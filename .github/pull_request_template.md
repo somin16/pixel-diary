@@ -1,9 +1,4 @@
----
-name: 기능 요청
-about:  PR템플릿
-title: "Feat "
-labels: feat
----
+
 <!-- 작성하지 않은 항목은 모두 지워주세요 -->
  
 ## 🔎개요 
