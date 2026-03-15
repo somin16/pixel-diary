@@ -78,6 +78,10 @@ http://127.0.0.1:8000
 1) 라이브러리 설치
 ```bash
 npm install
+# package.json 프론트엔드 라이브러리 및 실행 스크립트 관리용
+
+# "dependencies":실제 서비스 운영에 필요한 재료(react, icon)
+# "devDependencies":개발할 때만 옆에서 도와주는 도구(Vite)
 ```
 2) 브라우저에서 다음 주소로 접속
 ```bash
