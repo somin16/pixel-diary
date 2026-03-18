@@ -38,7 +38,7 @@ python -m venv venv
 ```bash
 deactivate
 ```
---- 
+
 ## 3. 의존성 설치(백엔드)
     
 1) requirements.txt 파일을 사용하여 필요한 패키지 설치 (항상 최신 상태로 유지하세요)
@@ -49,18 +49,8 @@ pip install -r requirements.txt
 ```bash
 pip freeze > requirements.txt
 ```
----
-## 4. 깃 커밋 메시지 템플릿
 
-프로젝트의 일관된 커밋 메시지를 위해 '.gitmessage.txt' 템플릿을 적용합니다.
-
-❗**각자 터미널에서 실행할 명령어:**
-
-```bash
-git config --local commit.template .gitmessage.txt
-```
-
-## 5. django 서버 실행
+## 4. django 서버 실행
 
 1) 가상환경이 활성화 된 상태에서
 ```bash
@@ -71,7 +61,7 @@ python manage.py runserver
 http://127.0.0.1:8000
 ```
 
-## 6. 프론트엔드 환경 구성
+## 5. 프론트엔드 환경 구성
 
 ❗`frontend` 폴더로 이동 후 실행하세요.
 
@@ -87,8 +77,44 @@ npm install
 npm run dev # http://localhost:5173 접속
 ```
 
-## 7. 환경 변수 설정
+## 6. 환경 변수 설정
 
 보안을 위해 API키와 시크릿 키는 깃허브에 올리지 않습니다.
 
 전달받은 .env파일을 각 폴더 (frontend/, backend/)루트에 생성하세요
+
+## 7. 깃 커밋 메시지 템플릿
+
+프로젝트의 일관된 커밋 메시지를 위해 '.gitmessage.txt' 템플릿을 적용합니다.
+
+❗**각자 터미널에서 실행할 명령어:**
+
+```bash
+git config --local commit.template .gitmessage.txt
+```
+
+## 8. 폴더 구조 ( 확정x )
+
+```
+PPIXEL-DIARY/ (Root)
+├── .github/                # 깃허브 설정 및 이슈 템플릿
+├── backend/                # [Django AI 서버]
+│   ├── config/             # Django 프로젝트 설정 (settings.py 등)
+│   ├── .env                # 슈파베이스 및 AI API 키
+│   ├── manage.py           # Django 실행 엔트리포인트
+│   ├── requirements.txt    # 파이썬 패키지 목록
+│   └── db.sqlite3          # 로컬 테스트용 DB
+│
+├── frontend/               # [React + Phaser 게임]
+│   ├── public/             # 게임 에셋 (이미지, 사운드 등)
+│   ├── src/                # 실제 프론트엔드 코드
+│   │   ├── (여기에 Phaser 게임 로직과 UI 컴포넌트 위치)
+│   ├── .env                # 프론트엔드 환경 변수
+│   ├── index.html          # 앱 메인 페이지
+│   ├── package.json        # 리액트/페이저 라이브러리 관리
+│   └── vite.config.js      # Vite 빌드 설정
+│
+├── .gitignore              # 버전 관리 제외 파일 설정
+├── .gitmessage.txt         # 커밋 메시지 규칙
+└── README.md               # 프로젝트 전체 가이드
+```
