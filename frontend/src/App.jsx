@@ -1,6 +1,7 @@
 // src/App.jsx
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
-import Home from './pages/Home'; // 홈 화면 부품을 가져온다
+import { BrowserRouter, Routes, Route } from "react-router-dom";
+import Home from "./pages/Home"; // 홈 화면 부품을 가져온다
+import Game1 from "./game/game1/Game1";
 
 function App() {
   return (
@@ -10,8 +11,7 @@ function App() {
         {/* 주소가 / 이면 홈화면을 보여줘 */}
         <Route path="/" element={<Home />} />
 
-
-
+        <Route path="/game1run" element={<Game1 />} />
       </Routes>
     </BrowserRouter>
   );
