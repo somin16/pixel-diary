@@ -25,6 +25,9 @@ export default class GameScene extends Phaser.Scene {
 
     // 타일
     this.load.image("map1_tile1", "/assets/game1/Tile/map1/tile1.png");
+
+    // 경험치 구슬
+    this.load.image("expBall", "/assets/game1/Obj/Exp/exp.png");
   }
 
   create() {
@@ -144,6 +147,12 @@ export default class GameScene extends Phaser.Scene {
     });
   }
 
+  // 경험치 구슬 생성
+  expBallAdd(PosX, PosY) {
+    const expBall = this.physics.add.sprite(PosX, PosY, "expBall");
+    expBall.setScale(2);
+  }
+
   // 공격 애니메이션
   autoAttack() {
     const PosX = this.player.x;
@@ -161,38 +170,39 @@ export default class GameScene extends Phaser.Scene {
 
     // 공격 판정
     // 유니티의 OnColider2D
-    this.physics.add.overlap(atkEff, this.monsters, (atk, moster) => {
+    this.physics.add.overlap(atkEff, this.monsters, (atk, monster) => {
       // 이미 타격중인 몬스터는 무시함
-      if (moster.isHit) return;
+      if (monster.isHit) return;
 
       // 타격 처리 시작
-      moster.isHit = true;
-      moster.hp -= 1; // 1만큼 체력 감소(차후에 공격력 할당)
-      moster.setTint(0xffffff); // 히트효과
+      monster.isHit = true;
+      monster.hp -= 1; // 1만큼 체력 감소(차후에 공격력 할당)
+      monster.setTint(0xffffff); // 히트효과
 
       // 넉백
-      const knockback = 250;
+      const knockback = 150;
       if (isLeft) {
         // 내가 왼쪽을 보고 쳤으면 슬라임을 더 왼쪽(- 방향)으로 밀어버림
-        moster.body.setVelocityX(-knockback);
+        monster.body.setVelocityX(-knockback);
       } else {
-        moster.body.setVelocityX(knockback);
+        monster.body.setVelocityX(knockback);
       }
 
       // 위 아래
-      moster.body.setVelocityY(Phaser.Math.Between(-100, 100));
+      monster.body.setVelocityY(Phaser.Math.Between(-100, 100));
 
       // 죽었으면~
-      if (moster.hp <= 0) {
-        moster.destroy(); // 체력이 다 달면 없애기
+      if (monster.hp <= 0) {
+        this.expBallAdd(monster.x, monster.y);
+        monster.destroy(); // 체력이 다 달면 없애기
       }
 
       // 살았으면~
       else {
         this.time.delayedCall(200, () => {
-          if (moster.active) {
-            moster.clearTint(); // 타격 이펙트 되돌리기
-            moster.isHit = false;
+          if (monster.active) {
+            monster.clearTint(); // 타격 이펙트 되돌리기
+            monster.isHit = false;
           }
         });
       }
