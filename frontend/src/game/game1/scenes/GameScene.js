@@ -28,6 +28,11 @@ export default class GameScene extends Phaser.Scene {
 
     // 경험치 구슬
     this.load.image("expBall", "/assets/game1/Obj/Exp/exp.png");
+
+
+    // 경험치바
+    this.load.image("Bar_Bg", "/assets/game1/Ui/Bar_Bg.png");
+    this.load.image("expBar", "/assets/game1/Ui/expBar.png");
   }
 
   create() {
@@ -40,6 +45,52 @@ export default class GameScene extends Phaser.Scene {
     // 플레이어 생성
     this.player = this.physics.add.sprite(400, 300, "py_img");
     this.player.setDisplaySize(32, 32); // 해상도 조정
+
+    // UI 작성
+    // ====================경험치====================
+
+    // 경험치바 위치
+    const ExpBarPosX = this.cameras.main.width / 2;
+    const ExpBarPosY = this.cameras.main.height / 15;
+
+    const AddExpPosX = ExpBarPosX - 150;
+
+    // 경험치 바 배경
+    // nieslice는 상하좌우 n픽셀은 건들지않고 크기를 조정할 수 있다.
+    // (x,y, 텍스쳐이름, 프레임, 가로, 세로, 보호픽셀 좌,우,위,아래)
+    this.ExpBar = this.add.nineslice(ExpBarPosX, ExpBarPosY, 'Bar_Bg', 0, 16, 8, 1, 1, 1, 1); 
+    this.ExpBar.setScrollFactor(0); // 카메라를 따라오도록 설정한다
+    this.ExpBar.width = 150;
+    this.ExpBar.setDepth(100); // 레이어 우선순위(높을수록 우선)
+    this.ExpBar.setScale(2);
+
+    // 경험치
+    this.AddExpValue = this.add.nineslice(AddExpPosX, ExpBarPosY, 'expBar', 0, 16, 8, 1, 1, 1, 1); 
+    this.AddExpValue.setOrigin(0, 0.5); // 왼쪽에서 오른쪽으로 늘어나게 한다
+    this.AddExpValue.setScrollFactor(0); // 카메라를 따라오도록 설정한다
+    this.AddExpValue.setDepth(101); // 해당 스프라이트를 최상단 레이어에 놓는다
+    this.AddExpValue.setScale(2);
+
+    this.maxExp = 100; // 변수 설정
+    this.ExpCount = 0;
+
+    this.AddExpValue.setVisible(false); // 시작할때 채워지는 경험치 가리기
+
+
+    // 경험치 구슬 그룹
+    this.expBalls = this.physics.add.group();
+
+    // 경험치 획득
+    // 닿으면~ 파괴하고 AddExp(10)
+    this.physics.add.overlap(this.player, this.expBalls, (py, exp) => {
+
+      exp.destroy();
+      this.AddExp(10);
+
+    },null, this
+  );
+
+    // ==================여기까지 경험치==================
 
     // 몬스터 생성
 
@@ -149,8 +200,33 @@ export default class GameScene extends Phaser.Scene {
 
   // 경험치 구슬 생성
   expBallAdd(PosX, PosY) {
-    const expBall = this.physics.add.sprite(PosX, PosY, "expBall");
+    const expBall = this.expBalls.create(PosX, PosY, "expBall");
     expBall.setScale(2);
+  }
+
+  AddExp(Value) {
+
+    this.ExpCount += Value;
+
+    // 최대치 넘었을때 일단 고정해두기
+    if (this.ExpCount >= this.maxExp) {
+      this.ExpCount = this.maxExp;
+    }
+
+    if (this.ExpCount <= 0) {
+
+      this.AddExpValue.setVisible(false);
+    }
+
+    else {
+
+      this.AddExpValue.setVisible(true);
+
+      const percent = this.ExpCount / this.maxExp; //퍼센트 계산
+
+      const ExpBarPercentValue = Math.max(2, 150 * percent);
+      this.AddExpValue.width = ExpBarPercentValue; 
+    }
   }
 
   // 공격 애니메이션

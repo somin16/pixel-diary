@@ -9,19 +9,21 @@ const Game1 = () => {
     // 페이저 게임 환경 설정
     const config = {
       type: Phaser.AUTO,
-
       pixelArt: true, // 업스케일링 해도 픽셀이 깨지지 않도록 설정
 
       scale: {
-        mode: Phaser.Scale.RESIZE, // 페이저 기능, 창크기에 따라서 캔버스 크기를 자동으로 맞춘다
-        parent: gameContainer.current, // 렌더링 기준? 인거같다
-        width: "100%",
-        height: "100%",
+        mode: Phaser.Scale.FIT, // 화면에 꽉 채워주게 줌인한다
+        autoCenter: Phaser.Scale.CENTER_BOTH,
+        parent: gameContainer.current, // 렌더링 기준 설정
+        width: 360,
+        height: 640,
       },
+
       physics: {
         default: "arcade",
         arcade: { gravity: { y: 0 } }, // 중력제거
       },
+      
       scene: [GameScene],
     };
 
@@ -37,11 +39,18 @@ const Game1 = () => {
   return (
     <div
       style={{
+
+        position: "fixed", // 독자적인 화면 구축
+        top: 0,
+        left: 0,
+        zIndex: 9999,
+
         width: "100vw",
         height: "100vh",
-        margin: 0,
-        padding: 0,
+        backgroundColor: "#111", // 화면 밖 검은색으로
         overflow: "hidden",
+
+        textAlign: "left",
       }}
     >
       <div ref={gameContainer} style={{ width: "100%", height: "100%" }} />
