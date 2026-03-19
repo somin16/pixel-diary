@@ -11,7 +11,8 @@ function App() {
         {/* 주소가 / 이면 홈화면을 보여줘 */}
         <Route path="/" element={<Home />} />
 
-        <Route path="/game1run" element={<Game1 />} />
+        {/* 주소가 /game1run 이면 미니게임1 화면을 보여줘 */}
+        <Route path="/game1run" element={<Game1 />} /> 
       </Routes>
     </BrowserRouter>
   );
