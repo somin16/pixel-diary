@@ -5,76 +5,80 @@ export default class GameScene extends Phaser.Scene {
     super("GameScene");
   }
 
-  // preload 유니티에서 미리 이미지나 프리팹 에셋 선언하는 느낌?
+  // perload: 이미지 불러오기
   preload() {
+
+    // 이미지에는 모두 언더바를 넣는것으로 하겠습니다(가독성을 위해)
+
     // 플레이어 이미지
-    this.load.image("py_img", "/assets/game1/Py/stop.png");
+    this.load.image("player_stop", "/assets/game1/Player/stop.png");
 
     // 플레이어 이동 이미지
-    this.load.image("move1", "/assets/game1/Py/move1.png");
-    this.load.image("move2", "/assets/game1/Py/move2.png");
-    this.load.image("move3", "/assets/game1/Py/move3.png");
+    this.load.image("player_move1", "/assets/game1/Player/move1.png");
+    this.load.image("player_move2", "/assets/game1/Player/move2.png");
+    this.load.image("player_move3", "/assets/game1/Player/move3.png");
 
     // 공격 이미지
-    this.load.image("atk1_1", "/assets/game1/Attacks/attack1/1.png");
-    this.load.image("atk1_2", "/assets/game1/Attacks/attack1/2.png");
-    this.load.image("atk1_3", "/assets/game1/Attacks/attack1/3.png");
+    this.load.image("blade_1", "/assets/game1/Attacks/Blade/1.png");
+    this.load.image("blade_2", "/assets/game1/Attacks/Blade/2.png");
+    this.load.image("blade_3", "/assets/game1/Attacks/Blade/3.png");
 
     // 몬스터 이미지
-    this.load.image("slime_img", "/assets/game1/Monster/Nomal/slime.png"); // 슬라임(몬스터1)
+    this.load.image("slime_stop", "/assets/game1/Monster/Nomal/slime.png"); // 슬라임(몬스터1)
 
     // 타일
     this.load.image("map1_tile1", "/assets/game1/Tile/map1/tile1.png");
 
     // 경험치 구슬
-    this.load.image("expBall", "/assets/game1/Obj/Exp/exp.png");
-
+    this.load.image("expBall", "/assets/game1/Object/Exp/exp.png");
 
     // 경험치바
-    this.load.image("Bar_Bg", "/assets/game1/Ui/Bar_Bg.png");
+    this.load.image("Bar_BackGorund", "/assets/game1/Ui/Bar_BackGorund.png");
     this.load.image("expBar", "/assets/game1/Ui/expBar.png");
   }
 
-  create() {
+  create() { // create: 말그대로 생성, 오브젝트를 작성하는 곳
+
     // 기본배경색(나중에 지울거임)
     this.cameras.main.setBackgroundColor("#2d2d2d");
 
     // 타일맵 깔기
+    // 4000x4000에 규격에 맞춰서 깔아준다
     this.add.tileSprite(0, 0, 4000, 4000, "map1_tile1").setScale(2);
 
     // 플레이어 생성
-    this.player = this.physics.add.sprite(400, 300, "py_img");
+    this.player = this.physics.add.sprite(400, 300, "player_stop");
     this.player.setDisplaySize(32, 32); // 해상도 조정
 
     // UI 작성
     // ====================경험치====================
 
     // 경험치바 위치
-    const ExpBarPosX = this.cameras.main.width / 2;
-    const ExpBarPosY = this.cameras.main.height / 15;
+    const EXP_BAR_POS_X = this.cameras.main.width / 2;
+    const EXP_BAR_POS_Y = this.cameras.main.height / 15;
 
-    const AddExpPosX = ExpBarPosX - 150;
+    const ADD_EXP_POS_X = EXP_BAR_POS_X - 150;
 
     // 경험치 바 배경
     // nieslice는 상하좌우 n픽셀은 건들지않고 크기를 조정할 수 있다.
     // (x,y, 텍스쳐이름, 프레임, 가로, 세로, 보호픽셀 좌,우,위,아래)
-    this.ExpBar = this.add.nineslice(ExpBarPosX, ExpBarPosY, 'Bar_Bg', 0, 16, 8, 1, 1, 1, 1); 
-    this.ExpBar.setScrollFactor(0); // 카메라를 따라오도록 설정한다
-    this.ExpBar.width = 150;
-    this.ExpBar.setDepth(100); // 레이어 우선순위(높을수록 우선)
-    this.ExpBar.setScale(2);
+    this.expBar = this.add.nineslice(EXP_BAR_POS_X, EXP_BAR_POS_Y, 'Bar_BackGorund', 0, 16, 8, 1, 1, 1, 1); 
+    this.expBar.setScrollFactor(0); // 카메라를 따라오도록 설정한다
+    this.expBar.width = 150; // 넓이 설정
+    this.expBar.setDepth(100); // 레이어 우선순위(높을수록 우선)
+    this.expBar.setScale(2);
 
     // 경험치
-    this.AddExpValue = this.add.nineslice(AddExpPosX, ExpBarPosY, 'expBar', 0, 16, 8, 1, 1, 1, 1); 
-    this.AddExpValue.setOrigin(0, 0.5); // 왼쪽에서 오른쪽으로 늘어나게 한다
-    this.AddExpValue.setScrollFactor(0); // 카메라를 따라오도록 설정한다
-    this.AddExpValue.setDepth(101); // 해당 스프라이트를 최상단 레이어에 놓는다
-    this.AddExpValue.setScale(2);
+    this.addExpValue = this.add.nineslice(ADD_EXP_POS_X, EXP_BAR_POS_Y, 'expBar', 0, 16, 8, 1, 1, 1, 1); 
+    this.addExpValue.setOrigin(0, 0.5); // 왼쪽에서 오른쪽으로 늘어나게 한다
+    this.addExpValue.setScrollFactor(0); // 카메라를 따라오도록 설정한다
+    this.addExpValue.setDepth(101); // 해당 스프라이트를 최상단 레이어에 놓는다
+    this.addExpValue.setScale(2);
 
-    this.maxExp = 100; // 변수 설정
-    this.ExpCount = 0;
+    this.MAX_EXP = 100; // 최대값 100%의 상수 설정
+    this.expCount = 0; // 시작은 0으로
 
-    this.AddExpValue.setVisible(false); // 시작할때 채워지는 경험치 가리기
+    this.addExpValue.setVisible(false); // 시작할때 채워지는 경험치 가리기
 
 
     // 경험치 구슬 그룹
@@ -82,10 +86,10 @@ export default class GameScene extends Phaser.Scene {
 
     // 경험치 획득
     // 닿으면~ 파괴하고 AddExp(10)
-    this.physics.add.overlap(this.player, this.expBalls, (py, exp) => {
+    this.physics.add.overlap(this.player, this.expBalls, (player, expBalls) => {
 
-      exp.destroy();
-      this.AddExp(10);
+      expBalls.destroy();
+      this.addExp(10);
 
     },null, this
   );
@@ -102,29 +106,29 @@ export default class GameScene extends Phaser.Scene {
       let randomX = Phaser.Math.Between(200, 600);
       let randomY = Phaser.Math.Between(0, 100);
 
-      let monster1 = this.monsters.create(randomX, randomY, "slime_img");
+      let slime = this.monsters.create(randomX, randomY, "slime_stop");
 
-      monster1.hp = 3;
-      monster1.isHit = false;
-      monster1.setDisplaySize(32, 32);
+      slime.hp = 3;
+      slime.isHit = false;
+      slime.setDisplaySize(32, 32);
     }
 
     // 카메라를 플레이어에 맞춰서 이동
     this.cameras.main.startFollow(this.player, true, 0.05, 0.05);
 
     // 플레이어 움직임 애니메이션
+    // anims: 이미지를 조합하여 애니메이션을 만들어준다
     this.anims.create({
-      key: "move_ani",
-      frames: [{ key: "move1" }, { key: "move2" }, { key: "move3" }],
+      key: "move_animation",
+      frames: [{ key: "player_move1" }, { key: "player_move2" }, { key: "player_move3" }],
       frameRate: 10,
       repeat: -1,
     });
 
-    // anims: 애니메이션
-    // 1번 공격 애니메이션
+    // 기본 공격(블레이드) 애니메이션
     this.anims.create({
-      key: "atk1_ani",
-      frames: [{ key: "atk1_1" }, { key: "atk1_2" }, { key: "atk1_3" }],
+      key: "blade_animation",
+      frames: [{ key: "blade_1" }, { key: "blade_2" }, { key: "blade_3" }],
       frameRate: 10,
       repeat: 0,
     });
@@ -143,6 +147,7 @@ export default class GameScene extends Phaser.Scene {
   }
 
   update() {
+
     // 기본 설정
     const speed = 150; // 속도
     this.player.body.setVelocity(0); // 중력x
@@ -176,77 +181,82 @@ export default class GameScene extends Phaser.Scene {
 
     // 이동시 ~ 애니메이션
     if (isMove) {
-      this.player.play("move_ani", true);
+      this.player.play("move_animation", true);
     } else {
-      // player.stop : 애니메이션 중지
+      // .stop : 애니메이션 중지
       this.player.stop();
-      this.player.setTexture("py_img"); // 중지하고 이미지 변경
+      this.player.setTexture("player_stop"); // 중지하고 이미지 변경
     }
 
     // ===============||여기부터 몬스터||=================
 
     // 몬스터1(슬라임)
 
-    this.monsters.getChildren().forEach((monster1) => {
-      if (monster1.active) {
+    this.monsters.getChildren().forEach((slime) => {
+      if (slime.active) {
         // moveToObject: A가 B에게 C의 속도로 다가간다
 
-        if (monster1.isHit != true) {
-          this.physics.moveToObject(monster1, this.player, 100);
+        if (slime.isHit != true) {
+          this.physics.moveToObject(slime, this.player, 100);
         }
       }
     });
   }
 
   // 경험치 구슬 생성
-  expBallAdd(PosX, PosY) {
-    const expBall = this.expBalls.create(PosX, PosY, "expBall");
+  expBallAdd(POS_X, POS_Y) {
+    const expBall = this.expBalls.create(POS_X, POS_Y, "expBall");
     expBall.setScale(2);
   }
 
-  AddExp(Value) {
+  addExp(Value) {
 
-    this.ExpCount += Value;
+    this.expCount += Value;
 
     // 최대치 넘었을때 일단 고정해두기
-    if (this.ExpCount >= this.maxExp) {
-      this.ExpCount = this.maxExp;
+    if (this.expCount >= this.MAX_EXP) {
+      this.expCount = this.MAX_EXP;
     }
 
-    if (this.ExpCount <= 0) {
+    if (this.expCount <= 0) {
 
-      this.AddExpValue.setVisible(false);
+      this.addExpValue.setVisible(false);
     }
 
     else {
 
-      this.AddExpValue.setVisible(true);
+      this.addExpValue.setVisible(true);
 
-      const percent = this.ExpCount / this.maxExp; //퍼센트 계산
+      const percent = this.expCount / this.MAX_EXP; //퍼센트 계산
 
-      const ExpBarPercentValue = Math.max(2, 150 * percent);
-      this.AddExpValue.width = ExpBarPercentValue; 
+      const EXP_BAR_PERCENT_VALUE = Math.max(2, 150 * percent);
+      this.addExpValue.width = EXP_BAR_PERCENT_VALUE; 
     }
   }
 
   // 공격 애니메이션
   autoAttack() {
-    const PosX = this.player.x;
-    const PosY = this.player.y;
 
+    // 플레이어의 위치를 받고
+    const POS_X = this.player.x;
+    const POS_Y = this.player.y;
+
+    // 플레이어의 방향을 받는다
     const isLeft = this.player.flipX;
 
-    const offsetX = isLeft ? -50 : 50;
+    // 좌우에 따라서 생성 위치를 변경
+    const OFFSET_X = isLeft ? -50 : 50;
 
     // 이펙트 생성
-    const atkEff = this.physics.add.sprite(PosX + offsetX, PosY, "atk1_1");
+    // 기본공격(블레이드)
+    const atkEff = this.physics.add.sprite(POS_X + OFFSET_X, POS_Y, "blade_1");
     atkEff.setScale(4);
     atkEff.setFlipX(isLeft);
-    atkEff.play("atk1_ani");
+    atkEff.play("blade_animation");
 
     // 공격 판정
     // 유니티의 OnColider2D
-    this.physics.add.overlap(atkEff, this.monsters, (atk, monster) => {
+    this.physics.add.overlap(atkEff, this.monsters, (damage, monster) => {
       // 이미 타격중인 몬스터는 무시함
       if (monster.isHit) return;
 
