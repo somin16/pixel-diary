@@ -40,7 +40,7 @@ deactivate
 ```
 
 ## 3. 의존성 설치(백엔드)
-❗가상환경 활성화된 상태에서 하셔야 합니다
+❗가상환경이 활성화된 상태에서 실행하세요.
     
 1) requirements.txt 파일을 사용하여 필요한 패키지 설치 (처음 설치 시 or 추가/버전업 )
 ```bash
@@ -56,18 +56,32 @@ pip-sync requirements.txt # 삭제된 패키지까지 자동 제거됩니다
 pip freeze > requirements.txt
 ```
 
-## 4. django 서버 실행
+## 4. 데이터베이스 마이그레이션 (백엔드)
 
-1) 가상환경이 활성화 된 상태에서
+❗가상환경이 활성화된 상태에서 실행하세요.
+1) 마이그레이션 적용 (처음 세팅 시)
+```bash
+python manage.py migrate
+```
+
+2) models.py 수정 후 (테이블 추가/수정/삭제 시)
+```bash
+python manage.py makemigrations
+python manage.py migrate
+```
+
+## 5. django 서버 실행
+❗가상환경이 활성화된 상태에서 실행하세요.
+
 ```bash
 python manage.py runserver
 ```
-2) 브라우저에서 다음 주소로 접속
+브라우저에서 다음 주소로 접속
 ```bash
 http://127.0.0.1:8000
 ```
 
-## 5. 프론트엔드 환경 구성
+## 6. 프론트엔드 환경 구성
 
 ❗`frontend` 폴더로 이동 후 실행하세요.
 
@@ -83,13 +97,13 @@ npm install
 npm run dev # http://localhost:5173 접속
 ```
 
-## 6. 환경 변수 설정
+## 7. 환경 변수 설정
 
 보안을 위해 API키와 시크릿 키는 깃허브에 올리지 않습니다.
 
 전달받은 .env파일을 각 폴더 (frontend/, backend/)루트에 생성하세요
 
-## 7. 깃 커밋 메시지 템플릿
+## 8. 깃 커밋 메시지 템플릿
 
 프로젝트의 일관된 커밋 메시지를 위해 '.gitmessage.txt' 템플릿을 적용합니다.
 
@@ -99,7 +113,7 @@ npm run dev # http://localhost:5173 접속
 git config --local commit.template .gitmessage.txt
 ```
 
-## 8. 폴더 구조 ( 확정x )
+## 9. 폴더 구조 ( 확정x )
 
 ```
 PPIXEL-DIARY/ (Root)
