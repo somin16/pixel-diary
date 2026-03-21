@@ -40,12 +40,18 @@ deactivate
 ```
 
 ## 3. 의존성 설치(백엔드)
+❗가상환경 활성화된 상태에서 하셔야 합니다
     
-1) requirements.txt 파일을 사용하여 필요한 패키지 설치 (항상 최신 상태로 유지하세요)
+1) requirements.txt 파일을 사용하여 필요한 패키지 설치 (처음 설치 시 or 추가/버전업 )
 ```bash
 pip install -r requirements.txt
 ```
- 2) 새로운 패키지 설치 시 requirements.txt 업데이트 (새로운 패키지 설치 시 반드시 가상환경이 활성화된 상태에서 설치)
+2) requirements.txt 내용 바탕으로 가상환경 동기화 (삭제 or 다운그레이드 1개라도 있을 시)
+```bash
+pip install pip-tools #로컬 환경에서 1번만 하면 됩니다
+pip-sync requirements.txt # 삭제된 패키지까지 자동 제거됩니다
+```
+3) requirements.txt 업데이트 (새로운 패키지 설치 삭제후)
 ```bash
 pip freeze > requirements.txt
 ```
