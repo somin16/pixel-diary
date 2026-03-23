@@ -13,17 +13,18 @@ https://docs.djangoproject.com/en/6.0/ref/settings/
 from pathlib import Path
 import os
 from dotenv import load_dotenv
- 
+
+# .env 파일에서 환경변수 로드
 load_dotenv()
- 
+
 BASE_DIR = Path(__file__).resolve().parent.parent
- 
+
 SECRET_KEY = os.getenv("SECRET_KEY", "django-insecure-o7b#$)n%=rsdhb^8(75&s#6)_9cv#s9_$u7n%-*nduea54wcn&")
- 
+
 DEBUG = os.getenv("DEBUG", "True") == "True"
- 
+
 ALLOWED_HOSTS = []
- 
+
 INSTALLED_APPS = [
     "django.contrib.admin",
     "django.contrib.auth",
@@ -31,13 +32,13 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
-    "rest_framework",
-    "corsheaders",
-    "accounts",         # 추가
+    "rest_framework",   # Django REST Framework
+    "corsheaders",      # CORS 헤더 처리
+    "accounts",         # 인증 및 계정 관련 앱
 ]
- 
+
 MIDDLEWARE = [
-    "corsheaders.middleware.CorsMiddleware",
+    "corsheaders.middleware.CorsMiddleware",    # CORS 처리 (최상단에 위치해야 함)
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
@@ -46,9 +47,9 @@ MIDDLEWARE = [
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
- 
+
 ROOT_URLCONF = "config.urls"
- 
+
 TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
@@ -63,9 +64,9 @@ TEMPLATES = [
         },
     },
 ]
- 
+
 WSGI_APPLICATION = "config.wsgi.application"
- 
+
 # Supabase를 메인 DB로 사용하므로 SQLite는 Django 내부 관리용으로만 유지
 DATABASES = {
     "default": {
@@ -73,26 +74,26 @@ DATABASES = {
         "NAME": BASE_DIR / "db.sqlite3",
     }
 }
- 
-# Supabase 설정
+
+# Supabase 연결 설정 (.env에서 로드)
 SUPABASE_URL = os.getenv("SUPABASE_URL")
 SUPABASE_SERVICE_KEY = os.getenv("SUPABASE_SERVICE_KEY")
- 
+
 AUTH_PASSWORD_VALIDATORS = [
     {"NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator"},
     {"NAME": "django.contrib.auth.password_validation.MinimumLengthValidator"},
     {"NAME": "django.contrib.auth.password_validation.CommonPasswordValidator"},
     {"NAME": "django.contrib.auth.password_validation.NumericPasswordValidator"},
 ]
- 
+
 LANGUAGE_CODE = "en-us"
-TIME_ZONE = "Asia/Seoul"
+TIME_ZONE = "Asia/Seoul"    # 한국 시간대 설정
 USE_I18N = True
 USE_TZ = True
- 
+
 STATIC_URL = "static/"
- 
-# 프론트엔드(Vite) 기본 포트인 5173 허용
+
+# 프론트엔드(Vite) 기본 포트 5173 허용
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:5173",
     "http://127.0.0.1:5173",
