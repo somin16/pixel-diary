@@ -10,6 +10,7 @@ export default class GameScene extends Phaser.Scene {
 
     // 이미지에는 모두 언더바를 넣는것으로 하겠습니다(가독성을 위해)
 
+    // ========================플레이어 + 공격 이펙트=========================
     // 플레이어 이미지
     this.load.image("player_stop", "/assets/game1/Player/player_stop.png");
 
@@ -23,23 +24,41 @@ export default class GameScene extends Phaser.Scene {
     this.load.image("blade_2", "/assets/game1/Attacks/Blade/blade_2.png");
     this.load.image("blade_3", "/assets/game1/Attacks/Blade/blade_3.png");
 
+
+    // ======================몬스터===================================
     // 몬스터 이미지
-    this.load.image("slime_stop", "/assets/game1/Monster/Nomal/slime_stop.png"); // 슬라임(몬스터1)
+
+    // 슬라임(몬스터1)
+    this.load.image("slime_stop", "/assets/game1/Monster/Nomal/slime_stop.png");
+
+
+    // =======================타일======================================
 
     // 타일
     this.load.image("map1_tile1", "/assets/game1/Tile/map1/map1_tile1.png");
 
+
+    // =========================UI=======================================
     // 공통으로 사용하는 UI바 배경
     this.load.image("bar_background", "/assets/game1/Ui/bar_background.png");
 
     // HP바
     this.load.image("hp_bar", "/assets/game1/Ui/hp_bar.png");
 
+    // 경험치바
+    this.load.image("exp_bar", "/assets/game1/Ui/exp_bar.png");
+
+
+    // =====================오브젝트=========================================
     // 경험치 구슬
     this.load.image("exp_ball", "/assets/game1/Object/Exp/exp_ball.png");
 
-    // 경험치바
-    this.load.image("exp_bar", "/assets/game1/Ui/exp_bar.png");
+    // 상자
+    this.load.image("chest_level_1", "/assets/game1/Object/Chest/chest_level_1.png");
+
+    // 고기(회복 아이템)
+    this.load.image("meat", "/assets/game1/Object/DropItem/meat.png");
+
   }
 
   create() { // create: 말그대로 생성, 오브젝트를 작성하는 곳
@@ -109,8 +128,17 @@ export default class GameScene extends Phaser.Scene {
                                         // 시작할때 채워지는 경험치 가리기
 
 
+
+    // =================오브젝트 아이템들===================
+
     // 경험치 구슬 그룹
     this.expBalls = this.physics.add.group();
+
+    // 상자 오브젝트 그룹
+    this.chests = this.physics.add.group();
+
+    // 드랍 아이템 오브젝트 그룹
+    this.dropItems = this.physics.add.group();
 
     // 경험치 획득
     // 닿으면~ 파괴하고 AddExp(10)
@@ -118,6 +146,23 @@ export default class GameScene extends Phaser.Scene {
 
       expBalls.destroy();
       this.addExp(2);
+
+    },null, this 
+  );
+
+    // 드랍 아이템(현재는 고기만 있지만, 차후에 더 추가 될수도 있음)
+    this.physics.add.overlap(this.player, this.dropItems, (player, dropItem) => {
+
+      dropItem.destroy();
+      this.updateHP(this.MAX_HP / 2); // 최대 체력의 50%를 채워준다
+      player.setTint(0x00ff00);
+
+      // 0.1초후에 초록 이펙트 되돌리기
+      this.time.delayedCall(200, () => {
+        if (player.active) {
+              player.clearTint(); // 이펙트 되돌리기
+          }
+        });
 
     },null, this
   );
@@ -181,7 +226,15 @@ export default class GameScene extends Phaser.Scene {
       callback: this.spawnMonster,
       callbackScope: this,
       loop: true,
-    })
+    });
+
+    // 상자 생성 이벤트(현재는 게임 시작 5초후 플레이어 근처에 1회 자동 스폰되도록 임시설정)
+    this.time.addEvent({
+      delay: 5000,
+      callback: this.spawnChest,
+      callbackScope: this,
+      loop: false,
+    });
 
     // 방향키 입력
     this.cursors = this.input.keyboard.createCursorKeys();
@@ -278,10 +331,38 @@ export default class GameScene extends Phaser.Scene {
     slime.setScale(2);
   }
 
+  // 상자 생성
+  spawnChest() {
+
+    // 현재 임시로 몬스터 생성 방식과 같은 방식을 채택하였습니다.
+
+    // 생성범위
+    const SPAWN_RADIUS = 100;
+    // Between을 통해 랜덤한 각도를 뽑아낸다
+    const randomAngle = Phaser.Math.FloatBetween(0, Math.PI * 2);
+
+    // 플레이어의 현재 위치와 비교하여 원의 테두리 좌표에 몬스터가 스폰될 위치를 정합니다
+    const SPAWN_X = this.player.x + Math.cos(randomAngle) * SPAWN_RADIUS;
+    const SPAWN_Y = this.player.y + Math.sin(randomAngle) * SPAWN_RADIUS;
+
+    // 상자(1레벨) 생성
+    let chest_level_1 = this.chests.create(SPAWN_X, SPAWN_Y, "chest_level_1");
+    chest_level_1.hp = 3;
+    chest_level_1.isHit = false;
+    chest_level_1.setScale(2);
+  }
+
   // 경험치 구슬 생성
   addExpBall(posX, posY) {
     const expBall = this.expBalls.create(posX, posY, "exp_ball");
     expBall.setScale(2);
+  }
+
+  // 고기 아이템 생성
+  addDropItemMeat(posX, posY) {
+
+    const meat = this.dropItems.create(posX, posY, "meat");
+    meat.setScale(2); 
   }
 
   // 경험치 추가
@@ -358,7 +439,8 @@ export default class GameScene extends Phaser.Scene {
     atkEff.play("blade_animation");
 
     // 공격 판정
-    // 유니티의 OnColider2D
+
+    // 몬스터 공격 판정
     this.physics.add.overlap(atkEff, this.monsters, (damage, monster) => {
       // 이미 타격중인 몬스터는 무시함
       if (monster.isHit) return;
@@ -395,6 +477,33 @@ export default class GameScene extends Phaser.Scene {
           if (monster.active) {
             monster.clearTint(); // 타격 이펙트 되돌리기
             monster.isHit = false;
+          }
+        });
+      }
+    });
+
+    // 상자 오브젝트 공격 판정(몬스터 공격 판정과 같습니다.)
+    this.physics.add.overlap(atkEff, this.chests, (damage, chest) => {
+
+      if (chest.isHit) return;
+
+      chest.isHit = true;
+      chest.hp -= 1;
+      chest.setTintFill(0xffffff);
+
+      if (chest.hp <= 0) {
+        this.addDropItemMeat(chest.x, chest.y);
+        chest.destroy(); // 체력이 다 달면 없애기
+      }
+
+      else {
+
+        // 0.1초후에 무적판정 종료
+        // 상자는 어느정도의 연타를 허용해줘서 빠르게 부술 수 있도록 0.1초로 설정
+        this.time.delayedCall(100, () => {
+          if (chest.active) {
+            chest.clearTint(); // 타격 이펙트 되돌리기
+            chest.isHit = false;
           }
         });
       }
