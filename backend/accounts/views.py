@@ -20,6 +20,17 @@ def get_supabase_headers():
     }
 
 
+def get_supabase_anon_headers():
+    """
+    Supabase 로그인 API 요청에 필요한 헤더 반환
+    - 로그인은 anon key를 사용
+    """
+    return {
+        "apikey": os.getenv("SUPABASE_ANON_KEY"),
+        "Content-Type": "application/json",
+    }
+
+
 def validate_email_format(email):
     """
     이메일 형식 유효성 검사
@@ -167,5 +178,77 @@ class SignupView(APIView):
             print(f"=== SIGNUP ERROR ===\n{error}\n===================")
             return Response(
                 {"message": "회원가입 중 오류가 발생했습니다."},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
+        
+
+class LoginView(APIView):
+    """일반 로그인 API"""
+ 
+    def post(self, request):
+        """
+        POST /api/v1/auth/login
+        - 이메일, 비밀번호를 받아 Supabase Auth로 로그인
+        - 로그인 성공 시 access_token, refresh_token 반환
+        """
+        # 요청 Body에서 필수값 추출 (앞뒤 공백 제거)
+        user_email = request.data.get("user_email", "").strip()
+        password = request.data.get("password", "").strip()
+ 
+        # 필수값(이메일, 비밀번호) 누락 시 400 반환
+        if not all([user_email, password]):
+            return Response(
+                {"message": "이메일과 비밀번호는 필수입니다."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+ 
+        # 이메일 형식 검증 (예: user@example.com 형식이 아니면 400 반환)
+        if not validate_email_format(user_email):
+            return Response(
+                {"message": "이메일 형식이 올바르지 않습니다."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+ 
+        try:
+            supabase_url = os.getenv("SUPABASE_URL")
+            headers = get_supabase_anon_headers()
+ 
+            # Supabase Auth API로 로그인 요청
+            response = requests.post(
+                f"{supabase_url}/auth/v1/token?grant_type=password",
+                headers=headers,
+                json={
+                    "email": user_email,
+                    "password": password,
+                },
+            )
+ 
+            # 이메일 또는 비밀번호가 틀린 경우 401 반환
+            if response.status_code == 400:
+                return Response(
+                    {"message": "이메일 또는 비밀번호가 올바르지 않습니다."},
+                    status=status.HTTP_401_UNAUTHORIZED,
+                )
+ 
+            # 그 외 실패 응답인 경우 예외 발생
+            if response.status_code != 200:
+                raise Exception(f"Supabase API 오류: {response.text}")
+ 
+            data = response.json()
+ 
+            return Response(
+                {
+                    "access_token": data.get("access_token"),
+                    "refresh_token": data.get("refresh_token"),
+                    "message": "로그인되었습니다.",
+                },
+                status=status.HTTP_200_OK,
+            )
+ 
+        except Exception as error:
+            # 오류 발생 시 터미널에 출력 (개발 완료 후 삭제 예정)
+            print(f"=== LOGIN ERROR ===\n{error}\n==================")
+            return Response(
+                {"message": "로그인 중 오류가 발생했습니다."},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
