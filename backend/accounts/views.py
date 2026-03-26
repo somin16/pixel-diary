@@ -252,3 +252,66 @@ class LoginView(APIView):
                 {"message": "로그인 중 오류가 발생했습니다."},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
+        
+
+class LogoutView(APIView):
+    """일반 로그아웃 API"""
+ 
+    def post(self, request):
+        """
+        POST /api/v1/auth/logout
+        - Authorization 헤더의 access_token과 Body의 refresh_token으로 토큰 무효화
+        - 로그아웃 완료 메시지 반환
+        """
+        # Authorization 헤더에서 access_token 추출 (Bearer 토큰 방식)
+        auth_header = request.headers.get("Authorization", "")
+        if not auth_header.startswith("Bearer "):
+            return Response(
+                {"message": "Authorization 헤더에 유효한 Bearer 토큰이 필요합니다."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        access_token = auth_header.split("Bearer ")[1].strip()
+ 
+        # 요청 Body에서 refresh_token 추출
+        refresh_token = request.data.get("refresh_token", "").strip()
+ 
+        # refresh_token 누락 시 400 반환
+        if not refresh_token:
+            return Response(
+                {"message": "refresh_token이 필요합니다."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+ 
+        try:
+            supabase_url = os.getenv("SUPABASE_URL")
+ 
+            # 로그아웃은 access_token을 Authorization 헤더로 전달
+            headers = {
+                "apikey": os.getenv("SUPABASE_ANON_KEY"),
+                "Authorization": f"Bearer {access_token}",
+                "Content-Type": "application/json",
+            }
+ 
+            # Supabase Auth API로 토큰 무효화 요청
+            response = requests.post(
+                f"{supabase_url}/auth/v1/logout",
+                headers=headers,
+                json={"refresh_token": refresh_token},
+            )
+ 
+            # 그 외 실패 응답인 경우 예외 발생
+            if response.status_code not in [200, 204]:
+                raise Exception(f"Supabase API 오류: {response.text}")
+ 
+            return Response(
+                {"message": "로그아웃되었습니다."},
+                status=status.HTTP_200_OK,
+            )
+ 
+        except Exception as error:
+            # 오류 발생 시 터미널에 출력 (개발 완료 후 삭제 예정)
+            print(f"=== LOGOUT ERROR ===\n{error}\n==================")
+            return Response(
+                {"message": "로그아웃 중 오류가 발생했습니다."},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
