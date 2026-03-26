@@ -40,13 +40,32 @@ export default class GameScene extends Phaser.Scene {
 
     // =========================UI=======================================
     // 공통으로 사용하는 UI바 배경
-    this.load.image("bar_background", "/assets/game1/Ui/bar_background.png");
+    this.load.image("background_bar", "/assets/game1/Ui/background_bar.png");
 
     // HP바
     this.load.image("hp_bar", "/assets/game1/Ui/hp_bar.png");
 
     // 경험치바
     this.load.image("exp_bar", "/assets/game1/Ui/exp_bar.png");
+
+    // 레벨업 창 배경
+    this.load.image("level_up_background", "/assets/game1/Ui/level_up_background.png");
+
+
+    // 레벨업시에 사용할 아이콘들
+    // =====================스킬 아이콘=====================================
+
+    // 블레이드
+    this.load.image("blade_icon", "/assets/game1/Ui/Skill_Icon/blade_icon.png");
+
+    // 화살
+    this.load.image("arrow_icon", "/assets/game1/Ui/Skill_Icon/arrow_icon.png");
+
+    // 공격력
+    this.load.image("damage_icon","/assets/game1/Ui/Skill_Icon/damage_icon.png");
+
+    // 이동속도
+    this.load.image("speed_icon","/assets/game1/Ui/Skill_Icon/speed_icon.png");
 
 
     // =====================오브젝트=========================================
@@ -72,7 +91,9 @@ export default class GameScene extends Phaser.Scene {
 
     // 플레이어 생성
     this.player = this.physics.add.sprite(400, 300, "player_stop");
-    this.player.hp = 100;
+    this.player.hp = 100; // 기본 체력
+    this.player.damage = 1; // 기본 공격력
+    this.player.speed = 0; // 레벨업시 추가될 이동속도 계산용
     this.player.isDamage = false; // 플레이어 피격 감지(무적시간)
     this.player.setScale(2); // 해상도 조정
 
@@ -81,7 +102,7 @@ export default class GameScene extends Phaser.Scene {
     // ======================HP=====================
 
     // 배경
-    this.hpBar = this.add.nineslice(0, 0, 'bar_background', 0, 8, 4, 1, 1, 1, 1);
+    this.hpBar = this.add.nineslice(0, 0, 'background_bar', 0, 8, 4, 1, 1, 1, 1);
     this.hpBar.width = 20;
     this.hpBar.setDepth(100); // 레이어 우선순위(높을수록 우선)
     this.hpBar.setScale(2); // setScale: 해상도 조정, N배만큼 키워준다
@@ -108,7 +129,7 @@ export default class GameScene extends Phaser.Scene {
     // 경험치 바 배경(expBar)
     // nieslice는 상하좌우 n픽셀은 건들지않고 크기를 조정할 수 있다.
     // (x,y, 텍스쳐이름, 프레임, 가로, 세로, 보호픽셀 좌,우,위,아래)
-    this.expBar = this.add.nineslice(expBarPosX, expBarPosY, 'bar_background', 0, 16, 8, 1, 1, 1, 1); 
+    this.expBar = this.add.nineslice(expBarPosX, expBarPosY, 'background_bar', 0, 16, 8, 1, 1, 1, 1); 
     this.expBar.setScrollFactor(0); // 카메라를 따라오도록 설정한다
     this.expBar.width = 150; // 배경UI 넓이 설정
     this.expBar.setDepth(100); // 레이어 우선순위(높을수록 우선)
@@ -145,7 +166,7 @@ export default class GameScene extends Phaser.Scene {
     this.physics.add.overlap(this.player, this.expBalls, (player, expBalls) => {
 
       expBalls.destroy();
-      this.addExp(2);
+      this.addExp(50); // 테스트를 위해 경험치 25배 이벤트
 
     },null, this 
   );
@@ -168,6 +189,10 @@ export default class GameScene extends Phaser.Scene {
   );
 
     // ==================여기까지 경험치==================
+
+    // 몬스터에 사용될 가중치
+    // 해당 가중치를 통해 난이도 증가 시스템을 구현할 예정
+    this.monsterStatus = 0;
 
     // 몬스터 그룹
     this.monsters = this.physics.add.group();
@@ -236,6 +261,22 @@ export default class GameScene extends Phaser.Scene {
       loop: false,
     });
 
+    // 30초마다 몬스터가 점점 빨라지고 체력이 증가하는 이벤트
+    this.time.addEvent({
+      delay: 30000,
+      callback: this.monsterLevelUp,
+      callbackScope: this,
+      loop: true,
+    });
+
+    // 플레이어 체력 자연 회복 이벤트
+    this.time.addEvent({
+      delay: 1000,
+      callback: () => this.updateHP(1), // 수치가 들어가는 클래스일 경우엔 괄호랑 화살표도 써줘야한다
+      callbackScope: this,
+      loop: true,
+    });
+
     // 방향키 입력
     this.cursors = this.input.keyboard.createCursorKeys();
   }
@@ -243,7 +284,7 @@ export default class GameScene extends Phaser.Scene {
   update() {
 
     // 기본 설정
-    const speed = 150; // 속도
+    const speed = 150; // 기본 속도
     this.player.body.setVelocity(0); // 중력x
 
     let isMove = false;
@@ -257,27 +298,27 @@ export default class GameScene extends Phaser.Scene {
     if (this.cursors.left.isDown) {
       isMove = true;
 
-      this.player.body.setVelocityX(-speed);
+      this.player.body.setVelocityX(-speed - this.player.speed); // 기본속도 + 레벨업 보상으로 받은 이동속도도 함께 계산
       this.player.setFlipX(true); // 좌우반전
     }
     // 오른쪽
     else if (this.cursors.right.isDown) {
       isMove = true;
 
-      this.player.body.setVelocityX(speed);
+      this.player.body.setVelocityX(speed + this.player.speed);
       this.player.setFlipX(false); // 좌우반전
     }
 
     // 위아래
     if (this.cursors.up.isDown) {
 
-      this.player.body.setVelocityY(-speed);
+      this.player.body.setVelocityY(-speed - this.player.speed);
       isMove = true;
     } 
     
     else if (this.cursors.down.isDown) {
 
-      this.player.body.setVelocityY(speed);
+      this.player.body.setVelocityY(speed + this.player.speed);
       isMove = true;
     }
 
@@ -296,14 +337,19 @@ export default class GameScene extends Phaser.Scene {
 
     // ===============||여기부터 몬스터||=================
 
-    // 몬스터1(슬라임)
+    // 몬스터 이동 로직
 
-    this.monsters.getChildren().forEach((slime) => {
-      if (slime.active) {
+    this.monsters.getChildren().forEach((monsters) => {
+      if (monsters.active) {
         // moveToObject: A가 B에게 C의 속도로 다가간다
 
-        if (slime.isHit != true) {
-          this.physics.moveToObject(slime, this.player, 50);
+        if (monsters.isHit != true) {
+          this.physics.moveToObject(monsters, this.player, 50 + this.monsterStatus);
+
+          // 몬스터가 바라보는 방향에 따라 위치 변경
+          // 플레이어를 기준으로 왼쪽에 있으면 오른쪽을 보고 반대면 왼쪽을 본다
+          if (monsters.x > this.player.x) monsters.setFlipX(false);
+          else monsters.setFlipX(true);
         }
       }
     });
@@ -325,10 +371,16 @@ export default class GameScene extends Phaser.Scene {
 
     // 슬라임 생성
     let slime = this.monsters.create(SPAWN_X, SPAWN_Y, "slime_stop");
-    slime.hp = 3;
+    slime.hp = 3 + this.monsterStatus / 3; // 가중치를 넣는 방식으로 변경
     slime.damage = -5;
     slime.isHit = false;
     slime.setScale(2);
+  }
+
+  // 몬스터 레벨업(스탯 증가)
+  monsterLevelUp() {
+
+    this.monsterStatus += 1; // 현재는 임시로 전체 가중치1 증가로 설정
   }
 
   // 상자 생성
@@ -370,9 +422,14 @@ export default class GameScene extends Phaser.Scene {
 
     this.expCount += Value; // 위에서 선언한 상수 expCount를 활용
 
-    // 최대치 넘었을때 일단 고정해두기
+    // 최대치 넘었을때 최대 경험치 수치만큼 깎고 레벨업 실행
     if (this.expCount >= this.MAX_EXP) {
-      this.expCount = this.MAX_EXP;
+
+      this.expCount -= this.MAX_EXP; // 최대 경험치의 수치만큼 깎기
+
+      this.MAX_EXP += 10; // 레벨이 오를때마다 최대 경험치가 10씩 증가(임시)
+      this.levelUpMenu(); // 레벨업 실행
+
     }
 
     // 0보다 작으면 안보여야하니 .setVisible을 꺼준다
@@ -391,6 +448,137 @@ export default class GameScene extends Phaser.Scene {
 																													     // 150 * percent인 이유: 150이 기본 크기여서 150의 n%로 하면 딱 맞는다  
       this.addExpValue.width = expBarPercentValue; // 계산 완료된걸 넣어준다
     }
+  }
+
+  // 플레이어 레벨업
+  levelUpMenu() {
+
+    this.physics.pause(); // 게임 정지
+    this.time.paused = true; // 시간 정지
+
+    this.levelUpUI = this.add.container(0, 0); // 레벨업 UI 그룹을 00에 소환
+    this.levelUpUI.setScrollFactor(0); // 카메라 고정
+    this.levelUpUI.setDepth(500); // 레이어 맨위에 고정
+
+    // 반투명 검은배경을 게임 전체에 깔기
+    const backGround = this.add.rectangle(
+      this.cameras.main.width / 2,
+      this.cameras.main.height / 2,
+      this.cameras.main.width,
+      this.cameras.main.height,
+      0x000000,
+      0.7
+    );
+
+    this.levelUpUI.add(backGround); // 차후에 한번에 지워줘야하기에 levelUpUI에 넣는다
+
+    // 레벨업 보상(리워드로 할까 하다가 알아먹기 쉽게 이름을 스킬로 정했습니다)
+    const skills = [
+
+      // 스탯
+      { name: "공격력 증가" , id: "damage_up", icon: "damage_icon"},
+      { name: "이동속도 증가", id: "speed_up", icon: "speed_icon"},
+
+      // 무기
+      { name: "블레이드", id: "blade_up", icon: "blade_icon"}, // 현재 구현x
+      { name: "활", id: "arrow_up", icon: "arrow_icon"} // 현재 구현x
+    ];
+
+    // 보상이 랜덤으로 나오도록 배열을 섞는다
+    Phaser.Utils.Array.Shuffle(skills);
+
+    // 맨앞 3개만 뽑아오기
+    const selectSkills = skills.slice(0, 3);
+
+    // 버튼이 들어갈 좌표 설정
+    const centerX = this.cameras.main.width / 2;     // 카메라 가운데
+    const startY = 180;        // 첫 번째 버튼의 Y 좌표
+    const buttonGap = 100;     // 버튼 간격
+    const buttonWidth = 250;   // 버튼 넓이
+    const buttonHeight = 80;   // 버튼 높이
+
+    // 보상선택버튼 생성
+    selectSkills.forEach((skill, index) => {
+
+      // 버튼이 생성될 초기 위치
+      const buttonY = startY + (index * buttonGap);
+
+      // 나인 슬라이스로 레벨업 창의 배경을 생성
+      const buttonBackGround = this.add.nineslice(centerX, buttonY, "level_up_background", 0, buttonWidth, buttonHeight, 1, 1, 1, 1)
+
+      buttonBackGround.setScrollFactor(0) // 가운데 고정
+      buttonBackGround.setInteractive() // .setInteractive를 해줘야 클릭이 된다
+      buttonBackGround.on('pointerdown', () => this.selectSkill(skill.id)); // 클릭한 항목의 id를 가져와서 적용한다
+
+      // 배경을 완성했으니 이제 버튼을 넣어줄 그룹생성
+      const buttonComponents = [buttonBackGround];
+
+
+      // 아이콘이 들어갈 적절한 위치
+      const iconX = centerX - (buttonWidth / 2) + 35;
+
+      // 아이콘 생성
+      const icon = this.add.image(iconX, buttonY, skill.icon);
+      icon.setScale(2); // 크기조정
+      icon.setScrollFactor(0); // 화면고정
+      icon.setDepth(501); // 아이콘이 묻히지않게 501로 레이어 위치 조정
+      buttonComponents.push(icon); // 생성된 아이콘을 배경에 넣는다
+
+
+      // 텍스트가 들어갈 위치
+      const textX = iconX + 45;
+
+      // 텍스트를 넣는다
+      const buttonText = this.add.text(textX, buttonY, skill.name, {
+        fontSize: "18px",
+        fill: "#ffffff",
+        fontFamily: "Arial"
+      }).setOrigin(0, 0.5); // 좌측정렬
+      buttonComponents.push(buttonText); // 완성된 텍스트를 배경에 넣는다
+
+      // 지금까지 만든 애들을 모두 levelUpUI에 넣어서 한번에 관리한다
+      this.levelUpUI.add([buttonBackGround, buttonText, icon]);
+    });
+  }
+
+  selectSkill(skill_Id) { // skillId는 너무 가독성이 안좋아서 규칙을 무시하고 skill_Id로 했습니다
+
+    // 가짓수가 많기에 스위치 케이스 사용
+    switch (skill_Id) {
+
+      // 공격력 증가
+      case "damage_up": {
+
+        this.player.damage += 1;
+        break;
+      }
+
+      // 이동속도 증가
+      case "speed_up" : {
+
+        this.player.speed += 15;
+        break;
+      }
+
+      // 블레이드(미구현)
+      case "blade_up" : {
+
+        break;
+      }
+
+      // 활(미구현)
+      case "arrow_up" : {
+
+        break;
+      }
+    }
+
+    // 선택이 종료되면 UI파괴
+    this.levelUpUI.destroy();
+
+    // 시간 다시 되돌리기
+    this.physics.resume();
+    this.time.paused = false;
   }
 
   // hp가 변화됐을때 적용되는 클래스, 기본적으로 EXP와 작동방식이 같다
@@ -447,7 +635,7 @@ export default class GameScene extends Phaser.Scene {
 
       // 타격 처리 시작
       monster.isHit = true;
-      monster.hp -= 1; // 1만큼 체력 감소(차후에 공격력 할당)
+      monster.hp -= this.player.damage; // 공격력(damage)만큼 감소
       monster.setTintFill(0xffffff); // 히트효과
                                      // setTint와는 조금 다른 setTintFill은 스프라이트의 명도 조절이 아닌 스프라이트 위에 색 자체를 덮어버린다
 
