@@ -315,3 +315,115 @@ class LogoutView(APIView):
                 {"message": "로그아웃 중 오류가 발생했습니다."},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
+        
+        
+class ChangePasswordView(APIView):
+    """비밀번호 변경 API"""
+ 
+    def patch(self, request):
+        """
+        PATCH /api/v1/auth/password
+        - Authorization 헤더의 access_token으로 현재 유저 확인
+        - current_password로 기존 비밀번호 검증 후 new_password로 변경
+        - 변경 완료 메시지 반환
+        """
+        # Authorization 헤더에서 access_token 추출 (Bearer 토큰 방식)
+        auth_header = request.headers.get("Authorization", "")
+        if not auth_header.startswith("Bearer "):
+            return Response(
+                {"message": "Authorization 헤더에 유효한 Bearer 토큰이 필요합니다."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        access_token = auth_header.split("Bearer ")[1].strip()
+ 
+        # 요청 Body에서 필수값 추출 (앞뒤 공백 제거)
+        current_password = request.data.get("current_password", "").strip()
+        new_password = request.data.get("new_password", "").strip()
+ 
+        # 필수값 누락 시 400 반환
+        if not all([current_password, new_password]):
+            return Response(
+                {"message": "현재 비밀번호와 새 비밀번호는 필수입니다."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+ 
+        # 새 비밀번호 최소 길이 검증 (8자 미만이면 400 반환)
+        if len(new_password) < 8:
+            return Response(
+                {"message": "새 비밀번호는 최소 8자 이상이어야 합니다."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+ 
+        # 현재 비밀번호와 새 비밀번호가 같은 경우 400 반환
+        if current_password == new_password:
+            return Response(
+                {"message": "새 비밀번호는 현재 비밀번호와 달라야 합니다."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+ 
+        try:
+            supabase_url = os.getenv("SUPABASE_URL")
+ 
+            # access_token으로 현재 유저 정보 조회
+            user_headers = {
+                "apikey": os.getenv("SUPABASE_ANON_KEY"),
+                "Authorization": f"Bearer {access_token}",
+                "Content-Type": "application/json",
+            }
+            user_response = requests.get(
+                f"{supabase_url}/auth/v1/user",
+                headers=user_headers,
+            )
+ 
+            if user_response.status_code != 200:
+                return Response(
+                    {"message": "유효하지 않은 토큰입니다."},
+                    status=status.HTTP_401_UNAUTHORIZED,
+                )
+ 
+            # 현재 유저 이메일 추출
+            user_email = user_response.json().get("email")
+ 
+            # 현재 비밀번호 검증 (로그인 시도로 확인)
+            verify_headers = {
+                "apikey": os.getenv("SUPABASE_ANON_KEY"),
+                "Content-Type": "application/json",
+            }
+            verify_response = requests.post(
+                f"{supabase_url}/auth/v1/token?grant_type=password",
+                headers=verify_headers,
+                json={"email": user_email, "password": current_password},
+            )
+ 
+            # 현재 비밀번호가 틀린 경우 401 반환
+            if verify_response.status_code != 200:
+                return Response(
+                    {"message": "현재 비밀번호가 올바르지 않습니다."},
+                    status=status.HTTP_401_UNAUTHORIZED,
+                )
+ 
+            # Supabase Admin API로 비밀번호 변경
+            admin_headers = get_supabase_headers()
+            user_id = user_response.json().get("id")
+            change_response = requests.put(
+                f"{supabase_url}/auth/v1/admin/users/{user_id}",
+                headers=admin_headers,
+                json={"password": new_password},
+            )
+ 
+            # 비밀번호 변경 실패 시 예외 발생
+            if change_response.status_code != 200:
+                raise Exception(f"Supabase API 오류: {change_response.text}")
+ 
+            return Response(
+                {"message": "비밀번호가 변경되었습니다."},
+                status=status.HTTP_200_OK,
+            )
+ 
+        except Exception as error:
+            # 오류 발생 시 터미널에 출력 (개발 완료 후 삭제 예정)
+            print(f"=== CHANGE PASSWORD ERROR ===\n{error}\n============================")
+            return Response(
+                {"message": "비밀번호 변경 중 오류가 발생했습니다."},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
