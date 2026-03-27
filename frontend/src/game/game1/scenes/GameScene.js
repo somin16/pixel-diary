@@ -20,16 +20,22 @@ export default class GameScene extends Phaser.Scene {
     this.load.image("player_move3", "/assets/game1/Player/player_move3.png");
 
     // 공격 이미지
+
+    // 블레이드(기본무기)
     this.load.image("blade_1", "/assets/game1/Attacks/Blade/blade_1.png");
     this.load.image("blade_2", "/assets/game1/Attacks/Blade/blade_2.png");
     this.load.image("blade_3", "/assets/game1/Attacks/Blade/blade_3.png");
+
+    // 활
+    this.load.image("arrow","/assets/game1/Attacks/Arrow/arrow.png");
 
 
     // ======================몬스터===================================
     // 몬스터 이미지
 
     // 슬라임(몬스터1)
-    this.load.image("slime_stop", "/assets/game1/Monster/Nomal/slime_stop.png");
+    this.load.image("slime_move1", "/assets/game1/Monster/Nomal/slime_move1.png");
+    this.load.image("slime_move2", "/assets/game1/Monster/Nomal/slime_move2.png");
 
 
     // =======================타일======================================
@@ -94,6 +100,12 @@ export default class GameScene extends Phaser.Scene {
     this.player.hp = 100; // 기본 체력
     this.player.damage = 1; // 기본 공격력
     this.player.speed = 0; // 레벨업시 추가될 이동속도 계산용
+
+    // 플레이어가 가지고 있는 무기
+    this.player.bladeLevel = 1; // 블레이드는 기본무기
+    this.player.arrowLevel = 0; // 그 외는 0레벨로 시작
+
+    // 그 외
     this.player.isDamage = false; // 플레이어 피격 감지(무적시간)
     this.player.setScale(2); // 해상도 조정
 
@@ -228,6 +240,14 @@ export default class GameScene extends Phaser.Scene {
       repeat: -1,
     });
 
+    // 몬스터 움직임 애니메이션
+    this.anims.create({
+      key: "slime_animation",
+      frames: [{ key: "slime_move1"}, { key: "slime_move2"}],
+      frameRate: 5, // 키프레임 살짝 느리게(10으로 하니까 너무 촐싹거림)
+      repeat: -1,
+    });
+
     // 기본 공격(블레이드) 애니메이션
     this.anims.create({
       key: "blade_animation",
@@ -237,13 +257,16 @@ export default class GameScene extends Phaser.Scene {
     });
 
     // 정해진 딜레이(ms)마다 이벤트 발생
-    // 자동공격 이벤트
+    // 블레이드(기본무기)
     this.time.addEvent({
       delay: 1500,
-      callback: this.autoAttack,
+      callback: this.autoAttackBlade,
       callbackScope: this,
       loop: true,
     });
+
+    // 활 (레벨업 시스템으로 인해 독자적으로 관리)
+    this.updateArrowTimer();
 
     // 몬스터생성 이벤트
     this.time.addEvent({
@@ -279,6 +302,26 @@ export default class GameScene extends Phaser.Scene {
 
     // 방향키 입력
     this.cursors = this.input.keyboard.createCursorKeys();
+  }
+
+  // 활 딜레이 업데이트(레벨당 딜레이 감소)
+  updateArrowTimer() {
+
+    // 중복 방지를 위해 이미 만들어졌으면 지우기
+    if (this.arrowTimer) {
+      this.arrowTimer.remove();
+    }
+
+    // 활의 레벨이 오를때마다 딜레이가 줄어든다
+    let newDelay = 1250 - (100 * this.player.arrowLevel);
+
+    // 그 후 딜레이마다 공격
+    this.arrowTimer = this.time.addEvent({
+      delay: newDelay,
+      callback: this.autoAttackArrow,
+      callbackScope: this,
+      loop: true,
+    });
   }
 
   update() {
@@ -370,11 +413,12 @@ export default class GameScene extends Phaser.Scene {
     // 설명: 플레이어를 기준으로 반지름이 400인 원을 그린뒤 그 원의 테두리를 기준으로 랜덤하게 몬스터를 소환한다
 
     // 슬라임 생성
-    let slime = this.monsters.create(SPAWN_X, SPAWN_Y, "slime_stop");
-    slime.hp = 3 + this.monsterStatus / 3; // 가중치를 넣는 방식으로 변경
-    slime.damage = -5;
+    let slime = this.monsters.create(SPAWN_X, SPAWN_Y, "slime_move1");
+    slime.hp = 5 + this.monsterStatus / 3; // 가중치를 넣는 방식으로 변경
+    slime.damage = -5; // 몬스터 대미지는 음수로
     slime.isHit = false;
     slime.setScale(2);
+    slime.play("slime_animation", true); // 슬라임 움직임 애니메이션
   }
 
   // 몬스터 레벨업(스탯 증가)
@@ -484,11 +528,28 @@ export default class GameScene extends Phaser.Scene {
       { name: "활", id: "arrow_up", icon: "arrow_icon"} // 현재 구현x
     ];
 
+    // 최고레벨에 도달한 스킬들을 걸러내기
+    // 버그 방지를 위해 이동속도 증가는 무한적으로 중첩이 가능합니다.
+    const removeSkills = skills.filter((skill) => {
+
+      if(skill.id == "damage_up" && this.player.damage >= 4) {
+        return false;
+      }
+      if(skill.id == "blade_up" && this.player.bladeLevel >= 4) {
+        return false;
+      } 
+      if(skill.id == "arrow_up" && this.player.arrowLevel >= 4) {
+        return false;
+      }
+      // 조건문 통과하면 냅두기
+      return true;
+    });
+
     // 보상이 랜덤으로 나오도록 배열을 섞는다
-    Phaser.Utils.Array.Shuffle(skills);
+    Phaser.Utils.Array.Shuffle(removeSkills);
 
     // 맨앞 3개만 뽑아오기
-    const selectSkills = skills.slice(0, 3);
+    const selectSkills = removeSkills.slice(0, 3);
 
     // 버튼이 들어갈 좌표 설정
     const centerX = this.cameras.main.width / 2;     // 카메라 가운데
@@ -560,15 +621,18 @@ export default class GameScene extends Phaser.Scene {
         break;
       }
 
-      // 블레이드(미구현)
+      // 블레이드(레벨 3까지 구현)
       case "blade_up" : {
 
+        this.player.bladeLevel += 1;
         break;
       }
 
-      // 활(미구현)
+      // 활
       case "arrow_up" : {
 
+        this.player.arrowLevel += 1;
+        this.updateArrowTimer(); // 딜레이 갱신
         break;
       }
     }
@@ -606,30 +670,15 @@ export default class GameScene extends Phaser.Scene {
     }
   }
 
-  // 공격 애니메이션
-  autoAttack() {
-
-    // 플레이어의 위치를 받고
-    const posX = this.player.x;
-    const posY = this.player.y;
-
-    // 플레이어의 방향을 받는다
-    const isLeft = this.player.flipX;
-
-    // 좌우에 따라서 생성 위치를 변경
-    const OFFSET_X = isLeft ? -50 : 50;
-
-    // 이펙트 생성
-    // 기본공격(블레이드)
-    const atkEff = this.physics.add.sprite(posX + OFFSET_X, posY, "blade_1");
-    atkEff.setScale(4);
-    atkEff.setFlipX(isLeft);
-    atkEff.play("blade_animation");
-
-    // 공격 판정
+  // 기본무기 공격(blade)
+  // 2레벨: 공격범위증가
+  // 3레벨: 추가로 뒤를 공격
+  attackBlade() {
 
     // 몬스터 공격 판정
-    this.physics.add.overlap(atkEff, this.monsters, (damage, monster) => {
+    const bladeHitbox = (bladeSpriteEff) => {
+
+      this.physics.add.overlap(bladeSpriteEff, this.monsters, (damage, monster) => {
       // 이미 타격중인 몬스터는 무시함
       if (monster.isHit) return;
 
@@ -641,37 +690,75 @@ export default class GameScene extends Phaser.Scene {
 
       // 넉백
       const knockback = 150;
-      if (isLeft) {
-        // 내가 왼쪽을 보고 쳤으면 슬라임을 더 왼쪽(- 방향)으로 밀어버림
-        monster.body.setVelocityX(-knockback);
-      } else {
+
+      // 몬스터가 바라보는 방향에 따라서 넉백으로 변경
+      if (monster.flipX) { 
+        monster.body.setVelocityX(-knockback); 
+      } 
+      
+      else {
         monster.body.setVelocityX(knockback);
       }
 
       // 위 아래
       monster.body.setVelocityY(Phaser.Math.Between(-100, 100));
 
-      // 죽었으면~
-      if (monster.hp <= 0) {
-        this.addExpBall(monster.x, monster.y);
-        monster.destroy(); // 체력이 다 달면 없애기
-      }
-
-      // 살았으면~
-      else {
-
-        // 0.15초후에 무적판정 종료
-        this.time.delayedCall(150, () => {
-          if (monster.active) {
+      this.time.delayedCall(150, () => {
+        if (monster.active) {
             monster.clearTint(); // 타격 이펙트 되돌리기
             monster.isHit = false;
           }
-        });
-      }
-    });
+      });
 
-    // 상자 오브젝트 공격 판정(몬스터 공격 판정과 같습니다.)
-    this.physics.add.overlap(atkEff, this.chests, (damage, chest) => {
+      // 몬스터가 죽었는지를 감지
+      this.monsterDead(monster);
+      });
+
+      // animationcomplete: 애니메이션이 끝날때
+      bladeSpriteEff.on("animationcomplete", () => {
+        bladeSpriteEff.destroy();
+      });
+    }
+
+    // 플레이어의 위치를 받고
+    const posX = this.player.x;
+    const posY = this.player.y;
+
+    // 플레이어의 방향을 받는다
+    const isLeft = this.player.flipX;
+
+    // 좌우에 따라서 생성 위치를 변경
+    const OFFSET_X = isLeft ? -50 : 50;
+    const blaedEff = this.physics.add.sprite(posX + OFFSET_X, posY, "blade_1");
+
+    // 레벨이 2이상이라면 크기를 키워준다
+    if(this.player.bladeLevel >= 2) blaedEff.setScale(5);
+    else blaedEff.setScale(4);
+
+    blaedEff.setFlipX(isLeft);
+    blaedEff.play("blade_animation");
+
+    bladeHitbox(blaedEff);
+
+    // 블레이드의 레벨이 3이상이라면 뒤도 공격
+    if(this.player.bladeLevel >= 3) {
+
+      this.time.delayedCall(200, () => {
+      const blaedEffBack = this.physics.add.sprite(posX - OFFSET_X, posY, "blade_1");
+
+      if(this.player.bladeLevel >= 2) blaedEffBack.setScale(5);
+      else blaedEffBack.setScale(4);
+
+      blaedEffBack.setFlipX(!isLeft);
+      blaedEffBack.play("blade_animation");
+
+      bladeHitbox(blaedEffBack);
+      });
+    }
+
+    // 오브젝트 공격 판정(몬스터 공격 판정과 같습니다.)
+    // 오브젝트 부분은 차후에 몬스터와 통합해줄 필요가 있어보임, 우선은 보류중
+    this.physics.add.overlap(blaedEff, this.chests, (damage, chest) => {
 
       if (chest.isHit) return;
 
@@ -698,8 +785,100 @@ export default class GameScene extends Phaser.Scene {
     });
 
     // animationcomplete: 애니메이션이 끝날때
-    atkEff.on("animationcomplete", () => {
-      atkEff.destroy();
+    blaedEff.on("animationcomplete", () => {
+      blaedEff.destroy();
     });
+  }
+
+  // 활 공격(arrow)
+  // 레벨마다 화살 발사속도가 증가하고, 딜레이가 감소된다
+  // 현재 활로는 오브젝트를 부술수 없습니다. 
+  attackArrow() {
+
+    // 플레이어의 위치를 받고
+    const posX = this.player.x;
+    const posY = this.player.y;
+
+    // 화면내에 있는 적만 공격하기 위해 화면영역을 선언
+    const ingameView = this.cameras.main.worldView;
+
+    // 화면거리내에 있는 몬스터들만 선택
+    let targetMonster = this.monsters.getChildren().filter(m => {
+
+      return m.active && ingameView.contains(m.x, m.y);
+    });
+
+    if (targetMonster.length == 0) return // 한마리도 없으면 취소
+
+    let target = this.physics.closest(this.player, targetMonster);
+
+    const arrowEff = this.physics.add.sprite(posX, posY, "arrow");
+    arrowEff.setScale(3);
+
+    // 화살이 몬스터를 향하도록 각도를 조정
+    const angle = Phaser.Math.Angle.Between(posX, posY, target.x, target.y);
+    arrowEff.setRotation(angle + Phaser.Math.DegToRad(135)); // 지금 이미지가 왼쪽 위를 바라보고 있음으로 135도를 꺾으면 딱 직각이 된다
+
+    // 화살 속도
+    const arrowSpeed = 800 * this.player.arrowLevel / 3; // 화살 레벨에 따라서 속도증가
+    this.physics.velocityFromRotation(angle, arrowSpeed, arrowEff.body.velocity);
+
+    this.physics.add.overlap(arrowEff, this.monsters, (arrow, monster) => {
+
+      if (monster.isHit) return;
+
+      monster.isHit = true;
+      monster.hp -= (this.player.damage * 0.5);
+      monster.setTintFill(0xffffff);
+
+      arrow.destroy();
+
+      this.monsterDead(monster);
+    });
+
+    this.time.delayedCall(2000, () => {
+      if(arrowEff.active) arrowEff.destroy();
+    });
+  }
+
+  monsterDead(monster) {
+
+      // 죽었으면~
+      if (monster.hp <= 0) {
+        this.addExpBall(monster.x, monster.y);
+        monster.destroy(); // 체력이 다 달면 없애기
+      }
+
+      // 살았으면~
+      else {
+
+        // 0.15초후에 무적판정 종료
+        this.time.delayedCall(150, () => {
+          if (monster.active) {
+            monster.clearTint(); // 타격 이펙트 되돌리기
+            monster.isHit = false;
+          }
+        });
+      }
+
+  }
+
+  // 공격 애니메이션 재생
+  autoAttackBlade() {
+    
+    // 기본공격(블레이드)
+    if (this.player.bladeLevel > 0) {
+
+      this.attackBlade()
+    }
+  }
+
+  autoAttackArrow() {
+
+    // 활
+    if (this.player.arrowLevel > 0) {
+
+      this.attackArrow()
+    }
   }
 }
