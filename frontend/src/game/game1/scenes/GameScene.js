@@ -327,6 +327,26 @@ export default class GameScene extends Phaser.Scene {
     });
   }
 
+  // 활 딜레이 업데이트(레벨당 딜레이 감소)
+  updateArrowTimer() {
+
+    // 중복 방지를 위해 이미 만들어졌으면 지우기
+    if (this.arrowTimer) {
+      this.arrowTimer.remove();
+    }
+
+    // 활의 레벨이 오를때마다 딜레이가 줄어든다
+    let newDelay = 1250 - (100 * this.player.arrowLevel);
+
+    // 그 후 딜레이마다 공격
+    this.arrowTimer = this.time.addEvent({
+      delay: newDelay,
+      callback: this.autoAttackArrow,
+      callbackScope: this,
+      loop: true,
+    });
+  }
+
   update() {
 
     // 기본 설정
