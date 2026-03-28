@@ -421,3 +421,91 @@ class ChangePasswordView(APIView):
                 {"message": "비밀번호 변경 중 오류가 발생했습니다."},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
+
+
+class WithdrawalView(APIView):
+    """회원 탈퇴 API"""
+
+    def post(self, request):
+        """
+        POST /api/v1/auth/withdrawal
+        - Authorization 헤더의 access_token으로 사용자 식별
+        - Body의 password로 본인 확인 후 계정 삭제
+        """
+        
+        # 1. Authorization 헤더에서 access_token 추출
+        auth_header = request.headers.get("Authorization", "")
+        if not auth_header.startswith("Bearer "):
+            return Response(
+                {"message": "Authorization 헤더에 유효한 Bearer 토큰이 필요합니다."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        access_token = auth_header.split("Bearer ")[1].strip()
+
+        # 2. 요청 Body에서 password 추출
+        password = request.data.get("password", "").strip()
+
+        # Body에서 비밀번호 추출 및 검증 (비밀번호 누락 시 400 반환)
+        if not password:
+            return Response(
+                {"message": "본인 확인을 위해 비밀번호가 필요합니다."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        try:
+            supabase_url = os.getenv("SUPABASE_URL")
+            supabase_key = os.getenv("SUPABASE_SERVICE_KEY") # 계정 삭제를 위해 Service Key 필요
+
+            headers = {
+                "apikey": supabase_key,
+                "Authorization": f"Bearer {supabase_key}", # 관리자 권한으로 요청
+                "Content-Type": "application/json",
+            }
+
+            # 3. 먼저 access_token을 사용하여 현재 사용자의 UID를 가져옴
+            user_info_res = requests.get(
+                f"{supabase_url}/auth/v1/user",
+                headers={"apikey": os.getenv("SUPABASE_ANON_KEY"), "Authorization": f"Bearer {access_token}"}
+            )
+
+            if user_info_res.status_code != 200:
+                return Response({"message": "유효하지 않은 토큰입니다."}, status=status.HTTP_401_UNAUTHORIZED)
+            
+            user_id = user_info_res.json().get("id")
+
+            # 4. 비밀번호로 본인 계정 재검증 로직
+            email = user_info_res.json().get("email")
+            login_check = requests.post(
+                f"{supabase_url}/auth/v1/token?grant_type=password",
+                headers={"apikey": os.getenv("SUPABASE_ANON_KEY")},
+                json={"email": email, "password": password}
+            )
+
+            #입력한 비밀번호가 일치하지 않을 경우 401 반환
+            if login_check.status_code != 200:
+                return Response({"message": "비밀번호가 일치하지 않습니다."}, status=status.HTTP_401_UNAUTHORIZED)
+
+            # 5. Supabase Admin API를 통한 계정 삭제
+            # 주의: 이 작업은 되돌릴 수 없으며 관련 데이터가 모두 삭제됩니다.
+            delete_res = requests.delete(
+                f"{supabase_url}/auth/v1/admin/users/{user_id}",
+                headers=headers
+            )
+
+
+            # 계정 삭제 실패 시 예외 발생
+            if delete_res.status_code not in [200, 204]:
+                raise Exception(f"Supabase 계정 삭제 오류: {delete_res.text}")
+
+            return Response(
+                {"message": "회원 탈퇴가 완료되었습니다."},
+                status=status.HTTP_200_OK,
+            )
+
+        except Exception as error:
+            # 오류 발생 시 터미널에 출력 (개발 완료 후 삭제 예정)
+            print(f"=== WITHDRAWAL ERROR ===\n{error}\n========================")
+            return Response(
+                {"message": "회원 탈퇴 중 오류가 발생했습니다."},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
