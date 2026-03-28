@@ -375,12 +375,6 @@ class ChangePasswordView(APIView):
                 headers=user_headers,
             )
  
-            if user_response.status_code != 200:
-                return Response(
-                    {"message": "유효하지 않은 토큰입니다."},
-                    status=status.HTTP_401_UNAUTHORIZED,
-                )
- 
             # 현재 유저 이메일 추출
             user_email = user_response.json().get("email")
  
