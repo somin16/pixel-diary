@@ -1,5 +1,5 @@
 from django.urls import path
-from .views import CheckEmailView, SignupView, LoginView, LogoutView, ChangePasswordView, WithdrawalView
+from .views import CheckEmailView, SignupView, LoginView, LogoutView, ChangePasswordView, WithdrawalView, ChangeUsernameView
 
 # 인증 관련 URL 패턴
 # /api/v1/auth/ 하위 경로는 config/urls.py에서 include로 연결됨
@@ -10,4 +10,5 @@ urlpatterns = [
     path("logout", LogoutView.as_view(), name="logout"),                    # 일반 로그아웃
     path("password", ChangePasswordView.as_view(), name="change-password"), # 비밀번호 변경
     path("withdrawal", WithdrawalView.as_view(), name='withdrawal'),        # 일반 회원탈퇴
+    path("username", ChangeUsernameView.as_view(), name="change-username"), # 유저 이름 변경
 ]

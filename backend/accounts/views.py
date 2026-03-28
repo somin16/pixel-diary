@@ -421,8 +421,6 @@ class ChangePasswordView(APIView):
                 {"message": "비밀번호 변경 중 오류가 발생했습니다."},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
-
-
 class WithdrawalView(APIView):
     """회원 탈퇴 API"""
 
@@ -441,7 +439,7 @@ class WithdrawalView(APIView):
                 status=status.HTTP_400_BAD_REQUEST,
             )
         access_token = auth_header.split("Bearer ")[1].strip()
-
+        
         # 2. 요청 Body에서 password 추출
         password = request.data.get("password", "").strip()
 
@@ -507,5 +505,86 @@ class WithdrawalView(APIView):
             print(f"=== WITHDRAWAL ERROR ===\n{error}\n========================")
             return Response(
                 {"message": "회원 탈퇴 중 오류가 발생했습니다."},
+
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
+
+
+class ChangeUsernameView(APIView):
+    """유저 이름 변경 API"""
+ 
+    def patch(self, request):
+        """
+        PATCH /api/v1/auth/username
+        - Authorization 헤더의 access_token으로 현재 유저 확인
+        - user_name으로 닉네임 변경
+        - 변경 완료 메시지 반환
+        """
+        # Authorization 헤더에서 access_token 추출 (Bearer 토큰 방식)
+        auth_header = request.headers.get("Authorization", "")
+        if not auth_header.startswith("Bearer "):
+            return Response(
+                {"message": "Authorization 헤더에 유효한 Bearer 토큰이 필요합니다."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        access_token = auth_header.split("Bearer ")[1].strip()
+ 
+        # 요청 Body에서 user_name 추출 (앞뒤 공백 제거)
+        user_name = request.data.get("user_name", "").strip()
+ 
+        # user_name 누락 시 400 반환
+        if not user_name:
+            return Response(
+                {"message": "변경할 닉네임을 입력해주세요."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+ 
+        try:
+            supabase_url = os.getenv("SUPABASE_URL")
+ 
+            # access_token으로 현재 유저 정보 조회
+            user_headers = {
+                "apikey": os.getenv("SUPABASE_ANON_KEY"),
+                "Authorization": f"Bearer {access_token}",
+                "Content-Type": "application/json",
+            }
+            user_response = requests.get(
+                f"{supabase_url}/auth/v1/user",
+                headers=user_headers,
+            )
+ 
+            # 유효하지 않은 토큰인 경우 401 반환
+            if user_response.status_code != 200:
+                return Response(
+                    {"message": "유효하지 않은 토큰입니다."},
+                    status=status.HTTP_401_UNAUTHORIZED,
+                )
+ 
+            # 현재 유저 id 추출
+            user_id = user_response.json().get("id")
+ 
+            # Supabase Admin API로 닉네임 변경 (user_metadata에 저장)
+            admin_headers = get_supabase_headers()
+            change_response = requests.put(
+                f"{supabase_url}/auth/v1/admin/users/{user_id}",
+                headers=admin_headers,
+                json={"user_metadata": {"user_name": user_name}},
+            )
+ 
+            # 닉네임 변경 실패 시 예외 발생
+            if change_response.status_code != 200:
+                raise Exception(f"Supabase API 오류: {change_response.text}")
+ 
+            return Response(
+                {"message": "유저 이름이 변경되었습니다."},
+                status=status.HTTP_200_OK,
+            )
+ 
+        except Exception as error:
+            # 오류 발생 시 터미널에 출력 (개발 완료 후 삭제 예정)
+            print(f"=== CHANGE USERNAME ERROR ===\n{error}\n============================")
+            return Response(
+                {"message": "유저 이름 변경 중 오류가 발생했습니다."},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
+
