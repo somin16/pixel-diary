@@ -68,7 +68,7 @@ export default class GameScene extends Phaser.Scene {
     this.physics.add.overlap(this.player, this.obstacles, this.hitObstacle, null, this);
     this.physics.add.overlap(this.player, this.items, this.collectItem, null, this);
 
-    // 1초마다 실행되는 게임 타이머
+    // 게임플레이 시간
     this.time.addEvent({
       delay: 1000,
       callback: this.onSecondTick,
@@ -76,7 +76,7 @@ export default class GameScene extends Phaser.Scene {
       loop: true
     });
 
-    // 물건 떨어 뜨리기 타이머
+    // 장애물 생성 타이머
     this.spawnTimer = this.time.addEvent({
       delay: this.spawnRate,
       callback: this.spawnObjects,
@@ -130,7 +130,7 @@ export default class GameScene extends Phaser.Scene {
     this.spawnTimer.delay = this.spawnRate;
   }
 
-  // 물건 생성 로직 
+  // 오브젝트 생성 로직 
   spawnObjects(){
     if (this.isDead) return;
 
@@ -177,12 +177,15 @@ export default class GameScene extends Phaser.Scene {
     if (item.name === 'coin') {
       this.collectedCoins++;
       item.destroy();
-    } else if (item.name === 'bomb'){
-      // 화면 내 모든 장애물 파괴
-      this.obstacles.getChildren().forEach(obs => {
+    } else if (item.name === 'bomb') {
+      
+      const currentObstacles = [...this.obstacles.getChildren()];
+      
+      currentObstacles.forEach(obs => {
         this.createExplosion(obs.x, obs.y, 0xffffff);
-        obs.destroy();
+        obs.destroy(); 
       });
+      
       item.destroy();
     }
   }
@@ -204,6 +207,6 @@ export default class GameScene extends Phaser.Scene {
     this.isDead = true;
     this.physics.pause(); // 모든 물리효과 정지
     this.player.setTint(0xff0000); // 죽으면 빨간색으로 변경
-    console.log(isWin ? "승리!" : '게임 오버');
+    // console.log(isWin ? "승리!" : '게임 오버');
   }
 }
