@@ -588,3 +588,187 @@ class ChangeUsernameView(APIView):
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
 
+
+class UserImageView(APIView):
+    """프로필 사진 변경 / 기본 프로필 사진으로 변경 API"""
+ 
+    def patch(self, request):
+        """
+        PATCH /api/v1/auth/userimage
+        - Authorization 헤더의 access_token으로 현재 유저 확인
+        - profile_image 파일을 Supabase Storage에 업로드
+        - 업로드된 이미지 URL과 완료 메시지 반환
+        """
+        # Authorization 헤더에서 access_token 추출 (Bearer 토큰 방식)
+        auth_header = request.headers.get("Authorization", "")
+        if not auth_header.startswith("Bearer "):
+            return Response(
+                {"message": "Authorization 헤더에 유효한 Bearer 토큰이 필요합니다."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        access_token = auth_header.split("Bearer ")[1].strip()
+ 
+        # 요청에서 이미지 파일 추출
+        profile_image = request.FILES.get("profile_image")
+ 
+        # 이미지 파일 누락 시 400 반환
+        if not profile_image:
+            return Response(
+                {"message": "프로필 이미지를 첨부해주세요."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+ 
+        try:
+            supabase_url = os.getenv("SUPABASE_URL")
+ 
+            # access_token으로 현재 유저 정보 조회
+            user_headers = {
+                "apikey": os.getenv("SUPABASE_ANON_KEY"),
+                "Authorization": f"Bearer {access_token}",
+                "Content-Type": "application/json",
+            }
+            user_response = requests.get(
+                f"{supabase_url}/auth/v1/user",
+                headers=user_headers,
+            )
+ 
+            # 유효하지 않은 토큰인 경우 401 반환
+            if user_response.status_code != 200:
+                return Response(
+                    {"message": "유효하지 않은 토큰입니다."},
+                    status=status.HTTP_401_UNAUTHORIZED,
+                )
+ 
+            # 현재 유저 id 추출 후 저장 경로 설정 (유저별 고유 경로)
+            user_id = user_response.json().get("id")
+            file_extension = profile_image.name.split(".")[-1]
+            file_path = f"{user_id}/profile.{file_extension}"
+ 
+            # Supabase Storage에 이미지 업로드
+            storage_headers = {
+                "apikey": os.getenv("SUPABASE_SERVICE_KEY"),
+                "Authorization": f"Bearer {os.getenv('SUPABASE_SERVICE_KEY')}",
+                "Content-Type": profile_image.content_type,
+                "x-upsert": "true",  # 같은 경로에 파일이 있으면 덮어쓰기
+            }
+            upload_response = requests.post(
+                f"{supabase_url}/storage/v1/object/profiles/{file_path}",
+                headers=storage_headers,
+                data=profile_image.read(),
+            )
+ 
+            # 업로드 실패 시 예외 발생
+            if upload_response.status_code not in [200, 201]:
+                raise Exception(f"Supabase Storage 오류: {upload_response.text}")
+ 
+            # 업로드된 이미지의 공개 URL 생성
+            image_url = f"{supabase_url}/storage/v1/object/public/profiles/{file_path}"
+ 
+            # Supabase Admin API로 유저 메타데이터에 이미지 URL 저장
+            admin_headers = get_supabase_headers()
+            requests.put(
+                f"{supabase_url}/auth/v1/admin/users/{user_id}",
+                headers=admin_headers,
+                json={"user_metadata": {"profile_image_url": image_url}},
+            )
+ 
+            return Response(
+                {"image_url": image_url, "message": "프로필 사진이 변경되었습니다."},
+                status=status.HTTP_200_OK,
+            )
+ 
+        except Exception as error:
+            # 오류 발생 시 터미널에 출력 (개발 완료 후 삭제 예정)
+            print(f"=== CHANGE USER IMAGE ERROR ===\n{error}\n==============================")
+            return Response(
+                {"message": "프로필 사진 변경 중 오류가 발생했습니다."},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
+ 
+    def delete(self, request):
+        """
+        DELETE /api/v1/auth/userimage
+        - Authorization 헤더의 access_token으로 현재 유저 확인
+        - Supabase Storage에서 프로필 사진 삭제
+        - 유저 메타데이터의 profile_image_url을 None으로 초기화
+        - 완료 메시지 반환
+        """
+        # Authorization 헤더에서 access_token 추출 (Bearer 토큰 방식)
+        auth_header = request.headers.get("Authorization", "")
+        if not auth_header.startswith("Bearer "):
+            return Response(
+                {"message": "Authorization 헤더에 유효한 Bearer 토큰이 필요합니다."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        access_token = auth_header.split("Bearer ")[1].strip()
+ 
+        try:
+            supabase_url = os.getenv("SUPABASE_URL")
+ 
+            # access_token으로 현재 유저 정보 조회
+            user_headers = {
+                "apikey": os.getenv("SUPABASE_ANON_KEY"),
+                "Authorization": f"Bearer {access_token}",
+                "Content-Type": "application/json",
+            }
+            user_response = requests.get(
+                f"{supabase_url}/auth/v1/user",
+                headers=user_headers,
+            )
+ 
+            # 유효하지 않은 토큰인 경우 401 반환
+            if user_response.status_code != 200:
+                return Response(
+                    {"message": "유효하지 않은 토큰입니다."},
+                    status=status.HTTP_401_UNAUTHORIZED,
+                )
+ 
+            user_data = user_response.json()
+            user_id = user_data.get("id")
+ 
+            # 현재 프로필 사진 URL 확인
+            profile_image_url = user_data.get("user_metadata", {}).get("profile_image_url")
+ 
+            # 프로필 사진이 없는 경우 400 반환
+            if not profile_image_url:
+                return Response(
+                    {"message": "이미 기본 프로필 사진입니다."},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+ 
+            # Supabase Storage에서 프로필 사진 삭제
+            # Storage 삭제 API는 파일 경로 배열을 JSON으로 전달해야 함
+            storage_headers = get_supabase_headers()
+            file_extension = profile_image_url.split(".")[-1]
+            file_path = f"{user_id}/profile.{file_extension}"
+ 
+            delete_response = requests.delete(
+                f"{supabase_url}/storage/v1/object/profiles",
+                headers=storage_headers,
+                json={"prefixes": [file_path]},
+            )
+ 
+            # 삭제 실패 시 예외 발생
+            if delete_response.status_code not in [200, 204]:
+                raise Exception(f"Supabase Storage 오류: {delete_response.text}")
+ 
+            # 유저 메타데이터의 profile_image_url을 None으로 초기화
+            admin_headers = get_supabase_headers()
+            requests.put(
+                f"{supabase_url}/auth/v1/admin/users/{user_id}",
+                headers=admin_headers,
+                json={"user_metadata": {"profile_image_url": None}},
+            )
+ 
+            return Response(
+                {"message": "기본 프로필 사진으로 변경되었습니다."},
+                status=status.HTTP_200_OK,
+            )
+ 
+        except Exception as error:
+            # 오류 발생 시 터미널에 출력 (개발 완료 후 삭제 예정)
+            print(f"=== DELETE USER IMAGE ERROR ===\n{error}\n==============================")
+            return Response(
+                {"message": "기본 프로필 사진 변경 중 오류가 발생했습니다."},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
