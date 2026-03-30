@@ -31,7 +31,7 @@ const MorePage = () => {
       </header>
 
       {/* 프로필 영역 */}
-      {/* section 전체에 onClick을 걸어서, 이미지 어디를 누르든 이동하게 만듭니다. */}
+      {/* section 전체에 onClick을 걸어서, 이미지 어디를 누르든 이동하게 만듦 */}
       <section className={styles.profileSection} onClick={() => navigate('/profile')}>
         <img 
           src={`${ASSET_PATH}/profile_bar_box_x3.png`} 

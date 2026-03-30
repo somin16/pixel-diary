@@ -30,13 +30,14 @@
 /* PC 브라우저에서 볼 때 아이폰 화면처럼 고정 */
 @media (min-width: 600px) {
   .container {
-    width: 393px;        /* 아이폰 14/15/16/17 표준 너비 */
-    height: 852px;       /* 아이폰 표준 높이 */
+    width: 360px;        /* 아이폰 14/15/16/17 표준 너비 */
+    height: 720px;       /* 아이폰 표준 높이 */
+    
     margin: 50px auto;   /* 화면 한가운데 정렬 */
-    border: 10px solid #1e1e1e; /* 핸드폰 베젤 느낌의 검은 테두리 */
-    border-radius: 40px; /* 둥근 모서리 */
-    overflow: hidden;    /* 둥근 모서리 밖으로 배경이 삐져나가지 않게 자름 */
-    box-shadow: 0px 10px 30px rgba(0,0,0,0.2); /* 입체감 있는 그림자 */
+    /*border: 10px solid #1e1e1e; /* 핸드폰 베젤 느낌의 검은 테두리 */
+    /*border-radius: 40px; /* 둥근 모서리 */
+    /*overflow: hidden;    /* 둥근 모서리 밖으로 배경이 삐져나가지 않게 자름 */
+    /*box-shadow: 0px 10px 30px rgba(0,0,0,0.2); 입체감 있는 그림자 */
   }
 }
 
