@@ -1,8 +1,10 @@
 // src/App.jsx
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Home from "./pages/Home"; // 홈 화면 부품을 가져온다
-import Game1 from "./game/game1/Game1";
-import Game2 from "./game/game2/Game2";
+import Game1 from "./game/game1/Game1"; // game1
+import Game2 from "./game/game2/Game2"; // game2
+import MorePage from "./pages/More/MorePage"; // 더보기 화면 
+
 
 function App() {
   return (
@@ -14,8 +16,13 @@ function App() {
 
         {/* 주소가 /game1run 이면 미니게임1 화면을 보여줘 */}
         <Route path="/game1run" element={<Game1 />} /> 
-
+        
+        {/* 주소가 /game1run 이면 미니게임1 화면을 보여줘 */}
         <Route path="/game2run" element={<Game2 />} />
+           
+        {/* 주소가 /more 이면 더보기 화면을 보여줘 */}
+        <Route path="/more" element={<MorePage />} />
+        
       </Routes>
     </BrowserRouter>
   );
