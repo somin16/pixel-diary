@@ -88,18 +88,30 @@ export default class GameScene extends Phaser.Scene {
 
   create() { // create: 말그대로 생성, 오브젝트를 작성하는 곳
 
-    // 기본배경색(나중에 지울거임)
-    this.cameras.main.setBackgroundColor("#2d2d2d");
+    // 게임이 재시작할때 버그방지용
+    this.time.paused = false;
+    this.physics.resume();
 
     // 타일맵 깔기
-    // 4000x4000에 규격에 맞춰서 깔아준다
-    this.add.tileSprite(0, 0, 4000, 4000, "map1_tile1").setScale(2);
+    // 화면 크기에 딱 맞춰준다
+    this.backGroundTile = this.add.tileSprite(
+      this.cameras.main.width / 2,  // X좌표(중앙)
+      this.cameras.main.height / 2, // Y좌표(중앙)
+      this.cameras.main.width,      // 넓이
+      this.cameras.main.height,     // 높이
+      "map1_tile1")                 // 이미지
+      .setScrollFactor(0)           // 카메라 중앙 고정
+      .setScale(2)                  // 크기 2배로
+      .setDepth(-1);                // 배경이니 맨뒤로
+      
+      // 설명: 카메라의 가운데를 기준으로 화면크기만큼 꽉차게 배경타일을 깔아준다
 
     // 플레이어 생성
     this.player = this.physics.add.sprite(400, 300, "player_stop");
     this.player.hp = 100; // 기본 체력
     this.player.damage = 1; // 기본 공격력
     this.player.speed = 0; // 레벨업시 추가될 이동속도 계산용
+    this.player.isDead = false; // 플레이어 사망 감지용
 
     // 플레이어가 가지고 있는 무기
     this.player.bladeLevel = 1; // 블레이드는 기본무기
@@ -110,6 +122,50 @@ export default class GameScene extends Phaser.Scene {
     this.player.setScale(2); // 해상도 조정
 
     // UI 작성
+
+    // ====================타이머===================
+
+    this.gamePlayTime = 300; // 기본모드는 5분에서 시작
+    this.timeOver = false;
+
+    // 타이머 텍스트 구성
+    this.timerText = this.add.text(
+      this.cameras.main.width / 2,    // x좌표
+      this.cameras.main.height / 35,  // y좌표
+      "05:00" , {  // 기본 텍스트(5분)
+      fontSize: "32px",
+      fontFamily: "Arial",
+      fill: "#000000",
+    })
+    .setOrigin(0.5)     // 중앙
+    .setScrollFactor(0) // 카메라에 맞춰서 고정
+    .setDepth(100);     // UI니까 레이어 맨앞으로
+
+    this.time.addEvent({
+      delay: 1000,
+      callback: () => { // 보통은 클래스를 따로 만들지만 관리하기 쉽도록 UI에 같이 묶어두겠습니다.
+
+        if (this.timeOver == false) { // 오류방지를 위해 timeOver가 false일때만 시간 계산을 하도록 설정
+
+        this.gamePlayTime--; // 1초마다 타이머감소
+
+        // 분, 초 계산
+        const minutes = Math.floor(this.gamePlayTime / 60);
+        const seconds = this.gamePlayTime % 60;
+
+        // 값이 한자릿수면 앞에다가 0을 붙여준다.
+        const minutesText = String(minutes).padStart(2, '0');
+        const secondsText = String(seconds).padStart(2, '0');
+
+        // 최종값을 텍스트에 세팅
+        this.timerText.setText(`${minutesText}:${secondsText}`);
+
+        }
+      },
+
+      callbackScope: this,
+      loop: true
+    });
 
     // ======================HP=====================
 
@@ -178,7 +234,7 @@ export default class GameScene extends Phaser.Scene {
     this.physics.add.overlap(this.player, this.expBalls, (player, expBalls) => {
 
       expBalls.destroy();
-      this.addExp(50); // 테스트를 위해 경험치 25배 이벤트
+      this.addExp(50); // 경험치 수치
 
     },null, this 
   );
@@ -334,6 +390,20 @@ export default class GameScene extends Phaser.Scene {
     this.player.body.setVelocity(0); // 중력x
 
     let isMove = false;
+
+    // ===========타이머가 끝나면============
+    if (this.gamePlayTime < 0 && this.timeOver == false) {
+
+      // 원래는 보스가 나와야하지만 아직 구현이 안되어있음으로 타이머 파괴로 대체
+      this.timerText.destroy();
+      this.timeOver = true; // 시간이 끝났으니 시간 계산을 더 하지 않도록 timeOver를 true로 변경
+    }
+
+    // ============타일맵=============
+    // 배경타일맵(backGroundtile)을 카메라의 위치에 따라 갱신해준다
+    this.backGroundTile.tilePositionX = this.cameras.main.scrollX / 2;
+    this.backGroundTile.tilePositionY = this.cameras.main.scrollY / 2;
+
 
     // HP바 위치
     this.hpBar.setPosition(this.player.x , this.player.y + 25);
@@ -528,8 +598,8 @@ export default class GameScene extends Phaser.Scene {
       { name: "이동속도 증가", id: "speed_up", icon: "speed_icon"},
 
       // 무기
-      { name: "블레이드", id: "blade_up", icon: "blade_icon"}, // 현재 구현x
-      { name: "활", id: "arrow_up", icon: "arrow_icon"} // 현재 구현x
+      { name: "블레이드", id: "blade_up", icon: "blade_icon"}, // 현재 3레벨까지 구현
+      { name: "활", id: "arrow_up", icon: "arrow_icon"} // 레벨당 속도증가 구현
     ];
 
     // 최고레벨에 도달한 스킬들을 걸러내기
@@ -660,10 +730,10 @@ export default class GameScene extends Phaser.Scene {
       this.player.hp = this.MAX_HP;
     }
 
-    // 0이 되면, 나중에 여기에 게임오버를 넣을것
-    // 지금은 그냥 체력바 꺼지고 끝
-    if (this.player.hp <= 0) {
-      this.addHPValue.setVisible(false);
+    // 체력이 0이 되면 게임오버를 실행
+    if (this.player.hp <= 0 && this.player.isDead == false) { // 반복 방지를 위해 isDead로 구분
+
+      this.gameOver(); // 게임오버 실행
     }
 
     else {
@@ -867,7 +937,7 @@ export default class GameScene extends Phaser.Scene {
 
   }
 
-  // 공격 애니메이션 재생
+  // ======================공격 애니메이션 재생===============================
   autoAttackBlade() {
     
     // 기본공격(블레이드)
@@ -884,5 +954,66 @@ export default class GameScene extends Phaser.Scene {
 
       this.attackArrow()
     }
+  }
+
+  // 게임 종료
+  gameOver() {
+
+    // 연속작동 방지를 위해 isDead를 true로 변경
+    this.player.isDead = true;
+
+    // 게임정지
+    this.physics.pause();
+    this.time.paused = true;
+
+    // UI 그룹 및 위치조정
+    this.gameEndUI = this.add.container(0, 0);
+    this.gameEndUI.setScrollFactor(0);
+    this.gameEndUI.setDepth(500);
+
+    // 가로세로 중앙
+    const centerX = this.cameras.main.width / 2;
+    const centerY = this.cameras.main.height / 2;
+
+    // 반투명 검은배경을 게임 전체에 깔기
+    const backGround = this.add.rectangle(
+      centerX,
+      centerY,
+      this.cameras.main.width,
+      this.cameras.main.height,
+      0x000000,
+      0.7
+    );
+
+    // 게임오버 텍스트
+    const gameOverText = this.add.text(centerX, centerY - 150, "GAME OVER", {
+      fontSize: "48px",
+      fontStyle: "bold",
+      fill: "#ff4444",
+      fontFamily: "Arial"
+    }).setOrigin(0.5);
+
+    // 재시작 버튼 위치
+    const restartButtonPosY = centerY + 30;
+
+    // 재시작 버튼 배경
+    const restartButtonBackground = this.add.rectangle(centerX, restartButtonPosY, 250, 60, 0x44aa44)
+      .setScrollFactor(0) // 이거 안하면 이상한곳에서 스폰돼서 클릭이 안된다
+      .setInteractive()   // 이걸 넣어줘야 클릭이 가능
+      .on('pointerdown', () => { // 누를때 작동
+
+        this.scene.restart(); // 페이저에는 게임 재시작 기능이 따로 존재
+      });
+
+    // 재시작 버튼 텍스트
+    const restartButtonText = this.add.text(centerX, restartButtonPosY, "다시 도전하기!", {
+      fontSize: "24px",
+      fontStyle: "bold",
+      fill: "#ffffff",
+      fontFamily: "Arial"
+    }).setOrigin(0.5);
+
+    // 만든걸 모두 gameEndUI에 넣기
+    this.gameEndUI.add([backGround,gameOverText,restartButtonBackground,restartButtonText]);
   }
 }
