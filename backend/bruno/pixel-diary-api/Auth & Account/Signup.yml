@@ -23,6 +23,7 @@ settings:
   maxRedirects: 5
 
 docs: |-
-  user_email: 회원가입을 하려는 사용자의 이메일
-  password: 회원가입을 하려는 사용자의 비밀번호
-  user_name: 회원가입을 하려는 사용자의 닉네임
+  ### Body / Json
+  - user_email: 회원가입을 하려는 사용자의 이메일
+  - password: 회원가입을 하려는 사용자의 비밀번호
+  - user_name: 회원가입을 하려는 사용자의 닉네임

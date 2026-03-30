@@ -24,5 +24,8 @@ settings:
   maxRedirects: 5
 
 docs: |-
-  Key: 프로필 사진으로 변경/추가할 이미지 파일
-  Authorization: Bearer 로그인할 시 받는 access_token
+  ### Body / Form
+  - Key: 프로필 사진으로 변경/추가할 이미지 파일
+  ***
+  ### Headers
+  - Authorization: Bearer 로그인할 시 받는 access_token

@@ -18,4 +18,6 @@ settings:
   followRedirects: true
   maxRedirects: 5
 
-docs: "user_email: 중복 확인 하려는 사용자의 이메일"
+docs: |-
+  ### Query
+  - user_email: 중복 확인 하려는 사용자의 이메일

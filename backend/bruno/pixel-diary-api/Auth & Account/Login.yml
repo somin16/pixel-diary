@@ -22,5 +22,6 @@ settings:
   maxRedirects: 5
 
 docs: |-
-  user_email: 로그인을 하려는 사용자 이메일
-  password: 로그인을 하려는 사용자 비밀번호
+  ### Body / Json
+  - user_email: 로그인을 하려는 사용자 이메일
+  - password: 로그인을 하려는 사용자 비밀번호

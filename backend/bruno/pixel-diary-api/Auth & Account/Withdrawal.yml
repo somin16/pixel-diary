@@ -24,5 +24,8 @@ settings:
   maxRedirects: 5
 
 docs: |-
-  password: 회원 탈퇴할 계정의 비밀번호
-  Authorization: Bearer 로그인할 시 받는 access_token
+  ### Body / Json
+  - password: 회원 탈퇴할 계정의 비밀번호
+  ***
+  ### Headers
+  - Authorization: Bearer 로그인할 시 받는 access_token
