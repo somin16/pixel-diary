@@ -1,0 +1,21 @@
+info:
+  name: Check-Email
+  type: http
+  seq: 1
+
+http:
+  method: GET
+  url: http://127.0.0.1:8000/api/v1/auth/check-email?user_email=
+  params:
+    - name: user_email
+      value: ""
+      type: query
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: "user_email: 중복 확인 하려는 사용자의 이메일"

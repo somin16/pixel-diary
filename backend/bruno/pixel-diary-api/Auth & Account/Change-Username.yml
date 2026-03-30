@@ -1,0 +1,28 @@
+info:
+  name: Change-Username
+  type: http
+  seq: 7
+
+http:
+  method: PATCH
+  url: http://127.0.0.1:8000/api/v1/auth/username
+  headers:
+    - name: Authorization
+      value: "Bearer "
+  body:
+    type: json
+    data: |-
+      {
+        "user_name": ""
+      }
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |-
+  user_name: 새로 변경할 닉네임
+  Authorization: Bearer 로그인할 시 받는 access_token

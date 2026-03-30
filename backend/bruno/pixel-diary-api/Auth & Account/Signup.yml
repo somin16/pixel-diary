@@ -1,0 +1,28 @@
+info:
+  name: Signup
+  type: http
+  seq: 2
+
+http:
+  method: POST
+  url: http://127.0.0.1:8000/api/v1/auth/signup
+  body:
+    type: json
+    data: |-
+      {
+        "user_email": "",
+        "password": "",
+        "user_name": ""
+      }
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |-
+  user_email: 회원가입을 하려는 사용자의 이메일
+  password: 회원가입을 하려는 사용자의 비밀번호
+  user_name: 회원가입을 하려는 사용자의 닉네임

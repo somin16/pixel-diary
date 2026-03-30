@@ -421,6 +421,8 @@ class ChangePasswordView(APIView):
                 {"message": "비밀번호 변경 중 오류가 발생했습니다."},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
+        
+
 class WithdrawalView(APIView):
     """회원 탈퇴 API"""
 
