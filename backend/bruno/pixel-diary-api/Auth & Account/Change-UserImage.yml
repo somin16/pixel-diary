@@ -1,0 +1,37 @@
+info:
+  name: Change-UserImage
+  type: http
+  seq: 8
+
+http:
+  method: PATCH
+  url: http://127.0.0.1:8000/api/v1/auth/userimage
+  headers:
+    - name: Authorization
+      value: "Bearer "
+  body:
+    type: multipart-form
+    data:
+      - name: profile_image
+        type: file
+        value: []
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |-
+  ### Body / Form
+  - Key: 프로필 사진으로 변경/추가할 이미지 파일
+  ***
+  ### Headers
+  - Authorization: Bearer 로그인할 시 받는 access_token
+  ***
+  ### Status Code
+  - 200 OK: 프로필 사진 변경 성공
+  - 400 BAD Request: 필수값 누락 (Authorization Bearer 헤더 access_token)
+  - 400 BAD Request: 필수값 누락 (profile_image)
+  - 401 Unauthorized: 유효하지 않은 토큰인 경우
