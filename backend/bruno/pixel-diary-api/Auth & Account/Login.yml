@@ -25,3 +25,9 @@ docs: |-
   ### Body / Json
   - user_email: 로그인을 하려는 사용자 이메일
   - password: 로그인을 하려는 사용자 비밀번호
+  ***
+  ### Status Code
+  - 200 OK: 로그인 성공
+  - 400 Bad Request: 필수값 누락 (이메일, 비밀번호)
+  - 400 Bad Request: 이메일 형식 오류
+  - 401 Unauthorized: 값 불일치 (이메일, 비밀번호)

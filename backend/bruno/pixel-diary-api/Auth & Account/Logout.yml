@@ -29,3 +29,8 @@ docs: |-
   ***
   ### Headers
   - Authorization: Bearer 로그인할 시 받는 access_token
+  ***
+  ### Status Code
+  - 200 OK: 로그아웃 성공
+  - 400 Bad Request: 필수값 누락 (Authorization Bearer 헤더 acces_token)
+  - 400 Bad Request: 필수값 누락 (refresh_token )

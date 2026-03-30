@@ -29,3 +29,9 @@ docs: |-
   ***
   ### Headers
   - Authorization: Bearer 로그인할 시 받는 access_token
+  ***
+  ### Status Code
+  - 200 OK: 프로필 사진 변경 성공
+  - 400 BAD Request: 필수값 누락 (Authorization Bearer 헤더 access_token)
+  - 400 BAD Request: 필수값 누락 (profile_image)
+  - 401 Unauthorized: 유효하지 않은 토큰인 경우

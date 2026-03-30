@@ -27,3 +27,10 @@ docs: |-
   - user_email: 회원가입을 하려는 사용자의 이메일
   - password: 회원가입을 하려는 사용자의 비밀번호
   - user_name: 회원가입을 하려는 사용자의 닉네임
+  ***
+  ### Status Code
+  - 201 Created: 회원가입 성공
+  - 400 Bad Request: 필수값 누락 (이메일, 비밀번호, 닉네임)
+  - 400 Bad Request: 비밀번호 8자 미만
+  - 400 Bad Request: 이메일 형식 오류
+  - 409 Conflict: 이메일 중복

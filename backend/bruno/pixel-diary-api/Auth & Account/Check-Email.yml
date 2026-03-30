@@ -21,3 +21,9 @@ settings:
 docs: |-
   ### Query
   - user_email: 중복 확인 하려는 사용자의 이메일
+  ***
+  ### Status Code
+  - 200 OK: 조회 성공
+  - 200 OK: 중복 확인 (이미 사용중인 이메일)
+  - 400 Bad Request: 이메일 누락
+  - 400 Bad Request: 이메일 형식 오류
