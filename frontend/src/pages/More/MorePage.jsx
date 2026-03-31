@@ -28,7 +28,7 @@ const MorePage = () => {
       {/* 상단 설정 버튼 */}
       <header className={styles.header}>
         {/* 버튼 클릭 시 /setting 주소로 이동 */}
-        <button className={styles.iconButton} onClick={() => navigate('/setting')}>
+        <button className={styles.settingIconButton} onClick={() => navigate('/setting')}>
           <img src={getAssetUrl(currentTheme,'icon', 'setting_icon_x3')} alt="설정" />
         </button>
       </header>

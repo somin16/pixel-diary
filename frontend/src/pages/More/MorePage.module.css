@@ -24,7 +24,7 @@
 
 }
 
-.iconButton {
+.settingIconButton {
   background: none;
   border: none;
   cursor: pointer;
@@ -33,13 +33,13 @@
 }
 
 /* 누를 때 톱니바퀴가 살짝 작아지는 터치 효과 */
-.iconButton:active {
+.settingIconButton:active {
   transform: scale(0.9); 
 }
 
-.iconButton img {
-  width: 42px;
-  height: 42px;
+.settingIconButton img {
+  width: 50px;
+  height: 50px;
   image-rendering: pixelated; /* 픽셀 아트가 뭉개지지 않고 선명하게 보이도록 설정 */
 }
 
