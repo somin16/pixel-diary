@@ -4,7 +4,6 @@ import { getAssetUrl } from "../../utils/assetHelper"; // 헬퍼 불러오기
 import styles from './MorePage.module.css';
 
 const MorePage = () => {
-  // 페이지 이동 함수 생성
   // navigate('/경로') 처럼 사용하여 원하는 주소로 화면을 전환
   const navigate = useNavigate();
 
