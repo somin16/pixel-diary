@@ -1,111 +1,106 @@
+/* 0. 폰트 등록: src/assets/fonts 경로에 맞춰 파일을 불러옴 */
+@font-face {
+  font-family: 'Mona'; /* 폰트 이름 */
+  /* 파일 확장자가 ttf라면 format('truetype'), woff2라면 format('woff2') */
+  src: url('./assets/fonts/Mona12.woff2') format('woff2'),
+       url('./assets/fonts/Mona12.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+  /* [변경] 로딩 전에는 글자를 숨겼다가 로딩 완료되면 한 번에 보여줌 */
+  font-display: block;
+}
+
+/* 1. 디자인 시스템 & 전역 설정 */
 :root {
   --text: #6b6375;
   --text-h: #08060d;
   --bg: #fff;
   --border: #e5e4e7;
-  --code-bg: #f4f3ec;
   --accent: #aa3bff;
   --accent-bg: rgba(170, 59, 255, 0.1);
-  --accent-border: rgba(170, 59, 255, 0.5);
-  --social-bg: rgba(244, 243, 236, 0.5);
-  --shadow:
-    rgba(0, 0, 0, 0.1) 0 10px 15px -3px, rgba(0, 0, 0, 0.05) 0 4px 6px -2px;
-
-  --sans: system-ui, 'Segoe UI', Roboto, sans-serif;
-  --heading: system-ui, 'Segoe UI', Roboto, sans-serif;
+  
+  /* 결정된 폰트를 최우선으로 적용 */
+  --sans: 'Mona', system-ui, 'Segoe UI', sans-serif;
+  --heading: 'Mona', sans-serif;
   --mono: ui-monospace, Consolas, monospace;
 
-  font: 18px/145% var(--sans);
-  letter-spacing: 0.18px;
-  color-scheme: light dark;
+  /* 전역 텍스트 설정 */
+  font: 18px/1.45 var(--sans);
   color: var(--text);
-  background: var(--bg);
-  font-synthesis: none;
+  background: #000000; /* [추가] 360x720 밖 영역은 검은색 처리 (레터박스) */
+  
+  /* 텍스트 렌더링 최적화 (가독성 향상) */
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
 
-  @media (max-width: 1024px) {
-    font-size: 16px;
-  }
+  /* [앱 최적화] 사용자가 화면을 꾹 눌러서 텍스트 선택하거나 메뉴 뜨는 것 방지 */
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --text: #9ca3af;
-    --text-h: #f3f4f6;
-    --bg: #16171d;
-    --border: #2e303a;
-    --code-bg: #1f2028;
-    --accent: #c084fc;
-    --accent-bg: rgba(192, 132, 252, 0.15);
-    --accent-border: rgba(192, 132, 252, 0.5);
-    --social-bg: rgba(47, 48, 58, 0.5);
-    --shadow:
-      rgba(0, 0, 0, 0.4) 0 10px 15px -3px, rgba(0, 0, 0, 0.25) 0 4px 6px -2px;
-  }
-
-  #social .button-icon {
-    filter: invert(1) brightness(2);
-  }
-}
-
-body {
+/* 2. 레이아웃 제어: 스크롤을 완전히 막아 앱처럼 만듦 */
+html, body {
   margin: 0;
+  padding: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden; /* 가로/세로 스크롤 절대 방지 */
+  position: fixed;  /* 모바일 바운스 방지 */
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 
+/* 3. 메인 컨테이너: 화면 높이에 맞춰 꽉 채우고 중앙 정렬 */
 #root {
-  width: 1126px;
-  max-width: 100%;
-  margin: 0 auto;
-  text-align: center;
-  border-inline: 1px solid var(--border);
-  min-height: 100svh;
+  /* [변경] 고정 픽셀 대신 화면 높이(vh) 기준 */
+  height: 100vh;       /* 화면 높이의 100%만큼 커짐 */
+  aspect-ratio: 1 / 2; /* 모바일 비율(360:720) 유지 */
+  width: auto;
+
+  /* [중앙 정렬] absolute 대신 flex 부모 덕분에 중앙에 옵니다 */
+  position: relative; 
   display: flex;
   flex-direction: column;
+  overflow: hidden;
+
+  /* 디자인 설정 */
+  background-color: #ffffff;
+  
+  /* 픽셀 아트 선명도 유지 */
+  image-rendering: pixelated; 
+  image-rendering: crisp-edges;
+  
+  /* 앱 상단 노치 대응 */
+  padding-top: env(safe-area-inset-top, 20px);
+  padding-bottom: env(safe-area-inset-bottom, 20px);
   box-sizing: border-box;
 }
 
-h1,
-h2 {
-  font-family: var(--heading);
-  font-weight: 500;
-  color: var(--text-h);
+/* 페이지별 배경을 담을 공통 클래스 */
+.page-container {
+  width: 100%;
+  height: 100%;
+  background-repeat: no-repeat;
+  background-position: center;
+  position: relative;
 }
 
-h1 {
-  font-size: 56px;
-  letter-spacing: -1.68px;
-  margin: 32px 0;
-  @media (max-width: 1024px) {
-    font-size: 36px;
-    margin: 20px 0;
+/* 4. 반응형 제어: 화면이 360x720보다 작은 기기 대응 */
+@media (max-width: 360px) or (max-height: 720px) {
+  #root {
+    width: 100vw;
+    height: 100vh;
+    /* 세로가 살짝 짤리더라도 배경을 꽉 채우고 싶다면 cover 사용 */
+    background-size: cover; 
   }
 }
-h2 {
-  font-size: 24px;
-  line-height: 118%;
-  letter-spacing: -0.24px;
-  margin: 0 0 8px;
-  @media (max-width: 1024px) {
-    font-size: 20px;
-  }
-}
-p {
-  margin: 0;
-}
 
-code,
-.counter {
-  font-family: var(--mono);
-  display: inline-flex;
-  border-radius: 4px;
-  color: var(--text-h);
-}
+/* 입력창 등은 선택 가능하게 예외 처리 */
+input, textarea { user-select: text; -webkit-user-select: text; }
 
-code {
-  font-size: 15px;
-  line-height: 135%;
-  padding: 4px 8px;
-  background: var(--code-bg);
-}
+h1, h2 { color: var(--text-h); margin: 1rem 0; font-family: var(--sans); }
+h1 { font-size: 2.5rem; letter-spacing: -0.03em; }
+h2 { font-size: 1.5rem; }
