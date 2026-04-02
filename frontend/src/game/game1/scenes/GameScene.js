@@ -37,6 +37,13 @@ export default class GameScene extends Phaser.Scene {
     this.load.image("slime_move1", "/assets/game1/Monster/Nomal/slime_move1.png");
     this.load.image("slime_move2", "/assets/game1/Monster/Nomal/slime_move2.png");
 
+    // 큐브골렘(몬스터2)
+    // 애니메이션이 많을경우엔 이미지가 아니라 스프라이트시트로 받는다
+    // 이때는 .spritesheet를 사용
+    this.load.spritesheet("cube_golem_move", "/assets/game1/Monster/Nomal/cube_golem_move.png", {
+        frameWidth: 16, 
+        frameHeight: 16
+    }); 
 
     // =======================타일======================================
 
@@ -296,12 +303,34 @@ export default class GameScene extends Phaser.Scene {
       repeat: -1,
     });
 
-    // 몬스터 움직임 애니메이션
+    // 슬라임 애니메이션
     this.anims.create({
       key: "slime_animation",
       frames: [{ key: "slime_move1"}, { key: "slime_move2"}],
       frameRate: 5, // 키프레임 살짝 느리게(10으로 하니까 너무 촐싹거림)
       repeat: -1,
+    });
+
+    // 큐브골렘 애니메이션
+    const cubeGolemFrames = [];
+
+    // 큐브골렘은 12프레임의 애니메이션중 1,4,7,10프레임마다 잠깐씩 멈춰서는 몬스터기에 전용 애니메이션을 구축해준다
+    for (let i = 0; i < 12; i ++) {
+
+      const isStopFrame = [0,3,6,9].includes(i); // 배열의 0,3,6,9번째를 할당(0부터 시작함으로 1씩 빼준다)
+
+      cubeGolemFrames.push({
+        key: 'cube_golem_move', // 불러올 스프라이트 시트
+        frame: i,
+        duration: isStopFrame ? 1000 : 100 // 0,3,6,9번째 프레임마다 1000ms로 할당
+                                           // 그 외에는 100ms 
+      });
+    }
+
+    this.anims.create({
+      key: 'cube_golem_animation',
+      frames: cubeGolemFrames, // 위에서 만들어진 프레임대로 애니메이션을 제작해준다
+      repeat: -1
     });
 
     // 기본 공격(블레이드) 애니메이션
@@ -325,12 +354,7 @@ export default class GameScene extends Phaser.Scene {
     this.updateArrowTimer();
 
     // 몬스터생성 이벤트
-    this.time.addEvent({
-      delay: 2000,
-      callback: this.spawnMonster,
-      callbackScope: this,
-      loop: true,
-    });
+    this.updateMonsterSpawn();
 
     // 상자 생성 이벤트(현재는 게임 시작 5초후 플레이어 근처에 1회 자동 스폰되도록 임시설정)
     this.time.addEvent({
@@ -340,9 +364,9 @@ export default class GameScene extends Phaser.Scene {
       loop: false,
     });
 
-    // 30초마다 몬스터가 점점 빨라지고 체력이 증가하는 이벤트
+    // 20초마다 몬스터의 체력이 증가하고 스폰률이 올라가는 이벤트
     this.time.addEvent({
-      delay: 30000,
+      delay: 20000,
       callback: this.monsterLevelUp,
       callbackScope: this,
       loop: true,
@@ -381,6 +405,26 @@ export default class GameScene extends Phaser.Scene {
       callbackScope: this,
       loop: true,
     });
+  }
+
+  // 몬스터 스폰률 업데이트
+  updateMonsterSpawn() {
+
+    // 중복 방지
+    if (this.monsterSpawnTimer) {
+      this.monsterSpawnTimer.remove();
+    }
+
+    // 시간이 지날수록 스폰속도가 점점 빨라진다
+    let newDelay = 2500 - (50 * this.monsterStatus);
+
+    this.monsterSpawnTimer = this.time.addEvent({
+      delay: newDelay,
+      callback: this.spawnMonster,
+      callbackScope: this,
+      loop: true,
+    })
+
   }
 
   update() {
@@ -460,19 +504,41 @@ export default class GameScene extends Phaser.Scene {
       if (monsters.active) {
         // moveToObject: A가 B에게 C의 속도로 다가간다
 
-        if (monsters.isHit != true) {
-          this.physics.moveToObject(monsters, this.player, 50 + this.monsterStatus);
+        // 큐브 골렘은 움직임 로직을 따로 설정한다
+        if (monsters.isHit != true && monsters.monsterID != 2) {
+
+          this.physics.moveToObject(monsters, this.player, 50);
 
           // 몬스터가 바라보는 방향에 따라 위치 변경
           // 플레이어를 기준으로 왼쪽에 있으면 오른쪽을 보고 반대면 왼쪽을 본다
           if (monsters.x > this.player.x) monsters.setFlipX(false);
           else monsters.setFlipX(true);
         }
+
+        // 큐브골렘 전용 이동로직
+        else if(monsters.monsterID == 2) {
+
+          const thisFrame = monsters.anims.currentFrame.index; // 현재 애니메이션 프레임을 받아온다
+            
+          // 애니메이션이 자연스럽게 흘러가도록 1,4,7,10 프레임마다 큐브골렘의 움직임을 멈춘다
+          if ([1, 4, 7, 10].includes(thisFrame)) {
+            monsters.body.setVelocity(0,0);
+          }
+
+          else {
+
+            this.physics.moveToObject(monsters, this.player, 100);
+
+            // 큐브골렘이 움직일때만 방향을 바꾸도록 추가
+            if (monsters.x > this.player.x) monsters.setFlipX(false);
+            else monsters.setFlipX(true);
+          }
+        }
       }
     });
   }
 
-  // 몬스터 스폰 클래스(기존의 반복문을 대체)
+  // 몬스터 스폰 클래스
   spawnMonster() {
 
     // 생성범위
@@ -486,19 +552,62 @@ export default class GameScene extends Phaser.Scene {
 
     // 설명: 플레이어를 기준으로 반지름이 400인 원을 그린뒤 그 원의 테두리를 기준으로 랜덤하게 몬스터를 소환한다
 
-    // 슬라임 생성
-    let slime = this.monsters.create(SPAWN_X, SPAWN_Y, "slime_move1");
-    slime.hp = 5 + this.monsterStatus / 3; // 가중치를 넣는 방식으로 변경
+    // 몬스터 생성확률
+
+    // 슬라임 생성확률을 기준으로 계산한다
+    let slimeSpawnPercent = 100; //
+
+    // 20초가 지나기전까진 슬라임만 생성되며, 시간이 지나면 다른 몬스터의 확률이 증가
+    if (this.gamePlayTime > 280) {
+      slimeSpawnPercent = 100;
+    }
+
+    else {
+      slimeSpawnPercent = 80;
+    }
+
+    // 1부터 100을 랜덤으로 뽑는다
+    const randomSpawn = Phaser.Math.Between(1, 100);
+
+    // 뽑은게 슬라임의 스폰값보다 낮으면 슬라임, 높으면 다른몬스터
+    if (randomSpawn <= slimeSpawnPercent) this.spawnSlime(SPAWN_X, SPAWN_Y);
+    else this.spawnCubeGolem(SPAWN_X, SPAWN_Y);
+  }
+
+  // 슬라임 생성
+  spawnSlime(PosX, PosY) {
+
+    let slime = this.monsters.create(PosX, PosY, "slime_move1");
+
+    slime.monsterID = 1; // 몬스터마다 차이점을 주기위해 ID를 할당
+    slime.hp = 5 + this.monsterStatus; // 가중치를 넣는 방식으로 변경
     slime.damage = -5; // 몬스터 대미지는 음수로
+    slime.resistance = 1; // 몬스터가 공격을 받았을때 밀림 저항력을 Resistance로 할당
+                          // 1이 기본값, 0에 가까울수록 안밀림
     slime.isHit = false;
     slime.setScale(2);
     slime.play("slime_animation", true); // 슬라임 움직임 애니메이션
+  }
+
+  // 큐브골렘 생성
+  spawnCubeGolem(PosX, PosY) {
+
+    let cubeGolem = this.monsters.create(PosX, PosY, "cube_golem_move");
+
+    cubeGolem.monsterID = 2;
+    cubeGolem.hp = 20 + this.monsterStatus;
+    cubeGolem.damage = -7;
+    cubeGolem.resistance = 0;
+    cubeGolem.isHit = false;
+    cubeGolem.setScale(3);
+    cubeGolem.play("cube_golem_animation");
   }
 
   // 몬스터 레벨업(스탯 증가)
   monsterLevelUp() {
 
     this.monsterStatus += 1; // 현재는 임시로 전체 가중치1 증가로 설정
+    this.updateMonsterSpawn();
   }
 
   // 상자 생성
@@ -744,6 +853,37 @@ export default class GameScene extends Phaser.Scene {
     }
   }
 
+  // 공용으로 사용할 몬스터 공격 효과
+  damageBase(monster, knockback) {
+
+    monster.isHit = true;
+    monster.setTintFill(0xffffff); // 히트효과
+    // setTint와는 조금 다른 setTintFill은 스프라이트의 명도 조절이 아닌 스프라이트 위에 색 자체를 덮어버린다
+
+    let knockbackValue = knockback * monster.resistance;
+
+    // 몬스터가 바라보는 방향에 따라서 넉백으로 변경
+    if (monster.flipX) { 
+      monster.body.setVelocityX(-knockbackValue * monster.resistance); 
+    } 
+      
+    else {
+      monster.body.setVelocityX(knockbackValue);
+    }
+
+    // 위 아래
+    monster.body.setVelocityY(Phaser.Math.Between(-knockbackValue, knockbackValue));
+
+    this.time.delayedCall(150, () => {
+      if (monster.active) {
+          monster.clearTint(); // 타격 이펙트 되돌리기
+          monster.isHit = false;
+        }
+    });
+    // 몬스터가 죽었는지를 감지
+    this.monsterDead(monster);
+  }
+
   // 기본무기 공격(blade)
   // 2레벨: 공격범위증가
   // 3레벨: 추가로 뒤를 공격
@@ -756,36 +896,13 @@ export default class GameScene extends Phaser.Scene {
       // 이미 타격중인 몬스터는 무시함
       if (monster.isHit) return;
 
-      // 타격 처리 시작
-      monster.isHit = true;
-      monster.hp -= this.player.damage; // 공격력(damage)만큼 감소
-      monster.setTintFill(0xffffff); // 히트효과
-                                     // setTint와는 조금 다른 setTintFill은 스프라이트의 명도 조절이 아닌 스프라이트 위에 색 자체를 덮어버린다
-
-      // 넉백
+      // 블레이드의 넉백수치
       const knockback = 150;
 
-      // 몬스터가 바라보는 방향에 따라서 넉백으로 변경
-      if (monster.flipX) { 
-        monster.body.setVelocityX(-knockback); 
-      } 
-      
-      else {
-        monster.body.setVelocityX(knockback);
-      }
+      // 타격 처리 시작
+      this.damageBase(monster, knockback); // 공통 대미지 효과
+      monster.hp -= this.player.damage; // 공격력(damage)만큼 감소
 
-      // 위 아래
-      monster.body.setVelocityY(Phaser.Math.Between(-100, 100));
-
-      this.time.delayedCall(150, () => {
-        if (monster.active) {
-            monster.clearTint(); // 타격 이펙트 되돌리기
-            monster.isHit = false;
-          }
-      });
-
-      // 몬스터가 죽었는지를 감지
-      this.monsterDead(monster);
       });
 
       // animationcomplete: 애니메이션이 끝날때
@@ -901,9 +1018,11 @@ export default class GameScene extends Phaser.Scene {
 
       if (monster.isHit) return;
 
-      monster.isHit = true;
+      const knockback = 35;
+
+      // 공용 타격처리
+      this.damageBase(monster, knockback); 
       monster.hp -= (this.player.damage * 0.5);
-      monster.setTintFill(0xffffff);
 
       arrow.destroy();
 
