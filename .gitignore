@@ -555,4 +555,6 @@ ComfyUI/
 *.safetensors
 *.pt
 
+# 개인 메모장 미 추적
+basic_memo.txt
 # End of https://www.toptal.com/developers/gitignore/api/node,react,python,django,pycharm,visualstudiocode
