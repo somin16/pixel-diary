@@ -555,6 +555,9 @@ ComfyUI/
 *.safetensors
 *.pt
 
+# 개인 메모장 미 추적
+basic_memo.txt
+
 # 팀장 전용 실행 파일( 서버 오픈 용)
 run_comfy_somin.bat
 
