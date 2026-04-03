@@ -555,4 +555,7 @@ ComfyUI/
 *.safetensors
 *.pt
 
+# 팀장 전용 실행 파일( 서버 오픈 용)
+run_comfy_somin.bat
+
 # End of https://www.toptal.com/developers/gitignore/api/node,react,python,django,pycharm,visualstudiocode
