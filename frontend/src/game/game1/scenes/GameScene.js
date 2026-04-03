@@ -1,4 +1,5 @@
 import Phaser from "phaser";
+import Player from "../entity/Player.js"; // 다른 폴더에서 Player.js를 Player로 받아온다
 
 export default class GameScene extends Phaser.Scene {
   constructor() {
@@ -113,20 +114,8 @@ export default class GameScene extends Phaser.Scene {
       
       // 설명: 카메라의 가운데를 기준으로 화면크기만큼 꽉차게 배경타일을 깔아준다
 
-    // 플레이어 생성
-    this.player = this.physics.add.sprite(400, 300, "player_stop");
-    this.player.hp = 100; // 기본 체력
-    this.player.damage = 1; // 기본 공격력
-    this.player.speed = 0; // 레벨업시 추가될 이동속도 계산용
-    this.player.isDead = false; // 플레이어 사망 감지용
-
-    // 플레이어가 가지고 있는 무기
-    this.player.bladeLevel = 1; // 블레이드는 기본무기
-    this.player.arrowLevel = 0; // 그 외는 0레벨로 시작
-
-    // 그 외
-    this.player.isDamage = false; // 플레이어 피격 감지(무적시간)
-    this.player.setScale(2); // 해상도 조정
+    // 플레이어 생성(Player.js로 분리)
+    this.player = new Player(this, 400, 300);
 
     // UI 작성
 
@@ -424,16 +413,9 @@ export default class GameScene extends Phaser.Scene {
       callbackScope: this,
       loop: true,
     })
-
   }
 
   update() {
-
-    // 기본 설정
-    const speed = 150; // 기본 속도
-    this.player.body.setVelocity(0); // 중력x
-
-    let isMove = false;
 
     // ===========타이머가 끝나면============
     if (this.gamePlayTime < 0 && this.timeOver == false) {
@@ -453,48 +435,8 @@ export default class GameScene extends Phaser.Scene {
     this.hpBar.setPosition(this.player.x , this.player.y + 25);
     this.addHPValue.setPosition(this.player.x - (this.hpBar.width / 2 + 10), this.player.y + 25);    
 
-    // 방향키 입력에 따른 플레이어 이동 로직
-    // WASD도 추가했습니다.
-    // 왼쪽
-    if (this.cursors.left.isDown || this.wasd.A.isDown) {
-      isMove = true;
-
-      this.player.body.setVelocityX(-speed - this.player.speed); // 기본속도 + 레벨업 보상으로 받은 이동속도도 함께 계산
-      this.player.setFlipX(true); // 좌우반전
-    }
-    // 오른쪽
-    else if (this.cursors.right.isDown || this.wasd.D.isDown) {
-      isMove = true;
-
-      this.player.body.setVelocityX(speed + this.player.speed);
-      this.player.setFlipX(false); // 좌우반전
-    }
-
-    // 위아래
-    if (this.cursors.up.isDown || this.wasd.W.isDown) {
-
-      this.player.body.setVelocityY(-speed - this.player.speed);
-      isMove = true;
-    } 
-    
-    else if (this.cursors.down.isDown || this.wasd.S.isDown) {
-
-      this.player.body.setVelocityY(speed + this.player.speed);
-      isMove = true;
-    }
-
-    // 이동시 ~ 애니메이션
-    if (isMove) {
-
-      this.player.play("move_animation", true);
-    } 
-    
-    else {
-      
-      // .stop : 애니메이션 중지
-      this.player.stop();
-      this.player.setTexture("player_stop"); // 중지하고 이미지 변경
-    }
+    // Player.js에서 playerMove를 받아오고 사용
+    this.player.playerMove(this.cursors, this.wasd);
 
     // ===============||여기부터 몬스터||=================
 
@@ -853,8 +795,10 @@ export default class GameScene extends Phaser.Scene {
     }
   }
 
-  // 공용으로 사용할 몬스터 공격 효과
-  damageBase(monster, knockback) {
+  // 공용으로 사용할 몬스터가 받는 피해 효과
+  // 이 부분은 그냥 knockback으로 두겠습니다
+  // 함수내에서 변수로 받는 부분이고, monsterKnockbackBasic을 쓰면 가독성이 너무 안좋게 변합니다
+  monstersHitDamageBase(monster, knockback) {
 
     monster.isHit = true;
     monster.setTintFill(0xffffff); // 히트효과
@@ -900,7 +844,7 @@ export default class GameScene extends Phaser.Scene {
       const knockback = 150;
 
       // 타격 처리 시작
-      this.damageBase(monster, knockback); // 공통 대미지 효과
+      this.monstersHitDamageBase(monster, knockback); // 공통적으로 사용하는 몬스터가 받는 대미지 효과
       monster.hp -= this.player.damage; // 공격력(damage)만큼 감소
 
       });
@@ -1018,10 +962,11 @@ export default class GameScene extends Phaser.Scene {
 
       if (monster.isHit) return;
 
+      // 몬스터가 대미지를 받을때 넉백되는 수치
       const knockback = 35;
 
-      // 공용 타격처리
-      this.damageBase(monster, knockback); 
+      // 공통적으로 사용하는 몬스터가 받는 대미지 효과
+      this.monstersHitDamageBase(monster, knockback); 
       monster.hp -= (this.player.damage * 0.5);
 
       arrow.destroy();
