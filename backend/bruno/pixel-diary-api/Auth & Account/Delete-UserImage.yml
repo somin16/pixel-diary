@@ -18,7 +18,8 @@ settings:
   maxRedirects: 5
 
 docs: |-
-  Authorization: Bearer 로그인할 시 받는 access_token
+  ### Headers
+  - Authorization: Bearer 로그인할 시 받는 access_token
   ***
   ### Status Code
   - 200 OK: 기본 프로필 사진으로 변경 성공

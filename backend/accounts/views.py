@@ -774,3 +774,59 @@ class UserImageView(APIView):
                 {"message": "기본 프로필 사진 변경 중 오류가 발생했습니다."},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
+
+
+class ResetPasswordView(APIView):
+    """비밀번호 재설정 이메일 발송 API"""
+ 
+    def post(self, request):
+        """
+        POST /api/v1/auth/password/reset
+        - 가입한 이메일을 받아 Supabase Auth로 비밀번호 재설정 링크 발송
+        - 발송 완료 메시지 반환
+        """
+        # 요청 Body에서 이메일 추출 (앞뒤 공백 제거)
+        user_email = request.data.get("user_email", "").strip()
+ 
+        # 이메일 미입력 시 400 반환
+        if not user_email:
+            return Response(
+                {"message": "이메일을 입력해주세요."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+ 
+        # 이메일 형식 검증
+        if not validate_email_format(user_email):
+            return Response(
+                {"message": "이메일 형식이 올바르지 않습니다."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+ 
+        try:
+            supabase_url = os.getenv("SUPABASE_URL")
+            headers = get_supabase_anon_headers()
+ 
+            # Supabase Auth API로 비밀번호 재설정 이메일 발송
+            response = requests.post(
+                f"{supabase_url}/auth/v1/recover",
+                headers=headers,
+                json={"email": user_email},
+            )
+ 
+            # 실패 응답인 경우 예외 발생
+            if response.status_code not in [200, 204]:
+                raise Exception(f"Supabase API 오류: {response.text}")
+ 
+            return Response(
+                {"message": "비밀번호 재설정 링크가 이메일로 발송되었습니다."},
+                status=status.HTTP_200_OK,
+            )
+ 
+        except Exception as error:
+            # 오류 발생 시 터미널에 출력 (개발 완료 후 삭제 예정)
+            print(f"=== RESET PASSWORD ERROR ===\n{error}\n===========================")
+            return Response(
+                {"message": "비밀번호 재설정 이메일 발송 중 오류가 발생했습니다."},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
+ 
