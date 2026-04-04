@@ -20,9 +20,9 @@ export function overlapAddExp(scene) {
   );
 }
 
-function addExp(Value, player ,scene) {
+function addExp(value, player ,scene) {
 
-    player.expCount += Value; // 위에서 선언한 상수 expCount를 활용
+    player.expCount += value; // 위에서 선언한 상수 expCount를 활용
 
     // 최대치 넘었을때 최대 경험치 수치만큼 깎고 레벨업 실행
     if (player.expCount >= player.MAX_EXP) {

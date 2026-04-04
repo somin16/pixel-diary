@@ -52,7 +52,7 @@ export function monstersHitDamageBase(monster, knockback, scene) {
 
     // 몬스터가 바라보는 방향에 따라서 넉백으로 변경
     if (monster.flipX) { 
-      monster.body.setVelocityX(-knockbackValue * monster.resistance); 
+      monster.body.setVelocityX(-knockbackValue); 
     } 
       
     else {

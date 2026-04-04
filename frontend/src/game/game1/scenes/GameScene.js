@@ -30,7 +30,7 @@ import { addEventMonsterLevelUp, monsterMove, overlapMonstersHit } from "../mons
 import { loadAllSprite } from "../preload/Preload.js";            
 
 // 애니메이션 선언
-import { createAllAnimations } from "../animations/Aniations.js"; 
+import { createAllAnimations } from "../animations/Animations.js"; 
 
 // UI바 세팅
 import { barUiSetting, hpBarPosSet } from "../ui/Bar.js";

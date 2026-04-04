@@ -61,7 +61,7 @@ function attackArrow(scene) {
       arrow.destroy();
     });
 
-    // 화살이 안맞았을경우를 대비해서 20초후에 자동파괴
+    // 화살이 안맞았을경우를 대비해서 2초후에 자동파괴
     scene.time.delayedCall(2000, () => {
       if(arrowEff.active) arrowEff.destroy();
     });

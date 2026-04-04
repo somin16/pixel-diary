@@ -1,9 +1,9 @@
 import { gameOver } from "../manage/GameOver";
 
 // HP업데이트(회복, 피해 모두 관리)
-export function updateHP(player, Value, scene) {
+export function updateHP(player, value, scene) {
 
-    player.hp += Value;
+    player.hp += value;
 
     // 최대 HP를 초과하면 최대HP의 수치로 고정
     if (player.hp >= player.MAX_HP) {

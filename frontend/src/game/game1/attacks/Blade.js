@@ -48,36 +48,36 @@ function attackBlade(scene) {
 
     // 좌우에 따라서 생성 위치를 변경
     const OFFSET_X = isLeft ? -50 : 50;
-    const blaedEff = scene.physics.add.sprite(posX + OFFSET_X, posY, "blade_1");
+    const bladeEff = scene.physics.add.sprite(posX + OFFSET_X, posY, "blade_1");
 
     // 레벨이 2이상이라면 크기를 키워준다
-    if(scene.player.bladeLevel >= 2) blaedEff.setScale(5);
-    else blaedEff.setScale(4);
+    if(scene.player.bladeLevel >= 2) bladeEff.setScale(5);
+    else bladeEff.setScale(4);
 
-    blaedEff.setFlipX(isLeft);
-    blaedEff.play("blade_animation");
+    bladeEff.setFlipX(isLeft);
+    bladeEff.play("blade_animation");
 
-    bladeHitbox(blaedEff);
+    bladeHitbox(bladeEff);
 
     // 블레이드의 레벨이 3이상이라면 뒤도 공격
     if(scene.player.bladeLevel >= 3) {
 
       scene.time.delayedCall(200, () => {
-      const blaedEffBack = scene.physics.add.sprite(posX - OFFSET_X, posY, "blade_1");
+      const bladeEffBack = scene.physics.add.sprite(posX - OFFSET_X, posY, "blade_1");
 
-      if(scene.player.bladeLevel >= 2) blaedEffBack.setScale(5);
-      else blaedEffBack.setScale(4);
+      if(scene.player.bladeLevel >= 2) bladeEffBack.setScale(5);
+      else bladeEffBack.setScale(4);
 
-      blaedEffBack.setFlipX(!isLeft);
-      blaedEffBack.play("blade_animation");
+      bladeEffBack.setFlipX(!isLeft);
+      bladeEffBack.play("blade_animation");
 
-      bladeHitbox(blaedEffBack);
+      bladeHitbox(bladeEffBack);
       });
     }
 
     // 오브젝트 공격 판정(몬스터 공격 판정과 같습니다.)
     // 오브젝트 부분은 차후에 몬스터와 통합해줄 필요가 있어보임, 우선은 보류중
-    scene.physics.add.overlap(blaedEff, scene.chests, (damage, chest) => {
+    scene.physics.add.overlap(bladeEff, scene.chests, (damage, chest) => {
 
       if (chest.isHit) return;
 
@@ -104,7 +104,7 @@ function attackBlade(scene) {
     });
 
     // animationcomplete: 애니메이션이 끝날때
-    blaedEff.on("animationcomplete", () => {
-      blaedEff.destroy();
+    bladeEff.on("animationcomplete", () => {
+      bladeEff.destroy();
     });
 }

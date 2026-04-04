@@ -26,8 +26,8 @@ export function spawnChest(scene) {
     const SPAWN_Y = scene.player.y + Math.sin(randomAngle) * SPAWN_RADIUS;
     
     // 상자(1레벨) 생성
-    let chest_level_1 = scene.chests.create(SPAWN_X, SPAWN_Y, "chest_level_1");
-    chest_level_1.hp = 3;
-    chest_level_1.isHit = false;
-    chest_level_1.setScale(2);
+    let chestLevel_1 = scene.chests.create(SPAWN_X, SPAWN_Y, "chest_level_1");
+    chestLevel_1.hp = 3;
+    chestLevel_1.isHit = false;
+    chestLevel_1.setScale(2);
 }
