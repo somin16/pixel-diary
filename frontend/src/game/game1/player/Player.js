@@ -2,14 +2,20 @@ import Phaser from "phaser";
 
 export default class Player extends Phaser.Physics.Arcade.Sprite {
 
+    // 생성될 부모 클래스, x좌표, y좌표
     constructor(scene, x, y) {
 
+        // scene의 x좌표 y좌표에 player_stop이미지를 가진 개체를 소환
         super(scene, x, y, 'player_stop');
-
-        scene.add.existing(this);
-        scene.physics.add.existing(this);
+        scene.add.existing(this);     
+        scene.physics.add.existing(this); 
 
         this.hp = 100; // 기본 체력
+        this.MAX_HP = 100; // 최대 체력
+
+        this.expCount = 0; // 경험치값
+        this.MAX_EXP = 100; // 최대 경험치값
+
         this.damage = 1; // 기본 공격력
         this.speed = 0; // 레벨업시 추가될 이동속도 계산용
         this.isDead = false; // 플레이어 사망 감지용
@@ -23,13 +29,14 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
         this.setScale(2); // 해상도 조정
     }
 
+    // 플레이어 이동
     playerMove(cursors, wasd) {
 
         // 기본 설정
         const speed = 150; // 기본 속도
         this.setVelocity(0); // 중력x
 
-        let isMove = false;
+        let isMove = false; // 움직이고 있는지 감지
 
         // 방향키 입력에 따른 플레이어 이동 로직
         // WASD도 추가했습니다.
