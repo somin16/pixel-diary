@@ -20,7 +20,7 @@ git checkout develop
  ```
 ## 2. 개발 환경 구성 (백엔드, python/django)
 
-❗ `backend` 폴더로 이동 후 실행하세요.
+❗ `backend` 폴더로 이동 후 실행하세요. (ai는 ai_engine폴더로 이동 후 venv_ai 생성)
 
 1) 가상환경 생성
 ```bash
@@ -29,7 +29,7 @@ python -m venv venv
 
 # (권한 에러 발생 시: Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser 실행)
 ```
-2) 가상환경 활성화
+2) 가상환경 활성화 (ai는 venv_ai)
 ```bash
  # windows
 .\venv\Scripts\activate
@@ -40,7 +40,7 @@ deactivate
 ```
 
 ## 3. 의존성 설치(백엔드)
-❗가상환경이 활성화된 상태에서 실행하세요.
+❗가상환경이 활성화된 상태에서 실행하세요. (ai는 ai_engine 폴더에서 venv_ai 켜진 상태에서 requirements_ai.txt)
     
 1) requirements.txt 파일을 사용하여 필요한 패키지 설치 (처음 설치 시 or 추가/버전업 )
 ```bash
@@ -81,7 +81,15 @@ python manage.py runserver
 http://127.0.0.1:8000
 ```
 
-## 6. 프론트엔드 환경 구성
+## 6. AI 그림 생성 테스트 시 (ComfyUi)
+
+ai_engine 폴더로 이동 후 
+```bash
+.\run_comfy.bat 
+# 터미널에 입력 해당 코드를 입력해 bat 파일을 실행 후 뜨는 포트번호로 접속 (웹사이트)
+```
+
+## 7. 프론트엔드 환경 구성
 
 ❗`frontend` 폴더로 이동 후 실행하세요.
 
@@ -97,13 +105,13 @@ npm install
 npm run dev # http://localhost:5173 접속
 ```
 
-## 7. 환경 변수 설정
+## 8. 환경 변수 설정
 
 보안을 위해 API키와 시크릿 키는 깃허브에 올리지 않습니다.
 
-전달받은 .env파일을 각 폴더 (frontend/, backend/)루트에 생성하세요
+전달받은 .env파일을 각 폴더 (frontend/, backend/, ai_engine/)루트에 생성하세요
 
-## 8. 깃 커밋 메시지 템플릿
+## 9. 깃 커밋 메시지 템플릿
 
 프로젝트의 일관된 커밋 메시지를 위해 '.gitmessage.txt' 템플릿을 적용합니다.
 
@@ -111,30 +119,4 @@ npm run dev # http://localhost:5173 접속
 
 ```bash
 git config --local commit.template .gitmessage.txt
-```
-
-## 9. 폴더 구조 ( 확정x )
-
-```
-PPIXEL-DIARY/ (Root)
-├── .github/                # 깃허브 설정 및 이슈 템플릿
-├── backend/                # [Django AI 서버]
-│   ├── config/             # Django 프로젝트 설정 (settings.py 등)
-│   ├── .env                # 슈파베이스 및 AI API 키
-│   ├── manage.py           # Django 실행 엔트리포인트
-│   ├── requirements.txt    # 파이썬 패키지 목록
-│   └── db.sqlite3          # 로컬 테스트용 DB
-│
-├── frontend/               # [React + Phaser 게임]
-│   ├── public/             # 게임 에셋 (이미지, 사운드 등)
-│   ├── src/                # 실제 프론트엔드 코드
-│   │   ├── (여기에 Phaser 게임 로직과 UI 컴포넌트 위치)
-│   ├── .env                # 프론트엔드 환경 변수
-│   ├── index.html          # 앱 메인 페이지
-│   ├── package.json        # 리액트/페이저 라이브러리 관리
-│   └── vite.config.js      # Vite 빌드 설정
-│
-├── .gitignore              # 버전 관리 제외 파일 설정
-├── .gitmessage.txt         # 커밋 메시지 규칙
-└── README.md               # 프로젝트 전체 가이드
 ```

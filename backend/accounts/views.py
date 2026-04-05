@@ -375,6 +375,12 @@ class ChangePasswordView(APIView):
                 headers=user_headers,
             )
  
+            if user_response.status_code != 200:
+                return Response(
+                    {"message": "유효하지 않은 토큰입니다."},
+                    status=status.HTTP_401_UNAUTHORIZED,
+                )
+ 
             # 현재 유저 이메일 추출
             user_email = user_response.json().get("email")
  
@@ -409,8 +415,25 @@ class ChangePasswordView(APIView):
             if change_response.status_code != 200:
                 raise Exception(f"Supabase API 오류: {change_response.text}")
  
+            # 새 비밀번호로 다시 로그인하여 새 토큰 발급
+            new_token_response = requests.post(
+                f"{supabase_url}/auth/v1/token?grant_type=password",
+                headers=verify_headers,
+                json={"email": user_email, "password": new_password},
+            )
+ 
+            # 새 토큰 발급 실패 시 예외 발생
+            if new_token_response.status_code != 200:
+                raise Exception(f"새 토큰 발급 오류: {new_token_response.text}")
+ 
+            new_token_data = new_token_response.json()
+ 
             return Response(
-                {"message": "비밀번호가 변경되었습니다."},
+                {
+                    "message": "비밀번호가 변경되었습니다.",
+                    "access_token": new_token_data.get("access_token"),
+                    "refresh_token": new_token_data.get("refresh_token"),
+                },
                 status=status.HTTP_200_OK,
             )
  
@@ -829,4 +852,60 @@ class ResetPasswordView(APIView):
                 {"message": "비밀번호 재설정 이메일 발송 중 오류가 발생했습니다."},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
+
+
+class TokenRefreshView(APIView):
+    """토큰 갱신 API"""
  
+    def post(self, request):
+        """
+        POST /api/v1/auth/refresh
+        - Body의 refresh_token으로 만료된 access_token 재발급
+        - 갱신된 access_token 반환
+        """
+        # 요청 Body에서 refresh_token 추출 (앞뒤 공백 제거)
+        refresh_token = request.data.get("refresh_token", "").strip()
+ 
+        # refresh_token 누락 시 400 반환
+        if not refresh_token:
+            return Response(
+                {"message": "refresh_token이 필요합니다."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+ 
+        try:
+            supabase_url = os.getenv("SUPABASE_URL")
+            headers = get_supabase_anon_headers()
+ 
+            # Supabase Auth API로 토큰 갱신 요청
+            response = requests.post(
+                f"{supabase_url}/auth/v1/token?grant_type=refresh_token",
+                headers=headers,
+                json={"refresh_token": refresh_token},
+            )
+ 
+            # 유효하지 않거나 만료된 refresh_token인 경우 401 반환
+            if response.status_code == 400:
+                return Response(
+                    {"message": "유효하지 않거나 만료된 refresh_token입니다."},
+                    status=status.HTTP_401_UNAUTHORIZED,
+                )
+ 
+            # 그 외 실패 응답인 경우 예외 발생
+            if response.status_code != 200:
+                raise Exception(f"Supabase API 오류: {response.text}")
+ 
+            data = response.json()
+ 
+            return Response(
+                {"access_token": data.get("access_token")},
+                status=status.HTTP_200_OK,
+            )
+ 
+        except Exception as error:
+            # 오류 발생 시 터미널에 출력 (개발 완료 후 삭제 예정)
+            print(f"=== TOKEN REFRESH ERROR ===\n{error}\n==========================")
+            return Response(
+                {"message": "토큰 갱신 중 오류가 발생했습니다."},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
