@@ -375,6 +375,12 @@ class ChangePasswordView(APIView):
                 headers=user_headers,
             )
  
+            if user_response.status_code != 200:
+                return Response(
+                    {"message": "유효하지 않은 토큰입니다."},
+                    status=status.HTTP_401_UNAUTHORIZED,
+                )
+ 
             # 현재 유저 이메일 추출
             user_email = user_response.json().get("email")
  
@@ -409,8 +415,25 @@ class ChangePasswordView(APIView):
             if change_response.status_code != 200:
                 raise Exception(f"Supabase API 오류: {change_response.text}")
  
+            # 새 비밀번호로 다시 로그인하여 새 토큰 발급
+            new_token_response = requests.post(
+                f"{supabase_url}/auth/v1/token?grant_type=password",
+                headers=verify_headers,
+                json={"email": user_email, "password": new_password},
+            )
+ 
+            # 새 토큰 발급 실패 시 예외 발생
+            if new_token_response.status_code != 200:
+                raise Exception(f"새 토큰 발급 오류: {new_token_response.text}")
+ 
+            new_token_data = new_token_response.json()
+ 
             return Response(
-                {"message": "비밀번호가 변경되었습니다."},
+                {
+                    "message": "비밀번호가 변경되었습니다.",
+                    "access_token": new_token_data.get("access_token"),
+                    "refresh_token": new_token_data.get("refresh_token"),
+                },
                 status=status.HTTP_200_OK,
             )
  
