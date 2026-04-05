@@ -52,17 +52,63 @@
   width: 100%;
 }
 
-.profileImageCombined {
-  width: 90%; /* 화면 가로폭의 90%를 차지하게 큼직하게 배치 */
+/* 이미지 크기에 딱 맞춘 포장지 */
+.profileBarWrapper {
+  position: relative; /* 자식 요소들의 절대 위치 기준점 */
+  width: 90%; 
   max-width: 350px;
-  height: auto;
-  image-rendering: pixelated;
+  display: flex;
   transition: transform 0.1s ease;
 }
 
-/* 누를 때 전체 프로필 영역이 꾹 눌리는 느낌 */
-.profileImageCombined:active {
+/* 누를 때 전체 프로필 영역이 꾹 눌리는 느낌을 래퍼로 이동 */
+.profileBarWrapper:active {
   transform: scale(0.97); 
+}
+
+/* 바 배경 이미지 */
+.profileBarBackground {
+  width: 100%;
+  height: auto;
+  display: block;
+  image-rendering: pixelated;
+}
+
+/* 프로필 사진 위치*/
+.profilePhoto {
+  position: absolute;
+  left: 3.7%;
+  top: 43.5%;
+  transform: translateY(-50%);
+  width: 21.5%;
+  aspect-ratio: 1 / 1; /* 정사각형 유지 */
+  object-fit: cover;
+  
+}
+
+/* 닉네임 + 이메일 위치 */
+.profileInfo {
+  position: absolute;
+  left: 29%;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.profileNickname {
+  font-size: 16px;
+  font-weight: bold;
+  color: black;
+  font-family: 'Mona', sans-serif;
+}
+
+.profileEmail {
+  font-size: 12px;
+  font-weight: bold;
+  color: gray;
+  font-family: 'Mona', sans-serif;
 }
 
 /* 더보기 메뉴 아이콘 그리드 */
@@ -104,7 +150,7 @@
 
 .iconWrapper img {
   /* 틀 안에서 비율을 유지하며 최대 크기로 들어감 */
-  width: auto;    /* 박스 크기에 상관없이 이미지 원본 크기로 표시하게 합니다. */
+  width: auto;    /* 박스 크기에 상관없이 이미지 원본 크기로 표시 */
   height: auto;
   image-rendering: pixelated; /* 픽셀 아트 선명하게 */
   object-fit: contain; /* 박스 안에서 비율 유지하며 채우기 */
