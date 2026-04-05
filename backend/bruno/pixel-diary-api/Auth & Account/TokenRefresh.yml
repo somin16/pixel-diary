@@ -1,0 +1,30 @@
+info:
+  name: TokenRefresh
+  type: http
+  seq: 11
+
+http:
+  method: POST
+  url: http://127.0.0.1:8000/api/v1/auth/refresh
+  body:
+    type: json
+    data: |-
+      {
+        "refresh_token": ""
+      }
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |-
+  ### Body / Json
+  - refresh_token: "로그인시 발급되는 refresh token"
+  ***
+  ### Status Code
+  200 OK: 토큰 갱신 성공
+  400 BAD Request: 필수값 누락 (refresh_token)
+  401 Unauthorized: 유효하지 않거나 만료된 refresh_token

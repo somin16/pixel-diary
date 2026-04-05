@@ -1,5 +1,5 @@
 from django.urls import path
-from .views import CheckEmailView, SignupView, LoginView, LogoutView, ChangePasswordView, WithdrawalView, ChangeUsernameView, UserImageView, ResetPasswordView
+from .views import CheckEmailView, SignupView, LoginView, LogoutView, ChangePasswordView, WithdrawalView, ChangeUsernameView, UserImageView, ResetPasswordView, TokenRefreshView
 
 # 인증 관련 URL 패턴
 # /api/v1/auth/ 하위 경로는 config/urls.py에서 include로 연결됨
@@ -13,4 +13,5 @@ urlpatterns = [
     path("withdrawal", WithdrawalView.as_view(), name='withdrawal'),            # 일반 회원탈퇴
     path("username", ChangeUsernameView.as_view(), name="change-username"),     # 유저 이름 변경
     path("userimage", UserImageView.as_view(), name="userimage"),               # 프로필 사진 변경 / 기본으로 변경
+    path("refresh", TokenRefreshView.as_view(), name="token-refresh"),          # 토큰 갱신
 ]
