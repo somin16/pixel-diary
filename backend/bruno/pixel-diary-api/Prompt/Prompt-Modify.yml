@@ -1,0 +1,41 @@
+info:
+  name: Prompt-Modify
+  type: http
+  seq: 2
+
+http:
+  method: POST
+  url: http://127.0.0.1:8000/api/v1/prompt/modify
+  body:
+    type: json
+    data: |-
+      {
+        "prompt": "여기에 Prompt-Convert 응답의 positive_prompt 붙여넣기",
+        "request": "고양이를 추가해줘"
+      }
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |-
+  ### 사용 순서
+  1. Prompt-Convert 먼저 실행
+  2. 응답의 positive_prompt 값을 이 요청의 prompt 필드에 붙여넣기
+  3. request 필드에 수정 요청 입력 (한국어 가능)
+  ***
+  ### Body / Json
+  - prompt: Prompt-Convert에서 받은 positive_prompt 값
+  - request: 추가하거나 강조하고 싶은 내용 (한국어 가능)
+  ***
+  ### Response
+  - positive_prompt: 수정된 ComfyUI 긍정 프롬프트 (기존 내용 유지 + 요청 반영)
+  - negative_prompt: ComfyUI 부정 프롬프트
+  ***
+  ### Status Code
+  - 200 OK: 프롬프트 수정 성공
+  - 400 Bad Request: prompt 또는 request 필드 누락
+  - 500 Internal Server Error: Groq API 오류

@@ -35,6 +35,7 @@ INSTALLED_APPS = [
     "rest_framework",   # Django REST Framework
     "corsheaders",      # CORS 헤더 처리
     "accounts",         # 인증 및 계정 관련 앱
+    "prompt",           # 프롬프트 변환 관련 앱
 ]
 
 MIDDLEWARE = [
