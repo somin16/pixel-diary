@@ -11,7 +11,8 @@ http:
     data: |-
       {
         "prompt": "여기에 Prompt-Convert 응답의 positive_prompt 붙여넣기",
-        "request": "고양이를 추가해줘"
+        "request": "",
+        "remove": ""
       }
   auth: inherit
 
@@ -30,6 +31,7 @@ docs: |-
   ### Body / Json
   - prompt: Prompt-Convert에서 받은 positive_prompt 값
   - request: 추가하거나 강조하고 싶은 내용 (한국어 가능)
+  - remove: 제거하고 싶은 요소 (콤마로 구분, 부정 프롬프트에 자동 추가) 예: "rain, window"
   ***
   ### Response
   - positive_prompt: 수정된 ComfyUI 긍정 프롬프트 (기존 내용 유지 + 요청 반영)

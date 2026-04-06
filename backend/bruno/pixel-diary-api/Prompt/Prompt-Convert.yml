@@ -10,7 +10,9 @@ http:
     type: json
     data: |-
       {
-        "diary": "오늘은 비가와서 집에서 독서를 했다.\n창밖에는 하루종일 비가 왔다."
+        "diary": "오늘은 비가와서 집에서 독서를 했다.\n창밖에는 하루종일 비가 왔다.",
+        "gender": "girl",
+        "age": 20
       }
   auth: inherit
 
@@ -23,6 +25,8 @@ settings:
 docs: |-
   ### Body / Json
   - diary: 변환할 일기 내용 (한국어 가능)
+  - gender: 주인공 성별 (girl / man / boy / woman 등), 기본값: girl
+  - age: 주인공 나이 (자연수), 기본값: 20
   ***
   ### Response
   - positive_prompt: ComfyUI 긍정 프롬프트

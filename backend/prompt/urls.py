@@ -1,7 +1,8 @@
 from django.urls import path
 from .views import PromptConvertView, PromptModifyView
 
+# /api/v1/prompt/ 하위 경로는 config/urls.py에서 include로 연결됨
 urlpatterns = [
     path("convert", PromptConvertView.as_view(), name="prompt-convert"),  # 일기 → 프롬프트 변환
-    path("modify", PromptModifyView.as_view(), name="prompt-modify"),     # 프롬프트 수정
+    path("modify", PromptModifyView.as_view(), name="prompt-modify"),     # 프롬프트 추가 수정
 ]
