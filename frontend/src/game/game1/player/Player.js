@@ -18,6 +18,7 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
 
         this.damage = 1; // 기본 공격력
         this.speed = 0; // 레벨업시 추가될 이동속도 계산용
+        this.autoHeal = 1; // 자동 회복 가중치
         this.isDead = false; // 플레이어 사망 감지용
 
         // 플레이어가 가지고 있는 무기
@@ -45,7 +46,8 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
             
             isMove = true;
 
-            this.setVelocityX(-speed - this.speed); // 기본속도 + 레벨업 보상으로 받은 이동속도도 함께 계산
+            // 1은 왜 넣었나요? : speed가 0이면 최종속도값이 0이 되버려서 임시방편으로 1을 넣었습니다
+            this.setVelocityX(-speed - 1 * this.speed); // 기본속도 + 레벨업 보상으로 받은 이동속도도 함께 계산
             this.setFlipX(true); // 좌우반전
 
             }
@@ -54,21 +56,21 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
             else if (cursors.right.isDown || wasd.D.isDown) {
             isMove = true;
 
-            this.setVelocityX(speed + this.speed);
+            this.setVelocityX(speed + 1 * this.speed);
             this.setFlipX(false); // 좌우반전
         }
 
         // 위아래
         if (cursors.up.isDown || wasd.W.isDown) {
 
-            this.setVelocityY(-speed - this.speed);
+            this.setVelocityY(-speed - 1 * this.speed);
             isMove = true;
 
         } 
         
         else if (cursors.down.isDown || wasd.S.isDown) {
 
-            this.setVelocityY(speed + this.speed);
+            this.setVelocityY(speed + 1 * this.speed);
             isMove = true;
         }
 

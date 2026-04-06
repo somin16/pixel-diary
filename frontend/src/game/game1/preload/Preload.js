@@ -39,6 +39,10 @@ export function loadAllSprite(scene) {
         frameHeight: 16
     }); 
 
+    // 레드슬라임(몬스터3)
+    scene.load.image("red_slime_move1", "/assets/game1/Monster/Nomal/red_slime_move1.png");
+    scene.load.image("red_slime_move2", "/assets/game1/Monster/Nomal/red_slime_move2.png");
+
     // =======================타일======================================
 
     // 타일
@@ -73,6 +77,9 @@ export function loadAllSprite(scene) {
 
     // 이동속도
     scene.load.image("speed_icon","/assets/game1/Ui/Skill_Icon/speed_icon.png");
+
+    // 자동회복
+    scene.load.image("autoHeal_icon","/assets/game1/Ui/Skill_Icon/autoHeal_icon.png");
 
 
     // =====================오브젝트=========================================

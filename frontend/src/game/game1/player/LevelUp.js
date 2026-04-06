@@ -1,5 +1,6 @@
 import Phaser from "phaser";
 import { updateArrowTimer } from "../attacks/Attacks";
+import { addEventautoHeal } from "./Hp";
 
 // 플레이어 레벨업
 export function levelUpMenu(scene) {
@@ -29,6 +30,7 @@ export function levelUpMenu(scene) {
       // 스탯
       { name: "공격력 증가" , id: "damage_up", icon: "damage_icon"},
       { name: "이동속도 증가", id: "speed_up", icon: "speed_icon"},
+      { name: "자연회복 증가", id: "autoHeal_up", icon: "autoHeal_icon"},
 
       // 무기
       { name: "블레이드", id: "blade_up", icon: "blade_icon"}, // 현재 3레벨까지 구현
@@ -40,6 +42,9 @@ export function levelUpMenu(scene) {
     const removeSkills = skills.filter((skill) => {
 
       if(skill.id == "damage_up" && scene.player.damage >= 4) {
+        return false;
+      }
+      if(skill.id == "speed_up" && scene.player.speed >= 4) {
         return false;
       }
       if(skill.id == "blade_up" && scene.player.bladeLevel >= 4) {
@@ -124,7 +129,14 @@ function selectSkill(skill_Id, scene) { // skillId는 너무 가독성이 안좋
       // 이동속도 증가
       case "speed_up" : {
 
-        scene.player.speed += 15;
+        scene.player.speed += 1;
+        break;
+      }
+
+      // 자연회복
+      case "autoHeal_up" : {
+
+        scene.player.autoHeal += 1;
         break;
       }
 
@@ -132,6 +144,7 @@ function selectSkill(skill_Id, scene) { // skillId는 너무 가독성이 안좋
       case "blade_up" : {
 
         scene.player.bladeLevel += 1;
+        addEventautoHeal(scene); // 회복량 갱신
         break;
       }
 
