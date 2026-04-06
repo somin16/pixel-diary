@@ -1,0 +1,207 @@
+/* 전체 화면 레이아웃 */
+.container {
+  width: 100%;
+  height: 100%;
+  
+  /* 화면 상하좌우 안쪽 여백 */
+  padding: 60px 20px 30px;
+  box-sizing: border-box;
+  
+  display: flex;
+  flex-direction: column;
+  align-items: center; /* 모든 요소를 가운데 정렬 */
+
+  /* 터치 시 파란 박스 깜빡임 제거 */
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* 상단 헤더 (뒤로 가기 버튼) */
+.header {
+  width: 100%;
+  display: flex;
+  justify-content: flex-start; /* 왼쪽 정렬 */
+  margin-top: env(safe-area-inset-top, 20px); /* 노치 높이만큼 마진을 줌, 노치 없으면 기본 20px */
+  margin-bottom: 20px;
+  padding-left: 15px;
+}
+
+.backButton {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  transition: transform 0.1s ease;
+}
+
+.backButton:active {
+  transform: scale(0.9); /* 누를 때 살짝 작아지는 효과 */
+}
+
+.backButton img {
+  width: auto;
+  height: 40px;
+  image-rendering: pixelated; 
+}
+
+/* 프로필 사진 영역 (프레임 + 사용자 프로필 사진 겹치기) */
+.profilePhotoArea {
+  position: relative; /* 자식 요소 겹치기의 기준점 */
+  width: auto;
+  height: auto;
+  margin-top: 50px;
+  margin-bottom: 65px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.photoFrame {
+  width: 200px;
+  height: 200px;
+  image-rendering: pixelated;
+  z-index: 1; /* 액자 프레임이 위로 올라옴 */
+  pointer-events: none; /* 클릭 이벤트가 아래 사진으로 통과되게 함 */
+  position: relative;
+}
+
+.photoContent {
+  position: absolute; 
+  top: 15px;           /* 액자 안쪽 빈 공간에 맞게 조절 (이미지 따라 다름) */
+  left: 15px;
+  width: 170px; 
+  height: 170px; 
+  z-index: 2;          /* 진짜 사진이 액자 아래에 깔림 */
+  display: block;      /* label을 블록으로 */
+  cursor: pointer;
+  overflow: hidden;    /* 이미지가 label 밖으로 삐져나오지 않게 */
+}
+
+/* label 안의 img에 object-fit 적용 */
+.photoContent img {
+  width: 90%;
+  height: 90%;
+  object-fit: cover;
+}
+
+/* 입력 필드 영역 (닉네임 & 이메일) */
+.inputArea {
+  width: 220px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px; /* 닉네임과 이메일 그룹 사이 간격 */
+  margin-bottom: 30px;
+}
+
+.inputGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 8px; /* 라벨(글씨)과 입력칸 사이 간격 */
+}
+
+.inputLabel {
+  font-size: 13px;
+  font-weight: normal;
+  color: rgb(0, 0, 0);
+  font-family: 'Mona', sans-serif;
+}
+
+/* 닉네임 변경 박스 위에 투명 input 올리기 */
+.imageInputContainer {
+  position: relative; 
+  width: 100%;
+  max-width: 350px; 
+  height: 45px; 
+  display: flex;
+  align-items: center;
+}
+
+.inputBackgroundImage {
+  position: absolute; 
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 1; /* 바닥에 깔리는 박스 이미지 */
+  image-rendering: pixelated;
+}
+
+.transparentInput {
+  position: relative; 
+  z-index: 2; /* 이미지 위로 올라가는 실제 입력칸 */
+  width: 100%;
+  height: 100%;
+  background: transparent; /* 배경을 투명하게 만듦 */
+  border: none;            /* 기본 테두리 없애기 */
+  outline: none;           /* 포커스 시 생기는 파란 선 없애기 */
+  padding: 0 20px 0 12px;  /* 박스 안에서 글씨가 시작될 좌우 여백 */
+  
+  font-size: 13px;
+  font-weight: normal;
+  color: rgb(0, 0, 0);
+  font-family: 'Mona', sans-serif;
+}
+
+/* 이메일 (읽기 전용) 전용 스타일 */
+.readOnlyInput {
+  color: rgb(150, 150, 150); /* 사용자 이메일 회색 처리*/
+  cursor: not-allowed;       /* 웹에서 금지 모양 마우스 커서 표시 */
+}
+
+/* 수정 완료 메세지 공간 */
+.messageWrapper {
+  width: 100%;
+  height: 60px;      /* 메시지 글자 크기보다 조금 크게 고정! */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-bottom: 3px; /* 버튼과의 고정 간격 */
+}
+
+/* 상태 메시지 */
+.successMessage {
+  margin: 0;
+  font-size: 13px;
+  font-weight: normal;
+  color: #00A40B; /* 수정 완료 메세지 색 */
+  margin-top: 3px;
+  font-family: 'Mona', sans-serif;
+}
+
+/* 정보 수정 완료 버튼 */
+.updateButton {
+  position: relative; /* 글씨를 겹치기 위한 기준점 */
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  width: 220px;
+  margin-top: 0;
+  transition: transform 0.1s ease;
+  display: flex;         /* 중앙 정렬 */
+  justify-content: center;
+  align-items: center;
+  font-weight: normal;
+}
+
+.imageButton img {
+  width: 100%;
+  height: auto;
+  image-rendering: pixelated;
+}
+
+.buttonText {
+  position: absolute;   /* 이미지 위로 띄우기 */
+  top: 50%;             /* 세로 중앙 */
+  left: 50%;            /* 가로 중앙 */
+  transform: translate(-50%, -50%); /* 정확한 정중앙 보정 */
+  color: white;         
+  font-size: 12px;    
+  font-weight: normal;
+  font-family: 'Mona', sans-serif;
+  pointer-events: none; /* 글씨가 클릭을 방해하지 않도록 설정 */
+  white-space: nowrap;  /* 글씨가 옆으로 퍼지지 않게 한 줄 고정 */
+}
+
+.imageButton:active {
+  transform: scale(0.95); /* 누를 때 버튼이 꾹 눌리는 효과 */
+}

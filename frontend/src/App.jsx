@@ -3,7 +3,8 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Home from "./pages/home/Home"; // 홈 화면 부품을 가져온다
 import Game1 from "./game/game1/Game1"; // 게임1 화면
 import Game2 from "./game/game2/Game2"; // 게임2 화면
-import MorePage from "./pages/more/MorePage"; // 더보기 화면 
+import MorePage from "./pages/more/MorePage"; // 더보기 화면
+import Profile from "./pages/profile/Profile"; // 더보기 - 프로필 화면
 
 function App() {
   return (
@@ -21,6 +22,9 @@ function App() {
 
         {/* 주소가 /more 이면 더보기 화면을 보여줘 */}
         <Route path="/more" element={<MorePage />} />
+
+        {/* 주소가 /more/profile 이면 프로필 화면을 보여줘 */}
+        <Route path="/more/profile" element={<Profile />} />
       </Routes>
     </BrowserRouter>
   );
