@@ -37,7 +37,7 @@ class PromptConvertView(APIView):
     """
     일기 → 픽셀아트 프롬프트 변환 API
 
-    POST /api/v1/prompt/convert
+    POST /api/v1/prompt/transform
     Body: {
         "diary": "오늘 비가 와서 집에서 독서를 했다.",
         "gender": "girl",   (선택, 기본값: girl / 예: man, boy, woman 등)
@@ -107,7 +107,7 @@ class PromptModifyView(APIView):
     기존 내용을 절대 삭제하거나 줄이지 않고, 요청한 요소만 추가/강조합니다.
     수정 요청은 한국어로 입력해도 됩니다.
 
-    POST /api/v1/prompt/modify
+    POST /api/v1/prompt/restyle
     Body: {
         "prompt": "Prompt-Convert 응답의 positive_prompt 값",
         "request": "고양이를 추가해줘"

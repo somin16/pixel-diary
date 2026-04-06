@@ -5,7 +5,7 @@ info:
 
 http:
   method: POST
-  url: http://127.0.0.1:8000/api/v1/prompt/modify
+  url: http://127.0.0.1:8000/api/v1/prompt/restyle
   body:
     type: json
     data: |-
