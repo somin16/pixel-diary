@@ -108,9 +108,9 @@ input, textarea, [contenteditable="true"], .selectable {
 }
 
 /* ── 반응형 제어 ──────────────────────────────────────────
-   화면이 360x720보다 작은 기기 대응
+   화면이 360x640보다 작은 기기 대응
 ──────────────────────────────────────────────────────── */
-@media (max-width: 360px) or (max-height: 720px) {
+@media (max-width: 360px) or (max-height: 640px) {
   #root {
     width: 100vw;
     height: 100dvh;
