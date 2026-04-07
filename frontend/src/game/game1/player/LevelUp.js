@@ -137,6 +137,7 @@ function selectSkill(skill_Id, scene) { // skillId는 너무 가독성이 안좋
       case "autoHeal_up" : {
 
         scene.player.autoHeal += 1;
+        addEventautoHeal(scene); // 회복량 갱신
         break;
       }
 
@@ -144,7 +145,6 @@ function selectSkill(skill_Id, scene) { // skillId는 너무 가독성이 안좋
       case "blade_up" : {
 
         scene.player.bladeLevel += 1;
-        addEventautoHeal(scene); // 회복량 갱신
         break;
       }
 
