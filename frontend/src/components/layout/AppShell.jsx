@@ -1,4 +1,3 @@
-import './AppShell.css';
 import NavigationBar from './NavigationBar';
 
 // 기준 해상도 상수 — 모든 UI는 이 크기 안에서 작업
