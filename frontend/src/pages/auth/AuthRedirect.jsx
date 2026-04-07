@@ -13,39 +13,28 @@ export default function AuthRedirect() {
   let isMounted = true; // 메모리 누수 및 중복 실행 방지
 
   const processAuth = async () => {
-    const params = new URLSearchParams(window.location.search);
-    const code = params.get('code');
-    const provider = params.get('provider') || 'google';
-    const code_verifier = localStorage.getItem('supabase.auth.code_verifier');
+  // # 뒤의 값 파싱
+  const hashParams = new URLSearchParams(window.location.hash.substring(1));
+  const access_token = hashParams.get('access_token');
+  const refresh_token = hashParams.get('refresh_token');
 
-    if (code && code_verifier && isMounted) {
-      try {
-        const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/v1/auth/social`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ provider, code, code_verifier })
-        });
+  if (access_token && isMounted) {
+    try {
+      localStorage.setItem('access_token', access_token);
+      localStorage.setItem('refresh_token', refresh_token);
 
-        if (response.ok) {
-          const data = await response.json(); // 추가
-          localStorage.setItem('access_token', data.access_token);   // 추가
-          localStorage.setItem('refresh_token', data.refresh_token); // 추가
-
-          setStatus('success');
-          // 성공 시 로컬스토리지에 저장된 verifier 삭제 (보안 및 깔끔한 정리)
-          localStorage.removeItem('supabase.auth.code_verifier');
-          setTimeout(() => navigate('/'), 1500);
-        } else {
-          setStatus('error'); // 에러 상태 업데이트
-          setTimeout(() => navigate('/login'), 2000);
-        }
-      } catch (err) {
-        console.error("연동 에러:", err);
-        setStatus('error');
-        setTimeout(() => navigate('/login'), 2000);
-      }
+      setStatus('success');
+      setTimeout(() => navigate('/'), 1500);
+    } catch (err) {
+      console.error("토큰 저장 에러:", err);
+      setStatus('error');
+      setTimeout(() => navigate('/login'), 2000);
     }
-  };
+  } else {
+    setStatus('error');
+    setTimeout(() => navigate('/login'), 2000);
+  }
+};
 
   processAuth();
   return () => { isMounted = false; }; // 언마운트 시 실행 방지

@@ -25,6 +25,6 @@ docs: |-
   - refresh_token: "로그인시 발급되는 refresh token"
   ***
   ### Status Code
-  200 OK: 토큰 갱신 성공
-  400 BAD Request: 필수값 누락 (refresh_token)
-  401 Unauthorized: 유효하지 않거나 만료된 refresh_token
+  - 200 OK: 토큰 갱신 성공
+  - 400 BAD Request: 필수값 누락 (refresh_token)
+  - 401 Unauthorized: 유효하지 않거나 만료된 refresh_token
