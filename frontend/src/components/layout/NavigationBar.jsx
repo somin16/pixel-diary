@@ -28,7 +28,7 @@ const NAVIGATION_ITEMS = [
   {
     id: 'game',
     label: '게임',
-    path: '/gameselect',
+    path: '/game1run',
     iconActive: getAssetUrl('winter_light', 'icons', 'game_icon_x3'),
     iconInactive: getAssetUrl('winter_light', 'icons', 'game_icon_x3'),
   },
