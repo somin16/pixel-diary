@@ -34,7 +34,7 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
     playerMove(cursors, wasd) {
 
         // 기본 설정
-        const speed = 150; // 기본 속도
+        const DefaultSpeed = 150; // 기본 속도
         this.setVelocity(0); // 중력x
 
         let isMove = false; // 움직이고 있는지 감지
@@ -46,31 +46,30 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
             
             isMove = true;
 
-            // 1은 왜 넣었나요? : speed가 0이면 최종속도값이 0이 되버려서 임시방편으로 1을 넣었습니다
-            this.setVelocityX(-speed - 1 * this.speed); // 기본속도 + 레벨업 보상으로 받은 이동속도도 함께 계산
+            this.setVelocityX(-DefaultSpeed - 15 * this.speed); // 기본속도 + 레벨업 보상으로 받은 이동속도도 함께 계산
             this.setFlipX(true); // 좌우반전
 
-            }
+        }
 
             // 오른쪽
             else if (cursors.right.isDown || wasd.D.isDown) {
             isMove = true;
 
-            this.setVelocityX(speed + 1 * this.speed);
+            this.setVelocityX(DefaultSpeed + 15 * this.speed);
             this.setFlipX(false); // 좌우반전
         }
 
         // 위아래
         if (cursors.up.isDown || wasd.W.isDown) {
 
-            this.setVelocityY(-speed - 1 * this.speed);
+            this.setVelocityY(-DefaultSpeed - 15 * this.speed);
             isMove = true;
 
         } 
         
         else if (cursors.down.isDown || wasd.S.isDown) {
 
-            this.setVelocityY(speed + 1 * this.speed);
+            this.setVelocityY(DefaultSpeed + 15 * this.speed);
             isMove = true;
         }
 
