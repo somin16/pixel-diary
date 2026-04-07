@@ -18,7 +18,7 @@ export default function AppShell({ children }) {
     // bg-black → 360×640 밖 영역 검은색 처리
     <div className="flex justify-center items-center w-full h-full overflow-hidden bg-black">
 
-      {/* 360×640 고정 캔버스 — 모든 UI 요소는 여기 안에 m
+      {/* 360×640 고정 캔버스 — 모든 UI 요소는 여기 안에
           aspect-ratio: 9/16 → 360:640 모바일 비율 유지
           h-screen → 화면 높이에 맞춤
           relative → 자식 요소들이 absolute 쓸 때 기준점
