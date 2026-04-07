@@ -21,16 +21,16 @@ const MorePage = () => {
   }, [])
 
   const menuItems = [
-    { id: 'shop', label: '상점', icon: getAssetUrl(currentTheme,'icon','shop_icon_x3'), path: '/more/shop' },
-    { id: 'storage', label: '보관함', icon: getAssetUrl(currentTheme,'icon','inventory_icon_x3'), path: '/more/inventory' },
-    { id: 'attendance', label: '출석', icon: getAssetUrl(currentTheme,'icon','daily_icon_x3'), path: '/more/daily' },
-    { id: 'notice', label: '공지사항', icon: getAssetUrl(currentTheme,'icon','info_icon_x3'), path: '/more/info' },
+    { id: 'shop', label: '상점', icon: getAssetUrl(currentTheme,'icons','shop_icon_x3'), path: '/more/shop' },
+    { id: 'storage', label: '보관함', icon: getAssetUrl(currentTheme,'icons','inventory_icon_x3'), path: '/more/inventory' },
+    { id: 'attendance', label: '출석', icon: getAssetUrl(currentTheme,'icons','daily_icon_x3'), path: '/more/daily' },
+    { id: 'notice', label: '공지사항', icon: getAssetUrl(currentTheme,'icons','info_icon_x3'), path: '/more/info' },
   ];
 
   return (
     // 전체 페이지를 감싸는 컨테이너 (배경 이미지가 깔리는 곳)
     <div className={styles.container}
-    style={{ backgroundImage: `url(${getAssetUrl(currentTheme,'background','menu_background_x3')})`,
+    style={{ backgroundImage: `url(${getAssetUrl(currentTheme,'backgrounds','menu_background_x3')})`,
     backgroundSize: '100% 100%', // 컨테이너 크기에 이미지를 강제로 꽉 맞춤
     }}>
       
@@ -38,7 +38,7 @@ const MorePage = () => {
       <header className={styles.header}>
         {/* 버튼 클릭 시 /setting 주소로 이동 */}
         <button className={styles.settingIconButton} onClick={() => navigate('/more/setting')}>
-          <img src={getAssetUrl(currentTheme,'icon', 'setting_icon_x3')} alt="설정" />
+          <img src={getAssetUrl(currentTheme,'icons', 'setting_icon_x3')} alt="설정" />
         </button>
       </header>
 
@@ -49,14 +49,14 @@ const MorePage = () => {
         <div className={styles.profileBarWrapper}>
           {/* 배경이 되는 박스+선 이미지 */}
           <img 
-            src={getAssetUrl(currentTheme, 'box', 'profile_bar_box_x3')} 
+            src={getAssetUrl(currentTheme, 'boxes', 'profile_bar_box_x3')} 
             alt="프로필" 
             className={styles.profileBarBackground} 
           />
 
           {/* 그 위에 올라가는 프로필 사진 */}
           <img 
-            src={profileImage || getAssetUrl(currentTheme, 'icon', 'app_icon_x2')}
+            src={profileImage || getAssetUrl(currentTheme, 'icons', 'app_icon_x2')}
             alt="프로필 사진"
             className={styles.profilePhoto}
           />
