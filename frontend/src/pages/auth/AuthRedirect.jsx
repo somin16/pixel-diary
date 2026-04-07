@@ -27,6 +27,10 @@ export default function AuthRedirect() {
         });
 
         if (response.ok) {
+          const data = await response.json(); // 추가
+          localStorage.setItem('access_token', data.access_token);   // 추가
+          localStorage.setItem('refresh_token', data.refresh_token); // 추가
+
           setStatus('success');
           // 성공 시 로컬스토리지에 저장된 verifier 삭제 (보안 및 깔끔한 정리)
           localStorage.removeItem('supabase.auth.code_verifier');
