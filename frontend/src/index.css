@@ -92,6 +92,11 @@ html, body {
   image-rendering: pixelated;
   image-rendering: crisp-edges; /* Firefox 대응 */
 
+  /* 배경화면 가로 고정 및 위아래 컷팅 설정 */
+  background-size: 100% auto;   /* 가로를 무조건 100%에 맞춤 (세로가 길면 위아래가 삐져나감) */
+  background-position: center; /* 삐져나간 위아래를 똑같이 배분해서 중앙 유지 */
+  background-repeat: no-repeat; /* 배경 반복 방지 */
+
   /* 아이폰 노치/홈바 대응 */
   padding-top: env(safe-area-inset-top, 20px);
   padding-bottom: env(safe-area-inset-bottom, 20px);
@@ -114,6 +119,6 @@ input, textarea, [contenteditable="true"], .selectable {
   #root {
     width: 100vw;
     height: 100dvh;
-    background-size: cover;
+    background-size: 100% auto;
   }
 }

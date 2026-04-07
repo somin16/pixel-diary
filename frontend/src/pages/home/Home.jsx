@@ -8,7 +8,7 @@ function Home() {
 
   // 인라인 스타일로 배경 이미지를 동적으로 적용
   const containerStyle = {
-    backgroundImage: `url(${getAssetUrl(currentTheme,'background', 'background_x3')})`,
+    backgroundImage: `url(${getAssetUrl(currentTheme,'backgrounds', 'background_x3')})`,
     backgroundSize: '100% 100%',
     backgroundRepeat: 'no-repeat',
     height: '100%',
