@@ -2,7 +2,7 @@ import NavigationBar from './NavigationBar';
 
 // 기준 해상도 상수 — 모든 UI는 이 크기 안에서 작업
 const BASE_WIDTH = 360;
-const BASE_HEIGHT = 640; 
+const BASE_HEIGHT = 720; 
 
 export default function AppShell({ children }) {
   // children: 부모 컴포넌트가 자식한테 내용 전달하는 방식
@@ -15,11 +15,11 @@ export default function AppShell({ children }) {
     // w-screen 대신 w-full을 사용해 fixed와의 충돌을 방지 
     // overflow-hidden → 스크롤 방지
     // fixed → 모바일 바운스 방지
-    // bg-black → 360×640 밖 영역 검은색 처리
+    // bg-black → 360×720 밖 영역 검은색 처리
     <div className="flex justify-center items-center w-full h-full overflow-hidden bg-black">
 
       {/* 360×640 고정 캔버스 — 모든 UI 요소는 여기 안에
-          aspect-ratio: 9/16 → 360:640 모바일 비율 유지
+          aspect-ratio: 9/20 → 360:720 모바일 비율 유지
           h-screen → 화면 높이에 맞춤
           relative → 자식 요소들이 absolute 쓸 때 기준점
           overflow-hidden → 캔버스 밖으로 넘치는 요소 잘라줌
@@ -29,7 +29,7 @@ export default function AppShell({ children }) {
         className="app-root relative overflow-hidden bg-white flex flex-col"
         style={{
           // Tailwind에 없는 속성들 — style로 직접 지정
-          aspectRatio: `${BASE_WIDTH} / ${BASE_HEIGHT}`, // 360:640 비율 유지
+          aspectRatio: `${BASE_WIDTH} / ${BASE_HEIGHT}`, // 360:720 비율 유지
           height: '100dvh',                               // vh대신 dvh를 사용해 주소창 변화에 따라 높이를 동적으로 조절
           width: 'auto',                                 // 비율에 맞게 자동 계산
         }}

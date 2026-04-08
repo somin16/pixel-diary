@@ -20,7 +20,6 @@
   width: 100%;
   display: flex;
   justify-content: flex-start; /* 왼쪽 정렬 */
-  margin-top: env(safe-area-inset-top, 20px); /* 노치 높이만큼 마진을 줌, 노치 없으면 기본 20px */
   margin-bottom: 20px;
   padding-left: 15px;
 }
@@ -31,16 +30,13 @@
   cursor: pointer;
   padding: 0;
   transition: transform 0.1s ease;
+  outline: none;
 }
 
-.backButton:active {
-  transform: scale(0.9); /* 누를 때 살짝 작아지는 효과 */
-}
 
 .backButton img {
   width: auto;
   height: 40px;
-  image-rendering: pixelated; 
 }
 
 /* 프로필 사진 영역 (프레임 + 사용자 프로필 사진 겹치기) */
@@ -58,7 +54,6 @@
 .photoFrame {
   width: 200px;
   height: 200px;
-  image-rendering: pixelated;
   z-index: 1; /* 액자 프레임이 위로 올라옴 */
   pointer-events: none; /* 클릭 이벤트가 아래 사진으로 통과되게 함 */
   position: relative;
@@ -122,7 +117,6 @@
   width: 100%;
   height: 100%;
   z-index: 1; /* 바닥에 깔리는 박스 이미지 */
-  image-rendering: pixelated;
 }
 
 .transparentInput {
@@ -186,7 +180,6 @@
 .imageButton img {
   width: 100%;
   height: auto;
-  image-rendering: pixelated;
 }
 
 .buttonText {
@@ -200,8 +193,4 @@
   font-family: 'Mona', sans-serif;
   pointer-events: none; /* 글씨가 클릭을 방해하지 않도록 설정 */
   white-space: nowrap;  /* 글씨가 옆으로 퍼지지 않게 한 줄 고정 */
-}
-
-.imageButton:active {
-  transform: scale(0.95); /* 누를 때 버튼이 꾹 눌리는 효과 */
 }

@@ -21,26 +21,6 @@ function Home() {
     /* 2. 배경 이미지는 style 속성으로 넘겨줍니다. */
     <div className="page-container" style={containerStyle}>
 
-      {/*콘텐츠 영역*/}
-      <div style={{ padding: '20px', textAlign: 'center' }}>
-        <h1>🏠 Pixel Diary 임시<br/> 홈 화면</h1>
-
-        <div style={{ 
-          marginTop: '40px', 
-          alignItems: 'center',
-        }}>
-          {/* 글씨 링크 */}
-          <Link to="/game1run" style={{ fontSize: '14px', color: '#666' }}>
-            미니게임1 테스트 이동<br/>
-          </Link>
-          <Link to="/game2run" style={{ fontSize: '14px', color: '#666' }}>
-            미니게임2 테스트 이동<br/>
-          </Link>
-          <Link to="/more" style={{ fontSize: '14px', color: '#666' }}>
-            더보기 페이지 테스트 이동<br/>
-          </Link>
-        </div>
-      </div>
     </div>
   );
 }

@@ -37,7 +37,7 @@ const Profile = () => {
   return (
     // 전체 페이지를 감싸는 컨테이너(배경 이미지 깔림)
     <div className={styles.container}
-      style={{ backgroundImage: `url(${getAssetUrl(currentTheme,'background','menu_background_x3')})`,
+      style={{ backgroundImage: `url(${getAssetUrl(currentTheme,'backgrounds','menu_background_x3')})`,
       backgroundSize: '100% 100%', // 컨테이너 크기에 이미지를 강제로 꽉 맞춤
     }}>
       
@@ -45,14 +45,14 @@ const Profile = () => {
     <header className={styles.header}>
         {/* 버튼 클릭 시 뒤로 가기 */}
         <button className={styles.backButton} onClick={handleBack}>
-          <img src={getAssetUrl(currentTheme,'icon', 'back_icon_x3')} alt="뒤로 가기" />
+          <img src={getAssetUrl(currentTheme,'icons', 'back_icon_x3')} alt="뒤로 가기" />
         </button>
     </header>
 
     {/* 프로필 사진 영역 */}
     <section className={styles.profilePhotoArea}>
     <img 
-    src={getAssetUrl(currentTheme, 'box', 'profile__image_box_x3')} 
+    src={getAssetUrl(currentTheme, 'boxes', 'profile__image_box_x3')} 
     alt="프로필 프레임" 
     className={styles.photoFrame} 
     />
@@ -60,7 +60,7 @@ const Profile = () => {
     {/* 클릭하면 파일 선택창 열리도록 */}
     <label htmlFor="profileImageInput" className={styles.photoContent}>
     <img 
-      src={profileImage || getAssetUrl(currentTheme, 'icon', 'app_icon_x2')} 
+      src={profileImage || getAssetUrl(currentTheme, 'icons', 'app_icon_x2')} 
       alt="프로필 사진" 
       style={{ width: '100%', height: '100%', objectFit: 'cover', cursor: 'pointer' }}
     />
@@ -96,7 +96,7 @@ const Profile = () => {
           <div className={styles.imageInputContainer}>
             {/* 배경이 되는 픽셀 박스 이미지 */}
             <img 
-              src={getAssetUrl(currentTheme, 'box', 'profile__info_box_x3')}
+              src={getAssetUrl(currentTheme, 'boxes', 'profile__info_box_x3')}
               alt="입력칸 배경" 
               className={styles.inputBackgroundImage} 
             />
@@ -115,7 +115,7 @@ const Profile = () => {
           <label className={styles.inputLabel}>이메일</label>
           <div className={styles.imageInputContainer}>
             <img 
-              src={getAssetUrl(currentTheme, 'box', 'profile__info_box_x3')}
+              src={getAssetUrl(currentTheme, 'boxes', 'profile__info_box_x3')}
               alt="이메일 배경" 
               className={styles.inputBackgroundImage} 
             />
@@ -139,7 +139,7 @@ const Profile = () => {
       {/* 내 정보 수정하기 버튼 */}
       <button className={styles.updateButton} onClick={handleUpdate}>
         <img 
-          src={getAssetUrl(currentTheme, 'button', 'profile__info_patch_button_x3')} 
+          src={getAssetUrl(currentTheme, 'buttons', 'profile__info_patch_button_x3')} 
           alt="수정하기 버튼" 
         />
         <span className={styles.buttonText}>내 정보 수정하기</span>

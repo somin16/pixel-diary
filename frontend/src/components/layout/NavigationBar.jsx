@@ -28,7 +28,7 @@ const NAVIGATION_ITEMS = [
   {
     id: 'game',
     label: '게임',
-    path: '/gameselect',
+    path: '/game1run',
     iconActive: getAssetUrl('winter_light', 'icons', 'game_icon_x3'),
     iconInactive: getAssetUrl('winter_light', 'icons', 'game_icon_x3'),
   },
@@ -94,13 +94,15 @@ export default function NavigationBar() {
             onClick={() => handleNavigationClick(item.path)}
           >
             {/* 아이콘 이미지 렌더링 
-              width/height: auto → 이미지 원본의 픽셀 비율(도트)을 유지하기 위함 */}
+              네비게이션바의 세로를 약 55%를 아이콘이 차지하도록 설정해 모니터 해상도에 따른 차이를 제거했습니다
+              가로는 세로에 맞춰서 자동으로 비율조절되도록 했습니다
+              이미지 원본의 픽셀 비율(도트)을 유지하기 위함 */}
             <img
               src={checkIsActive(item.path) ? item.iconActive : item.iconInactive}
-              className="w-8 h-8"
+              className="w-auto"
               style={{
                 width: 'auto',
-                height: 'auto'
+                height: '55%'
               }}
               alt={item.label}
             />
