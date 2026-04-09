@@ -23,6 +23,11 @@ export function loadAllSprite(scene) {
     // 활
     scene.load.image("arrow","/assets/game1/Attacks/Arrow/arrow.png");
 
+    // 화염구
+    scene.load.image("fireball","/assets/game1/Attacks/FireBall/fireball.png")
+    // 화염구 파티클
+    scene.load.image("fireball_particle","/assets/game1/Attacks/FireBall/fireball_particle.png")
+
 
     // ======================몬스터===================================
     // 몬스터 이미지
@@ -71,6 +76,9 @@ export function loadAllSprite(scene) {
 
     // 화살
     scene.load.image("arrow_icon", "/assets/game1/Ui/Skill_Icon/arrow_icon.png");
+
+    // 화염구
+    scene.load.image("fireball_icon", "assets/game1/Ui/Skill_Icon/fireball_icon.png");
 
     // 공격력
     scene.load.image("damage_icon","/assets/game1/Ui/Skill_Icon/damage_icon.png");

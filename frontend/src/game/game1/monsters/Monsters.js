@@ -165,7 +165,7 @@ export function addEventRedSlimeSpawn(scene) {
   }
 
   scene.redSlimeSpawnEvent = scene.time.addEvent({
-    delay: 10000,   // 현재는 테스트를 위해 10초마다 생성이지만, 차후엔 20~30초마다 생성으로 바꿀 예정
+    delay: 20000,   // 20초마다 레드슬라임 등장
     callback: () => spawnRedSlime(scene),
     callbackScope: scene,
     loop: true,

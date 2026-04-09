@@ -24,6 +24,7 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
         // 플레이어가 가지고 있는 무기
         this.bladeLevel = 1; // 블레이드는 기본무기
         this.arrowLevel = 0; // 그 외는 0레벨로 시작
+        this.fireBallLevel = 0;
 
         // 그 외
         this.isDamage = false; // 플레이어 피격 감지(무적시간)
