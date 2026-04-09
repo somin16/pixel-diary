@@ -8,6 +8,7 @@ import MorePage from "./pages/more/MorePage"; // 더보기 화면
 import Profile from "./pages/profile/Profile"; // 더보기 - 프로필 화면
 import Login from "./pages/auth/login"; // 로그인 화면
 import AuthRedirect from "./pages/auth/AuthRedirect"; // 소셜 로그인 성공 시 페이지
+import Setting from "./pages/setting/Setting"; // 더보기 - 설정 메인화면
 
 function App() {
   return (
@@ -39,6 +40,9 @@ function App() {
 
         {/* 주소가 /auth-redirect 이면 프로필 화면을 보여줘 */}
         <Route path="/auth-redirect" element={<AuthRedirect />} />
+
+        {/* 주소가 /more/setting 이면 설정 메인 화면을 보여줘 */}
+        <Route path="/more/setting" element={<Setting />} />
 
       </Routes>
       </AppShell>

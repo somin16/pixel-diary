@@ -1,0 +1,106 @@
+/* --------------------------------------
+   1. 전체 화면 레이아웃 
+--------------------------------------- */
+.container {
+  width: 100%;
+  height: 100vh;      /* 화면 전체 높이 고정 */
+  overflow: hidden;   /* 절대 스크롤이 생기지 않도록 강제 고정 */
+  padding: 60px 0 30px; /* 화면 상하좌우 안쪽 여백 */
+  box-sizing: border-box;
+  
+  display: flex;
+  flex-direction: column;
+  -webkit-tap-highlight-color: transparent; /* 터치 시 파란 박스 깜빡임 제거 */
+}
+
+/* --------------------------------------
+   2. 상단 헤더 (뒤로 가기 & 제목)
+--------------------------------------- */
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: center; /* 제목 중앙 정렬 */
+  position: relative;
+  margin-bottom: 50px; /* 메뉴와의 간격 */
+  padding: 0 20px; /* 헤더에만 여백을 줘서 너무 붙지 않게 함 */
+}
+
+.backButton {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  position: absolute;
+  left: 20px; /* 뒤로 가기 버튼 left 여백 */
+  top: 50%;
+  transform: translateY(-50%);
+  outline: none;
+}
+
+/* 뒤로 가기 아이콘 */
+.backIcon {
+  width: auto;
+  height: 40px;
+}
+
+.title {
+  font-size: 36px;
+  color: #000000;
+  font-family: 'Mona', sans-serif; /* 픽셀 폰트 적용 */
+  margin: 0;
+}
+
+/* --------------------------------------
+   3. 설정 메뉴 리스트 영역
+--------------------------------------- */
+.settingsList {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+/* 개별 메뉴 항목 */
+.settingsItem {
+  cursor: pointer;
+  width: 100%; /* 가로 끝까지 꽉 차게 늘림 */
+  -webkit-tap-highlight-color: transparent;
+  margin-top: -4px;
+}
+
+.settingsItem:first-child {
+  margin-top: 0; /* 첫 번째는 그대로 */
+}
+
+/* <img> 태그와 텍스트를 감싸는 래퍼(포장지) */
+.menuItemWrapper {
+  position: relative; /* 자식 요소들의 기준점 */
+  width: 100%;
+}
+
+/* 바닥에 깔리는 메뉴 박스 이미지 */
+.menuItemBg {
+  position: relative; 
+  width: 100%; /* 가로로 늘림 */
+  height: auto; /* 원본 비율 유지 */
+  display: block; /* 이미지 밑 빈 공간 제거 */
+}
+
+/* 메뉴 박스 이미지 위로 올라가는 텍스트 */
+.settingsText {
+  position: absolute;
+  z-index: 2; /* 이미지보다 위로 올라옴 */
+  top: 50%;
+  transform: translateY(-50%);
+  left: 25px; /* 텍스트 왼쪽 여백 */
+  
+  font-size: 16px;
+  color: #000000;
+  font-family: 'Mona', sans-serif; /* 픽셀 폰트 */
+}
+
+/* 빨간색 텍스트 스타일 (로그아웃, 회원탈퇴) */
+.dangerText {
+  color: #ef4444;
+}
