@@ -17,6 +17,8 @@ export default function AppShell({ children }) {
     '/auth-redirect',
     '/game1run',
     '/more/setting',
+    '/more/setting/account',
+    '/more/setting/notification',
     '/more/profile',
     '/more/shop',
     '/more/inventory',
