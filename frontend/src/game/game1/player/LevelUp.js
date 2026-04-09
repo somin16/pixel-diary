@@ -1,6 +1,7 @@
 import Phaser from "phaser";
 import { updateArrowTimer } from "../attacks/Attacks";
 import { addEventautoHeal } from "./Hp";
+import { updateAttackFireBall } from "../attacks/FireBall";
 
 // 플레이어 레벨업
 export function levelUpMenu(scene) {
@@ -34,7 +35,8 @@ export function levelUpMenu(scene) {
 
       // 무기
       { name: "블레이드", id: "blade_up", icon: "blade_icon"}, // 현재 3레벨까지 구현
-      { name: "활", id: "arrow_up", icon: "arrow_icon"} // 레벨당 속도증가 구현
+      { name: "활", id: "arrow_up", icon: "arrow_icon"}, // 레벨당 속도증가 구현
+      { name: "화염구", id: "fireball_up", icon: "fireball_icon"}
     ];
 
     // 최고레벨에 도달한 스킬들을 걸러내기
@@ -51,6 +53,9 @@ export function levelUpMenu(scene) {
         return false;
       } 
       if(skill.id == "arrow_up" && scene.player.arrowLevel >= 4) {
+        return false;
+      }
+      if(skill.id == "fireball_up" && scene.player.fireBallLevel >= 4) {
         return false;
       }
       // 조건문 통과하면 냅두기
@@ -153,6 +158,14 @@ function selectSkill(skill_Id, scene) { // skillId는 너무 가독성이 안좋
 
         scene.player.arrowLevel += 1;
         updateArrowTimer(scene); // 딜레이 갱신
+        break;
+      }
+
+      // 화염구
+      case "fireball_up" : {
+
+        scene.player.fireBallLevel += 1;
+        updateAttackFireBall(scene); // 화염구 갯수 갱신
         break;
       }
     }
