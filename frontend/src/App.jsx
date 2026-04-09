@@ -7,22 +7,26 @@ import Game2 from "./game/game2/Game2"; // 게임2 화면
 import MorePage from "./pages/more/MorePage"; // 더보기 화면
 import Profile from "./pages/profile/Profile"; // 더보기 - 프로필 화면
 import Login from "./pages/auth/login"; // 로그인 화면
-import AuthRedirect from "./pages/auth/AuthRedirect"; // 
+import AuthRedirect from "./pages/auth/AuthRedirect"; // 소셜 로그인 성공 시 페이지
 
 function App() {
   return (
     <BrowserRouter>
-      <AppShell>
-        <Routes>
-        {/* 지금은 홈 화면 하나뿐, 나중에 아래에 Route 추가 */}
-        {/* 주소가 / 이면 홈화면을 보여줘 */}
-        <Route path="/" element={<Home />} />
-
+      {/* 1. AppShell이 필요 없는 완전 독립 페이지 (게임 등) */}
+      <Routes>
         {/* 주소가 /game1run 이면 미니게임1 화면을 보여줘 */}
         <Route path="/game1run" element={<Game1 />} /> 
 
         {/* 주소가 /game2run 이면 미니게임2 화면을 보여줘 */}
         <Route path="/game2run" element={<Game2 />} /> 
+      </Routes>
+
+      {/* 2. AppShell 레이아웃을 공유하는 일반 페이지들 */}
+      <AppShell>
+        <Routes>
+        {/* 지금은 홈 화면 하나뿐, 나중에 아래에 Route 추가 */}
+        {/* 주소가 / 이면 홈화면을 보여줘 */}
+        <Route path="/" element={<Home />} />
 
         {/* 주소가 /more 이면 더보기 화면을 보여줘 */}
         <Route path="/more" element={<MorePage />} />
