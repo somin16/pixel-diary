@@ -3,9 +3,6 @@ import { useNavigate, useLocation } from 'react-router-dom';
 // useLocation: 현재 어떤 경로에 있는지 확인할 때 사용하는 훅
 // 훅 (Hook): React에서 use로 시작하는 특별한 함수, 컴포넌트 안에서만 사용 가능
 
-import { combineTailwindClasses } from '../../utils/tailwindClassManager';
-// combineTailwindClasses: Tailwind 클래스 충돌 방지 및 조건부 클래스 처리 유틸리티 함수
-
 import { getAssetUrl } from '../../utils/assetHelper';
 // 에셋 이미지 경로 헬퍼 함수
 
@@ -94,8 +91,8 @@ export default function NavigationBar() {
             onClick={() => handleNavigationClick(item.path)}
           >
             {/* 아이콘 이미지 렌더링 
-              네비게이션바의 세로를 약 55%를 아이콘이 차지하도록 설정해 모니터 해상도에 따른 차이를 제거했습니다
-              가로는 세로에 맞춰서 자동으로 비율조절되도록 했습니다
+              네비게이션바의 세로를 약 55%를 아이콘이 차지하도록 설정해 모니터 해상도에 따른 차이를 제거
+              가로는 세로에 맞춰서 자동으로 비율조절
               이미지 원본의 픽셀 비율(도트)을 유지하기 위함 */}
             <img
               src={checkIsActive(item.path) ? item.iconActive : item.iconInactive}
