@@ -19,7 +19,9 @@ load_dotenv()
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-SECRET_KEY = os.getenv("SECRET_KEY", "django-insecure-o7b#$)n%=rsdhb^8(75&s#6)_9cv#s9_$u7n%-*nduea54wcn&")
+SECRET_KEY = os.getenv("SECRET_KEY")
+if not SECRET_KEY:
+    raise ValueError("SECRET_KEY 환경변수가 설정되지 않았습니다.")
 
 DEBUG = os.getenv("DEBUG", "True") == "True"
 

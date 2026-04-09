@@ -31,7 +31,7 @@ docs: |-
   - Authorization: Bearer 로그인할 시 받는 access_token
   ***
   ### Status Code
-  - 200 OK: 일기 작성 및 저장 성공
+  - 201 Created: 일기 작성 및 저장 성공
   - 400 Bad Request: 필수값 누락 (Authorization Bearer 헤더 access_token)
   - 400 Bad Request: 필수값 누락 (content)
   - 400 Bad Request: 글자수 제한 (10자)
