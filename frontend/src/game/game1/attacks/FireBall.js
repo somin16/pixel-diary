@@ -49,7 +49,7 @@ function spawnFireBall(scene, radius, angleOffset) {
         scale: { start: 5, end: 0 }, // 파티클이 작아지는 정도(5에서 시작 0으로 끝난다)
         alpha: { start: 1, end: 0 }, // 파티클의 색상이 변하는 정도
         lifespan: 300, // 파티클이 남아있는 시간
-        blendMode: 'NOMAL' // NOMAL은 파티클로 사용되는 fireball_particle의 원본색을 유지
+        blendMode: 'NORMAL' // NOMAL은 파티클로 사용되는 fireball_particle의 원본색을 유지
                            // 다른걸로는 ADD가 있고 ADD는 다른 색의 영향을 받는다
     });
     firePaticle.startFollow(fireBallEff); // 파티클이 화염구에서 시작되도록 설정
