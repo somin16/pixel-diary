@@ -48,6 +48,9 @@ export function loadAllSprite(scene) {
     scene.load.image("red_slime_move1", "/assets/game1/Monster/Nomal/red_slime_move1.png");
     scene.load.image("red_slime_move2", "/assets/game1/Monster/Nomal/red_slime_move2.png");
 
+    // 슬라임 소대(몬스터11)
+    scene.load.image("phalanx_move1", "/assets/game1/Monster/Elite/phalanx_move1.png")
+    scene.load.image("phalanx_move2", "/assets/game1/Monster/Elite/phalanx_move2.png")
     // =======================타일======================================
 
     // 타일
