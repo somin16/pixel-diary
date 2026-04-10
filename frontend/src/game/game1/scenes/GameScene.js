@@ -21,7 +21,7 @@ import { overlapMeat } from "../Object/Meat.js";
 // ==============몬스터 관련=================
 
 // 몬스터 레벨업, 몬스터 스폰 업데이트
-import { addEventMonsterLevelUp, addEventRedSlimeSpawn, monsterMove, overlapMonstersHit } from "../monsters/Monsters.js";
+import { addEventMonsterLevelUp, addEventRedSlimeSpawn, addEliteMonsterSpawn, monsterMove, overlapMonstersHit } from "../monsters/Monsters.js";
 
 
 // ============이미지, 애니메이션====================
@@ -138,6 +138,9 @@ export default class GameScene extends Phaser.Scene {
 
     // 레드슬라임 생성 이벤트(Monsters.js)
     addEventRedSlimeSpawn(this);
+
+    // 엘리트 몬스터 생성 이벤트(Monsters.js)
+    addEliteMonsterSpawn(this);
 
     // 20초마다 몬스터의 체력이 증가하고 스폰률이 올라가는 이벤트(Monsters.js)
     // 이벤트 클래스에 레벨업, 스폰률 업데이트로 모두 함께 관리

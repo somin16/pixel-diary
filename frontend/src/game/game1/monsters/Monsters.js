@@ -4,6 +4,7 @@ import CubeGolem from "../monsters/Cubegolem.js";
 import { addExpBall } from "../player/ExpBall.js";
 import { updateHP } from "../player/Hp.js";
 import RedSlime from "./RedSlime.js";
+import Phalanx from "./Phalanx.js";
 
 // 몬스터 이동 로직
 export function monsterMove(scene) {
@@ -78,6 +79,21 @@ export function monstersHitDamageBase(monster, knockback, scene) {
     monsterDead(monster, scene);
   }
 
+// 엘리트 몬스터 스폰
+function spawnEliteMonster(scene) {
+
+    // 생성범위
+    const SPAWN_RADIUS = 400;
+    // Between을 통해 랜덤한 각도를 뽑아낸다
+    const randomAngle = Phaser.Math.FloatBetween(0, Math.PI * 2);
+
+    // 플레이어의 현재 위치와 비교하여 원의 테두리 좌표에 몬스터가 스폰될 위치를 정합니다
+    const SPAWN_X = scene.player.x + Math.cos(randomAngle) * SPAWN_RADIUS;
+    const SPAWN_Y = scene.player.y + Math.sin(randomAngle) * SPAWN_RADIUS;
+
+    spawnPhalanx(SPAWN_X,SPAWN_Y,scene);
+}
+
 // 몬스터 스폰
 function spawnMonster(scene) {
 
@@ -112,6 +128,13 @@ function spawnMonster(scene) {
     // 뽑은게 슬라임의 스폰값보다 낮으면 슬라임, 높으면 다른몬스터
     if (randomSpawn <= slimeSpawnPercent) spawnSlime(SPAWN_X, SPAWN_Y, scene); // 여기에 소환이 되면 안됨으로 부모 클래스인 scene을 추가
     else spawnCubeGolem(SPAWN_X, SPAWN_Y, scene);
+}
+
+// 슬라임 소대 생성
+function spawnPhalanx(PosX, PosY, scene) {
+
+  let phalanx = new Phalanx(scene, PosX, PosY, scene.monsterStatus);
+  scene.monsters.add(phalanx);
 }
 
 // 슬라임 생성
@@ -209,6 +232,17 @@ function updateMonsterSpawn(scene) {
       callbackScope: scene,
       loop: true,
     })
+}
+
+// 엘리트 몬스터 스폰(현재 테스트를 위해 30초로 설정, 차후 1분으로 변경)
+export function addEliteMonsterSpawn(scene) {
+
+  scene.eliteMonsterSpawnTimer = scene.time.addEvent({
+    delay: 30000,
+    callback: () => spawnEliteMonster(scene),
+    callbackScope: scene,
+    loop: true
+  })
 }
 
 // 몬스터가 죽었는지 살았는지 감지
