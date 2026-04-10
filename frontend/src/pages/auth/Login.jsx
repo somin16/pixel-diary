@@ -39,18 +39,30 @@ export default function Login() {
 
   // 소셜 로그인 실행 함수
   const handleSocialLogin = async (provider) => {
-    // 백엔드 가이드에 있던 코드
-    const { data, error } = await supabase.auth.signInWithOAuth({
-      provider: provider, // 'google', 'kakao' 등
-      options: {
-        // 인증 후 돌아올 주소 (App.jsx에 설정할 경로)
-        redirectTo: `${window.location.origin}/auth-redirect?provider=${provider}`,
-        skipBrowserRedirect: false,
-      },
-    });
+  // 네이버는 Supabase SDK가 지원하지 않아서 별도로 처리
+  if (provider === 'naver') {
+    const NAVER_CLIENT_ID = import.meta.env.VITE_NAVER_CLIENT_ID; // .env에서 네이버 Client ID 가져오기
+    const REDIRECT_URI = `${window.location.origin}/auth-redirect?provider=naver`; // 로그인 후 돌아올 주소
+    const STATE = Math.random().toString(36).substring(2); // CSRF 공격 방지용 랜덤값
+    
+    localStorage.setItem('naver_state', STATE); // 콜백에서 검증하기 위해 state 저장
+    
+    // 네이버 로그인 페이지로 이동 (code를 받아오기 위함)
+    window.location.href = `https://nid.naver.com/oauth2.0/authorize?response_type=code&client_id=${NAVER_CLIENT_ID}&redirect_uri=${REDIRECT_URI}&state=${STATE}`;
+    return;
+  }
 
-    if (error) console.error("Login Error:", error.message);
-  };
+  // 구글, 카카오는 Supabase SDK로 처리 (SDK가 code_verifier 자동 생성)
+  const { data, error } = await supabase.auth.signInWithOAuth({
+    provider: provider,
+    options: {
+      redirectTo: `${window.location.origin}/auth-redirect?provider=${provider}`,
+      skipBrowserRedirect: false,
+    },
+  });
+
+  if (error) console.error("Login Error:", error.message);
+};
 
 
   return (
