@@ -58,11 +58,11 @@ export default function Login() {
     // h-full, w-full로 설정해서 AppShell 중앙에 배치
     <div className="w-full h-full items-center flex flex-col p-25 ">
       {/* 앱 아이콘 */}
-      <div className="p-20">
+      <div className="p-20">{/* 여백(패딩) 증가 */}
         <img 
           src={getAssetUrl('winter_light', 'icons', 'app_icon_32_x3')} 
           alt="앱 아이콘"
-          className="w-auto h-auto scale-150"
+          className="w-auto h-auto scale-150"// 이미지 스케일 150% 증가
         />
       </div>
 
