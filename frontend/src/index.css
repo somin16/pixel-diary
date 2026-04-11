@@ -1,106 +1,105 @@
-/* 0. 폰트 등록: src/assets/fonts 경로에 맞춰 파일을 불러옴 */
+/* Tailwind CSS 불러오기 — 이 한 줄로 Tailwind의 모든 유틸리티 클래스 사용 가능 */
+@import "tailwindcss";
+
+/* ── 폰트 등록 ────────────────────────────────────────────
+   woff2: 최신 브라우저용 (용량 작고 빠름)
+   truetype: 구형 브라우저 대응용
+──────────────────────────────────────────────────────── */
 @font-face {
-  font-family: 'Mona'; /* 폰트 이름 */
-  /* 파일 확장자가 ttf라면 format('truetype'), woff2라면 format('woff2') */
+  font-family: 'Mona';
   src: url('./assets/fonts/Mona12.woff2') format('woff2'),
        url('./assets/fonts/Mona12.ttf') format('truetype');
   font-weight: normal;
   font-style: normal;
-  /* [변경] 로딩 전에는 글자를 숨겼다가 로딩 완료되면 한 번에 보여줌 */
+  /* 폰트 로딩 전에는 글자를 숨겼다가 로딩 완료되면 한 번에 보여줌 */
   font-display: block;
 }
 
-/* 1. 디자인 시스템 & 전역 설정 */
+/* ── CSS 변수 (디자인 토큰) ───────────────────────────────
+──────────────────────────────────────────────────────── */
 :root {
-  --text: #6b6375;
-  --text-h: #08060d;
-  --bg: #fff;
-  --border: #e5e4e7;
-  --accent: #aa3bff;
-  --accent-bg: rgba(170, 59, 255, 0.1);
-  
-  /* 결정된 폰트를 최우선으로 적용 */
-  --sans: 'Mona', system-ui, 'Segoe UI', sans-serif;
-  --heading: 'Mona', sans-serif;
-  --mono: ui-monospace, Consolas, monospace;
+  /* 폰트 패밀리 */
+  --font-sans: 'Mona', sans-serif;
+  --font-heading: 'Mona', sans-serif;
+}
 
-  /* 전역 텍스트 설정 */
-  font: 18px/1.45 var(--sans);
-  color: var(--text);
-  background: #000000; /* [추가] 360x720 밖 영역은 검은색 처리 (레터박스) */
-  
-  /* 텍스트 렌더링 최적화 (가독성 향상) */
+/* ── 전역 기본 설정 ───────────────────────────────────────
+──────────────────────────────────────────────────────── */
+* {
+  /* 텍스트 렌더링 최적화 — 가독성 향상 */
+  font-family: 'Mona', sans-serif !important;
   text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
+  -webkit-font-smoothing: none;
+  box-sizing: border-box;
 
-  /* [앱 최적화] 사용자가 화면을 꾹 눌러서 텍스트 선택하거나 메뉴 뜨는 것 방지 */
+  /* 앱 최적화 — 사용자가 화면을 꾹 눌러서 텍스트 선택하거나 메뉴 뜨는 것 방지 */
   -webkit-touch-callout: none;
   -webkit-user-select: none;
   user-select: none;
   -webkit-tap-highlight-color: transparent;
 }
 
-/* 2. 레이아웃 제어: 스크롤을 완전히 막아 앱처럼 만듦 */
+/* ── html, body 기본 설정 ────────────────────────────────
+   Tailwind의 h-screen, overflow-hidden 등으로 대체 가능하지만
+   position: fixed → 최상위 레이아웃 고정 및 모바일 스크롤 바운스 방지 (전역 설정)
+──────────────────────────────────────────────────────── */
 html, body {
   margin: 0;
   padding: 0;
   width: 100%;
-  height: 100%;
-  overflow: hidden; /* 가로/세로 스크롤 절대 방지 */
-  position: fixed;  /* 모바일 바운스 방지 */
+  height: 100dvh; /* appshell.jsx와 같이 dvh로 통일 */
+  overflow: hidden;
+  position: fixed;    /* 모바일 바운스 방지 */
+
+  /* 레터박스 설정 */
+  background-color: #000000;
+
+  /* 자식인 #root를 브라우저 중앙에 배치 */
   display: flex;
   justify-content: center;
   align-items: center;
 }
 
-/* 3. 메인 컨테이너: 화면 높이에 맞춰 꽉 채우고 중앙 정렬 */
+/* ── #root 컨테이너 ──────────────────────────────────────
+   image-rendering → 픽셀아트 전용 렌더링 설정 (도트 깨짐 방지)
+   env(safe-area-inset) → 최신 기기(아이폰 노치 등)의 세이프 에어리어 확보
+──────────────────────────────────────────────────────── */
 #root {
-  /* [변경] 고정 픽셀 대신 화면 높이(vh) 기준 */
-  height: 100vh;       /* 화면 높이의 100%만큼 커짐 */
-  aspect-ratio: 1 / 2; /* 모바일 비율(360:720) 유지 */
-  width: auto;
+  /* AppShell에서 비율을 잡으므로 여기서는 꽉 채워주기 */
+  height: 100%;      /* 화면 높이에 꽉 채움 */
+  width: auto;        /* 높이에 맞춰서 가로 너비가 비율대로 자동 조절됨 */
 
-  /* [중앙 정렬] absolute 대신 flex 부모 덕분에 중앙에 옵니다 */
-  position: relative; 
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
+  /* 픽셀아트 선명도 유지 — 확대해도 도트가 흐릿해지지 않음 */
+  image-rendering: pixelated;
+  image-rendering: crisp-edges; /* Firefox 대응 */
 
-  /* 디자인 설정 */
-  background-color: #ffffff;
-  
-  /* 픽셀 아트 선명도 유지 */
-  image-rendering: pixelated; 
-  image-rendering: crisp-edges;
-  
-  /* 앱 상단 노치 대응 */
+  /* 배경화면 가로 고정 및 위아래 컷팅 설정 */
+  background-size: 100% auto;   /* 가로를 무조건 100%에 맞춤 (세로가 길면 위아래가 삐져나감) */
+  background-position: center; /* 삐져나간 위아래를 똑같이 배분해서 중앙 유지 */
+  background-repeat: no-repeat; /* 배경 반복 방지 */
+
+  /* 아이폰 노치/홈바 대응 */
   padding-top: env(safe-area-inset-top, 20px);
   padding-bottom: env(safe-area-inset-bottom, 20px);
-  box-sizing: border-box;
+
 }
 
-/* 페이지별 배경을 담을 공통 클래스 */
-.page-container {
-  width: 100%;
-  height: 100%;
-  background-repeat: no-repeat;
-  background-position: center;
-  position: relative;
+/* ── 입력창 선택 허용 예외 처리 ──────────────────────────
+   위에서 전체 user-select: none으로 막았지만
+   input, textarea는 텍스트 입력이 필요하므로 예외 처리
+──────────────────────────────────────────────────────── */
+input, textarea, [contenteditable="true"], .selectable {
+  user-select: text;
+  -webkit-user-select: text;
 }
 
-/* 4. 반응형 제어: 화면이 360x720보다 작은 기기 대응 */
-@media (max-width: 360px) or (max-height: 720px) {
-  #root {
-    width: 100vw;
-    height: 100vh;
-    /* 세로가 살짝 짤리더라도 배경을 꽉 채우고 싶다면 cover 사용 */
-    background-size: cover; 
+@layer utilities {
+  /* 스크롤바 숨기기 (기능은 작동) */
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
   }
 }
-
-/* 입력창 등은 선택 가능하게 예외 처리 */
-input, textarea { user-select: text; -webkit-user-select: text; }
-
-h1, h2 { color: var(--text-h); margin: 1rem 0; font-family: var(--sans); }
-h1 { font-size: 2.5rem; letter-spacing: -0.03em; }
-h2 { font-size: 1.5rem; }

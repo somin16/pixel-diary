@@ -1,0 +1,38 @@
+info:
+  name: Diary
+  type: http
+  seq: 1
+
+http:
+  method: POST
+  url: http://127.0.0.1:8000/api/v1/diaries/
+  headers:
+    - name: Authorization
+      value: "Bearer "
+  body:
+    type: json
+    data: |-
+      {
+        "content": ""
+      }
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |-
+  ### Body / Json
+  - content: 작성할 일기 내용
+  ***
+  ### Headers
+  - Authorization: Bearer 로그인할 시 받는 access_token
+  ***
+  ### Status Code
+  - 201 Created: 일기 작성 및 저장 성공
+  - 400 Bad Request: 필수값 누락 (Authorization Bearer 헤더 access_token)
+  - 400 Bad Request: 필수값 누락 (content)
+  - 400 Bad Request: 글자수 제한 (10자)
+  - 401 Unauthorized: 유효하지 않은 토큰인 경우 

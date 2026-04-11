@@ -29,7 +29,7 @@ function attackBlade(scene) {
 
       // 타격 처리 시작
       monstersHitDamageBase(monster, knockback, scene); // 공통적으로 사용하는 몬스터가 받는 대미지 효과
-      monster.hp -= scene.player.damage; // 공격력(damage)만큼 감소
+      monster.hp -= scene.player.damage * 1.5; // 공격력의 150%만큼의 대미지
 
       });
 

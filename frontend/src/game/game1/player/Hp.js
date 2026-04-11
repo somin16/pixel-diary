@@ -29,11 +29,16 @@ export function updateHP(player, value, scene) {
 }
 
 // 플레이어 체력 자연회복 이벤트
-export function addEventupdataHP(scene) {
+export function addEventautoHeal(scene) {
 
-    scene.time.addEvent({
+    // 갱신을 위해 이미 있으면 삭제
+    if(scene.autoHeal) {
+        scene.autoHeal.remove();
+    }
+
+    scene.autoHeal = scene.time.addEvent({
     delay: 1000,
-    callback: () => updateHP(scene.player, 1, scene), // 수치가 들어가는 클래스일 경우엔 괄호랑 화살표도 써줘야한다
+    callback: () => updateHP(scene.player, scene.player.autoHeal, scene), // 수치가 들어가는 클래스일 경우엔 괄호랑 화살표도 써줘야한다
     callbackScope: scene,
     loop: true,
     });

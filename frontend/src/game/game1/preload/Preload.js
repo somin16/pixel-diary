@@ -23,6 +23,11 @@ export function loadAllSprite(scene) {
     // 활
     scene.load.image("arrow","/assets/game1/Attacks/Arrow/arrow.png");
 
+    // 화염구
+    scene.load.image("fireball","/assets/game1/Attacks/FireBall/fireball.png")
+    // 화염구 파티클
+    scene.load.image("fireball_particle","/assets/game1/Attacks/FireBall/fireball_particle.png")
+
 
     // ======================몬스터===================================
     // 몬스터 이미지
@@ -39,6 +44,13 @@ export function loadAllSprite(scene) {
         frameHeight: 16
     }); 
 
+    // 레드슬라임(몬스터3)
+    scene.load.image("red_slime_move1", "/assets/game1/Monster/Nomal/red_slime_move1.png");
+    scene.load.image("red_slime_move2", "/assets/game1/Monster/Nomal/red_slime_move2.png");
+
+    // 슬라임 소대(몬스터11)
+    scene.load.image("phalanx_move1", "/assets/game1/Monster/Elite/phalanx_move1.png")
+    scene.load.image("phalanx_move2", "/assets/game1/Monster/Elite/phalanx_move2.png")
     // =======================타일======================================
 
     // 타일
@@ -68,11 +80,17 @@ export function loadAllSprite(scene) {
     // 화살
     scene.load.image("arrow_icon", "/assets/game1/Ui/Skill_Icon/arrow_icon.png");
 
+    // 화염구
+    scene.load.image("fireball_icon", "assets/game1/Ui/Skill_Icon/fireball_icon.png");
+
     // 공격력
     scene.load.image("damage_icon","/assets/game1/Ui/Skill_Icon/damage_icon.png");
 
     // 이동속도
     scene.load.image("speed_icon","/assets/game1/Ui/Skill_Icon/speed_icon.png");
+
+    // 자동회복
+    scene.load.image("autoHeal_icon","/assets/game1/Ui/Skill_Icon/autoHeal_icon.png");
 
 
     // =====================오브젝트=========================================

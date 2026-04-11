@@ -3,6 +3,8 @@ import Slime from "../monsters/Slime.js";
 import CubeGolem from "../monsters/Cubegolem.js";
 import { addExpBall } from "../player/ExpBall.js";
 import { updateHP } from "../player/Hp.js";
+import RedSlime from "./RedSlime.js";
+import Phalanx from "./Phalanx.js";
 
 // 몬스터 이동 로직
 export function monsterMove(scene) {
@@ -51,16 +53,21 @@ export function monstersHitDamageBase(monster, knockback, scene) {
     let knockbackValue = knockback * monster.resistance;
 
     // 몬스터가 바라보는 방향에 따라서 넉백으로 변경
-    if (monster.flipX) { 
-      monster.body.setVelocityX(-knockbackValue); 
-    } 
-      
-    else {
-      monster.body.setVelocityX(knockbackValue);
-    }
 
-    // 위 아래
-    monster.body.setVelocityY(Phaser.Math.Between(-knockbackValue, knockbackValue));
+    // 레드 슬라임은 해당 넉백에서 제외(velocity가 한번만 작동하는 몬스터라 멈추는 오류가 발생)
+    if (monster.monsterID != 3) {
+
+        if (monster.flipX) { 
+          monster.body.setVelocityX(-knockbackValue); 
+        }  
+      
+        else {
+          monster.body.setVelocityX(knockbackValue);
+        }
+
+        // 위 아래
+        monster.body.setVelocityY(Phaser.Math.Between(-knockbackValue, knockbackValue));
+    }
 
     scene.time.delayedCall(150, () => {
       if (monster.active) {
@@ -71,6 +78,21 @@ export function monstersHitDamageBase(monster, knockback, scene) {
     // 몬스터가 죽었는지를 감지
     monsterDead(monster, scene);
   }
+
+// 엘리트 몬스터 스폰
+function spawnEliteMonster(scene) {
+
+    // 생성범위
+    const SPAWN_RADIUS = 400;
+    // Between을 통해 랜덤한 각도를 뽑아낸다
+    const randomAngle = Phaser.Math.FloatBetween(0, Math.PI * 2);
+
+    // 플레이어의 현재 위치와 비교하여 원의 테두리 좌표에 몬스터가 스폰될 위치를 정합니다
+    const SPAWN_X = scene.player.x + Math.cos(randomAngle) * SPAWN_RADIUS;
+    const SPAWN_Y = scene.player.y + Math.sin(randomAngle) * SPAWN_RADIUS;
+
+    spawnPhalanx(SPAWN_X,SPAWN_Y,scene);
+}
 
 // 몬스터 스폰
 function spawnMonster(scene) {
@@ -108,6 +130,13 @@ function spawnMonster(scene) {
     else spawnCubeGolem(SPAWN_X, SPAWN_Y, scene);
 }
 
+// 슬라임 소대 생성
+function spawnPhalanx(PosX, PosY, scene) {
+
+  let phalanx = new Phalanx(scene, PosX, PosY, scene.monsterStatus);
+  scene.monsters.add(phalanx);
+}
+
 // 슬라임 생성
 function spawnSlime(PosX, PosY, scene) { // 함수를 따로 할당했기에 어디에 소환할지도 설정
 
@@ -117,12 +146,53 @@ function spawnSlime(PosX, PosY, scene) { // 함수를 따로 할당했기에 어
     scene.monsters.add(slime); // monsters 배열에 넣는다
     }
 
-    // 큐브골렘 생성
-    function spawnCubeGolem(PosX, PosY, scene) {
+// 큐브골렘 생성
+function spawnCubeGolem(PosX, PosY, scene) {
   
-      // 큐브골렘을 생성(monsters/CubeGolem.js)
-      let cubeGolem = new CubeGolem(scene, PosX, PosY, scene.monsterStatus);
-      scene.monsters.add(cubeGolem); // monsters 배열에 넣는다
+    // 큐브골렘을 생성(monsters/CubeGolem.js)
+    let cubeGolem = new CubeGolem(scene, PosX, PosY, scene.monsterStatus);
+    scene.monsters.add(cubeGolem); // monsters 배열에 넣는다
+}
+
+// 레드슬라임 생성
+function spawnRedSlime(scene) {
+
+  // 생성범위
+  const SPAWN_RADIUS = 400;
+  // Between을 통해 랜덤한 각도를 뽑아낸다
+  const randomAngle = Phaser.Math.FloatBetween(0, Math.PI * 2);
+
+  // 플레이어의 현재 위치와 비교하여 원의 테두리 좌표에 몬스터가 스폰될 위치를 정합니다
+  const SPAWN_X = scene.player.x + Math.cos(randomAngle) * SPAWN_RADIUS;
+  const SPAWN_Y = scene.player.y + Math.sin(randomAngle) * SPAWN_RADIUS;
+
+  // 현재는 3마리 고정
+  for (let i = 0; i < 3; i++) {
+
+    // 뭉쳐있으면 한마리처럼 보임으로 -33 ~ 33사이로 랜덤하게 거리를 준다
+    let offsetX = Phaser.Math.Between(-33, 33);
+    let offsetY = Phaser.Math.Between(-33, 33);
+
+    // 레드슬라임 생성(monsters/RedSlime.js)
+    let redSlime = new RedSlime(scene, SPAWN_X + offsetX, SPAWN_Y + offsetY, scene.monsterStatus);
+    scene.monsters.add(redSlime); // monsters 배열에 넣는다
+  }
+}
+
+// 레드 슬라임 생성(전용)
+export function addEventRedSlimeSpawn(scene) {
+
+  // 중복방지
+  if (scene.redSlimeSpawnEvent) {
+    scene.redSlimeSpawnEvent.remove();
+  }
+
+  scene.redSlimeSpawnEvent = scene.time.addEvent({
+    delay: 20000,   // 20초마다 레드슬라임 등장
+    callback: () => spawnRedSlime(scene),
+    callbackScope: scene,
+    loop: true,
+  });
 }
 
 // 이벤트 생성 함수
@@ -141,7 +211,8 @@ export function addEventMonsterLevelUp(scene) {
 function monsterLevelUp(scene) {
 
     scene.monsterStatus += 1; // 현재는 임시로 전체 가중치1 증가로 설정
-    updateMonsterSpawn(scene);
+    updateMonsterSpawn(scene);    // 몬스터 스폰 갱신
+    addEventRedSlimeSpawn(scene); // 갱신
 }
 
 // 몬스터 스폰률 업데이트
@@ -161,6 +232,17 @@ function updateMonsterSpawn(scene) {
       callbackScope: scene,
       loop: true,
     })
+}
+
+// 엘리트 몬스터 스폰(현재 테스트를 위해 30초로 설정, 차후 1분으로 변경)
+export function addEliteMonsterSpawn(scene) {
+
+  scene.eliteMonsterSpawnTimer = scene.time.addEvent({
+    delay: 30000,
+    callback: () => spawnEliteMonster(scene),
+    callbackScope: scene,
+    loop: true
+  })
 }
 
 // 몬스터가 죽었는지 살았는지 감지

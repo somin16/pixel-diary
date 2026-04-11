@@ -43,6 +43,24 @@ export function createAllAnimations(scene) {
       repeat: -1
     });
 
+    // 몬스터3
+    // 레드슬라임 애니메이션
+    scene.anims.create({
+      key: "red_slime_animation",
+      frames: [{ key: "red_slime_move1"}, { key: "red_slime_move2"}],
+      frameRate: 10,
+      repeat: -1,
+    });
+
+    // 몬스터11
+    // 슬라임소대 애니메이션
+    scene.anims.create({
+      key: "phalanx_animation",
+      frames: [{ key: "phalanx_move1"}, { key: "phalanx_move2"}],
+      frameRate: 5,
+      repeat: -1,
+    });
+
     // 기본 공격(블레이드) 애니메이션
     scene.anims.create({
       key: "blade_animation",

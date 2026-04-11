@@ -909,3 +909,146 @@ class TokenRefreshView(APIView):
                 {"message": "토큰 갱신 중 오류가 발생했습니다."},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
+
+
+class NaverLoginView(APIView):
+    """네이버 로그인 API"""
+
+    def post(self, request):
+        """
+        POST /api/v1/auth/naver
+        - 프론트에서 받은 code로 네이버 API에 토큰 요청
+        - 네이버 유저 정보로 Supabase에 유저 생성 또는 조회
+        - Supabase access_token, refresh_token 반환
+        """
+        code = request.data.get("code", "").strip()
+
+        if not code:
+            return Response(
+                {"message": "code는 필수입니다."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        try:
+            naver_client_id = os.getenv("NAVER_CLIENT_ID")
+            naver_client_secret = os.getenv("NAVER_CLIENT_SECRET")
+            redirect_uri = f"{os.getenv('FRONTEND_URL')}/auth-redirect?provider=naver"
+
+            # 1. 네이버 API로 access_token 요청
+            token_response = requests.post(
+                "https://nid.naver.com/oauth2.0/token",
+                params={
+                    "grant_type": "authorization_code",
+                    "client_id": naver_client_id,
+                    "client_secret": naver_client_secret,
+                    "code": code,
+                    "redirect_uri": redirect_uri,
+                },
+            )
+
+            if token_response.status_code != 200:
+                raise Exception(f"네이버 토큰 요청 오류: {token_response.text}")
+
+            naver_token = token_response.json().get("access_token")
+
+            # 2. 네이버 API로 유저 정보 조회
+            user_response = requests.get(
+                "https://openapi.naver.com/v1/nid/me",
+                headers={"Authorization": f"Bearer {naver_token}"},
+            )
+
+            if user_response.status_code != 200:
+                raise Exception(f"네이버 유저 정보 조회 오류: {user_response.text}")
+
+            naver_user = user_response.json().get("response", {})
+            email = naver_user.get("email")
+            naver_id = naver_user.get("id")  # 네이버 고유 ID (임시 비밀번호로 사용)
+            user_name = naver_user.get("nickname", "")
+            profile_image_url = naver_user.get("profile_image", "")
+
+            if not email:
+                return Response(
+                    {"message": "네이버 계정에서 이메일 정보를 가져올 수 없습니다."},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+
+            supabase_url = os.getenv("SUPABASE_URL")
+            admin_headers = get_supabase_headers()
+
+            # 임시 비밀번호: 네이버 고유 ID + 고정 문자열
+            # 네이버 유저는 일반 로그인 불가, SNS 로그인 전용
+            temp_password = f"naver_{naver_id}_pixel"
+
+            # 3. Supabase에서 기존 유저 조회
+            users_response = requests.get(
+                f"{supabase_url}/auth/v1/admin/users",
+                headers=admin_headers,
+            )
+            users = users_response.json().get("users", [])
+            existing_user = next((u for u in users if u.get("email") == email), None)
+
+            if not existing_user:
+                # 4-A. 신규 유저면 Supabase에 유저 생성
+                create_response = requests.post(
+                    f"{supabase_url}/auth/v1/admin/users",
+                    headers=admin_headers,
+                    json={
+                        "email": email,
+                        "password": temp_password,
+                        "email_confirm": True,
+                        "user_metadata": {
+                            "user_name": user_name,
+                            "profile_image_url": profile_image_url,
+                            "provider": "naver",
+                        },
+                    },
+                )
+
+                # 중복 오류 시 기존 유저로 처리 (StrictMode 동시 요청 대비)
+                if create_response.status_code not in [200, 201]:
+                    response_data = create_response.json()
+                    # 중복 이메일 오류 (Supabase가 422 대신 다른 코드로 반환하는 경우 대비)
+                    if response_data.get("code") == "23505" or create_response.status_code == 422:
+                        existing_user = next((u for u in users if u.get("email") == email), None)
+                    else:
+                        raise Exception(f"Supabase 유저 생성 오류: {create_response.text}")
+
+            if existing_user:
+                # 4-B. 기존 유저면 비밀번호 동기화 (네이버 ID 기반)
+                requests.put(
+                    f"{supabase_url}/auth/v1/admin/users/{existing_user.get('id')}",
+                    headers=admin_headers,
+                    json={"password": temp_password},
+                )
+
+            # 5. 임시 비밀번호로 Supabase 로그인 → 토큰 발급
+            anon_headers = get_supabase_anon_headers()
+            sign_in_response = requests.post(
+                f"{supabase_url}/auth/v1/token?grant_type=password",
+                headers=anon_headers,
+                json={
+                    "email": email,
+                    "password": temp_password,
+                },
+            )
+
+            if sign_in_response.status_code != 200:
+                raise Exception(f"Supabase 로그인 오류: {sign_in_response.text}")
+
+            token_data = sign_in_response.json()
+
+            return Response(
+                {
+                    "access_token": token_data.get("access_token"),
+                    "refresh_token": token_data.get("refresh_token"),
+                    "message": "네이버 로그인되었습니다.",
+                },
+                status=status.HTTP_200_OK,
+            )
+
+        except Exception as error:
+            print(f"=== NAVER LOGIN ERROR ===\n{error}\n========================")
+            return Response(
+                {"message": "네이버 로그인 중 오류가 발생했습니다."},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
