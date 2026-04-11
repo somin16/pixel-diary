@@ -59,7 +59,7 @@ class DiaryView(APIView):
         access_token = auth_header.split("Bearer ")[1].strip()
 
         # 요청 Body에서 필수값 추출 (앞뒤 공백 제거)
-        image_id = request.data.get("image_id", None)  # iamge_id는 현재 선택사항 입니다. (넣지 않아도 작동에 문제가 없습니다.)
+        image_id = request.data.get("image_id", None)  # image_id는 현재 선택사항 입니다. (넣지 않아도 작동에 문제가 없습니다.)
         content = request.data.get("content", "").strip()
 
         if not content:
