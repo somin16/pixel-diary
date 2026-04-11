@@ -1005,10 +1005,13 @@ class NaverLoginView(APIView):
                 )
 
                 # 중복 오류 시 기존 유저로 처리 (StrictMode 동시 요청 대비)
-                if create_response.status_code == 422:
-                    existing_user = next((u for u in users if u.get("email") == email), None)
-                elif create_response.status_code not in [200, 201]:
-                    raise Exception(f"Supabase 유저 생성 오류: {create_response.text}")
+                if create_response.status_code not in [200, 201]:
+                    response_data = create_response.json()
+                    # 중복 이메일 오류 (Supabase가 422 대신 다른 코드로 반환하는 경우 대비)
+                    if response_data.get("code") == "23505" or create_response.status_code == 422:
+                        existing_user = next((u for u in users if u.get("email") == email), None)
+                    else:
+                        raise Exception(f"Supabase 유저 생성 오류: {create_response.text}")
 
             if existing_user:
                 # 4-B. 기존 유저면 비밀번호 동기화 (네이버 ID 기반)
