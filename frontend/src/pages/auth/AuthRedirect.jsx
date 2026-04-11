@@ -13,16 +13,53 @@ export default function AuthRedirect() {
   let isMounted = true; // 메모리 누수 및 중복 실행 방지
 
   const processAuth = async () => {
-  // # 뒤의 값 파싱
+  // 구글/카카오는 # 뒤에 토큰이 바로 옴 (Supabase implicit 방식)
   const hashParams = new URLSearchParams(window.location.hash.substring(1));
   const access_token = hashParams.get('access_token');
   const refresh_token = hashParams.get('refresh_token');
 
+  // 네이버는 ? 뒤에 code가 옴 (일반 OAuth 방식)
+  const params = new URLSearchParams(window.location.search);
+  const provider = params.get('provider');
+  const code = params.get('code');
+
+  // 네이버 로그인 처리
+  // 구글/카카오와 달리 code를 백엔드로 보내서 토큰을 받아야 함
+  if (provider === 'naver' && code) {
+    try {
+      // 백엔드 /api/v1/auth/naver로 code 전송
+      // 백엔드에서 네이버 API로 토큰 요청 후 Supabase 유저 생성/조회
+      const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/v1/auth/naver`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code })
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        localStorage.setItem('access_token', data.access_token);   // 토큰 저장
+        localStorage.setItem('refresh_token', data.refresh_token); // 토큰 저장
+        localStorage.removeItem('naver_state'); // 사용한 state 삭제
+        setStatus('success');
+        setTimeout(() => navigate('/'), 1500);
+      } else {
+        setStatus('error');
+        setTimeout(() => navigate('/login'), 2000);
+      }
+    } catch (err) {
+      console.error("네이버 로그인 에러:", err);
+      setStatus('error');
+      setTimeout(() => navigate('/login'), 2000);
+    }
+    return;
+  }
+
+  // 구글/카카오 로그인 처리
+  // Supabase가 # 뒤에 토큰을 바로 전달해줘서 백엔드 호출 없이 저장만 하면 됨
   if (access_token && isMounted) {
     try {
       localStorage.setItem('access_token', access_token);
       localStorage.setItem('refresh_token', refresh_token);
-
       setStatus('success');
       setTimeout(() => navigate('/'), 1500);
     } catch (err) {
