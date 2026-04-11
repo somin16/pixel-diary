@@ -1,0 +1,28 @@
+info:
+  name: DeleteDiary
+  type: http
+  seq: 3
+
+http:
+  method: DELETE
+  url: http://127.0.0.1:8000/api/v1/diaries/{diary_id}
+  headers:
+    - name: Authorization
+      value: "Bearer "
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |-
+  ### Headers
+  - Authorization: Bearer 로그인할 시 받는 access_token
+  ***
+  ### Status Code
+  - 200 OK: 일기 삭제 성공
+  - 400 BAD Request: 필수값 누락 (Authorization Bearer 헤더 access_token)
+  - 401 Unauthorized: 유효하지 않은 토큰인 경우
+  - 404 Not_Found: 일기를 찾을 수 없거나 본인 일기가 아닌 경우
