@@ -1,5 +1,5 @@
 info:
-  name: Prompt-Convert
+  name: Prompt-Transform
   type: http
   seq: 1
 
@@ -10,9 +10,9 @@ http:
     type: json
     data: |-
       {
-        "diary": "오늘은 비가와서 집에서 독서를 했다.\n창밖에는 하루종일 비가 왔다.",
-        "gender": "girl",
-        "age": 20
+        "diary": "",
+        "gender": "",
+        "age":
       }
   auth: inherit
 

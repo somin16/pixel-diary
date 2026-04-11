@@ -1,5 +1,5 @@
 info:
-  name: Prompt-Modify
+  name: Prompt-Restyle
   type: http
   seq: 2
 
@@ -10,7 +10,7 @@ http:
     type: json
     data: |-
       {
-        "prompt": "여기에 Prompt-Convert 응답의 positive_prompt 붙여넣기",
+        "prompt": "",
         "request": "",
         "remove": ""
       }
