@@ -1,41 +1,106 @@
-import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+
 import { getAssetUrl } from "../../utils/assetHelper";
+import { useTheme } from '../../theme_states/useTheme';
+
 import { supabase } from "../../utils/supabaseClient";
+import { useState, useEffect } from 'react';
+
+// 상수 
+const MIN_PASSWORD_LENGTH = 8;
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const STATUS_COLORS = {
+  default: "text-gray-400",
+  error: "text-red-500",
+  success: "text-green-600"
+};
 
 export default function Login() {
   const navigate = useNavigate();
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+
+  // [상태] 입력값 관리
+  const [user_email, setUser_email] = useState('');
+  const [password, setpassword] = useState('');
   const [loading, setLoading] = useState(false);
 
-  // 로그인 로직 (임시)
-  const handleLogin = (e) => {
+  // [상태] 피드백 메시지
+  const [emailStatus, setEmailStatus] = useState({ state: 'default', message: '' });
+  const [passwordStatus, setPasswordStatus] = useState({ state: 'default', message: '' });
+
+  // 현재 테마
+  const currentTheme = useTheme((state) => state.currentTheme) 
+
+  // 실시간 유효성 검사 (타이핑 시 즉시 반영)
+  useEffect(() => {
+    if (!user_email) {
+      setEmailStatus({ state: 'default', message: '' });
+    } else if (!EMAIL_REGEX.test(user_email)) {
+      setEmailStatus({ state: 'error', message: '올바른 이메일 형식이 아닙니다.' });
+    } else {
+      setEmailStatus({ state: 'success', message: '' });
+    }
+  }, [user_email]);
+
+  useEffect(() => {
+    if (!password) {
+      setPasswordStatus({ state: 'default', message: '' });
+    } else if (password.length < MIN_PASSWORD_LENGTH) {
+      setPasswordStatus({ state: 'error', message: `비밀번호는 ${MIN_PASSWORD_LENGTH}자 이상입니다.` });
+    } else {
+      setPasswordStatus({ state: 'success', message: '' });
+    }
+  }, [password]);
+
+  // 일반 로그인 (이메일)
+  const onEmailLoginSubmit = async (e) => {
     e.preventDefault();
 
+    // 최종 확인 : 에러가 있거나 빈값이면 중단
+    if (emailStatus.state === 'error' || !user_email || !password) {
+      alert("입력 정보를 다시 확인해주세요")
+      return;
+    }
+
     setLoading(true);
-    // 성공 시 1초 뒤 홈 화면(`/`)으로 이동
-    setTimeout(() => {
-      setLoading(false);
-      console.log("임시 로그인 성공!");
-      navigate('/');
-    }, 1000);
-  };
 
-  // 준비된 인풋창 배경 이미지 적용 스타일
-  const inputBoxStyle = {
-    backgroundImage: `url(${getAssetUrl('winter_light', 'boxes', 'auth_info_input_box_x3')})`,
-    backgroundSize: '100% 100%'
-  };
+    try {
+      const loginEndpoint = `${import.meta.env.VITE_BACKEND_URL}/api/v1/auth/login/`;
+      const response = await fetch(loginEndpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ user_email: user_email, password: password })
+      });
 
-  // 준비된 로그인 버튼 배경 이미지 적용 스타일
-  const loginButtonStyle = {
-    backgroundImage: `url(${getAssetUrl('winter_light', 'buttons', 'login_button_x3')})`,
-    backgroundSize: '100% 100%'
-  };
+      const authData = await response.json();
 
-  // 인풋창 공통 스타일 
-  const inputClassName = "w-full p-5 bg-transparent outline-none placeholder:text-gray-400 font-bold text-center";
+      if (response.ok) {
+      // 직접 저장하지 않고, 토큰을 쿼리 스트링에 담아 리다이렉트 페이지로 이동
+      const params = new URLSearchParams({
+        access_token: authData.access_token,
+        refresh_token: authData.refresh_token || '',
+        provider: 'email'
+      });
+      
+      navigate(`/auth-redirect?${params.toString()}`);
+    } else {
+      // 서버에서 온 에러 처리
+      setEmailStatus({ 
+        state: 'error', 
+        message: authData.message || "로그인 정보를 확인해주세요." 
+      });
+    }
+  } catch (commError) {
+    console.error("통신 장애:", commError);
+    // 서버가 꺼져있을 때 사용자에게 알림
+    setEmailStatus({ 
+      state: 'error', 
+      message: "서버와 연결 X . 잠시 후 시도해주세요." 
+    });
+  } finally {
+    setLoading(false);
+  }
+};
+
 
   // 소셜 로그인 실행 함수
   const handleSocialLogin = async (provider) => {
@@ -64,6 +129,21 @@ export default function Login() {
   if (error) console.error("Login Error:", error.message);
 };
 
+  //  스타일 설정
+  // 준비된 인풋창 배경 이미지 적용 스타일
+  const inputBoxStyle = {
+    backgroundImage: `url(${getAssetUrl(currentTheme, 'boxes', 'auth_info_input_box_x3')})`,
+    backgroundSize: '100% 100%'
+  };
+
+  // 준비된 로그인 버튼 배경 이미지 적용 스타일
+  const loginButtonStyle = {
+    backgroundImage: `url(${getAssetUrl(currentTheme, 'buttons', 'login_button_x3')})`,
+    backgroundSize: '100% 100%'
+  };
+
+  // 인풋창 공통 스타일 
+  const inputClassName = "w-full p-5 bg-transparent outline-none placeholder:text-gray-400 font-bold text-center";
 
   return (
     // 전체 컨테이너 (AppShell 안에서 좌우 꽉 차게)
@@ -72,25 +152,33 @@ export default function Login() {
       {/* 앱 아이콘 */}
       <div className="p-20">{/* 여백(패딩) 증가 */}
         <img 
-          src={getAssetUrl('winter_light', 'icons', 'app_icon_32_x3')} 
+          src={getAssetUrl(currentTheme, 'icons', 'app_icon_32_x3')} 
           alt="앱 아이콘"
           className="w-auto h-auto scale-150"// 이미지 스케일 150% 증가
         />
       </div>
 
       {/* 로그인 폼 (이메일, 비밀번호, 로그인 버튼) */}
-      <form onSubmit={handleLogin} className="w-full flex flex-col gap-6 mb-8">
+      <form onSubmit={onEmailLoginSubmit} noValidate className="w-full flex flex-col gap-2 mb-5">
+
         {/* 이메일 입력창 */}
         <div className="w-full" style={inputBoxStyle}>
           <input 
             type="email" 
             placeholder="이메일을 입력하세요"
             className={inputClassName}
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-          />
+            value={user_email}
+            onChange={(e) => setUser_email(e.target.value)}
+          /> 
         </div>
-        
+
+        {/* 이메일 피드백 메시지 추가 */}
+        <div className="h-3 flex items-center pl-2">
+          <span className={`text-xs pl-2 font-bold ${STATUS_COLORS[emailStatus.state]}`}>
+            {emailStatus.message}
+          </span>
+        </div>
+
         {/* 비밀번호 입력창 */}
         <div className="w-full" style={inputBoxStyle}>
           <input 
@@ -98,10 +186,18 @@ export default function Login() {
             placeholder="비밀번호를 입력하세요"
             className={inputClassName}
             value={password}
-            onChange={(e) => setPassword(e.target.value)}
+            onChange={(e) => setpassword(e.target.value)}
           />
         </div>
+
+        {/* 비밀번호 피드백 메시지 추가 */}
+        <div className="h-3 flex items-center pl-2">
+          <span className={`text-xs pl-2 font-bold ${STATUS_COLORS[passwordStatus.state]}`}>
+            {passwordStatus.message}
+          </span> 
+        </div>
         
+
         {/* 로그인 버튼 */}
         <button 
           disabled={loading} // 로그인 중에는 클릭 방지
@@ -130,7 +226,7 @@ export default function Login() {
             onClick={() => handleSocialLogin(social.id)} // 클릭 시 함수 실행
             className="w-20 h-20 transition-transform outline-none">
             <img 
-              src={getAssetUrl('winter_light', 'icons', social.name)} 
+              src={getAssetUrl(currentTheme, 'icons', social.name)} 
               alt={`${social.id} 로그인`}
               className="w-full h-full object-contain"
             />
