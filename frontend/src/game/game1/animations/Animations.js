@@ -52,6 +52,15 @@ export function createAllAnimations(scene) {
       repeat: -1,
     });
 
+    // 몬스터11
+    // 슬라임소대 애니메이션
+    scene.anims.create({
+      key: "phalanx_animation",
+      frames: [{ key: "phalanx_move1"}, { key: "phalanx_move2"}],
+      frameRate: 5,
+      repeat: -1,
+    });
+
     // 기본 공격(블레이드) 애니메이션
     scene.anims.create({
       key: "blade_animation",

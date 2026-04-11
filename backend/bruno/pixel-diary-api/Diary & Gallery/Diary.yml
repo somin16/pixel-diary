@@ -1,11 +1,11 @@
 info:
-  name: Logout
+  name: Diary
   type: http
-  seq: 4
+  seq: 1
 
 http:
   method: POST
-  url: http://127.0.0.1:8000/api/v1/auth/logout/
+  url: http://127.0.0.1:8000/api/v1/diaries/
   headers:
     - name: Authorization
       value: "Bearer "
@@ -13,7 +13,7 @@ http:
     type: json
     data: |-
       {
-        "refresh_token": ""
+        "content": ""
       }
   auth: inherit
 
@@ -25,12 +25,14 @@ settings:
 
 docs: |-
   ### Body / Json
-  - refresh_token: 로그인할 시 받는 refresh_token
+  - content: 작성할 일기 내용
   ***
   ### Headers
   - Authorization: Bearer 로그인할 시 받는 access_token
   ***
   ### Status Code
-  - 200 OK: 로그아웃 성공
+  - 201 Created: 일기 작성 및 저장 성공
   - 400 Bad Request: 필수값 누락 (Authorization Bearer 헤더 access_token)
-  - 400 Bad Request: 필수값 누락 (refresh_token)
+  - 400 Bad Request: 필수값 누락 (content)
+  - 400 Bad Request: 글자수 제한 (10자)
+  - 401 Unauthorized: 유효하지 않은 토큰인 경우 
