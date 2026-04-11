@@ -5,7 +5,7 @@ info:
 
 http:
   method: PATCH
-  url: http://127.0.0.1:8000/api/v1/auth/username
+  url: http://127.0.0.1:8000/api/v1/auth/username/
   headers:
     - name: Authorization
       value: "Bearer "
