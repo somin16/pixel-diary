@@ -33,7 +33,7 @@ def get_groq_client():
     return Groq(api_key=os.getenv("GROQ_API_KEY"))
 
 
-class PromptConvertView(APIView):
+class PromptTransformView(APIView):
     """
     일기 → 픽셀아트 프롬프트 변환 API
 
@@ -73,7 +73,7 @@ class PromptConvertView(APIView):
                         "content": (
                             # ▼ LLM에게 주는 지시문 (영어로 작성해야 영어 프롬프트가 나옵니다)
                             # ▼ 아래 Rules 항목들을 수정하면 프롬프트 스타일이 달라집니다
-                            f"Convert the following diary entry into a natural English image generation prompt for ComfyUI pixel art.\n"
+                            f"transform the following diary entry into a natural English image generation prompt for ComfyUI pixel art.\n"
                             f"Rules:\n"
                             f"- The main character is a {age}-year-old {gender} (the diary writer) and must be clearly visible and centered\n"  # 주인공: Body에서 받은 성별/나이 적용
                             f"- Write in natural descriptive phrases (not just keywords)\n"  # 자연스러운 문장 (키워드만 나열 금지)
@@ -100,7 +100,7 @@ class PromptConvertView(APIView):
             )
 
 
-class PromptModifyView(APIView):
+class PromptRestyleView(APIView):
     """
     기존 프롬프트 수정 API
 
@@ -109,7 +109,7 @@ class PromptModifyView(APIView):
 
     POST /api/v1/prompt/restyle
     Body: {
-        "prompt": "Prompt-Convert 응답의 positive_prompt 값",
+        "prompt": "Prompt-transform 응답의 positive_prompt 값",
         "request": "고양이를 추가해줘"
     }
 
@@ -127,7 +127,7 @@ class PromptModifyView(APIView):
 
         if not original_prompt:
             return Response(
-                {"error": "수정할 프롬프트가 없습니다. Prompt-Convert를 먼저 실행해주세요."},
+                {"error": "수정할 프롬프트가 없습니다. Prompt-transform를 먼저 실행해주세요."},
                 status=status.HTTP_400_BAD_REQUEST
             )
 
@@ -144,7 +144,7 @@ class PromptModifyView(APIView):
                             "role": "user",
                             "content": (
                                 # ▼ 한국어 제거 요청을 ComfyUI 부정 프롬프트용 영어 키워드로 변환
-                                f"Convert the following removal request into short English keywords for a ComfyUI negative prompt.\n"
+                                f"transform the following removal request into short English keywords for a ComfyUI negative prompt.\n"
                                 f"Output only comma-separated English keywords, no explanation.\n"
                                 f"Request (may be in Korean): {remove}"
                             )
@@ -170,7 +170,7 @@ class PromptModifyView(APIView):
                             # ▼ 기존 내용 유지하면서 추가만 하도록 지시
                             # ▼ "Add or emphasize" = 기존 삭제 없이 추가/강조만
                             f"You are given a scene description from an image generation prompt. Add or emphasize the requested element while keeping ALL original details.\n"
-                            f"Output only the modified scene description in one line. No explanations, no extra text.\n"
+                            f"Output only the restyle scene description in one line. No explanations, no extra text.\n"
                             f"Original scene: {original_prompt}\n"
                             f"Additional request (may be in Korean): {user_request}\n"  # 한국어 요청도 처리 가능
                             f"Rules: keep main character as described, natural descriptive English, under 100 words, one line only."
@@ -178,14 +178,14 @@ class PromptModifyView(APIView):
                     }
                 ]
             )
-            modified_scene = response.choices[0].message.content.strip()
-            modified_prompt = f"{FIXED_PREFIX}, {modified_scene}, {FIXED_SUFFIX}"  # 고정 토큰 다시 붙이기
+            restyle_scene = response.choices[0].message.content.strip()
+            restyle_prompt = f"{FIXED_PREFIX}, {restyle_scene}, {FIXED_SUFFIX}"  # 고정 토큰 다시 붙이기
 
             # remove 영어 키워드를 부정 프롬프트에 추가
             negative_prompt = f"{NEGATIVE_PROMPT}, {remove_keywords}" if remove_keywords else NEGATIVE_PROMPT
 
             return Response({
-                "positive_prompt": modified_prompt,
+                "positive_prompt": restyle_prompt,
                 "negative_prompt": negative_prompt,
             }, status=status.HTTP_200_OK)
 
