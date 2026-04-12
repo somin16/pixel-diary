@@ -21,17 +21,17 @@ export default class AuthValidator {
     static PASSWORD_REGEX = /^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*#?&])[A-Za-z\d@$!%*#?&]{8,}$/;
 
     // 이메일 중복(백엔드 연동) 또는 형식 유효성 검사 선택해서
-    static async vaildateEmail(user_email, checkavailable = true) {
+    static async validateEmail(user_email, checkAvailable = true) {
         
         if (!user_email)
             return { state: 'default', message: '' };
         
         // 이메일 형식 공통 검사
         if (!this.EMAIL_REGEX.test(user_email))
-            return{ state: 'error', message: '올바른 이메일 형식이 아닙니다.' };
+            return { state: 'error', message: '올바른 이메일 형식이 아닙니다.' };
         
         // 중복 체크X (로그인 페이지)
-        if(!checkavailable) {
+        if(!checkAvailable) {
             return { state: 'success', message: '' };
         }
 
@@ -49,7 +49,7 @@ export default class AuthValidator {
     }
     
     // 비밀번호 유효성 검사
-    static vaildatePassword(password) {
+    static validatePassword(password) {
         if (!password) 
             return { state: 'default', message: '' };
 
@@ -61,7 +61,7 @@ export default class AuthValidator {
         
         // 비밀번호 조합 체크
         if (!this.PASSWORD_REGEX.test(password))
-            return { state: 'error', message: '영문, 숫자, 특수문자를 모두 포함 해야 합니다.' };
+            return { state: 'error', message: '영문, 숫자, 특수문자를 모두 포함해야 합니다.' };
 
         return { state: 'success', message: '안전한 비밀번호입니다.' };
 
@@ -80,7 +80,7 @@ export default class AuthValidator {
     }
 
     // 유저이름 중복(백엔드 연동) & 길이 유효성 검사
-    static async vaildateUserName(user_name) {
+    static async validateUserName(user_name) {
         if (!user_name)
             return { state: 'default', message: ''};
 
@@ -94,7 +94,7 @@ export default class AuthValidator {
         // try {
         //     const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/v1/auth/check-user_name/?user_name=${encodeURIComponent(user_name)}` );
         //     const data = await response.json();
-        //     return data.is_available
+        //     return !data.is_available
         //         ? { state: 'error', message: '이미 누군가 사용 중입니다.' }
         //         : { state: 'success', message: '사용 가능한 닉네임입니다.' };
         // } catch (e) {
