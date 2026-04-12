@@ -4,6 +4,7 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 from datetime import datetime, timezone, timedelta
+from utils import extract_access_token, get_user_from_token
 
 
 def get_supabase_headers():
@@ -20,25 +21,6 @@ def get_supabase_headers():
     }
 
 
-def get_user_from_token(access_token):
-    """
-    access_token으로 Supabase에서 유저 정보 조회
-    - 유효한 토큰이면 유저 정보 반환
-    - 유효하지 않으면 None 반환
-    """
-    supabase_url = os.getenv("SUPABASE_URL")
-    headers = {
-        "apikey": os.getenv("SUPABASE_ANON_KEY"),
-        "Authorization": f"Bearer {access_token}",
-        "Content-Type": "application/json",
-    }
-    response = requests.get(f"{supabase_url}/auth/v1/user", headers=headers)
-
-    if response.status_code == 200:
-        return response.json()
-    return None
-
-
 class DiaryView(APIView):
     """일기 작성 및 저장 API"""
 
@@ -50,13 +32,12 @@ class DiaryView(APIView):
         - 저장된 diary_id와 완료 메시지 반환
         """
         # Authorization 헤더에서 access_token 추출 (Bearer 토큰 방식)
-        auth_header = request.headers.get("Authorization", "")
-        if not auth_header.startswith("Bearer "):
+        access_token = extract_access_token(request)
+        if not access_token:
             return Response(
                 {"message": "Authorization 헤더에 유효한 Bearer 토큰이 필요합니다."},
                 status=status.HTTP_400_BAD_REQUEST,
             )
-        access_token = auth_header.split("Bearer ")[1].strip()
 
         # 요청 Body에서 필수값 추출 (앞뒤 공백 제거)
         image_id = request.data.get("image_id", None)  # image_id는 현재 선택사항 입니다. (넣지 않아도 작동에 문제가 없습니다.)
@@ -152,13 +133,12 @@ class DiaryDetailView(APIView):
         - 수정된 updated_at 반환
         """
         # Authorization 헤더에서 access_token 추출
-        auth_header = request.headers.get("Authorization", "")
-        if not auth_header.startswith("Bearer "):
+        access_token = extract_access_token(request)
+        if not access_token:
             return Response(
                 {"message": "Authorization 헤더에 유효한 Bearer 토큰이 필요합니다."},
                 status=status.HTTP_400_BAD_REQUEST,
             )
-        access_token = auth_header.split("Bearer ")[1].strip()
 
         # 요청 Body에서 content 추출
         content = request.data.get("content", "").strip()
@@ -192,30 +172,27 @@ class DiaryDetailView(APIView):
             supabase_url = os.getenv("SUPABASE_URL")
             headers = get_supabase_headers()
 
-            # 해당 일기가 본인 것인지 확인
-            diary_response = requests.get(
-                f"{supabase_url}/rest/v1/diaries?id=eq.{diary_id}&user_id=eq.{user_id}",
-                headers=headers,
-            )
-
-            if not diary_response.json():
-                return Response(
-                    {"message": "일기를 찾을 수 없거나 수정 권한이 없습니다."},
-                    status=status.HTTP_404_NOT_FOUND,
-                )
-
-            # Supabase diaries 테이블에서 일기 수정
             kst = timezone(timedelta(hours=9))
-            now_kst = datetime.now(kst).isoformat()
+            now_kst = datetime.now(kst).strftime("%Y-%m-%dT%H:%M:%S+09:00")
 
+            # 해당 일기가 본인 것인지 확인
             update_response = requests.patch(
                 f"{supabase_url}/rest/v1/diaries?id=eq.{diary_id}&user_id=eq.{user_id}",
                 headers={**headers, "Prefer": "return=representation"},
                 json={
                     "content": content,
-                    "updated_at": now_kst,  # 수정 시간 직접 전달
+                    "updated_at": now_kst,
                 },
             )
+
+            # 빈 리스트면 일기가 없거나 본인 일기가 아닌 경우
+            # Supabase PostgREST는 조건절(id, user_id)이 둘 다 맞아야 수정되므로
+            # GET으로 먼저 확인할 필요 없이 PATCH 결과로 바로 확인 가능
+            if not update_response.json():
+                return Response(
+                    {"message": "일기를 찾을 수 없거나 수정 권한이 없습니다."},
+                    status=status.HTTP_404_NOT_FOUND,
+                )
 
             if update_response.status_code not in [200, 204]:
                 raise Exception(f"Supabase API 오류: {update_response.text}")
@@ -255,13 +232,12 @@ class DiaryDetailView(APIView):
         - 삭제 완료 메시지 반환
         """
         # Authorization 헤더에서 access_token 추출
-        auth_header = request.headers.get("Authorization", "")
-        if not auth_header.startswith("Bearer "):
+        access_token = extract_access_token(request)
+        if not access_token:
             return Response(
                 {"message": "Authorization 헤더에 유효한 Bearer 토큰이 필요합니다."},
                 status=status.HTTP_400_BAD_REQUEST,
             )
-        access_token = auth_header.split("Bearer ")[1].strip()
 
         try:
             # access_token으로 유저 정보 조회
@@ -279,22 +255,19 @@ class DiaryDetailView(APIView):
             headers = get_supabase_headers()
 
             # 해당 일기가 본인 것인지 확인
-            diary_response = requests.get(
+            delete_response = requests.delete(
                 f"{supabase_url}/rest/v1/diaries?id=eq.{diary_id}&user_id=eq.{user_id}",
-                headers=headers,
+                headers={**headers, "Prefer": "return=representation"},
             )
 
-            if not diary_response.json():
+            # 빈 리스트면 일기가 없거나 본인 일기가 아닌 경우
+            # Supabase PostgREST는 조건절(id, user_id)이 둘 다 맞아야 수정되므로
+            # GET으로 먼저 확인할 필요 없이 PATCH 결과로 바로 확인 가능
+            if not delete_response.json():
                 return Response(
                     {"message": "일기를 찾을 수 없거나 삭제 권한이 없습니다."},
                     status=status.HTTP_404_NOT_FOUND,
                 )
-
-            # Supabase diaries 테이블에서 일기 삭제
-            delete_response = requests.delete(
-                f"{supabase_url}/rest/v1/diaries?id=eq.{diary_id}&user_id=eq.{user_id}",
-                headers=headers,
-            )
 
             # 삭제 실패 시 예외 발생
             if delete_response.status_code not in [200, 204]:
