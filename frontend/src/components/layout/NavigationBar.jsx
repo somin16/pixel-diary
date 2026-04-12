@@ -3,7 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 // useLocation: 현재 어떤 경로에 있는지 확인할 때 사용하는 훅
 // 훅 (Hook): React에서 use로 시작하는 특별한 함수, 컴포넌트 안에서만 사용 가능
 
-import { getAssetUrl } from '../../utils/assetHelper';
+import { getAssetUrl } from '../../utils/AssetHelper';
 // 에셋 이미지 경로 헬퍼 함수
 
 // 네비게이션 탭 목록 상수 — 탭이 추가되거나 변경될 때 여기서만 수정하면 됨
