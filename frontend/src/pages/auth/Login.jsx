@@ -138,7 +138,7 @@ export default function Login() {
 
   // 준비된 로그인 버튼 배경 이미지 적용 스타일
   const loginButtonStyle = {
-    backgroundImage: `url(${getAssetUrl(currentTheme, 'buttons', 'login_button_x3')})`,
+    backgroundImage: `url(${getAssetUrl(currentTheme, 'buttons', 'auth_submit_button_x3')})`,
     backgroundSize: '100% 100%'
   };
 
