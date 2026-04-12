@@ -21,7 +21,7 @@ export default class AuthValidator {
     static PASSWORD_REGEX = /^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*#?&])[A-Za-z\d@$!%*#?&]{8,}$/;
 
     // 이메일 중복(백엔드 연동) 또는 형식 유효성 검사 선택해서
-    static async vaildateEmail(user_email, checkAvailable = true) {
+    static async validateEmail(user_email, checkAvailable = true) {
         
         if (!user_email)
             return { state: 'default', message: '' };
