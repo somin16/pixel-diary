@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from 'react-router-dom';
-import { getAssetUrl } from "../../utils/assetHelper"; // 헬퍼 불러오기
+import { getAssetUrl } from "../../utils/AssetHelper"; // 헬퍼 불러오기
 import styles from './Profile.module.css';
 
 const Profile = () => {

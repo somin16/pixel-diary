@@ -4,6 +4,7 @@ import requests
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
+from utils import extract_access_token
 
 
 def get_supabase_headers():
@@ -264,13 +265,12 @@ class LogoutView(APIView):
         - 로그아웃 완료 메시지 반환
         """
         # Authorization 헤더에서 access_token 추출 (Bearer 토큰 방식)
-        auth_header = request.headers.get("Authorization", "")
-        if not auth_header.startswith("Bearer "):
+        access_token = extract_access_token(request)
+        if not access_token:
             return Response(
                 {"message": "Authorization 헤더에 유효한 Bearer 토큰이 필요합니다."},
                 status=status.HTTP_400_BAD_REQUEST,
             )
-        access_token = auth_header.split("Bearer ")[1].strip()
  
         # 요청 Body에서 refresh_token 추출
         refresh_token = request.data.get("refresh_token", "").strip()
@@ -304,7 +304,7 @@ class LogoutView(APIView):
                 raise Exception(f"Supabase API 오류: {response.text}")
  
             return Response(
-                {"message": "로그아웃되었습니다."},
+                {"message": "로그아웃 되었습니다."},
                 status=status.HTTP_200_OK,
             )
  
@@ -328,13 +328,12 @@ class ChangePasswordView(APIView):
         - 변경 완료 메시지 반환
         """
         # Authorization 헤더에서 access_token 추출 (Bearer 토큰 방식)
-        auth_header = request.headers.get("Authorization", "")
-        if not auth_header.startswith("Bearer "):
+        access_token = extract_access_token(request)
+        if not access_token:
             return Response(
                 {"message": "Authorization 헤더에 유효한 Bearer 토큰이 필요합니다."},
                 status=status.HTTP_400_BAD_REQUEST,
             )
-        access_token = auth_header.split("Bearer ")[1].strip()
  
         # 요청 Body에서 필수값 추출 (앞뒤 공백 제거)
         current_password = request.data.get("current_password", "").strip()
@@ -457,13 +456,12 @@ class WithdrawalView(APIView):
         """
         
         # 1. Authorization 헤더에서 access_token 추출
-        auth_header = request.headers.get("Authorization", "")
-        if not auth_header.startswith("Bearer "):
+        access_token = extract_access_token(request)
+        if not access_token:
             return Response(
                 {"message": "Authorization 헤더에 유효한 Bearer 토큰이 필요합니다."},
                 status=status.HTTP_400_BAD_REQUEST,
             )
-        access_token = auth_header.split("Bearer ")[1].strip()
         
         # 2. 요청 Body에서 password 추출
         password = request.data.get("password", "").strip()
@@ -546,13 +544,12 @@ class ChangeUsernameView(APIView):
         - 변경 완료 메시지 반환
         """
         # Authorization 헤더에서 access_token 추출 (Bearer 토큰 방식)
-        auth_header = request.headers.get("Authorization", "")
-        if not auth_header.startswith("Bearer "):
+        access_token = extract_access_token(request)
+        if not access_token:
             return Response(
                 {"message": "Authorization 헤더에 유효한 Bearer 토큰이 필요합니다."},
                 status=status.HTTP_400_BAD_REQUEST,
             )
-        access_token = auth_header.split("Bearer ")[1].strip()
  
         # 요청 Body에서 user_name 추출 (앞뒤 공백 제거)
         user_name = request.data.get("user_name", "").strip()
@@ -625,13 +622,12 @@ class UserImageView(APIView):
         - 업로드된 이미지 URL과 완료 메시지 반환
         """
         # Authorization 헤더에서 access_token 추출 (Bearer 토큰 방식)
-        auth_header = request.headers.get("Authorization", "")
-        if not auth_header.startswith("Bearer "):
+        access_token = extract_access_token(request)
+        if not access_token:
             return Response(
                 {"message": "Authorization 헤더에 유효한 Bearer 토큰이 필요합니다."},
                 status=status.HTTP_400_BAD_REQUEST,
             )
-        access_token = auth_header.split("Bearer ")[1].strip()
  
         # 요청에서 이미지 파일 추출
         profile_image = request.FILES.get("profile_image")
@@ -719,13 +715,12 @@ class UserImageView(APIView):
         - 완료 메시지 반환
         """
         # Authorization 헤더에서 access_token 추출 (Bearer 토큰 방식)
-        auth_header = request.headers.get("Authorization", "")
-        if not auth_header.startswith("Bearer "):
+        access_token = extract_access_token(request)
+        if not access_token:
             return Response(
                 {"message": "Authorization 헤더에 유효한 Bearer 토큰이 필요합니다."},
                 status=status.HTTP_400_BAD_REQUEST,
             )
-        access_token = auth_header.split("Bearer ")[1].strip()
  
         try:
             supabase_url = os.getenv("SUPABASE_URL")
