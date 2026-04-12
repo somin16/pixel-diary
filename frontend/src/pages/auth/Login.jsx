@@ -1,26 +1,26 @@
 import { useNavigate } from 'react-router-dom';
 
-import { getAssetUrl } from "../../utils/assetHelper";
-import { useTheme } from '../../theme_states/useTheme';
+import { getAssetUrl } from "../../utils/AssetHelper";
+import { useTheme } from '../../hooks/useTheme';
 
-import { supabase } from "../../utils/supabaseClient";
+import { supabase } from "../../utils/SupabaseClient";
 import { useState, useEffect } from 'react';
 
-// 상수 
-const MIN_PASSWORD_LENGTH = 8;
-const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-const STATUS_COLORS = {
-  default: "text-gray-400",
-  error: "text-red-500",
-  success: "text-green-600"
-};
+import AuthValidator from '../../utils/AuthValidator';
+import useDebounce from '../../hooks/useDebounce';
 
 export default function Login() {
   const navigate = useNavigate();
 
+ 
+
   // [상태] 입력값 관리
   const [user_email, setUser_email] = useState('');
   const [password, setpassword] = useState('');
+
+  const debouncedUserEmail = useDebounce(user_email, 500); // 0.5초 대기
+
+  // [상태] 로그인 중인지 아닌지
   const [loading, setLoading] = useState(false);
 
   // [상태] 피드백 메시지
@@ -30,25 +30,23 @@ export default function Login() {
   // 현재 테마
   const currentTheme = useTheme((state) => state.currentTheme) 
 
-  // 실시간 유효성 검사 (타이핑 시 즉시 반영)
+  // 실시간 유효성 검사 이메일
   useEffect(() => {
-    if (!user_email) {
-      setEmailStatus({ state: 'default', message: '' });
-    } else if (!EMAIL_REGEX.test(user_email)) {
-      setEmailStatus({ state: 'error', message: '올바른 이메일 형식이 아닙니다.' });
-    } else {
-      setEmailStatus({ state: 'success', message: '' });
-    }
-  }, [user_email]);
+    const checkEmail = async () => {
+      // 클래스 메서드 활용: 두 번째 인자를 false로 주어 형식만 체크
+      if (debouncedUserEmail) {
+        const status = await AuthValidator.validateEmail(debouncedUserEmail, false);
+        setEmailStatus(status);
+      }
+    };
+    checkEmail();
+  }, [debouncedUserEmail]);
 
+  // 실시간 유효성 검사 비밀번호
   useEffect(() => {
-    if (!password) {
-      setPasswordStatus({ state: 'default', message: '' });
-    } else if (password.length < MIN_PASSWORD_LENGTH) {
-      setPasswordStatus({ state: 'error', message: `비밀번호는 ${MIN_PASSWORD_LENGTH}자 이상입니다.` });
-    } else {
-      setPasswordStatus({ state: 'success', message: '' });
-    }
+    // 클래스 메서드 활용
+    const status = AuthValidator.validatePassword(password);
+    setPasswordStatus(status);
   }, [password]);
 
   // 일반 로그인 (이메일)
@@ -56,7 +54,7 @@ export default function Login() {
     e.preventDefault();
 
     // 최종 확인 : 에러가 있거나 빈값이면 중단
-    if (emailStatus.state === 'error' || !user_email || !password) {
+    if (emailStatus.state === 'error' || passwordStatus.state === 'error' || !user_email || !password) {
       alert("입력 정보를 다시 확인해주세요")
       return;
     }
@@ -127,23 +125,22 @@ export default function Login() {
   });
 
   if (error) console.error("Login Error:", error.message);
-};
+  };
 
   //  스타일 설정
-  // 준비된 인풋창 배경 이미지 적용 스타일
-  const inputBoxStyle = {
+  // 로그인 인풋창 배경 이미지 적용 스타일
+  const loginInputBoxStyle = {
     backgroundImage: `url(${getAssetUrl(currentTheme, 'boxes', 'auth_info_input_box_x3')})`,
     backgroundSize: '100% 100%'
   };
+  // 로그인 인풋창 공통 스타일 
+    const LoginInputClassName = "w-full h-full p-6 bg-transparent outline-none placeholder:text-gray-400 text-sm font-bold text-center mt-2 -mb-0.5";
 
-  // 준비된 로그인 버튼 배경 이미지 적용 스타일
+  // 로그인 버튼 배경 이미지 적용 스타일
   const loginButtonStyle = {
     backgroundImage: `url(${getAssetUrl(currentTheme, 'buttons', 'auth_submit_button_x3')})`,
     backgroundSize: '100% 100%'
   };
-
-  // 인풋창 공통 스타일 
-  const inputClassName = "w-full p-5 bg-transparent outline-none placeholder:text-gray-400 font-bold text-center";
 
   return (
     // 전체 컨테이너 (AppShell 안에서 좌우 꽉 차게)
@@ -162,11 +159,12 @@ export default function Login() {
       <form onSubmit={onEmailLoginSubmit} noValidate className="w-full flex flex-col gap-2 mb-5">
 
         {/* 이메일 입력창 */}
-        <div className="w-full" style={inputBoxStyle}>
+        <div className="w-full" style={loginInputBoxStyle}>
+          <span className='absolute mt-3 ml-4 font-bold text-xs'>이메일</span>
           <input 
             type="email" 
             placeholder="이메일을 입력하세요"
-            className={inputClassName}
+            className={LoginInputClassName}
             value={user_email}
             onChange={(e) => setUser_email(e.target.value)}
           /> 
@@ -174,17 +172,18 @@ export default function Login() {
 
         {/* 이메일 피드백 메시지 추가 */}
         <div className="h-3 flex items-center pl-2">
-          <span className={`text-xs pl-2 font-bold ${STATUS_COLORS[emailStatus.state]}`}>
+          <span className={`text-xs pl-2 font-bold ${AuthValidator.STATUS_COLORS[emailStatus.state]}`}>
             {emailStatus.message}
           </span>
         </div>
 
         {/* 비밀번호 입력창 */}
-        <div className="w-full" style={inputBoxStyle}>
+        <div className="w-full" style={loginInputBoxStyle}>
+          <span className='absolute mt-3 ml-4 font-bold text-xs'>비밀번호</span>
           <input 
             type="password" 
             placeholder="비밀번호를 입력하세요"
-            className={inputClassName}
+            className={LoginInputClassName}
             value={password}
             onChange={(e) => setpassword(e.target.value)}
           />
@@ -192,7 +191,7 @@ export default function Login() {
 
         {/* 비밀번호 피드백 메시지 추가 */}
         <div className="h-3 flex items-center pl-2">
-          <span className={`text-xs pl-2 font-bold ${STATUS_COLORS[passwordStatus.state]}`}>
+          <span className={`text-xs pl-2 font-bold ${AuthValidator.STATUS_COLORS[passwordStatus.state]}`}>
             {passwordStatus.message}
           </span> 
         </div>
@@ -200,9 +199,11 @@ export default function Login() {
 
         {/* 로그인 버튼 */}
         <button 
-          disabled={loading} // 로그인 중에는 클릭 방지
+          disabled={loading ||emailStatus.state !== 'success' || passwordStatus.state !== 'success' } // 로그인 중에는 클릭 방지
           type="submit"
-          className="w-full p-5 text-white font-bold text-2xl transition-transform outline-none"
+          className=
+            {`w-full p-5 text-white font-bold text-2xl transition-transform outline-none
+            ${(loading || emailStatus.state !== 'success' || passwordStatus.state !== 'success') ? 'opacity-50' : 'active:scale-95'}`}
           style={loginButtonStyle}
         >
          {loading ? "로그인 중" : "로그인"}
@@ -235,7 +236,9 @@ export default function Login() {
       </div>
 
       {/* 회원가입 링크 */}
-      <button className="text-sm text-gray-800 underline font-medium outline-none">
+      <button 
+        onClick={() => navigate('/signup')}
+        className="text-sm text-gray-800 underline font-medium outline-none">
         회원가입 하러가기
       </button>
 
