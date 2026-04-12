@@ -1,6 +1,6 @@
 import React from "react";
 import { useNavigate } from 'react-router-dom';
-import { getAssetUrl } from "../../utils/assetHelper"; // 헬퍼 불러오기
+import { getAssetUrl } from "../../utils/AssetHelper"; // 헬퍼 불러오기
 import styles from './Setting.module.css';
 
 const Setting = () => {

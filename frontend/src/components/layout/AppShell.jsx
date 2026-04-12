@@ -1,4 +1,4 @@
-import { useLocation } from 'react-router-dom'; // 경로 읽어오기
+import { useLocation, Outlet } from 'react-router-dom'; // 경로 읽어오기
 import NavigationBar from './NavigationBar'; // 네비게이션 바
 
 // 기준 해상도 상수 — 모든 UI는 이 크기 안에서 작업 (9 : 20)
@@ -15,6 +15,7 @@ export default function AppShell({ children }) {
   const hideNavigationBarPaths = [
     '/login',
     '/auth-redirect',
+    '/signup',
     '/game1run',
     '/more/setting',
     '/more/setting/account',
@@ -52,7 +53,8 @@ export default function AppShell({ children }) {
       >
         {/* 페이지별 내용 — 배경/콘텐츠 전부 여기로 들어옴 */}
         <main className={`flex-1 w-full overflow-y-auto overflow-x-hidden relative ${!checkHideNavigationBarPaths ? 'pb-20' : ''}`}>
-          {children}
+          {/* children이 있으면 children을 보여주고, 없으면 라우터의 Outlet을 보여줍니다. */}
+          {children || <Outlet />}
         </main>
 
         {/* 하단 네비게이션 바 — 조건부 렌더링 : 네비게이션바 표시X 페이지 리스트에 없을 때만 출력 */}

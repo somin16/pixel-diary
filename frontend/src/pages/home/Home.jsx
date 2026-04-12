@@ -1,5 +1,5 @@
-import { getAssetUrl } from "../../utils/assetHelper";
-import { useTheme } from "../../theme_states/useTheme";
+import { getAssetUrl } from "../../utils/AssetHelper";
+import { useTheme } from "../../hooks/useTheme";
 
 export default function Home() {
   // 현재 테마 상태
