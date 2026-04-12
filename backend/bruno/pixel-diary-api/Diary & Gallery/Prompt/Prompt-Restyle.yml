@@ -39,5 +39,5 @@ docs: |-
   ***
   ### Status Code
   - 200 OK: 프롬프트 수정 성공
-  - 400 Bad Request: prompt 또는 request 필드 누락
+  - 400 Bad Request: prompt 필드 누락
   - 500 Internal Server Error: Groq API 오류
