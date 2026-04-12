@@ -185,6 +185,9 @@ class DiaryDetailView(APIView):
                 },
             )
 
+            if update_response.status_code not in [200, 204]:
+                raise Exception(f"Supabase API 오류: {update_response.text}")
+
             # 빈 리스트면 일기가 없거나 본인 일기가 아닌 경우
             # Supabase PostgREST는 조건절(id, user_id)이 둘 다 맞아야 수정되므로
             # GET으로 먼저 확인할 필요 없이 PATCH 결과로 바로 확인 가능
@@ -193,9 +196,6 @@ class DiaryDetailView(APIView):
                     {"message": "일기를 찾을 수 없거나 수정 권한이 없습니다."},
                     status=status.HTTP_404_NOT_FOUND,
                 )
-
-            if update_response.status_code not in [200, 204]:
-                raise Exception(f"Supabase API 오류: {update_response.text}")
             
             updated_diary = update_response.json()[0]
             
@@ -262,7 +262,7 @@ class DiaryDetailView(APIView):
 
             # 빈 리스트면 일기가 없거나 본인 일기가 아닌 경우
             # Supabase PostgREST는 조건절(id, user_id)이 둘 다 맞아야 수정되므로
-            # GET으로 먼저 확인할 필요 없이 PATCH 결과로 바로 확인 가능
+            # GET으로 먼저 확인할 필요 없이 DELETE 결과로 바로 확인 가능
             if not delete_response.json():
                 return Response(
                     {"message": "일기를 찾을 수 없거나 삭제 권한이 없습니다."},
