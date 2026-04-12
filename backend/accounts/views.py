@@ -298,7 +298,14 @@ class LogoutView(APIView):
                 headers=headers,
                 json={"refresh_token": refresh_token},
             )
- 
+
+            # 유효하지 않은 토큰인 경우 401 반환
+            if response.status_code in [401, 403]:
+                return Response(
+                    {"message": "유효하지 않은 토큰입니다."},
+                    status=status.HTTP_401_UNAUTHORIZED,
+                )
+
             # 그 외 실패 응답인 경우 예외 발생
             if response.status_code not in [200, 204]:
                 raise Exception(f"Supabase API 오류: {response.text}")
