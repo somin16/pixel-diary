@@ -34,3 +34,4 @@ docs: |-
   - 200 OK: 로그아웃 성공
   - 400 Bad Request: 필수값 누락 (Authorization Bearer 헤더 access_token)
   - 400 Bad Request: 필수값 누락 (refresh_token)
+  - 401 Unauthorized: 유효하지 않은 access_token인 경우

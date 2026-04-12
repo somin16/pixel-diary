@@ -35,4 +35,4 @@ docs: |-
   - 400 Bad Request: 필수값 누락 (Authorization Bearer 헤더 access_token)
   - 400 Bad Request: 필수값 누락 (content)
   - 400 Bad Request: 글자수 제한 (10자)
-  - 401 Unauthorized: 유효하지 않은 토큰인 경우 
+  - 401 Unauthorized: 유효하지 않은 access_token인 경우
