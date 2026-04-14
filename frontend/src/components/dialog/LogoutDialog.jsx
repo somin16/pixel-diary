@@ -28,13 +28,11 @@ const LogoutDialog = ({ onConfirm, onCancel }) => {
           label="로그아웃"
           imageSrc={getAssetUrl(currentTheme, 'buttons', 'red_button_x3')}
           onClick={onConfirm}
-          className={styles.dangerButton}
         />
         <ImageButton
           label="취소하기"
           imageSrc={getAssetUrl(currentTheme, 'buttons', 'blue_button_x3')}
           onClick={onCancel}
-          className={styles.cancelButton}
         />
       </div>
     </DialogBox>

@@ -52,7 +52,7 @@ const Profile = () => {
     {/* 프로필 사진 영역 */}
     <section className={styles.profilePhotoArea}>
     <img 
-    src={getAssetUrl(currentTheme, 'boxes', 'profile__image_box_x3')} 
+    src={getAssetUrl(currentTheme, 'boxes', 'profile_image_box_x3')} 
     alt="프로필 프레임" 
     className={styles.photoFrame} 
     />
@@ -96,7 +96,7 @@ const Profile = () => {
           <div className={styles.imageInputContainer}>
             {/* 배경이 되는 픽셀 박스 이미지 */}
             <img 
-              src={getAssetUrl(currentTheme, 'boxes', 'profile__info_box_x3')}
+              src={getAssetUrl(currentTheme, 'boxes', 'profile_info_box_x3')}
               alt="입력칸 배경" 
               className={styles.inputBackgroundImage} 
             />
@@ -115,7 +115,7 @@ const Profile = () => {
           <label className={styles.inputLabel}>이메일</label>
           <div className={styles.imageInputContainer}>
             <img 
-              src={getAssetUrl(currentTheme, 'boxes', 'profile__info_box_x3')}
+              src={getAssetUrl(currentTheme, 'boxes', 'profile_info_box_x3')}
               alt="이메일 배경" 
               className={styles.inputBackgroundImage} 
             />

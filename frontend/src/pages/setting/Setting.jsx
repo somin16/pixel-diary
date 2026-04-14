@@ -7,6 +7,14 @@ import LogoutDialog from '../../components/dialog/LogoutDialog';
 import WithdrawalDialog from '../../components/dialog/WithdrawalDialog';
 import ResultDialog from '../../components/dialog/ResultDialog';
 
+// 설정 메뉴 항목들 - 배열을 전역으로 선언
+const settingItems = [
+  { id: 'account', label: '계정 설정', path: '/more/setting/account' },
+  { id: 'notification', label: '알림 설정', path: '/more/setting/notification' },
+  { id: 'logout', label: '로그아웃', isDanger: true },
+  { id: 'withdrawal', label: '회원탈퇴', isDanger: true },
+];
+
 const Setting = () => {
   // navigate('/경로') 처럼 사용하여 원하는 주소로 화면을 전환
   const navigate = useNavigate();
@@ -43,14 +51,6 @@ const Setting = () => {
     setResultDialog(null);
     navigate('/login');
   };
-
-  // 설정 메뉴 항목들
-  const settingItems = [
-    { id: 'account', label: '계정 설정', path: '/more/setting/account' },
-    { id: 'notification', label: '알림 설정', path: '/more/setting/notification' },
-    { id: 'logout', label: '로그아웃', isDanger: true },
-    { id: 'withdrawal', label: '회원탈퇴', isDanger: true },
-  ];
 
   return (
     // 전체 페이지를 감싸는 컨테이너 (배경 이미지가 깔리는 곳)
