@@ -52,7 +52,7 @@ export default function AppShell({ children }) {
         }}
       >
         {/* 페이지별 내용 — 배경/콘텐츠 전부 여기로 들어옴 */}
-        <main className={`flex-1 w-full overflow-y-auto overflow-x-hidden relative ${!checkHideNavigationBarPaths ? 'pb-20' : ''}`}>
+        <main className="flex-1 w-full overflow-y-auto overflow-x-hidden relative">
           {/* children이 있으면 children을 보여주고, 없으면 라우터의 Outlet을 보여줍니다. */}
           {children || <Outlet />}
         </main>
