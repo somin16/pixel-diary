@@ -139,7 +139,7 @@ const Profile = () => {
       {/* 내 정보 수정하기 버튼 */}
       <button className={styles.updateButton} onClick={handleUpdate}>
         <img 
-          src={getAssetUrl(currentTheme, 'buttons', 'profile__info_patch_button_x3')} 
+          src={getAssetUrl(currentTheme, 'buttons', 'profile_info_patch_button_x3')} 
           alt="수정하기 버튼" 
         />
         <span className={styles.buttonText}>내 정보 수정하기</span>
