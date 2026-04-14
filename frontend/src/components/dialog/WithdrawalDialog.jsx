@@ -50,7 +50,7 @@ const WithdrawalDialog = ({ onConfirm, onCancel }) => {
           <p className={dialogStyles.dialogTitle}>현재 비밀번호를 입력하세요</p>
           <div className={withdrawalStyles.passwordWrapper}>
             <img
-              src={getAssetUrl(currentTheme, 'boxes', 'profile__info_box_x3')}
+              src={getAssetUrl(currentTheme, 'boxes', 'profile_info_box_x3')}
               alt="입력창 배경"
               className={withdrawalStyles.passwordBg}
             />
