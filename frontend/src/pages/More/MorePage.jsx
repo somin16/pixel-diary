@@ -4,6 +4,14 @@ import { useTheme } from '../../hooks/useTheme'; // useTheme 불러오기
 import { getAssetUrl } from "../../utils/AssetHelper"; // 헬퍼 불러오기
 import styles from './MorePage.module.css';
 
+// 배열 전역으로 선언
+const menuItems = [
+  { id: 'shop', label: '상점', iconName: 'shop_icon_x3', path: '/more/shop' },
+  { id: 'storage', label: '보관함', iconName: 'inventory_icon_x3', path: '/more/inventory' },
+  { id: 'attendance', label: '출석', iconName: 'daily_icon_x3', path: '/more/daily' },
+  { id: 'notice', label: '공지사항', iconName: 'info_icon_x3', path: '/more/info' },
+];
+
 const MorePage = () => {
   // navigate('/경로') 처럼 사용하여 원하는 주소로 화면을 전환
   const navigate = useNavigate();
@@ -20,13 +28,6 @@ const MorePage = () => {
   useEffect(() => {
     // TODO: API 연동 시 api 파일에서 불러오기
   }, [])
-
-  const menuItems = [
-    { id: 'shop', label: '상점', icon: getAssetUrl(currentTheme,'icons','shop_icon_x3'), path: '/more/shop' },
-    { id: 'storage', label: '보관함', icon: getAssetUrl(currentTheme,'icons','inventory_icon_x3'), path: '/more/inventory' },
-    { id: 'attendance', label: '출석', icon: getAssetUrl(currentTheme,'icons','daily_icon_x3'), path: '/more/daily' },
-    { id: 'notice', label: '공지사항', icon: getAssetUrl(currentTheme,'icons','info_icon_x3'), path: '/more/info' },
-  ];
 
   return (
     // 전체 페이지를 감싸는 컨테이너 (배경 이미지가 깔리는 곳)
@@ -57,7 +58,8 @@ const MorePage = () => {
 
           {/* 그 위에 올라가는 프로필 사진 */}
           <img 
-            src={profileImage || getAssetUrl(currentTheme, 'icons', 'app_icon_x2')}
+            // profileImage가 null, undefined, 빈 문자열일 때 모두 방어
+            src={profileImage ? profileImage : getAssetUrl(currentTheme, 'icons', 'app_icon_x2')}
             alt="프로필 사진"
             className={styles.profilePhoto}
           />
@@ -82,7 +84,10 @@ const MorePage = () => {
           >
             {/* 아이콘 이미지 영역 */}
             <div className={styles.iconWrapper}>
-              <img src={item.icon} alt={item.label} />
+              <img 
+                src={getAssetUrl(currentTheme, 'icons', item.iconName)} // getAssetUrl 함수
+                alt={item.label} 
+              />
             </div>
             {/* 메뉴 글자 (상점, 보관함 등) */}
             <span className={styles.menuLabel}>{item.label}</span>
