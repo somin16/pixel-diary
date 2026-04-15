@@ -1,6 +1,6 @@
 import React from "react";
 import { useTheme } from '../../hooks/useTheme'; // useTheme 불러오기
-import { getAssetUrl } from "../../utils/AssetHelper";
+import { getAssetUrl } from "../../utils/AssetHelper"; // 헬퍼 불러오기
 import styles from './DialogBox.module.css';
 
 /**

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from 'react-router-dom';
+import { useTheme } from '../../hooks/useTheme'; // useTheme 불러오기
 import { getAssetUrl } from "../../utils/AssetHelper"; // 헬퍼 불러오기
 import styles from './MorePage.module.css';
 
@@ -7,8 +8,8 @@ const MorePage = () => {
   // navigate('/경로') 처럼 사용하여 원하는 주소로 화면을 전환
   const navigate = useNavigate();
 
-  //  현재 테마 상태 (나중에 Context나 Redux로 전역 관리하면 좋습니다)
-  const currentTheme = "winter_light"; 
+  //  테마 전역 관리
+  const currentTheme = useTheme((state) => state.currentTheme);
 
   // 사용자 정보 상태 관리
   // 나중에 context나 zuStand로 전역 관리 하는 게 좋을 듯
