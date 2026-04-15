@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useTheme } from '../../hooks/useTheme'; // useTheme 불러오기
-import { getAssetUrl } from "../../utils/AssetHelper";
+import { getAssetUrl } from "../../utils/AssetHelper"; // 헬퍼 불러오기
 import DialogBox from '../dialog/DialogBox';
 import ImageButton from '../button/ImageButton';
 import withdrawalStyles from './WithdrawalDialog.module.css';
