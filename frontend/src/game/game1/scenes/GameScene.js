@@ -14,8 +14,11 @@ import { addEventautoHeal } from "../player/Hp.js";
 // 경험치 획득
 import { overlapAddExp } from "../player/ExpBall.js"; // ← 이렇게 선언하면 해당 클래스의 함수만 쏙 빼올수있다
 
-// 고기 획득
-import { overlapMeat } from "../Object/Meat.js";
+// 오브젝트 획득
+import { overlapObject } from "../Object/Objects.js";
+
+// 오브젝트 - 자석
+import { magnetActive } from "../Object/Magnet.js";
 
 
 // ==============몬스터 관련=================
@@ -82,6 +85,9 @@ export default class GameScene extends Phaser.Scene {
     // 자동공격(attacks/Attakcs.js)
     autoAttacks(this);
 
+    // 화염구 그룹(버그 방지용)
+    this.fireBallGroup = this.physics.add.group();
+
     
     // ===================타일맵===================
 
@@ -115,9 +121,8 @@ export default class GameScene extends Phaser.Scene {
     // 경험치 획득(ExpBall.js)
     overlapAddExp(this);
 
-    // 드랍 아이템 획득(고기, Meat.js)
-    overlapMeat(this);
-
+    // 드랍 아이템 획득(전체)
+    overlapObject(this);
 
     // ====================몬스터===================
 
@@ -167,5 +172,8 @@ export default class GameScene extends Phaser.Scene {
 
     // Player.js에서 playerMove를 받아오고 사용
     this.player.playerMove(this.cursors, this.wasd);
+
+    // 오브젝트- 자석효과
+    magnetActive(this);
   }
 }

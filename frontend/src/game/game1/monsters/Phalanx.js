@@ -14,9 +14,10 @@ export default class Phalanx extends Phaser.Physics.Arcade.Sprite {
 
         // 스탯 
         // 난이도 조절을 위해 현재 버전은 다소 하향시켜놨습니다
+        this.isElite = true;                  // 엘리트 몬스터 확인용
         this.monsterID = 11;                  // 몬스터 번호 (엘리트몬스터는 11부터 시작하는걸로 구분하겠습니다)
-        this.hp = 50 + (monsterStatus * 5);   // 체력
-        this.damage = -8;                     // 대미지
+        this.hp = 80 + (monsterStatus * 5);   // 체력
+        this.damage = -10;                     // 대미지
         this.resistance = 0;                  // 공격을 받았을때 밀려나는 저항정도
                                               // ※ 1은 저항없음, 0에 가까울수록 안밀린다
 

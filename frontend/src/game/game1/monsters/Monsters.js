@@ -1,10 +1,12 @@
 import Phaser from "phaser";
 import Slime from "../monsters/Slime.js"; 
-import CubeGolem from "../monsters/Cubegolem.js";
-import { addExpBall } from "../player/ExpBall.js";
+import Cubegolem from "../monsters/Cubegolem.js";
+import { addBigExpBall, addExpBall } from "../player/ExpBall.js";
 import { updateHP } from "../player/Hp.js";
 import RedSlime from "./RedSlime.js";
 import Phalanx from "./Phalanx.js";
+import { addDropItemMagnet } from "../Object/Magnet.js";
+import { addDropItemMeat } from "../Object/Meat.js";
 
 // 몬스터 이동 로직
 export function monsterMove(scene) {
@@ -150,7 +152,7 @@ function spawnSlime(PosX, PosY, scene) { // 함수를 따로 할당했기에 어
 function spawnCubeGolem(PosX, PosY, scene) {
   
     // 큐브골렘을 생성(monsters/CubeGolem.js)
-    let cubeGolem = new CubeGolem(scene, PosX, PosY, scene.monsterStatus);
+    let cubeGolem = new Cubegolem(scene, PosX, PosY, scene.monsterStatus);
     scene.monsters.add(cubeGolem); // monsters 배열에 넣는다
 }
 
@@ -201,7 +203,8 @@ export function addEventMonsterLevelUp(scene) {
     // 20초마다 몬스터의 체력이 증가하고 스폰률이 올라가는 이벤트
     scene.time.addEvent({
       delay: 20000,
-      callback: monsterLevelUp(scene),
+      callback: monsterLevelUp(scene), // 이건 시작할때 한번 실행되는것이 의도된 사항이 맞으니 수정하지 않았습니다
+                                       // 수정하게되면 monsterLevelUp이 실행되지 않아서 시작후 30초전까지 몬스터가 스폰되지 않습니다
       callbackScope: scene,
       loop: true,
     });
@@ -234,11 +237,11 @@ function updateMonsterSpawn(scene) {
     })
 }
 
-// 엘리트 몬스터 스폰(현재 테스트를 위해 30초로 설정, 차후 1분으로 변경)
+// 엘리트 몬스터 스폰(1분)
 export function addEliteMonsterSpawn(scene) {
 
   scene.eliteMonsterSpawnTimer = scene.time.addEvent({
-    delay: 30000,
+    delay: 60000,
     callback: () => spawnEliteMonster(scene),
     callbackScope: scene,
     loop: true
@@ -250,8 +253,38 @@ export function monsterDead(monster, scene) {
 
     // 죽었으면~
     if (monster.hp <= 0) {
-        addExpBall(monster.x, monster.y, scene);
-        monster.destroy(); // 체력이 다 달면 없애기
+
+      // 중복 방지 체크용(보상이 2번 드랍되는 현상 방지)
+      if (monster.isDeadD) return;
+      monster.isDeadD = true;
+
+      // 엘리트 몬스터가 죽었을때
+      if (monster.isElite == true) {
+        addBigExpBall(monster.x, monster.y, scene);
+      }
+
+      // 큐브 골렘이 죽었을때
+      else if (monster.monsterID == 2) {
+
+        // 50%확률로 자석이 생성
+        const magnetDropPercent = 50;
+        const randomValue = Phaser.Math.Between(1, 100);
+
+        if (magnetDropPercent >= randomValue) addDropItemMagnet(monster.x, monster.y, scene);
+        else addExpBall(monster.x, monster.y, scene);
+      }
+
+      // 그 외
+      else {
+
+        // 2%확률로 고기가 생성
+        const meatDropPercent = 2;
+        const randomValue = Phaser.Math.Between(1, 100);
+
+        if (meatDropPercent >= randomValue) addDropItemMeat(monster.x, monster.y, scene);
+        else addExpBall(monster.x, monster.y, scene);
+      }
+      monster.destroy(); // 체력이 다 달면 없애기
     }
 
     // 살았으면~

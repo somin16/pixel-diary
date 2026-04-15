@@ -1,6 +1,6 @@
 import Phaser from "phaser";
 import { monstersHitDamageBase } from "../monsters/Monsters";
-import { addDropItemMeat } from "../Object/Meat";
+import { addDropItemMagnet } from "../Object/Magnet";
 
 export function autoAttackBlade(scene) {
 
@@ -86,7 +86,7 @@ function attackBlade(scene) {
       chest.setTintFill(0xffffff);
 
       if (chest.hp <= 0) {
-        addDropItemMeat(chest.x, chest.y, scene);
+        addDropItemMagnet(chest.x, chest.y, scene);
         chest.destroy(); // 체력이 다 달면 없애기
       }
 
