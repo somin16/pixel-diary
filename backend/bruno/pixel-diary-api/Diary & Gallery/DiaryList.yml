@@ -1,0 +1,27 @@
+info:
+  name: DiaryList
+  type: http
+  seq: 4
+
+http:
+  method: GET
+  url: http://127.0.0.1:8000/api/v1/diaries/
+  headers:
+    - name: Authorization
+      value: "Bearer "
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |-
+  ### Headers
+  - Authorization: Bearer 로그인할 시 받는 access_token
+  ***
+  ### Status Code
+  - 200 OK: 일기 목록 조회 성공
+  - 400 Bad Request: 필수값 누락 (Authorization Bearer 헤더 access_token)
+  - 401 Unauthorized: 유효하지 않은 access_token인 경우
