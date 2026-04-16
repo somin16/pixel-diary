@@ -13,6 +13,7 @@ export default class Slime extends Phaser.Physics.Arcade.Sprite {
         scene.physics.add.existing(this);
 
         // 스탯 
+        this.isElite = false;          // 엘리트 몬스터 확인용
         this.monsterID = 1;            // 몬스터 번호
         this.hp = 5 + monsterStatus;   // 체력
         this.damage = -5;              // 대미지

@@ -170,6 +170,9 @@ function selectSkill(skill_Id, scene) { // skillId는 너무 가독성이 안좋
       }
     }
 
+    // 선택이 끝나면 false로 변경
+    scene.isLevelUpOpen = false;
+
     // 선택이 종료되면 UI파괴
     scene.levelUpUI.destroy();
 

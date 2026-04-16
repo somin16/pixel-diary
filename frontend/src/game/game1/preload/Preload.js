@@ -97,11 +97,17 @@ export function loadAllSprite(scene) {
     // 경험치 구슬
     scene.load.image("exp_ball", "/assets/game1/Object/Exp/exp_ball.png");
 
+    // 큰 경험치 구슬
+    scene.load.image("exp_ball_big","/assets/game1/Object/Exp/exp_ball_big.png");
+
     // 상자
     scene.load.image("chest_level_1", "/assets/game1/Object/Chest/chest_level_1.png");
 
     // 고기(회복 아이템)
     scene.load.image("meat", "/assets/game1/Object/DropItem/meat.png");
+
+    // 자석
+    scene.load.image("magnet", "/assets/game1/Object/DropItem/magnet.png");
 
 
 }

@@ -1,6 +1,6 @@
 import Phaser from "phaser";
 
-export default class CubeGolem extends Phaser.Physics.Arcade.Sprite {
+export default class Cubegolem extends Phaser.Physics.Arcade.Sprite {
 
     // 생성될 부모 클래스, x좌표, y좌표, 난이도 증가 가중치인 status 
     constructor(scene, x, y, monsterStatus) {
@@ -13,6 +13,7 @@ export default class CubeGolem extends Phaser.Physics.Arcade.Sprite {
         scene.physics.add.existing(this);
 
         // 스탯 
+        this.isElite = false;           // 엘리트 몬스터 확인용
         this.monsterID = 2;             // 몬스터 번호
         this.hp = 20 + monsterStatus;    // 체력
         this.damage = -7;               // 대미지
