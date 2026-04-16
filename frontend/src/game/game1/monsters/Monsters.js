@@ -129,7 +129,7 @@ function spawnMonster(scene) {
 
     // 뽑은게 슬라임의 스폰값보다 낮으면 슬라임, 높으면 다른몬스터
     if (randomSpawn <= slimeSpawnPercent) spawnSlime(SPAWN_X, SPAWN_Y, scene); // 여기에 소환이 되면 안됨으로 부모 클래스인 scene을 추가
-    else spawnCubeGolem(SPAWN_X, SPAWN_Y, scene);
+    else spawnCubegolem(SPAWN_X, SPAWN_Y, scene);
 }
 
 // 슬라임 소대 생성
@@ -149,11 +149,11 @@ function spawnSlime(PosX, PosY, scene) { // 함수를 따로 할당했기에 어
     }
 
 // 큐브골렘 생성
-function spawnCubeGolem(PosX, PosY, scene) {
+function spawnCubegolem(PosX, PosY, scene) {
   
-    // 큐브골렘을 생성(monsters/CubeGolem.js)
-    let cubeGolem = new Cubegolem(scene, PosX, PosY, scene.monsterStatus);
-    scene.monsters.add(cubeGolem); // monsters 배열에 넣는다
+    // 큐브골렘을 생성(monsters/Cubegolem.js)
+    let cubegolem = new Cubegolem(scene, PosX, PosY, scene.monsterStatus);
+    scene.monsters.add(cubegolem); // monsters 배열에 넣는다
 }
 
 // 레드슬라임 생성
