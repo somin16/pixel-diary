@@ -159,7 +159,7 @@ class DiaryView(APIView):
                 headers=headers,
                 params={
                     "user_id": f"eq.{user_id}",
-                    "order": "created_at.asc",          # asc 오래된 순 / desc 최신순
+                    "order": "created_at.desc",
                     "select": "id,content,created_at",  # 이미지 기능 구현 후 image_id 추가 예정
                 },
             )
