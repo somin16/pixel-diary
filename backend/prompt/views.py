@@ -1,17 +1,26 @@
 import os
+import requests as http_requests
 from groq import Groq
 from dotenv import load_dotenv
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 
-# backend/.env 파일에서 환경변수 로드 (GROQ_API_KEY 필요)
+# backend/.env 파일에서 환경변수 로드
 load_dotenv(os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '.env'))
+
+# ▼ Ollama 로컬 서버 설정 (ollama pull qwen2.5:7b 필요)
+OLLAMA_URL = "http://localhost:11434/api/chat"
+OLLAMA_MODEL = "qwen2.5:7b"
+
+# ▼ Groq 모델명 (.env의 GROQ_API_KEY 필요)
+GROQ_MODEL = "llama-3.3-70b-versatile"
+
 
 # ============================================================
 # 프롬프트 구조
 #
-#   [FIXED_PREFIX] + [LLM이 생성한 장면 설명] + [FIXED_SUFFIX]
+#   [FIXED_PREFIX] + [llm_model_engine_type이 생성한 장면 설명] + [FIXED_SUFFIX]
 #
 # FIXED_PREFIX: 픽셀아트 스타일을 고정하는 토큰 (항상 앞에 붙음)
 # FIXED_SUFFIX: 시점 등 후처리 토큰 (항상 뒤에 붙음)
@@ -28,9 +37,25 @@ FIXED_SUFFIX = "(Close-up:0.8)"
 NEGATIVE_PROMPT = "(landscape focus:1.5), small figure, busy background, dark, neon, (realistic:1.3), 3d, distorted limbs"
 
 
-def get_groq_client():
-    """Groq API 클라이언트 생성 (.env의 GROQ_API_KEY 사용)"""
-    return Groq(api_key=os.getenv("GROQ_API_KEY"))
+def call_llm_model_engine_type(messages, llm_model_engine_type="groq"):
+    """
+    llm_model_engine_type 호출
+    - llm_model_engine_type="groq" : Groq API (기본값, .env의 GROQ_API_KEY 필요)
+    - llm_model_engine_type="local" : Ollama 로컬 (ollama pull qwen2.5:7b 필요)
+    """
+    if llm_model_engine_type == "local":
+        response = http_requests.post(
+            OLLAMA_URL,
+            json={"model": OLLAMA_MODEL, "messages": messages, "stream": False}
+        )
+        return response.json()["message"]["content"].strip()
+    else:  # "groq" Groq 기본값
+        client = Groq(api_key=os.getenv("GROQ_API_KEY"))
+        response = client.chat.completions.create(
+            model=GROQ_MODEL,
+            messages=messages
+        )
+        return response.choices[0].message.content.strip()
 
 
 class PromptTransformView(APIView):
@@ -46,7 +71,7 @@ class PromptTransformView(APIView):
 
     Response:
     {
-        "positive_prompt": "FIXED_PREFIX + LLM 생성 장면 + FIXED_SUFFIX",
+        "positive_prompt": "FIXED_PREFIX + llm_model_engine_type 생성 장면 + FIXED_SUFFIX",
         "negative_prompt": "NEGATIVE_PROMPT 고정값"
     }
     """
@@ -55,6 +80,7 @@ class PromptTransformView(APIView):
         diary = request.data.get("diary", "").strip()
         gender = request.data.get("gender", "girl").strip()  # ▼ 주인공 성별 (girl / man 등), 기본값: girl
         age = request.data.get("age", 20)                    # ▼ 주인공 나이 (자연수), 기본값: 20
+        llm_model_engine_type = request.data.get("llm_model_engine_type", "groq")    # ▼ "groq": Groq (기본값), "local": Ollama 로컬, "c": Cerebras
 
         if not diary:
             return Response(
@@ -63,32 +89,25 @@ class PromptTransformView(APIView):
             )
 
         try:
-            client = get_groq_client()
-            response = client.chat.completions.create(
-                # ▼ 사용할 LLM 모델 - 바꾸면 다른 모델 사용 가능
-                model="llama-3.3-70b-versatile",
-                messages=[
-                    {
-                        "role": "user",
-                        "content": (
-                            # ▼ LLM에게 주는 지시문 (영어로 작성해야 영어 프롬프트가 나옵니다)
-                            # ▼ 아래 Rules 항목들을 수정하면 프롬프트 스타일이 달라집니다
-                            f"transform the following diary entry into a natural English image generation prompt for ComfyUI pixel art.\n"
-                            f"Rules:\n"
-                            f"- The main character is a {age}-year-old {gender} (the diary writer) and must be clearly visible and centered\n"  # 주인공: Body에서 받은 성별/나이 적용
-                            f"- Write in natural descriptive phrases (not just keywords)\n"  # 자연스러운 문장 (키워드만 나열 금지)
-                            f"- Up to 100 words, be vivid and expressive\n"  # 최대 100단어, 생동감 있게
-                            f"- Describe the scene, mood, characters, setting, weather, and atmosphere in detail\n"  # 장면/분위기/날씨 등 묘사
-                            f"- Output in English only, no extra explanation\n\n"  # 영어만 출력, 설명 없이
-                            f"Diary: {diary}"
-                        )
-                    }
-                ]
-            )
-            scene = response.choices[0].message.content.strip()  # LLM이 생성한 장면 설명 추출
+            scene = call_llm_model_engine_type([{
+                "role": "user",
+                "content": (
+                    # ▼ llm_model_engine_type에게 주는 지시문 (영어로 작성해야 영어 프롬프트가 나옵니다)
+                    # ▼ 아래 Rules 항목들을 수정하면 프롬프트 스타일이 달라집니다
+                    f"transform the following diary entry into a natural English image generation prompt for ComfyUI pixel art.\n"
+                    f"Rules:\n"
+                    f"- The main character is a {age}-year-old {gender} (the diary writer) and must be clearly visible and centered\n"  # 주인공: Body에서 받은 성별/나이 적용
+                    f"- Write in natural descriptive phrases (not just keywords)\n"  # 자연스러운 문장 (키워드만 나열 금지)
+                    f"- Up to 100 words, be vivid and expressive\n"  # 최대 100단어, 생동감 있게
+                    f"- Describe the scene, mood, characters, setting, weather, and atmosphere in detail\n"  # 장면/분위기/날씨 등 묘사
+                    f"- Output in English only, no extra explanation\n\n"  # 영어만 출력, 설명 없이
+                    f"Diary: {diary}"
+                )
+            }], llm_model_engine_type=llm_model_engine_type)
             positive_prompt = f"{FIXED_PREFIX}, {scene}, {FIXED_SUFFIX}"  # 앞뒤 고정 토큰과 합치기
 
             return Response({
+                "model": OLLAMA_MODEL if llm_model_engine_type == "local" else GROQ_MODEL,
                 "positive_prompt": positive_prompt,
                 "negative_prompt": NEGATIVE_PROMPT,
             }, status=status.HTTP_200_OK)
@@ -124,6 +143,7 @@ class PromptRestyleView(APIView):
         original_prompt = request.data.get("prompt", "").strip()
         user_request = request.data.get("request", "").strip()   # 한국어 가능, 추가/강조할 요소
         remove = request.data.get("remove", "").strip()          # ▼ 제거할 요소 (콤마로 구분), 부정 프롬프트에 자동 추가
+        llm_model_engine_type = request.data.get("llm_model_engine_type", "groq")        # ▼ "groq": Groq (기본값), "local": Ollama 로컬, "c": Cerebras
 
         if not original_prompt:
             return Response(
@@ -132,28 +152,20 @@ class PromptRestyleView(APIView):
             )
 
         try:
-            client = get_groq_client()
-
-            # remove가 있으면 LLM으로 영어 키워드로 변환
+            # remove가 있으면 llm_model_engine_type으로 영어 키워드로 변환
             remove_keywords = ""
             if remove:
-                remove_response = client.chat.completions.create(
-                    model="llama-3.3-70b-versatile",
-                    messages=[
-                        {
-                            "role": "user",
-                            "content": (
-                                # ▼ 한국어 제거 요청을 ComfyUI 부정 프롬프트용 영어 키워드로 변환
-                                f"transform the following removal request into short English keywords for a ComfyUI negative prompt.\n"
-                                f"Output only comma-separated English keywords, no explanation.\n"
-                                f"Request (may be in Korean): {remove}"
-                            )
-                        }
-                    ]
-                )
-                remove_keywords = remove_response.choices[0].message.content.strip()
+                remove_keywords = call_llm_model_engine_type([{
+                    "role": "user",
+                    "content": (
+                        # ▼ 한국어 제거 요청을 ComfyUI 부정 프롬프트용 영어 키워드로 변환
+                        f"transform the following removal request into short English keywords for a ComfyUI negative prompt.\n"
+                        f"Output only comma-separated English keywords, no explanation.\n"
+                        f"Request (may be in Korean): {remove}"
+                    )
+                }], llm_model_engine_type=llm_model_engine_type)
 
-            # request가 없으면 LLM 호출 없이 부정 프롬프트만 업데이트
+            # request가 없으면 llm_model_engine_type 호출 없이 부정 프롬프트만 업데이트
             if not user_request:
                 negative_prompt = f"{NEGATIVE_PROMPT}, {remove_keywords}" if remove_keywords else NEGATIVE_PROMPT
                 return Response({
@@ -161,24 +173,18 @@ class PromptRestyleView(APIView):
                     "negative_prompt": negative_prompt,
                 }, status=status.HTTP_200_OK)
 
-            response = client.chat.completions.create(
-                model="llama-3.3-70b-versatile",
-                messages=[
-                    {
-                        "role": "user",
-                        "content": (
-                            # ▼ 기존 내용 유지하면서 추가만 하도록 지시
-                            # ▼ "Add or emphasize" = 기존 삭제 없이 추가/강조만
-                            f"You are given a scene description from an image generation prompt. Add or emphasize the requested element while keeping ALL original details.\n"
-                            f"Output only the restyle scene description in one line. No explanations, no extra text.\n"
-                            f"Original scene: {original_prompt}\n"
-                            f"Additional request (may be in Korean): {user_request}\n"  # 한국어 요청도 처리 가능
-                            f"Rules: keep main character as described, natural descriptive English, under 100 words, one line only."
-                        )
-                    }
-                ]
-            )
-            restyle_scene = response.choices[0].message.content.strip()
+            restyle_scene = call_llm_model_engine_type([{
+                "role": "user",
+                "content": (
+                    # ▼ 기존 내용 유지하면서 추가만 하도록 지시
+                    # ▼ "Add or emphasize" = 기존 삭제 없이 추가/강조만
+                    f"You are given a scene description from an image generation prompt. Add or emphasize the requested element while keeping ALL original details.\n"
+                    f"Output only the restyle scene description in one line. No explanations, no extra text.\n"
+                    f"Original scene: {original_prompt}\n"
+                    f"Additional request (may be in Korean): {user_request}\n"  # 한국어 요청도 처리 가능
+                    f"Rules: keep main character as described, natural descriptive English, under 100 words, one line only."
+                )
+            }], llm_model_engine_type=llm_model_engine_type)
             restyle_prompt = f"{FIXED_PREFIX}, {restyle_scene}, {FIXED_SUFFIX}"  # 고정 토큰 다시 붙이기
 
             # remove 영어 키워드를 부정 프롬프트에 추가
