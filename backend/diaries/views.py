@@ -22,16 +22,17 @@ def get_supabase_headers():
 
 
 class DiaryView(APIView):
-    """일기 작성 및 저장 API"""
+    """일기 작성 및 저장, 목록 조회 API"""
 
     def post(self, request):
         """
+        일기 작성 및 저장
         POST /api/v1/diaries
         - Authorization 헤더의 access_token으로 현재 유저 확인
         - image_id, content를 받아 Supabase diaries 테이블에 저장
         - 저장된 diary_id와 완료 메시지 반환
         """
-        # Authorization 헤더에서 access_token 추출 (Bearer 토큰 방식)
+        # Authorization 헤더에서 access_token 추출
         access_token = extract_access_token(request)
         if not access_token:
             return Response(
@@ -59,10 +60,10 @@ class DiaryView(APIView):
         #         status=status.HTTP_400_BAD_REQUEST,
         #     )
 
-        # 글자수 제한 (테스트: 10자, 실제 서비스 시 변경 예정)
-        if len(content) > 10:
+        # 글자수 제한 (테스트: 20자, 실제 서비스 시 변경 예정)
+        if len(content) > 20:
             return Response(
-                {"message": "일기는 10자 이하로 작성해주세요."},
+                {"message": "일기는 20자 이하로 작성해주세요."},
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
@@ -120,6 +121,79 @@ class DiaryView(APIView):
                 {"message": "일기 저장 중 오류가 발생했습니다."},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
+        
+    def get(self, request):
+        """
+        일기 목록 조회
+        GET /api/v1/diaries/
+        - Authorization 헤더의 access_token으로 현재 유저 확인
+        - 해당 유저의 일기 목록을 최신순으로 반환
+        - 각 일기의 diary_id, content, created_at 반환
+        """
+        # Authorization 헤더에서 access_token 추출
+        access_token = extract_access_token(request)
+        if not access_token:
+            return Response(
+                {"message": "Authorization 헤더에 유효한 Bearer 토큰이 필요합니다."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        try:
+            # access_token으로 유저 정보 조회
+            user = get_user_from_token(access_token)
+
+            # 유효하지 않은 토큰인 경우 401 반환
+            if not user:
+                return Response(
+                    {"message": "유효하지 않은 토큰입니다."},
+                    status=status.HTTP_401_UNAUTHORIZED,
+                )
+
+            user_id = user.get("id")
+            supabase_url = os.getenv("SUPABASE_URL")
+            headers = get_supabase_headers()
+
+            # Supabase diaries 테이블에서 해당 유저의 일기 목록 조회
+            response = requests.get(
+                f"{supabase_url}/rest/v1/diaries",
+                headers=headers,
+                params={
+                    "user_id": f"eq.{user_id}",
+                    "order": "created_at.asc",          # asc 오래된 순 / desc 최신순
+                    "select": "id,content,created_at",  # 이미지 기능 구현 후 image_id 추가 예정
+                },
+            )
+
+            if response.status_code != 200:
+                raise Exception(f"Supabase API 오류: {response.text}")
+
+            # 날짜 포맷 변환 및 응답 데이터 구성
+            kst = timezone(timedelta(hours=9))
+            diaries = []
+            for diary in response.json():
+                created_at_str = diary.get("created_at")
+                created_at = datetime.fromisoformat(created_at_str.replace("Z", "+00:00"))
+                created_at_kst = created_at.astimezone(kst).strftime("%Y-%m-%dT%H:%M:%S+09:00")
+
+                diaries.append({
+                    "diary_id": diary.get("id"),
+                    "content": diary.get("content"),
+                    "created_at": created_at_kst,
+                    # "image_url": diary.get("image_id"),  # 이미지 기능 구현 후 URL로 교체 예정
+                })
+
+            return Response(
+                {"diaries": diaries},
+                status=status.HTTP_200_OK,
+            )
+
+        except Exception as error:
+            # 오류 발생 시 터미널에 출력 (개발 완료 후 삭제 예정)
+            print(f"=== DIARY LIST ERROR ===\n{error}\n=========================")
+            return Response(
+                {"message": "일기 목록 조회 중 오류가 발생했습니다."},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
 
 
 class DiaryDetailView(APIView):
@@ -127,6 +201,7 @@ class DiaryDetailView(APIView):
 
     def patch(self, request, diary_id):
         """
+        일기 수정
         PATCH /api/v1/diaries/{diary_id}
         - Authorization 헤더의 access_token으로 현재 유저 확인
         - content를 받아 Supabase diaries 테이블에서 해당 일기 수정
@@ -150,10 +225,10 @@ class DiaryDetailView(APIView):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        # 글자수 제한 (테스트: 10자, 실제 서비스 시 변경 예정)
-        if len(content) > 10:
+        # 글자수 제한 (테스트: 20자, 실제 서비스 시 변경 예정)
+        if len(content) > 20:
             return Response(
-                {"message": "일기는 10자 이하로 작성해주세요."},
+                {"message": "일기는 20자 이하로 작성해주세요."},
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
@@ -226,6 +301,7 @@ class DiaryDetailView(APIView):
 
     def delete(self, request, diary_id):
         """
+        일기 삭제
         DELETE /api/v1/diaries/{diary_id}
         - Authorization 헤더의 access_token으로 현재 유저 확인
         - 해당 일기가 본인 것인지 확인 후 삭제

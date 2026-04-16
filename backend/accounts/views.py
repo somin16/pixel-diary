@@ -623,6 +623,7 @@ class UserImageView(APIView):
  
     def patch(self, request):
         """
+        프로필 사진 변경
         PATCH /api/v1/auth/userimage
         - Authorization 헤더의 access_token으로 현재 유저 확인
         - profile_image 파일을 Supabase Storage에 업로드
@@ -715,6 +716,7 @@ class UserImageView(APIView):
  
     def delete(self, request):
         """
+        기본 프로필 사진으로 변경
         DELETE /api/v1/auth/userimage
         - Authorization 헤더의 access_token으로 현재 유저 확인
         - Supabase Storage에서 프로필 사진 삭제
