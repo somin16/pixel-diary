@@ -1,0 +1,48 @@
+info:
+  name: AddItem
+  type: http
+  seq: 1
+
+http:
+  method: POST
+  url: http://127.0.0.1:8000/api/v1/admin/items/
+  headers:
+    - name: Authorization
+      value: "Bearer "
+  body:
+    type: json
+    data: |-
+      {
+          "item_name": "",
+          "item_type": "",
+          "item_price": 0,
+          "item_info": "",
+          "item_image_url": ""
+      }
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |-
+  ### Body / Json
+  - item_name: 아이템 이름
+  - item_type: 아이템 타입 (app_theme, diary_theme, sticker, emoji, ticket)
+  - item_price: 아이템 가격 (기본값이 0이라 미리 입력해 두었습니다.)
+  - item_info: 아이템 정보
+  - item_image_url: 아이템 이미지 url (현재 값을 입력하지 않아도 테스트 가능)
+  ***
+  ### Headers
+  - Authorization: Bearer 로그인할 시 받는 access_token or 비밀번호 변경 후 받는 access_token
+  ***
+  ### Status Code
+  - 201 Created: 아이템 추가 성공
+  - 400 Bad Request: 필수값 누락 (Authorization Bearer 헤더 access_token)
+  - 400 Bad Request: 필수값 누락 (item_name, item_type, item_price, item_info)
+  - 400 Bad Request: 유효성 검증 (item_type: app_theme, diary_theme, sticker, emoji, ticket)
+  - 400 Bad Request: 유효성 검증 (item_price가 숫자가 아니거나 음수인 경우)
+  - 401 Unauthorized: 유효하지 않은 access_token인 경우
+  - 403 Forbidden: 관리자 권한 필요
