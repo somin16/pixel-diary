@@ -132,7 +132,7 @@ export default function Signup() { // 회원가입 페이지 내보내기
                     type="username"
                     placeholder="닉네임을 입력하세요"
                     value={user_name}
-                    onChange={(e) => setUser_name(e.target.value)}
+                    onChange={(e) => setUser_name(e.target.value)} // 현재 닉네임 중복 검사는 백엔드API가 미구현이므로 불가능합니다 AuthValidator.js 내부에 주석처리되어있음
                     status={userNameStatus}
                     currentTheme={currentTheme}
                 />               
@@ -173,7 +173,7 @@ export default function Signup() { // 회원가입 페이지 내보내기
                 {/* 회원가입 버튼 */}
                 <SubmitButton // auth/SubmitButton 컴포넌트 불러와서 사용
                     loading={loading}
-                    disabled={emailStatus.state !== 'success' || passwordStatus.state !== 'success'}
+                    disabled={loading || userNameStatus.state !== 'success' || emailStatus.state !== 'success' || passwordStatus.state !== 'success' || confirmStatus.state !== 'success'}
                     currentTheme={currentTheme}
                     text="회원가입"
                 />
