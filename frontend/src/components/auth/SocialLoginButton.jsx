@@ -20,7 +20,7 @@ const SocialLoginButton = ({ onLogin, currentTheme }) => {
         <div className="flex gap-4 mb-5"> 
             {socialPlatforms.map(social => (
                 <button
-                    key={social.id} // 리스트 렌더링 시 교유 식별자 설정
+                    key={social.id} // 리스트 렌더링 시 고유 식별자 설정
                     onClick={() => onLogin(social.id)} // 클릭 시 해당 플랫폼 ID 전달
                     className="w-20 h-20 transition-transform outline-none" // 버튼 크기 고정 및 버튼 테두리 제거
                 >

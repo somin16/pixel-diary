@@ -33,7 +33,7 @@ const InputBox = ({ label, type, placeholder, value, onChange, status, currentTh
                     {label}
                 </span>
 
-                <input // 실제 input 필드 : input 필드 배경이 투명행야 픽셀 이미지가 보임
+                <input // 실제 input 필드 : input 필드 배경이 투명해야 픽셀 이미지가 보임
                     type={type}
                     placeholder={placeholder}
                     className="w-full h-full p-6 bg-transparent outline-none placeholder:text-gray-400 text-m font-bold text-center mt-2 -mb-0.5"
