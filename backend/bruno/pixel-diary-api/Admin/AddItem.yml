@@ -16,7 +16,6 @@ http:
           "item_name": "",
           "item_type": "",
           "item_price": ,
-          "item_stackable": ,
           "item_info": "",
           "item_image_url": ""
       }
@@ -27,3 +26,22 @@ settings:
   timeout: 0
   followRedirects: true
   maxRedirects: 5
+
+docs: |-
+  ### Body / Json
+  - item_name: 아이템 이름
+  - item_type: 아이템 타입 (app_theme, diary_theme, sticker, emoji, ticket)
+  - item_price: 아이템 가격
+  - item_info: 아이템 정보
+  - item_image_url: 아이템 이미지 url (현재 값을 입력하지 않아도 테스트 가능)
+  ***
+  ### Headers
+  - Authorization: Bearer 로그인할 시 받는 access_token or 비밀번호 변경 후 받는 access_token
+  ***
+  ### Status Code
+  - 201 Created: 아이템 추가 성공
+  - 400 Bad Request: 필수값 누락 (Authorization Bearer 헤더 access_token)
+  - 400 Bad Request: 필수값 누락 (item_name, item_type, item_price, item_info)
+  - 400 Bad Request: 유효성 검사 (item_type: app_theme, diary_theme, sticker, emoji, ticket)
+  - 401 Unauthorized: 유효하지 않은 access_token인 경우
+  - 403 Forbidden: 관리자 권한 필요
