@@ -16,8 +16,8 @@ const SocialLoginButton = ({ onLogin, currentTheme }) => {
         { id: 'naver', name: 'naver_icon_x3' }
     ];
 
-    return (
-        <div className="flex gap-4 mb-5"> // 버튼 간격(gap-4(16px))및 중앙 정렬 레이아웃
+    return (// 버튼 간격(gap-4(16px))및 중앙 정렬 레이아웃
+        <div className="flex gap-4 mb-5"> 
             {socialPlatforms.map(social => (
                 <button
                     key={social.id} // 리스트 렌더링 시 교유 식별자 설정
