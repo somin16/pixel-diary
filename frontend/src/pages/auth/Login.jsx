@@ -70,7 +70,7 @@ export default function Login() { // 로그인 페이지 내보내기
 
         setLoading(true);
 
-        try { //백엔드 API 연동 /api/v1/auth/loginup/
+        try { //백엔드 API 연동 /api/v1/auth/login/
             const loginEndpoint = `${import.meta.env.VITE_BACKEND_URL}/api/v1/auth/login/`;
             const response = await fetch(loginEndpoint, {
                 method: 'POST',
