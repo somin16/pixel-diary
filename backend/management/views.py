@@ -60,6 +60,19 @@ class AdminItemView(APIView):
                 status=status.HTTP_400_BAD_REQUEST,
             )
         
+        # item_price 유효성 검증 (숫자가 아니거나 음수인 경우 400 반환)
+        if not isinstance(item_price, int):
+            return Response(
+                {"message": "item_price는 숫자여야 합니다."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        if item_price < 0:
+            return Response(
+                {"message": "item_price는 0 이상이어야 합니다."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        
         # item_stackable을 item_type에 따라 자동 설정
         # app_theme, diary_theme는 중복 보유 불가 (false)
         # sticker, emoji, ticket은 중복 보유 가능 (true)
