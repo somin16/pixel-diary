@@ -17,7 +17,7 @@ import { supabase } from "../../utils/SupabaseClient";
 import InputBox from '../../components/auth/InputBox';
 import SubmitButton from '../../components/auth/SubmitButton';
 
-export default function signup() { // 회원가입 페이지 내보내기
+export default function Signup() { // 회원가입 페이지 내보내기
     // 페이지 이동
     const navigate = useNavigate();
 
@@ -162,7 +162,7 @@ export default function signup() { // 회원가입 페이지 내보내기
                 {/* 비밀번호 확인창 */}
                 <InputBox // auth/InputBox 컴포넌트를 불러와서 사용
                     label="비밀번호 확인"
-                    type="confrimpassword"
+                    type="confirmpassword"
                     placeholder="비밀번호를 한번 더 입력하세요"
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
