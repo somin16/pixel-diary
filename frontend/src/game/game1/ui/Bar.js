@@ -20,7 +20,7 @@ export function barUiSetting(scene) {
 
     // 경험치바 위치
     const expBarPosX = scene.cameras.main.width / 2;
-    const expBarPosY = scene.cameras.main.height / 13;
+    const expBarPosY = scene.cameras.main.height / 8;
 
     // 차오르는 경험치바 한정 위치
     const addExpPosX = expBarPosX - 150;

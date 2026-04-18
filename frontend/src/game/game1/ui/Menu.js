@@ -21,7 +21,7 @@ export function createMenu(scene) {
     );
     
     // 메뉴아이콘을 화면기준 우측위에 생성
-    const menuOpenButton = scene.add.image(340, 20, "menu_icon").setInteractive();
+    const menuOpenButton = scene.add.image(340, 50, "menu_icon").setInteractive();
     menuOpenButton.setDepth(100);      // 레이어를 위에 설정
     menuOpenButton.setScrollFactor(0); // 가운데 고정
     menuOpenButton.setScale(2);        // 해상도x2
