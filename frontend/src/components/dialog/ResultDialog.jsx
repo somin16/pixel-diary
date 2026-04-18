@@ -1,9 +1,10 @@
 import React from "react";
 import { useTheme } from '../../hooks/useTheme'; // useTheme 불러오기
 import { getAssetUrl } from "../../utils/AssetHelper"; // 헬퍼 불러오기
+
+// 컴포넌트 불러오기
 import DialogBox from '../dialog/DialogBox';
 import ImageButton from '../button/ImageButton';
-import styles from './DialogBox.module.css';
 
 /**
  * ResultDialog (결과 알림 창)
@@ -19,7 +20,7 @@ const ResultDialog = ({ message, onConfirm }) => {
   return (
     <DialogBox>
       {/* 메세지 텍스트 */}
-      <p className={styles.dialogTitle} style={{ marginTop: '30px' }}>
+      <p className="text-[13px] font-bold text-center m-0 mt-[30px]">
         {message}
       </p>
 
@@ -28,7 +29,6 @@ const ResultDialog = ({ message, onConfirm }) => {
         label="확인"
         imageSrc={getAssetUrl(currentTheme, 'buttons', 'green_button_x3')}
         onClick={onConfirm}
-        className={styles.confirmButton} // 버튼 전용 클래스 적용
       />
     </DialogBox>
   );

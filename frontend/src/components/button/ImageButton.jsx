@@ -1,5 +1,4 @@
 import React from "react";
-import styles from './ImageButton.module.css'; // 버튼 전용 CSS 불러오기
 
 /**
  * ImageButton (버튼 구조 컴포넌트)
@@ -12,18 +11,22 @@ import styles from './ImageButton.module.css'; // 버튼 전용 CSS 불러오기
 
 const ImageButton = ({ label, onClick, imageSrc, className }) => {
   return (
-    // 뼈대 스타일(buttonWrapper)과 외부 스타일(className)을 백틱(`)으로 합쳐서 적용
+    // 뼈대 스타일과 외부 스타일(className)을 백틱(`)으로 합쳐서 적용
     <button 
-    type="button" // onClick으로 전달한 함수만 실행
-    className={`${styles.buttonWrapper} ${className}`} 
-    onClick={onClick}>
+      type="button" // onClick으로 전달한 함수만 실행
+      className={`relative bg-transparent border-none p-0 cursor-pointer flex justify-center items-center overflow-hidden outline-none ${className || ''}`} 
+      onClick={onClick}
+    >
       {/* 바닥에 깔리는 배경 이미지 */}
       <img 
         src={imageSrc} 
         alt={label} 
-        className={styles.buttonImage} />
+        className="w-full h-auto block" 
+      />
       {/* 이미지 위로 정중앙에 위치하는 텍스트 */}
-      <span className={styles.buttonText}>{label}</span>
+      <span className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-10 text-[13px] text-white whitespace-nowrap">
+        {label}
+      </span>
     </button>
   );
 };

@@ -2,7 +2,6 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from 'react-router-dom';
 import { useTheme } from '../../hooks/useTheme'; // useTheme 불러오기
 import { getAssetUrl } from "../../utils/AssetHelper"; // 헬퍼 불러오기
-import styles from './Profile.module.css';
 
 const Profile = () => {
   // navigate('/경로') 처럼 사용하여 원하는 주소로 화면을 전환
@@ -35,115 +34,127 @@ const Profile = () => {
     setTimeout(() => setShowSuccessMessage(false), 5000);
   };
 
-  return (
-    // 전체 페이지를 감싸는 컨테이너(배경 이미지 깔림)
-    <div className={styles.container}
-      style={{ backgroundImage: `url(${getAssetUrl(currentTheme,'backgrounds','menu_background_x3')})`,
-      backgroundSize: '100% 100%', // 컨테이너 크기에 이미지를 강제로 꽉 맞춤
-    }}>
+return (
+    <div 
+      className="w-full h-full pt-[60px] pb-[30px] px-5 flex flex-col items-center bg-[length:100%_100%]"
+      style={{ backgroundImage: `url(${getAssetUrl(currentTheme,'backgrounds','menu_background_x3')})` }}
+    >
       
-    {/* 상단 헤더 - 뒤로 가기 버튼 */}
-    <header className={styles.header}>
-        {/* 버튼 클릭 시 뒤로 가기 */}
-        <button className={styles.backButton} onClick={handleBack}>
-          <img src={getAssetUrl(currentTheme,'icons', 'back_icon_x3')} alt="뒤로 가기" />
+      {/* 상단 헤더 - 뒤로 가기 버튼 */}
+      <header className="w-full flex justify-start mb-5 pl-[15px]">
+        <button 
+          className="bg-transparent border-none cursor-pointer p-0 transition-transform duration-100 ease-in outline-none" 
+          onClick={handleBack}
+        >
+          <img 
+            src={getAssetUrl(currentTheme,'icons', 'back_icon_x3')} 
+            alt="뒤로 가기" 
+            className="w-auto h-[40px]" 
+          />
         </button>
-    </header>
+      </header>
 
-    {/* 프로필 사진 영역 */}
-    <section className={styles.profilePhotoArea}>
-    <img 
-    src={getAssetUrl(currentTheme, 'boxes', 'profile_image_box_x3')} 
-    alt="프로필 프레임" 
-    className={styles.photoFrame} 
-    />
-  
-    {/* 클릭하면 파일 선택창 열리도록 */}
-    <label htmlFor="profileImageInput" className={styles.photoContent}>
-    <img 
-      src={profileImage || getAssetUrl(currentTheme, 'icons', 'app_icon_x2')} 
-      alt="프로필 사진" 
-      style={{ width: '100%', height: '100%', objectFit: 'cover', cursor: 'pointer' }}
-    />
-    </label>
+      {/* 프로필 사진 영역 */}
+      <section className="relative w-auto h-auto mt-[50px] mb-[65px] flex justify-center items-center">
+        <img 
+          src={getAssetUrl(currentTheme, 'boxes', 'profile_image_box_x3')} 
+          alt="프로필 프레임" 
+          className="w-[200px] h-[200px] z-10 pointer-events-none relative" 
+        />
+        {/* 클릭하면 파일 선택창 열리도록 */}
+        <label htmlFor="profileImageInput" className="absolute top-[15px] left-[15px] w-[170px] h-[170px] z-20 block cursor-pointer overflow-hidden">
+          <img 
+            src={profileImage || getAssetUrl(currentTheme, 'icons', 'app_icon_x2')} 
+            alt="프로필 사진" 
+            className="w-full h-full object-cover cursor-pointer"
+          />
+        </label>
 
-    {/* 숨겨진 파일 input */}
-    <input 
-        id="profileImageInput"
-        type="file"
-        accept="image/*"
-        style={{ display: 'none' }}
-        onChange={(e) => {
-        const file = e.target.files[0];
-        if (!file) return;
-      
-      // 선택한 파일을 브라우저에서 바로 미리보기용 URL로 변환
-      if (profileImage && profileImage.startsWith('blob:')) {
-        URL.revokeObjectURL(profileImage); // 기존에 만들어둔 임시 URL이 있다면 메모리에서 지워줌
-      }
-      const previewUrl = URL.createObjectURL(file); // 임시 미리보기용 URL 생성
-      setProfileImage(previewUrl); // 만든 주소로 화면에 사진 띄워줌
-      setSelectedFile(file); // 서버로 보낼 파일 원본 저장
-    }}
-    />
-    </section>
+        {/* 숨겨진 파일 input */}
+        <input 
+          id="profileImageInput"
+          type="file"
+          accept="image/*"
+          className="hidden"
+          onChange={(e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+            // 선택한 파일을 브라우저에서 바로 미리보기용 URL로 변환
+            if (profileImage && profileImage.startsWith('blob:')) {
+              // 기존에 만들어둔 임시 URL이 있다면 메모리에서 지워줌
+              URL.revokeObjectURL(profileImage);
+            }
+            const previewUrl = URL.createObjectURL(file); // 임시 미리보기용 URL 생성
+            setProfileImage(previewUrl); // 만든 주소로 화면에 사진 띄워줌
+            setSelectedFile(file); // 서버로 보낼 파일 원본 저장
+          }}
+        />
+      </section>
 
-    {/* 입력 필드 영역 */}
-      <section className={styles.inputArea}>
+      {/* 입력 필드 영역 */}
+      <section className="w-[220px] flex flex-col gap-[10px] mb-[30px]">
         
         {/* 닉네임 입력 그룹 */}
-        <div className={styles.inputGroup}>
-          <label className={styles.inputLabel}>닉네임</label>
-          <div className={styles.imageInputContainer}>
+        <div className="flex flex-col gap-[8px]">
+          <label className="text-[13px] font-normal text-black">닉네임</label>
+          <div className="relative w-full max-w-[350px] h-[45px] flex items-center">
             {/* 배경이 되는 픽셀 박스 이미지 */}
             <img 
               src={getAssetUrl(currentTheme, 'boxes', 'profile_info_box_x3')}
               alt="입력칸 배경" 
-              className={styles.inputBackgroundImage} 
+              className="absolute top-0 left-0 w-full h-full z-10" 
             />
             {/* 그 위에 올라가는 투명한 실제 입력칸 */}
             <input 
               type="text" 
               value={nickname} 
               onChange={(e) => setNickname(e.target.value)} 
-              className={styles.transparentInput}
+              className="relative z-20 w-full h-full bg-transparent border-none outline-none pl-[12px] pr-[20px] text-[13px] font-normal text-black"
             />
           </div>
         </div>
         
         {/* 이메일 입력 그룹 - 클릭 불가 */}
-        <div className={styles.inputGroup}>
-          <label className={styles.inputLabel}>이메일</label>
-          <div className={styles.imageInputContainer}>
+        <div className="flex flex-col gap-[8px]">
+          <label className="text-[13px] font-normal text-black">이메일</label>
+          <div className="relative w-full max-w-[350px] h-[45px] flex items-center">
             <img 
               src={getAssetUrl(currentTheme, 'boxes', 'profile_info_box_x3')}
               alt="이메일 배경" 
-              className={styles.inputBackgroundImage} 
+              className="absolute top-0 left-0 w-full h-full z-10" 
             />
             <input 
               type="email" 
               value={email} 
               readOnly 
-              className={`${styles.transparentInput} ${styles.readOnlyInput}`} 
+              className="relative z-20 w-full h-full bg-transparent border-none outline-none pl-[12px] pr-[20px] text-[13px] font-normal text-[#969696] cursor-not-allowed" 
             />
           </div>
         </div>
       </section>
 
-      {/* 수정 완료 메시지 - 항상 공간을 차지하도록 Wrapper 추가 */}
-      <div className={styles.messageWrapper}>
+      {/* 수정 완료 메시지 */}
+      <div className="w-full h-[60px] flex justify-center items-center mb-[3px]">
         {showSuccessMessage && (
-        <p className={styles.successMessage}>정보가 수정되었습니다</p>
-      )}
+          <p className="m-0 mt-[3px] text-[13px] font-normal text-[#00A40B]">
+            정보가 수정되었습니다
+          </p>
+        )}
       </div>
 
       {/* 내 정보 수정하기 버튼 */}
-      <button className={styles.updateButton} onClick={handleUpdate}>
+      <button 
+        className="relative bg-transparent border-none p-0 cursor-pointer w-[220px] mt-0 transition-transform duration-100 ease-in flex justify-center items-center font-normal" 
+        onClick={handleUpdate}
+      >
         <img 
           src={getAssetUrl(currentTheme, 'buttons', 'profile_info_patch_button_x3')} 
           alt="수정하기 버튼" 
+          className="w-full h-auto"
         />
-        <span className={styles.buttonText}>내 정보 수정하기</span>
+        <span className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-white text-[12px] font-normal pointer-events-none whitespace-nowrap">
+          내 정보 수정하기
+        </span>
       </button>
     </div>
   );
