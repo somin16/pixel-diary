@@ -15,10 +15,10 @@ import { addEventautoHeal } from "../player/Hp.js";
 import { overlapAddExp } from "../player/ExpBall.js"; // ← 이렇게 선언하면 해당 클래스의 함수만 쏙 빼올수있다
 
 // 오브젝트 획득
-import { overlapObject } from "../Object/Objects.js";
+import { overlapObject } from "../object/Objects.js";
 
 // 오브젝트 - 자석
-import { magnetActive } from "../Object/Magnet.js";
+import { magnetActive } from "../object/Magnet.js";
 
 
 // ==============몬스터 관련=================
@@ -45,7 +45,7 @@ import { backGroundTileCameraSet, backgroundTileSet } from "../background/Backgr
 // ==============오브젝트===================
 
 // 상자 생성
-import { addEventSpawnChest } from "../Object/Chest.js";
+import { addEventSpawnChest } from "../object/Chest.js";
 
 
 // ===============타이머====================
