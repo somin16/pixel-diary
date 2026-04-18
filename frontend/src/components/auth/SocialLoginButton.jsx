@@ -1,9 +1,10 @@
 import { getAssetUrl } from "../../utils/AssetHelper"; // 이미지 url
 
 /**
- * [공통 컴포넌트] 소셜 로그인(Google, Kakao, Naver) 버튼 그룹
- * @param {function} onLogin - 특정 플랫폼의 로그인 로직을 실행할 핸들러 함수
- * @param {string} currentTheme - 현재 앱의 테마 (아이콘 경로 결정용)
+ * 소셜 로그인(Google, Kakao, Naver) 버튼 그룹 컴포넌트
+ * * @param {Object} props
+ * @param {function(string): void} props.onLogin - 클릭된 플랫폼 ID('google' 등)를 받는 핸들러
+ * @param {string} props.currentTheme - 현재 앱 테마
  */
 
 // auth/SocialLoginButton 컴포넌트 선언
