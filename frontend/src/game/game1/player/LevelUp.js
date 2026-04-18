@@ -31,7 +31,7 @@ export function levelUpMenu(scene) {
       // 스탯
       { name: "공격력 증가" , id: "damage_up", icon: "damage_icon"},
       { name: "이동속도 증가", id: "speed_up", icon: "speed_icon"},
-      { name: "자연회복 증가", id: "autoHeal_up", icon: "autoHeal_icon"},
+      { name: "자연회복 증가", id: "autoHeal_up", icon: "auto_heal_icon"},
 
       // 무기
       { name: "블레이드", id: "blade_up", icon: "blade_icon"}, // 현재 3레벨까지 구현
