@@ -1,6 +1,6 @@
 import Phaser from "phaser";
 import { monstersHitDamageBase } from "../monsters/Monsters";
-import { addDropItemMagnet } from "../object/Magnet";
+import { addDropItemMagnet } from "../object_/Magnet";
 
 export function autoAttackBlade(scene) {
 

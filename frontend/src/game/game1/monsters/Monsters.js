@@ -5,8 +5,8 @@ import { addBigExpBall, addExpBall } from "../player/ExpBall.js";
 import { updateHP } from "../player/Hp.js";
 import RedSlime from "./RedSlime.js";
 import Phalanx from "./Phalanx.js";
-import { addDropItemMagnet } from "../object/Magnet.js";
-import { addDropItemMeat } from "../object/Meat.js";
+import { addDropItemMagnet } from "../object_/Magnet.js";
+import { addDropItemMeat } from "../object_/Meat.js";
 
 // 몬스터 이동 로직
 export function monsterMove(scene) {
