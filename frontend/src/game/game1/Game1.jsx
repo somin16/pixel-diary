@@ -16,7 +16,7 @@ const Game1 = () => {
         autoCenter: Phaser.Scale.CENTER_BOTH,
         parent: gameContainer.current, // 렌더링 기준 설정
         width: 360,
-        height: 640,
+        height: 720,
       },
 
       physics: {

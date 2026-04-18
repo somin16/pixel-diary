@@ -5,8 +5,8 @@ import { addBigExpBall, addExpBall } from "../player/ExpBall.js";
 import { updateHP } from "../player/Hp.js";
 import RedSlime from "./RedSlime.js";
 import Phalanx from "./Phalanx.js";
-import { addDropItemMagnet } from "../Object/Magnet.js";
-import { addDropItemMeat } from "../Object/Meat.js";
+import { addDropItemMagnet } from "../object/Magnet.js";
+import { addDropItemMeat } from "../object/Meat.js";
 
 // 몬스터 이동 로직
 export function monsterMove(scene) {
@@ -200,14 +200,16 @@ export function addEventRedSlimeSpawn(scene) {
 // 이벤트 생성 함수
 export function addEventMonsterLevelUp(scene) {
 
-    // 20초마다 몬스터의 체력이 증가하고 스폰률이 올라가는 이벤트
-    scene.time.addEvent({
-      delay: 20000,
-      callback: monsterLevelUp(scene), // 이건 시작할때 한번 실행되는것이 의도된 사항이 맞으니 수정하지 않았습니다
-                                       // 수정하게되면 monsterLevelUp이 실행되지 않아서 시작후 30초전까지 몬스터가 스폰되지 않습니다
-      callbackScope: scene,
-      loop: true,
-    });
+  // 화살표 함수로 수정했으니, 함수호출을 한번 따로 해줘야 게임이 시작될때 몬스터가 스폰됩니다  
+  monsterLevelUp(scene)
+
+  // 20초마다 몬스터의 체력이 증가하고 스폰률이 올라가는 이벤트
+  scene.time.addEvent({
+    delay: 20000,
+    callback: () => monsterLevelUp(scene), // 다시 확인해본 결과, 화살표 함수로 수정하는편이 좋을것같아 수정했습니다
+    callbackScope: scene,
+    loop: true,
+  });
 } 
 
 // 몬스터 레벨업(스탯 증가)
@@ -266,22 +268,22 @@ export function monsterDead(monster, scene) {
       // 큐브 골렘이 죽었을때
       else if (monster.monsterID == 2) {
 
-        // 50%확률로 자석이 생성
-        const magnetDropPercent = 50;
+        // 10%확률로 고기가 생성
+        const meatDropPercent = 10;
         const randomValue = Phaser.Math.Between(1, 100);
 
-        if (magnetDropPercent >= randomValue) addDropItemMagnet(monster.x, monster.y, scene);
+        if (meatDropPercent >= randomValue) addDropItemMeat(monster.x, monster.y, scene);
         else addExpBall(monster.x, monster.y, scene);
       }
 
       // 그 외
       else {
 
-        // 2%확률로 고기가 생성
-        const meatDropPercent = 2;
+        // 1%확률로 자석이 생성
+        const magnetDropPercent = 1;
         const randomValue = Phaser.Math.Between(1, 100);
 
-        if (meatDropPercent >= randomValue) addDropItemMeat(monster.x, monster.y, scene);
+        if (magnetDropPercent >= randomValue) addDropItemMagnet(monster.x, monster.y, scene);
         else addExpBall(monster.x, monster.y, scene);
       }
       monster.destroy(); // 체력이 다 달면 없애기
