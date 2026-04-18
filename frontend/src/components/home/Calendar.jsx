@@ -16,33 +16,46 @@ import { getAssetUrl } from "../../utils/AssetHelper";
 
 const Calendar = ({ onDateClick, onMonthChange, viewDate, currentTheme }) => {
 
-    // 날짜 계산 로직
+    // 날짜 데이터 계산 로직
     const year = viewDate.getFullYear();
     const month = viewDate.getMonth();
 
-    const firstDay = new Date(year, month, 1).getDay(); // 이번 달의 첫날 요일 (0:일요일 ~ 6:토요일)
+    const firstDay = new Date(year, month, 1).getDay(); // 이번 달의 첫날 요일 (0:일요일 ~ 6:토요일) -> 지난달 날짜를 몇 칸 채울지 결정
     const lastDate = new Date(year, month + 1, 0).getDate(); // 이번 달의 마지막 날짜 (예: 30, 31)
+    const lastMonthDate = new Date(year, month, 0).getDate(); // 지난 달의 마지막 날짜 -> 지난달 날짜를 역순으로 채우기 위해 필요
 
-    // 그리드를 채울 전체 배열  (시작 요일 앞의 빈칸 + 실제 날짜)
-    const days = Array.from({ length: firstDay }, () => null)
-        .concat(Array.from({ length: lastDate }, (_, i) => i + 1));
+    const days = [];
+
+    // 지난달 날짜 채우기
+    for (let i = firstDay - 1; i >= 0; i--) {
+        days.push({ day: lastMonthDate - i, type: 'last' });
+    }
+    // 이번달 날짜 채우기
+    for (let i = 1; i <= lastDate; i++) {
+        days.push({ day: i, type: 'current' });
+    }
+    // 다음달 날짜 채우기 (무조건 42칸이 될 때까지) <6주를 맞춰서 그리드 비어보임 방지>
+    const remaining = 42 - days.length;
+    for (let i = 1; i <= remaining; i++) {
+        days.push({ day: i, type: 'next' });
+    }
 
     const CalendarStyle = { // 픽셀 아트 배경 이미지 & 비율 설정
         backgroundImage: `url(${getAssetUrl(currentTheme, 'calendars', 'calendar_basic_x3')})`,
         backgroundSize: '100% 100%', // 이미지를 박스 크기에 꽉 채움
-        aspectRatio: '354/318', //비율을 유지해 픽셀 왜곡 방지
+        aspectRatio: '354/357', //비율을 유지해 픽셀 왜곡 방지
     };
 
     return (
         <div style={CalendarStyle} className="relative min-w-19/20 h-auto max-w-full flex flex-col">
 
-            {/* 상단 헤더1: pixel calendar 표시 */}
-            <span className="w-full h-[17%] flex justify-center items-center text-white text-3xl p-[1.5%]">Pixel Diary</span>
+            {/* 상단 타이틀 헤더: pixel calendar 표시 */}
+            <span className="w-full h-[15%] flex justify-center items-center text-white text-3xl p-[1.5%]">Pixel Diary</span>
 
-            {/* 상단 헤더2: 월 이동 버튼 및 연/월 표시 영역 */}
+            {/* 연/월 네비게이션: 월 이동 버튼 및 연/월 표시 영역 */}
             <div className="relative w-full flex h-[9%]">
-                
-                {/* 중앙 년월 표시 (부모 div 안에서 절대 중앙 정렬) */}
+
+                {/* 중앙 년월 표시 */}
                 <div className="absolute w-full h-full flex items-center justify-center">
                     <span className=" text-black text-3xl">
                         {year}.{String(month + 1).padStart(2, '0')}
@@ -51,31 +64,51 @@ const Calendar = ({ onDateClick, onMonthChange, viewDate, currentTheme }) => {
 
                 {/*왼쪽 버튼 모음 ( 투명 버튼 <> ) */}
                 <div className="absolute w-[15%] pl-[3%] h-full flex items-center justify-between">
-                    <button onClick={() => onMonthChange(-1)} className="w-5 h-7 flex items-center justify-center"/>
-                        <span className="text-3xl">{String(month + 1)}</span>
-                    <button onClick={() => onMonthChange(1)} className=" w-5 h-7 flex items-center justify-center"/>
+                    <button onClick={() => onMonthChange(-1)} className="w-5 h-7 flex items-center justify-center outline-none" aria-label="이전 달"/>
+                    <span className="text-3xl">{String(month + 1)}</span>
+                    <button onClick={() => onMonthChange(1)} className=" w-5 h-7 flex items-center justify-center outline-none" aria-label="다음 달" />
                 </div>
             </div>
 
             {/*내부 데이터 레이어(배경 위에 띄우기) */}
-            <div className="absolute inset-0 flex flex-col mt-[26.5%] pl-[3%] pr-[9.5%]">
+            <div className="absolute inset-0 flex flex-col mt-[26%] pl-[3%] pr-[9.5%]">
 
                 {/* 요일 헤더 1. 일요일 시작 (일 월 화 수 목 금 토) */}
-                <div className="grid grid-cols-7 w-full h-[9%] text-[13px] text-center items-center justify-center gap-[1.5%]">
-                    {['일', '월', '화', '수', '목', '금', '토'].map(d => <div key={d}>{d}</div>)}
+                <div className="grid grid-cols-7 w-full h-[8%] text-[13px] text-center items-center justify-center gap-[1.5%]">
+                    {['일', '월', '화', '수', '목', '금', '토'].map((d, index) =>
+                        <div
+                            className={`
+                            ${index === 0 ? 'text-red-800' : ''} // 일요일: 빨간색
+                            ${index === 6 ? 'text-blue-800' : ''} // 토요일: 파란색
+                        `}
+                            key={d}
+                        >
+                            {d}
+                        </div>
+                    )}
                 </div>
 
                 {/* 날짜 그리드 */}
                 <div className="w-full h-[87%] grid grid-cols-7 gap-[1%] ">
-                    {days.map((day, i) => (
-                        <div
-                            key={i}
-                            onClick={() => day && onDateClick(`${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`)}
-                            className="aspect-[14/12] flex items-start pl-[8%] justify-start text-m "
-                        >
-                            {day}
-                        </div>
-                    ))}
+                    {days.map((item, i) => {
+                        const isSunday = i % 7 === 0;
+                        const isSaturday = i % 7 === 6;
+                        const isNotCurrent = item.type !== 'current'; // 저번 / 다음달 여부 판별
+                        return (
+                            <div
+                                key={`${item.type}-${item.day}-${i}`}
+                                // 이번 달 날짜만 클릭 가능하도록 핸들러 제안 (조건문)
+                                onClick={() => !isNotCurrent && onDateClick(`${year}-${String(month + 1).padStart(2, '0')}-${String(item.day).padStart(2, '0')}`)}
+                                className={`
+                                    aspect-[14/12] flex items-start pl-[8%] pt-[2%] justify-start text-m 
+                                    ${isNotCurrent ? 'opacity-60 grayscale' : 'cursor-pointer hover:bg-white/10'} // 이번달 아니면 흐리게 처리
+                                    ${isSunday ? 'text-red-800' : isSaturday ? 'text-blue-800' : 'text-black'}
+                                `}
+                            >
+                                {item.day}
+                            </div>
+                        );
+                    })}
                 </div>
             </div>
 
