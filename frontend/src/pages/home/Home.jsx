@@ -50,7 +50,7 @@ export default function Home() {
                     onDateClick={handleDateClick}
                 />    
             </div>
-            <div className="fixed w-20 h-auto bottom-[14%] right-[7%]">
+            <div className="absolute w-20 h-auto bottom-[14%] right-[7%]">
                 <FloatingActionButton
                     onClick={handleFabClick}
                 />
