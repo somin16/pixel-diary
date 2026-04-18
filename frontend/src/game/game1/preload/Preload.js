@@ -58,7 +58,7 @@ export function loadAllSprite(scene) {
 
 
     // =========================UI=======================================
-    // 공통으로 사용하는 UI바 배경
+    // HP/경험치바에서 공용으로 사용하는 UI바 배경
     scene.load.image("background_bar", "/assets/game1/Ui/background_bar.png");
 
     // HP바
@@ -70,6 +70,17 @@ export function loadAllSprite(scene) {
     // 레벨업 창 배경
     scene.load.image("level_up_background", "/assets/game1/Ui/level_up_background.png");
 
+    // 메뉴창 배경
+    scene.load.image("menu_window", "/assets/game1/Ui/menu_window.png");
+    // 메뉴버튼
+    scene.load.image("menu_window_button", "/assets/game1/Ui/menu_button.png");
+
+    // ====================메뉴 아이콘=====================================
+    // 메뉴아이콘
+    scene.load.image("menu_icon", "/assets/game1/Ui/Menu_Icon/menu_icon.png");
+    // 사운드아이콘
+    scene.load.image("sound_icon_on", "/assets/game1/Ui/Menu_Icon/sound_icon_on.png");
+    scene.load.image("sound_icon_off", "/assets/game1/Ui/Menu_Icon/sound_icon_off.png");
 
     // 레벨업시에 사용할 아이콘들
     // =====================스킬 아이콘=====================================

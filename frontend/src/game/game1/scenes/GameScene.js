@@ -52,6 +52,7 @@ import { addEventSpawnChest } from "../Object/Chest.js";
 
 // 타이머
 import { TimerEnd, TimerSetting } from "../manage/Timer.js";
+import { createMenu } from "../ui/Menu.js";
 
 export default class GameScene extends Phaser.Scene {
   constructor() {
@@ -151,12 +152,18 @@ export default class GameScene extends Phaser.Scene {
     // 이벤트 클래스에 레벨업, 스폰률 업데이트로 모두 함께 관리
     addEventMonsterLevelUp(this);
 
+    // 메뉴창 생성(ui/Menu.js)
+    createMenu(this);
+
     // 방향키, WASD입력
     this.cursors = this.input.keyboard.createCursorKeys();
     this.wasd = this.input.keyboard.addKeys("W,A,S,D");
   }
 
   update() {
+
+    // 게임을 멈추는 이벤트 도중엔 업데이트가 진행되지 않도록 return해주기
+    if (this.isLevelUpOpen == true || this.isMenuOpen == true) return;
 
     // 몬스터 움직임 베이스(monsters/Monsters.js)
     monsterMove(this);

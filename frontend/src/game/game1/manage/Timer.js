@@ -8,7 +8,7 @@ export function TimerSetting(scene) {
     // 타이머 텍스트 구성
     scene.timerText = scene.add.text(
       scene.cameras.main.width / 2,    // x좌표
-      scene.cameras.main.height / 35,  // y좌표
+      scene.cameras.main.height / 25,  // y좌표
       "05:00" , {  // 기본 텍스트(5분)
       fontSize: "32px",
       fontFamily: "Arial",
