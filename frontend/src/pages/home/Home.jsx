@@ -15,7 +15,7 @@ export default function Home() {
     const [viewDate, setViewDate] = useState(new Date()); // 달력의 기준이 되는 날짜 상태 (오늘 날짜로 초기화)
 
     // 월 변경 핸들러: Calendar 컴포넌트에서 호출하면 부모의 상태를 업데이트
-    const handleMonthChage = (offset) => {
+    const handleMonthChange = (offset) => {
         // 현재 viewDatef를 기준으로 새로운 Date 객체 생성
         const newDate = new Date(viewDate.getFullYear(), viewDate.getMonth() + offset, 1);
         setViewDate(newDate);
@@ -46,7 +46,7 @@ export default function Home() {
                 <Calendar
                     viewDate={viewDate}
                     currentTheme={currentTheme}
-                    onMonthChange={handleMonthChage}
+                    onMonthChange={handleMonthChange}
                     onDateClick={handleDateClick}
                 />    
             </div>
