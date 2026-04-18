@@ -1,5 +1,12 @@
 import { getAssetUrl } from "../../utils/AssetHelper"
 
+/**
+ * @typedef {Object} FloatingActionButtonProps
+ * @property {function} onClick - 버튼 클릭 시 실행될 핸들러 함수
+ * @property {string} currentTheme - 현재 앱의 테마 (예: 'winter', 'spring')
+ * @property {string} [ariaLabel="일기작성버튼"] - 스크린 리더용 웹 접근성 레이블 (기본값: "일기작성버튼")
+ */
+
 // home/FloatingActionButton FAB버튼 컴포넌트 선언
 const FloatingActionButton = ({onClick, currentTheme, ariaLabel = "일기작성버튼"}) => {
 
