@@ -24,9 +24,9 @@ export function loadAllSprite(scene) {
     scene.load.image("arrow","/assets/game1/attacks/arrow/arrow.png");
 
     // 화염구
-    scene.load.image("fireball","/assets/game1/attacks/fireball/fireball.png")
+    scene.load.image("fire_ball","/assets/game1/attacks/fire_ball/fire_ball.png")
     // 화염구 파티클
-    scene.load.image("fireball_particle","/assets/game1/attacks/fireball/fireball_particle.png")
+    scene.load.image("fire_ball_particle","/assets/game1/attacks/fire_ball/fire_ball_particle.png")
 
 
     // ======================몬스터===================================
@@ -101,7 +101,7 @@ export function loadAllSprite(scene) {
     scene.load.image("speed_icon","/assets/game1/ui/skill_icon/speed_icon.png");
 
     // 자동회복
-    scene.load.image("autoHeal_icon","/assets/game1/ui/skill_icon/autoHeal_icon.png");
+    scene.load.image("auto_heal_icon","/assets/game1/ui/skill_icon/auto_heal_icon.png");
 
 
     // =====================오브젝트=========================================

@@ -36,7 +36,7 @@ function spawnFireBall(scene, radius, angleOffset) {
     const posY = scene.player.y;
 
     // 화염구 이미지 생성
-    const fireBallEff = scene.physics.add.sprite(posX, posY, "fireball");
+    const fireBallEff = scene.physics.add.sprite(posX, posY, "fire_ball");
     fireBallEff.setScale(2);
     fireBallEff.setDepth(1);
 
@@ -44,7 +44,7 @@ function spawnFireBall(scene, radius, angleOffset) {
     scene.fireBallGroup.add(fireBallEff);
 
     // 화염구를 따라다닐 파티클
-    const firePaticle = scene.add.particles(0, 0, "fireball_particle", {
+    const firePaticle = scene.add.particles(0, 0, "fire_ball_particle", {
         speed: 10, // 파티클이 퍼지는 시간
         scale: { start: 5, end: 0 }, // 파티클이 작아지는 정도(5에서 시작 0으로 끝난다)
         alpha: { start: 1, end: 0 }, // 파티클의 색상이 변하는 정도
