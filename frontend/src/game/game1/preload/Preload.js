@@ -115,10 +115,10 @@ export function loadAllSprite(scene) {
     scene.load.image("chest_level_1", "/assets/game1/object/chest/chest_level_1.png");
 
     // 고기(회복 아이템)
-    scene.load.image("meat", "/assets/game1/object/dropItem/meat.png");
+    scene.load.image("meat", "/assets/game1/object/drop_item/meat.png");
 
     // 자석
-    scene.load.image("magnet", "/assets/game1/object/dropItem/magnet.png");
+    scene.load.image("magnet", "/assets/game1/object/drop_item/magnet.png");
 
 
 }
