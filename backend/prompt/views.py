@@ -18,7 +18,7 @@ OLLAMA_MODEL = "qwen2.5:7b"
 GROQ_MODEL = "llama-3.3-70b-versatile"
 
 # ▼ Cerebras 모델명 (.env의 CEREBRAS_API_KEY 필요)
-CEREBRAS_MODEL = "qwen-3-235b"
+CEREBRAS_MODEL = "qwen-3-235b-a22b-instruct-2507"
 
 
 # ============================================================

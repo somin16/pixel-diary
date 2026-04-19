@@ -25,21 +25,21 @@ settings:
 
 docs: |-
   ### 사용 순서
-  1. Prompt-Restyle 먼저 실행
+  1. Prompt-Transform 먼저 실행
   2. 응답의 positive_prompt 값을 이 요청의 prompt 필드에 붙여넣기
   3. request 필드에 수정 요청 입력 (한국어 가능)
   ***
   ### Body / Json
-  - llm_model_engine_type: "groq" = Groq (기본값), "local" = Ollama 로컬 (qwen2.5:7b), "cerebras" = Cerebras (qwen-3-235b)
-  - prompt: Prompt-Convert에서 받은 positive_prompt 값
-  - request: 추가하거나 강조하고 싶은 내용 (한국어 가능)
+  - llm_model_engine_type: "groq" = Groq (기본값), "local" = Ollama 로컬 (qwen2.5:7b), "cerebras" = Cerebras (qwen-3-235b-a22b-instruct-2507)
+  - prompt: Prompt-Transform에서 받은 positive_prompt 값
+  - request: 추가하거나 강조하고 싶은 내용 (한국어로 입력해 주세요)
   - remove: 제거하고 싶은 요소 (콤마로 구분, 부정 프롬프트에 자동 추가) 예: "rain, window"
   ***
   ### Response
-  - positive_prompt: 수정된 ComfyUI 긍정 프롬프트 (기존 내용 유지 + 요청 반영)
-  - negative_prompt: ComfyUI 부정 프롬프트
+  - positive_prompt: 수정된 ComfyUI 긍정 프롬프트에 추가해 주세요 (기존 내용 유지 + 요청 반영)
+  - negative_prompt: ComfyUI 부정 프롬프트에 추가해 주세요
   ***
   ### Status Code
   - 200 OK: 프롬프트 수정 성공
   - 400 Bad Request: prompt 필드 누락
-  - 500 Internal Server Error: LLM API 오류
+  - 500 Internal Server Error: LLM API 오류 또는 서버 내부 오류

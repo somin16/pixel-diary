@@ -28,21 +28,28 @@ settings:
   maxRedirects: 5
 
 docs: |-
-  ### Body / Json
-  - item_name: 아이템 이름
-  - item_type: 아이템 타입 (app_theme, diary_theme, sticker, emoji, ticket)
-  - item_price: 아이템 가격 (기본값이 0이라 미리 입력해 두었습니다.)
-  - item_info: 아이템 정보
-  - item_image_url: 아이템 이미지 url (현재 값을 입력하지 않아도 테스트 가능)
-  ***
   ### Headers
-  - Authorization: Bearer 로그인할 시 받는 access_token or 비밀번호 변경 후 받는 access_token
+  - Authorization: Bearer {access_token} (로그인 또는 비밀번호 변경 후 받은 access_token)
+  ***
+  ### Body / Json
+  - item_name: 아이템 이름 (필수)
+  - item_type: 아이템 타입 (필수) — app_theme, diary_theme, sticker, emoji, ticket 중 하나
+  - item_price: 아이템 가격 (필수) — 0 이상의 정수, 기본값 0 미리 입력
+  - item_info: 아이템 설명 (필수)
+  - item_image_url: 아이템 이미지 URL (선택) — 미입력 시 null로 저장
+  ***
+  ### 자동 설정값
+  - item_stackable: item_type에 따라 자동 설정 (직접 입력 불필요)
+    - app_theme, diary_theme → false (중복 보유 불가)
+    - sticker, emoji, ticket → true (중복 보유 가능)
   ***
   ### Status Code
-  - 201 Created: 아이템 추가 성공
-  - 400 Bad Request: 필수값 누락 (Authorization Bearer 헤더 access_token)
-  - 400 Bad Request: 필수값 누락 (item_name, item_type, item_price, item_info)
-  - 400 Bad Request: 유효성 검증 (item_type: app_theme, diary_theme, sticker, emoji, ticket)
-  - 400 Bad Request: 유효성 검증 (item_price가 숫자가 아니거나 음수인 경우)
-  - 401 Unauthorized: 유효하지 않은 access_token인 경우
-  - 403 Forbidden: 관리자 권한 필요
+  - 201 Created: 아이템 추가 성공 → { item_id, message }
+  - 400 Bad Request: Authorization Bearer 헤더 누락
+  - 400 Bad Request: item_name, item_type, item_price, item_info 중 하나 이상 누락
+  - 400 Bad Request: item_type이 유효하지 않은 값인 경우 (app_theme, diary_theme, sticker, emoji, ticket 외)
+  - 400 Bad Request: item_price가 정수가 아닌 경우 (문자열, 소수 등)
+  - 400 Bad Request: item_price가 음수인 경우
+  - 401 Unauthorized: access_token이 유효하지 않은 경우
+  - 403 Forbidden: access_token의 role이 admin이 아닌 경우
+  - 500 Internal Server Error: Supabase 저장 중 오류 발생
