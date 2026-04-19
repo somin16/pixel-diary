@@ -41,7 +41,7 @@ const Calendar = ({ onDateClick, onMonthChange, viewDate, currentTheme }) => {
     }
 
     const CalendarStyle = { // 픽셀 아트 배경 이미지 & 비율 설정
-        backgroundImage: `url(${getAssetUrl(currentTheme, 'calendars', 'calendar_basic_x3')})`,
+        backgroundImage: `url(${getAssetUrl(currentTheme, 'calendars', 'calendar_window_x3')})`,
         backgroundSize: '100% 100%', // 이미지를 박스 크기에 꽉 채움
         aspectRatio: '354/357', //비율을 유지해 픽셀 왜곡 방지
     };
@@ -50,14 +50,14 @@ const Calendar = ({ onDateClick, onMonthChange, viewDate, currentTheme }) => {
         <div style={CalendarStyle} className="relative min-w-19/20 h-auto max-w-full flex flex-col">
 
             {/* 상단 타이틀 헤더: pixel calendar 표시 */}
-            <span className="w-full h-[15%] flex justify-center items-center text-white text-3xl p-[1.5%]">Pixel Diary</span>
+            <span className="w-full h-[15%] flex justify-center items-center text-white text-[33px] p-[1.5%]">Pixel Diary</span>
 
             {/* 연/월 네비게이션: 월 이동 버튼 및 연/월 표시 영역 */}
             <div className="relative w-full flex h-[9%]">
 
                 {/* 중앙 년월 표시 */}
                 <div className="absolute w-full h-full flex items-center justify-center">
-                    <span className=" text-black text-3xl">
+                    <span className=" text-black text-[28px]">
                         {year}.{String(month + 1).padStart(2, '0')}
                     </span>
                 </div>
