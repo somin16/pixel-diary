@@ -117,7 +117,7 @@ class ItemPurchaseView(APIView):
                     )
 
             # item_stackable이 True인 경우 기존 인벤토리 확인 후 item_count 증가
-            # item_stackable이 False인 경우 중복 구매 제한 (위에서 이미 처리)
+            # item_stackable이 False인 경우 중복 구매 제한
             if item_stackable:
                 existing_response = requests.get(
                     f"{supabase_url}/rest/v1/inventory",
@@ -149,7 +149,7 @@ class ItemPurchaseView(APIView):
                         },
                     )
             else:
-                # item_stackable이 False인 경우 새로 생성 (중복 체크는 위에서 이미 처리)
+                # item_stackable이 False인 경우 새로 생성
                 inventory_response = requests.post(
                     f"{supabase_url}/rest/v1/inventory",
                     headers={**headers, "Prefer": "return=representation"},
