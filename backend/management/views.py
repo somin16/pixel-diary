@@ -60,7 +60,7 @@ class AdminItemView(APIView):
                 status=status.HTTP_400_BAD_REQUEST,
             )
         
-        # item_price 유효성 검증 (숫자가 아니거나 음수인 경우 400 반환)
+        # item_price 유효성 검증 (정수가 아니거나 음수인 경우 400 반환)
         if not isinstance(item_price, int):
             return Response(
                 {"message": "item_price는 숫자여야 합니다."},

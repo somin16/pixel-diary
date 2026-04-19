@@ -40,6 +40,7 @@ INSTALLED_APPS = [
     "prompt",           # 프롬프트 변환 관련 앱
     "diaries",          # 일기장 관련 앱
     "management",       # 관리자 관련 앱
+    "store",            # 상점 및 보관함 관련 앱
 
 ]
 
