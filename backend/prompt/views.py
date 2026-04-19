@@ -1,6 +1,7 @@
 import os
 import requests as http_requests
 from groq import Groq
+from cerebras.cloud.sdk import Cerebras
 from dotenv import load_dotenv
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -15,6 +16,9 @@ OLLAMA_MODEL = "qwen2.5:7b"
 
 # ▼ Groq 모델명 (.env의 GROQ_API_KEY 필요)
 GROQ_MODEL = "llama-3.3-70b-versatile"
+
+# ▼ Cerebras 모델명 (.env의 CEREBRAS_API_KEY 필요)
+CEREBRAS_MODEL = "qwen-3-235b-a22b-instruct-2507"
 
 
 # ============================================================
@@ -49,6 +53,13 @@ def call_llm_model_engine_type(messages, llm_model_engine_type="groq"):
             json={"model": OLLAMA_MODEL, "messages": messages, "stream": False}
         )
         return response.json()["message"]["content"].strip()
+    elif llm_model_engine_type == "cerebras":  # Cerebras API (.env의 CEREBRAS_API_KEY 필요)
+        client = Cerebras(api_key=os.getenv("CEREBRAS_API_KEY"))
+        response = client.chat.completions.create(
+            model=CEREBRAS_MODEL,
+            messages=messages
+        )
+        return response.choices[0].message.content.strip()
     else:  # "groq" Groq 기본값
         client = Groq(api_key=os.getenv("GROQ_API_KEY"))
         response = client.chat.completions.create(
@@ -106,8 +117,9 @@ class PromptTransformView(APIView):
             }], llm_model_engine_type=llm_model_engine_type)
             positive_prompt = f"{FIXED_PREFIX}, {scene}, {FIXED_SUFFIX}"  # 앞뒤 고정 토큰과 합치기
 
+            model_used = OLLAMA_MODEL if llm_model_engine_type == "local" else CEREBRAS_MODEL if llm_model_engine_type == "cerebras" else GROQ_MODEL
             return Response({
-                "model": OLLAMA_MODEL if llm_model_engine_type == "local" else GROQ_MODEL,
+                "model": model_used,
                 "positive_prompt": positive_prompt,
                 "negative_prompt": NEGATIVE_PROMPT,
             }, status=status.HTTP_200_OK)
