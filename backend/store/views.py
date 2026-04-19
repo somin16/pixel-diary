@@ -116,16 +116,49 @@ class ItemPurchaseView(APIView):
                         status=status.HTTP_400_BAD_REQUEST,
                     )
 
-            # 인벤토리에 아이템 추가
-            inventory_response = requests.post(
-                f"{supabase_url}/rest/v1/inventory",
-                headers={**headers, "Prefer": "return=representation"},
-                json={
-                    "user_id": user_id,
-                    "item_id": item_id,
-                    "item_count": item_count,
-                },
-            )
+            # item_stackable이 True인 경우 기존 인벤토리 확인 후 item_count 증가
+            # item_stackable이 False인 경우 중복 구매 제한 (위에서 이미 처리)
+            if item_stackable:
+                existing_response = requests.get(
+                    f"{supabase_url}/rest/v1/inventory",
+                    headers=headers,
+                    params={
+                        "user_id": f"eq.{user_id}",
+                        "item_id": f"eq.{item_id}",
+                        "select": "inventory_id,item_count",
+                    },
+                )
+
+                if existing_response.json():
+                    # 기존 row가 있으면 item_count 증가
+                    existing = existing_response.json()[0]
+                    inventory_response = requests.patch(
+                        f"{supabase_url}/rest/v1/inventory?inventory_id=eq.{existing.get('inventory_id')}",
+                        headers={**headers, "Prefer": "return=representation"},
+                        json={"item_count": existing.get("item_count") + item_count},
+                    )
+                else:
+                    # 기존 row가 없으면 새로 생성
+                    inventory_response = requests.post(
+                        f"{supabase_url}/rest/v1/inventory",
+                        headers={**headers, "Prefer": "return=representation"},
+                        json={
+                            "user_id": user_id,
+                            "item_id": item_id,
+                            "item_count": item_count,
+                        },
+                    )
+            else:
+                # item_stackable이 False인 경우 새로 생성 (중복 체크는 위에서 이미 처리)
+                inventory_response = requests.post(
+                    f"{supabase_url}/rest/v1/inventory",
+                    headers={**headers, "Prefer": "return=representation"},
+                    json={
+                        "user_id": user_id,
+                        "item_id": item_id,
+                        "item_count": item_count,
+                    },
+                )
 
             if inventory_response.status_code not in [200, 201]:
                 raise Exception(f"Supabase API 오류: {inventory_response.text}")
