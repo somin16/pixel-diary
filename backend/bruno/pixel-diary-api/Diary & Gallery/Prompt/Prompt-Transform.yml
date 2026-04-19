@@ -25,7 +25,7 @@ settings:
 
 docs: |-
   ### Body / Json
-  - llm_model_engine_type: "groq" = Groq (기본값), "local" = Ollama 로컬 (qwen2.5:7b)
+  - llm_model_engine_type: "groq" = Groq (기본값), "local" = Ollama 로컬 (qwen2.5:7b), "cerebras" = Cerebras (qwen-3-235b)
   - diary: 변환할 일기 내용 (한국어 가능)
   - gender: 주인공 성별 (girl / man / boy / woman 등), 기본값: girl
   - age: 주인공 나이 (자연수), 기본값: 20
@@ -37,4 +37,4 @@ docs: |-
   ### Status Code
   - 200 OK: 프롬프트 변환 성공
   - 400 Bad Request: diary 필드 누락
-  - 500 Internal Server Error: Groq API 오류
+  - 500 Internal Server Error: LLM API 오류
