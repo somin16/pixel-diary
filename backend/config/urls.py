@@ -19,8 +19,9 @@ from django.urls import path, include
 
 urlpatterns = [
     path("admin/", admin.site.urls),
-    path("api/v1/auth/", include("accounts.urls")),    # 계정 인증 관련 URL
-    path("api/v1/prompt/", include("prompt.urls")),    # 프롬프트 변환 관련 URL
-    path("api/v1/diaries/", include("diaries.urls")),  # 일기 관련 URL
-    path("api/v1/admin/", include("management.urls")),      # 관리자 전용 관련 URL
+    path("api/v1/auth/", include("accounts.urls")),     # 계정 인증 관련 URL
+    path("api/v1/prompt/", include("prompt.urls")),     # 프롬프트 변환 관련 URL
+    path("api/v1/diaries/", include("diaries.urls")),   # 일기 관련 URL
+    path("api/v1/admin/", include("management.urls")),  # 관리자 전용 관련 URL
+    path("api/v1/items/", include("store.urls")),       # 상점 및 보관함 관련 URL
 ]

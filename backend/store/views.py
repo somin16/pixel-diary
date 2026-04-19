@@ -1,0 +1,158 @@
+import os
+import requests
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework import status
+from utils import extract_access_token, get_user_from_token
+
+
+def get_supabase_headers():
+    """
+    Supabase API 요청에 필요한 헤더 반환
+    - apikey: Supabase 서비스 키
+    - Authorization: Bearer 토큰 방식으로 인증
+    - Content-Type: JSON 형식으로 데이터 전송
+    """
+    return {
+        "apikey": os.getenv("SUPABASE_SERVICE_KEY"),
+        "Authorization": f"Bearer {os.getenv('SUPABASE_SERVICE_KEY')}",
+        "Content-Type": "application/json",
+    }
+
+
+class ItemPurchaseView(APIView):
+    """아이템 구매 API"""
+
+    def post(self, request, item_id):
+        """
+        POST /api/v1/items/{item_id}/purchase/
+        - Authorization 헤더의 access_token으로 현재 유저 확인
+        - item_count를 받아 인벤토리에 아이템 추가
+        - 구매한 item_id, current_coin, inventory_id 반환
+        """
+        # Authorization 헤더에서 access_token 추출
+        access_token = extract_access_token(request)
+        if not access_token:
+            return Response(
+                {"message": "Authorization 헤더에 유효한 Bearer 토큰이 필요합니다."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        # 요청 Body에서 item_count 추출 (기본값 1)
+        item_count = request.data.get("item_count", 1)
+
+        # item_count 유효성 검증
+        if not isinstance(item_count, int) or item_count < 1:
+            return Response(
+                {"message": "item_count는 1 이상의 정수여야 합니다."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        try:
+            # access_token으로 유저 정보 조회
+            user = get_user_from_token(access_token)
+
+            # 유효하지 않은 토큰인 경우 401 반환
+            if not user:
+                return Response(
+                    {"message": "유효하지 않은 토큰입니다."},
+                    status=status.HTTP_401_UNAUTHORIZED,
+                )
+
+            user_id = user.get("id")
+            supabase_url = os.getenv("SUPABASE_URL")
+            headers = get_supabase_headers()
+
+            # 아이템 정보 조회
+            item_response = requests.get(
+                f"{supabase_url}/rest/v1/items",
+                headers=headers,
+                params={
+                    "item_id": f"eq.{item_id}",
+                    "select": "item_id,item_price,item_stackable",
+                },
+            )
+
+            if item_response.status_code != 200 or not item_response.json():
+                return Response(
+                    {"message": "아이템을 찾을 수 없습니다."},
+                    status=status.HTTP_404_NOT_FOUND,
+                )
+
+            item = item_response.json()[0]
+            item_stackable = item.get("item_stackable")
+            # item_price = item.get("item_price")  # 코인 차감 기능 구현 후 활성화 예정
+
+            # 유저 정보 조회 (코인 확인)
+            # user_response = requests.get(
+            #     f"{supabase_url}/rest/v1/users",
+            #     headers=headers,
+            #     params={"user_id": f"eq.{user_id}", "select": "coin"},
+            # )
+            # current_coin = user_response.json()[0].get("coin")
+
+            # 코인 잔액 확인
+            # if current_coin < item_price * item_count:
+            #     return Response(
+            #         {"message": "코인이 부족합니다."},
+            #         status=status.HTTP_400_BAD_REQUEST,
+            #     )
+
+            # item_stackable이 False인 경우 중복 구매 제한
+            if not item_stackable:
+                existing_response = requests.get(
+                    f"{supabase_url}/rest/v1/inventory",
+                    headers=headers,
+                    params={
+                        "user_id": f"eq.{user_id}",
+                        "item_id": f"eq.{item_id}",
+                        "select": "inventory_id",
+                    },
+                )
+
+                if existing_response.json():
+                    return Response(
+                        {"message": "이미 보유한 아이템입니다."},
+                        status=status.HTTP_400_BAD_REQUEST,
+                    )
+
+            # 인벤토리에 아이템 추가
+            inventory_response = requests.post(
+                f"{supabase_url}/rest/v1/inventory",
+                headers={**headers, "Prefer": "return=representation"},
+                json={
+                    "user_id": user_id,
+                    "item_id": item_id,
+                    "item_count": item_count,
+                },
+            )
+
+            if inventory_response.status_code not in [200, 201]:
+                raise Exception(f"Supabase API 오류: {inventory_response.text}")
+
+            inventory = inventory_response.json()[0]
+
+            # 코인 차감
+            # updated_coin = current_coin - item_price * item_count
+            # requests.patch(
+            #     f"{supabase_url}/rest/v1/users?user_id=eq.{user_id}",
+            #     headers=headers,
+            #     json={"coin": updated_coin},
+            # )
+
+            return Response(
+                {
+                    "item_id": item_id,
+                    "current_coin": None,  # 코인 차감 기능 구현 후 실제 값으로 교체 예정
+                    "inventory_id": inventory.get("inventory_id"),
+                    "message": "아이템을 구매했습니다.",
+                },
+                status=status.HTTP_201_CREATED,
+            )
+
+        except Exception as error:
+            print(f"=== ITEM PURCHASE ERROR ===\n{error}\n==========================")
+            return Response(
+                {"message": "아이템 구매 중 오류가 발생했습니다."},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
