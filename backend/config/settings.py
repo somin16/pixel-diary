@@ -41,7 +41,7 @@ INSTALLED_APPS = [
     "diaries",          # 일기장 관련 앱
     "management",       # 관리자 관련 앱
     "store",            # 상점 및 보관함 관련 앱
-
+    "games",            # 게임 관련 앱
 ]
 
 MIDDLEWARE = [
