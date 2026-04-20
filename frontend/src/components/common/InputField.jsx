@@ -38,7 +38,7 @@ const InputField = ({
         <img
           src={getAssetUrl(currentTheme, 'boxes', boxImageName)}
           alt="입력창 배경"
-          className="absolute top-0 left-0 w-full h-full z-10"
+          className={`absolute top-0 left-0 w-full h-full z-10 ${readOnly ? 'grayscale opacity-70' : ''}`}
         />
 
         {/* 실제 데이터를 입력받는 투명 input */}
@@ -47,7 +47,7 @@ const InputField = ({
           value={value}
           onChange={onChange}
           placeholder={placeholder}
-          readOnly={readOnly}
+          disabled={readOnly}
           className={`relative z-20 w-full h-full bg-transparent border-none outline-none px-[15px] text-[13px]
             ${readOnly ? 'text-[#969696] cursor-not-allowed' : 'text-black'}
             ${textAlign === 'center' ? 'text-center' : 'text-left'}
