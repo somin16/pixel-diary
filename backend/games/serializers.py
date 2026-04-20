@@ -5,8 +5,7 @@ class GameScoreSerializer(serializers.Serializer):
     # game_score 필드 - 정수형, 기본값 null
     game_score = serializers.IntegerField(
         required=False,   # 키가 없어도 됨
-        default=None,     # 기본값은 null
-        allow_null=True,  # null 허용 (검증은 views.py에서 따로 함)
+        default=0,     # 기본값은 0
         min_value=0,      # 0 이상이어야 함
         error_messages={
             "invalid": "game_score는 숫자여야 합니다.",
