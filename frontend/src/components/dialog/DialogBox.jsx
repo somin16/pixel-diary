@@ -3,28 +3,35 @@ import { useTheme } from '../../hooks/useTheme'; // useTheme 불러오기
 import { getAssetUrl } from "../../utils/AssetHelper"; // 헬퍼 불러오기
 
 /**
- * DialogBox (로그아웃&회원탈퇴 확인용 팝업 전용 컴포넌트)
- * 상점 아이템 상세 정보 다이얼로그는 구조가 너무 달라서 다른 컴포넌트로 분리할 계획입니다
- * 일기 수정 중에 나갈 때 뜨는 경고 팝업과 구조가 같아서 쓰면 좋을 것 같습니다 (컴포넌트를 가져가서 본문 내용만 바꾸면 됩니다)
+ * DialogBox (어두운 배경이 오버레이로 들어가는 다이얼로그 컴포넌트)
+ * @param {string} boxImageName - 'boxes' 카테고리의 배경 이미지 파일명 (기본값: popup_message_box_x3)
  * @param {React.ReactNode} children - 팝업 내부에 들어갈 본문 요소 (텍스트, 입력창 등)
  */
 
-const DialogBox = ({ children }) => {
-  // 테마 전역 관리
+const DialogBox = ({ boxImageName = 'popup_message_box_x3', children }) => {
   const currentTheme = useTheme((state) => state.currentTheme);
+
   return (
-    <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-[11] w-[80%] max-w-[300px]">
-      {/* 팝업창 배경 이미지 */}
-      <img
-        src={getAssetUrl(currentTheme, 'boxes', 'popup_message_box_x3')}
-        alt="다이얼로그 배경"
-        className="w-full h-auto block"
-      />
-      {/* 실제 내용이 담기는 컨테이너 (텍스트 위, 버튼 아래, 상하좌우 여백) */}
-      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-full flex flex-col items-center justify-between p-5">
-        {children}
+    <>
+      {/* 어두운 배경 오버레이 */}
+      <div className="fixed top-0 left-0 w-full h-full bg-black/60 z-40" />
+
+      {/* 다이얼로그 본체 컨테이너 (화면 중앙 정렬) */}
+      <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-50 w-[80%] max-w-[300px]">
+        
+        {/* 배경 이미지 (넘겨받은 boxImageName에 따라 동적으로 변경됨) */}
+        <img
+          src={getAssetUrl(currentTheme, 'boxes', boxImageName)}
+          alt="다이얼로그 배경"
+          className="w-full h-auto block"
+        />
+
+        {/* 실제 내용이 담기는 영역 (이미지 위에 absolute로 배치) */}
+        <div className="absolute top-0 left-0 w-full h-full flex flex-col items-center justify-between p-6">
+          {children}
+        </div>
       </div>
-    </div>
+    </>
   );
 };
 

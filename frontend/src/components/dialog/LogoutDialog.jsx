@@ -4,7 +4,7 @@ import { getAssetUrl } from "../../utils/AssetHelper"; // 헬퍼 불러오기
 
 // 컴포넌트 불러오기
 import DialogBox from '../dialog/DialogBox';
-import ImageButton from '../button/ImageButton';
+import ImageButton from '../common/ImageButton';
 
 /**
  * LogoutDialog (로그아웃 확인 창)
@@ -17,8 +17,7 @@ const LogoutDialog = ({ onConfirm, onCancel }) => {
   // 테마 전역 관리
   const currentTheme = useTheme((state) => state.currentTheme);
   return (
-    <DialogBox>
-      {/* 다른 팝업창 텍스트 위치까지 바뀌는 걸 방지하기 위해 mt-[30px]로 대체하여 넣음 */}
+    <DialogBox boxImageName="popup_message_box_x3">
       <p className="text-[13px] font-bold text-center m-0 mt-[30px]"> 
         로그아웃 하시겠습니까?
       </p>
