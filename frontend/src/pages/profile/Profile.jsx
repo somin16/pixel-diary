@@ -39,6 +39,17 @@ const Profile = () => {
     setTimeout(() => setShowSuccessMessage(false), 5000);
   };
 
+  // 컴포넌트 언마운트 시 메모리 누수 방지
+  useEffect(() => {
+    return () => {
+      // profileImage가 blob URL 형태일 때만 메모리에서 해제
+      // profileImage가 문자열(string) 일때만 startsWith 검사
+      if (profileImage && typeof profileImage === 'string' && profileImage.startsWith('blob:')) {
+        URL.revokeObjectURL(profileImage);
+      }
+    };
+  }, [profileImage]);
+
 return (
     <div 
       className="w-full h-full pt-[60px] pb-[30px] flex flex-col items-center bg-[length:100%_100%]"
