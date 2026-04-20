@@ -202,7 +202,9 @@ class PromptRestyleView(APIView):
             # remove 영어 키워드를 부정 프롬프트에 추가
             negative_prompt = f"{NEGATIVE_PROMPT}, {remove_keywords}" if remove_keywords else NEGATIVE_PROMPT
 
+            model_used = OLLAMA_MODEL if llm_model_engine_type == "local" else CEREBRAS_MODEL if llm_model_engine_type == "cerebras" else GROQ_MODEL
             return Response({
+                "model": model_used,
                 "positive_prompt": restyle_prompt,
                 "negative_prompt": negative_prompt,
             }, status=status.HTTP_200_OK)
