@@ -4,7 +4,7 @@ import { useTheme } from '../../hooks/useTheme'; // useTheme 불러오기
 import { getAssetUrl } from "../../utils/AssetHelper"; // 헬퍼 불러오기
 
 // 컴포넌트 불러오기
-import ProfileBar from "../../components/profile/ProfileBar";
+import ProfileBar from "../../components/common/profile/ProfileBar";
 
 // 배열 전역으로 선언
 const menuItems = [

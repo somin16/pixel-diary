@@ -1,11 +1,11 @@
 import React, { useState } from "react";
-import { useTheme } from '../../hooks/useTheme'; // useTheme 불러오기
-import { getAssetUrl } from "../../utils/AssetHelper"; // 헬퍼 불러오기
+import { useTheme } from '../../../hooks/useTheme'; // useTheme 불러오기
+import { getAssetUrl } from "../../../utils/AssetHelper"; // 헬퍼 불러오기
 
 // 컴포넌트 불러오기
-import DialogBox from '../dialog/DialogBox';
-import ImageButton from '../common/ImageButton';
-import InputField from '../common/InputField';
+import DialogBox from './DialogBox';
+import ImageButton from '../ImageButton';
+import InputField from '../InputField';
 
 /**
  * WithdrawalDialog (회원 탈퇴 다이얼로그)

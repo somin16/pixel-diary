@@ -1,6 +1,6 @@
 import React from "react";
-import { useTheme } from '../../hooks/useTheme'; // useTheme 불러오기
-import { getAssetUrl } from "../../utils/AssetHelper"; // 헬퍼 불러오기
+import { useTheme } from '../../../hooks/useTheme'; // useTheme 불러오기
+import { getAssetUrl } from "../../../utils/AssetHelper"; // 헬퍼 불러오기
 
 /**
  * DialogBox (어두운 배경이 오버레이로 들어가는 다이얼로그 컴포넌트)

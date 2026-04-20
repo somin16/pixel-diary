@@ -4,9 +4,9 @@ import { useTheme } from '../../hooks/useTheme'; // useTheme 불러오기
 import { getAssetUrl } from "../../utils/AssetHelper"; // 헬퍼 불러오기
 
 // 컴포넌트 불러오기
-import LogoutDialog from '../../components/dialog/LogoutDialog';
-import WithdrawalDialog from '../../components/dialog/WithdrawalDialog';
-import ResultDialog from '../../components/dialog/ResultDialog';
+import LogoutDialog from '../../components/common/dialog/LogoutDialog';
+import WithdrawalDialog from '../../components/common/dialog/WithdrawalDialog';
+import ResultDialog from '../../components/common/dialog/ResultDialog';
 import Header from "../../components/common/Header";
 
 // 설정 메뉴 항목들 - 배열을 전역으로 선언

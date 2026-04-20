@@ -1,10 +1,10 @@
 import React from "react";
-import { useTheme } from '../../hooks/useTheme'; // useTheme 불러오기
-import { getAssetUrl } from "../../utils/AssetHelper"; // 헬퍼 불러오기
+import { useTheme } from '../../../hooks/useTheme'; // useTheme 불러오기
+import { getAssetUrl } from "../../../utils/AssetHelper"; // 헬퍼 불러오기
 
 // 컴포넌트 불러오기
-import DialogBox from '../dialog/DialogBox';
-import ImageButton from '../common/ImageButton';
+import DialogBox from './DialogBox';
+import ImageButton from '../ImageButton';
 
 /**
  * LogoutDialog (로그아웃 확인 창)

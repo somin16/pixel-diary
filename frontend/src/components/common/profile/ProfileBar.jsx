@@ -1,7 +1,7 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
-import { useTheme } from "../../hooks/useTheme"; // useTheme 불러오기
-import { getAssetUrl } from "../../utils/AssetHelper"; // 헬퍼 불러오기
+import { useTheme } from "../../../hooks/useTheme"; // useTheme 불러오기
+import { getAssetUrl } from "../../../utils/AssetHelper"; // 헬퍼 불러오기
 
 /**
  * ProfileBar (MorePage 상단 사용자 프로필 영역)
