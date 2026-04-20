@@ -257,7 +257,8 @@ class PromptRestyleView(APIView):
                 "content": (
                     # ▼ 기존 내용 유지하면서 추가/강조만 하도록 지시
                     f"You are given a scene description from an image generation prompt. Add or emphasize the requested element while keeping ALL original details.\n"
-                    f"Output only the restyle scene description in one line. No explanations, no extra text.\n"
+                    f"Output only the scene description in one line. No explanations, no extra text.\n"
+                    f"Do NOT include any style tokens like '(pixel art:1.2)', '(medium shot:1.4)', '(Close-up:0.8)' or similar tags in your output.\n"
                     f"Original scene: {original_prompt}\n"
                     f"Additional request (may be in Korean): {user_request}\n"
                     f"Rules: keep main character as described, natural descriptive English, under 100 words, one line only."
