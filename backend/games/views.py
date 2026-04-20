@@ -35,6 +35,7 @@ def get_supabase_headers():
 
 
 class GameScoreView(APIView):
+    "게임 결과 저장 api"
 
     # POST 요청이 오면 실행 (id = URL에서 받은 게임 번호)
     def post(self, request, id):
@@ -71,13 +72,6 @@ class GameScoreView(APIView):
         serializer = GameScoreSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         game_score = serializer.validated_data["game_score"]
-
-        # game_score가 null이면 400 에러 반환
-        if game_score is None:
-            return Response(
-                {"message": "game_score는 필수입니다."},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
 
         try:
             # ── 3. Supabase에 게임 결과 저장 ──────────────────

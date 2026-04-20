@@ -13,7 +13,7 @@ http:
     type: json
     data: |-
       {
-        "game_score": null
+        "game_score": 0
       }
   auth: inherit
 
@@ -25,8 +25,8 @@ settings:
 
 docs: |-
   ### 참고 사항 
-  기본값:null
-  이유: game_score 값을 비운 채로 전송하면 JSON 형식이 올바르지 않아 서버가 데이터를 읽지 못해 JSON 형식이 깨지면서 파싱 오류가 발생합니다. 이 문제를 해결하기 위해 기본값을 null로 설정하여 값이 비어있어도 서버가 정상적으로 받을 수 있고, 이후에 null인지 확인해서 400 에러를 반환합니다.
+  기본값:0
+  이유: game_score 값을 비운 채로 전송하면 JSON 형식이 올바르지 않아 서버가 데이터를 읽지 못해 JSON 형식이 깨지면서 파싱 오류가 발생합니다. 이 문제를 해결하기 위해 기본값을 0로 설정하여 값이 비어있어도 서버가 정상적으로 받을 수 있습니다.
   ### Body / Json
     - game_score: 저장할 게임 점수
     ***
@@ -35,7 +35,5 @@ docs: |-
     ***
     ### Status Code
     - 201 Created: 게임 점수 저장 성공
-    - 400 Bad Request: 필수값 누락 (game_score)
     - 400 Bad Request: 필수값 누락 (Authorization Bearer 헤더 access_token)
     - 401 Unauthorized: 유효하지 않은 access_token인 경우
-    - 500 Internal Server Error: 서버 오류
