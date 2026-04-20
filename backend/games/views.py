@@ -40,6 +40,14 @@ class GameScoreView(APIView):
     # POST 요청이 오면 실행 (id = URL에서 받은 게임 번호)
     def post(self, request, id):
 
+        """
+        게임 결과 저장
+        POST /api/v1/games/1/scores/
+        - Authorization 헤더의 access_token으로 현재 유저 확인
+        - game_score를 받아 Supabase game_result 테이블에 저장 
+        - result_name,game_score,played_at,rank의 완료 메시지 반환
+        """
+
         # ── 1. 토큰 추출 ──────────────────────────────────
         # Authorization 헤더에서 access_token 추출
         access_token = extract_access_token(request)
@@ -109,14 +117,12 @@ class GameScoreView(APIView):
 
             # ── 5. 성공 응답 반환 ─────────────────────────────
             return Response(
-                {
-                    "success": True,
-                    "data": {
-                        "result_name": user_name,                    # 유저 닉네임
-                        "game_score": str(saved.get("game_score")),  # 게임 점수
-                        "played_at": saved.get("played_at"),         # 플레이 날짜
-                        "rank": rank,                                # 등수
-                    },
+                {                                   
+                    "result_name": user_name,                    # 유저 닉네임
+                    "game_score": str(saved.get("game_score")),  # 게임 점수
+                    "played_at": saved.get("played_at"),         # 플레이 날짜
+                    "rank": rank,                                # 등수
+                    "message": "게임 결과 저장을 성공하였습니다.",
                 },
                 status=status.HTTP_201_CREATED,
             )
