@@ -40,4 +40,5 @@ docs: |-
   - 400 Bad Request: prompt값 누락 (Prompt-Transform 먼저 실행 필요)
   - 400 Bad Request: llm_model_engine_type값 누락
   - 400 Bad Request: llm_model_engine_type값이 유효하지 않음 (groq, local, cerebras 중 하나여야 함)
+  - 429 Too Many Requests: Cerebras 트래픽 과부하 (잠시 후 재시도)
   - 500 Internal Server Error: LLM API 오류 또는 서버 내부 오류
