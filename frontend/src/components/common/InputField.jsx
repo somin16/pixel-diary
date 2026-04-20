@@ -38,7 +38,7 @@ const InputField = ({
         <img
           src={getAssetUrl(currentTheme, 'boxes', boxImageName)}
           alt="입력창 배경"
-          className={`absolute top-0 left-0 w-full h-full z-10 ${readOnly ? 'grayscale-[0.5]' : ''}`}
+          className={`absolute top-0 left-0 w-full h-full z-10 ${readOnly ? 'grayscale opacity-70' : ''}`}
         />
 
         {/* 실제 데이터를 입력받는 투명 input */}
