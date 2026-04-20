@@ -3,6 +3,11 @@ import { useNavigate } from 'react-router-dom';
 import { useTheme } from '../../hooks/useTheme'; // useTheme 불러오기
 import { getAssetUrl } from "../../utils/AssetHelper"; // 헬퍼 불러오기
 
+// 컴포넌트 불러오기
+import Header from "../../components/common/Header";
+import ImageButton from "../../components/common/ImageButton";
+import InputField from "../../components/common/InputField";
+
 const Profile = () => {
   // navigate('/경로') 처럼 사용하여 원하는 주소로 화면을 전환
   const navigate = useNavigate();
@@ -36,26 +41,15 @@ const Profile = () => {
 
 return (
     <div 
-      className="w-full h-full pt-[60px] pb-[30px] px-5 flex flex-col items-center bg-[length:100%_100%]"
+      className="w-full h-full pt-[60px] pb-[30px] flex flex-col items-center bg-[length:100%_100%]"
       style={{ backgroundImage: `url(${getAssetUrl(currentTheme,'backgrounds','menu_background_x3')})` }}
     >
       
       {/* 상단 헤더 - 뒤로 가기 버튼 */}
-      <header className="w-full flex justify-start mb-5 pl-[15px]">
-        <button 
-          className="bg-transparent border-none cursor-pointer p-0 transition-transform duration-100 ease-in outline-none" 
-          onClick={handleBack}
-        >
-          <img 
-            src={getAssetUrl(currentTheme,'icons', 'back_icon_x3')} 
-            alt="뒤로 가기" 
-            className="w-auto h-[40px]" 
-          />
-        </button>
-      </header>
+      <Header />
 
       {/* 프로필 사진 영역 */}
-      <section className="relative w-auto h-auto mt-[50px] mb-[65px] flex justify-center items-center">
+      <section className="relative w-auto h-auto mt-[10px] mb-[65px] flex justify-center items-center">
         <img 
           src={getAssetUrl(currentTheme, 'boxes', 'profile_image_box_x3')} 
           alt="프로필 프레임" 
@@ -93,44 +87,22 @@ return (
 
       {/* 입력 필드 영역 */}
       <section className="w-[220px] flex flex-col gap-[10px] mb-[30px]">
-        
-        {/* 닉네임 입력 그룹 */}
-        <div className="flex flex-col gap-[8px]">
-          <label className="text-[13px] font-normal text-black">닉네임</label>
-          <div className="relative w-full max-w-[350px] h-[45px] flex items-center">
-            {/* 배경이 되는 픽셀 박스 이미지 */}
-            <img 
-              src={getAssetUrl(currentTheme, 'boxes', 'profile_info_box_x3')}
-              alt="입력칸 배경" 
-              className="absolute top-0 left-0 w-full h-full z-10" 
-            />
-            {/* 그 위에 올라가는 투명한 실제 입력칸 */}
-            <input 
-              type="text" 
-              value={nickname} 
-              onChange={(e) => setNickname(e.target.value)} 
-              className="relative z-20 w-full h-full bg-transparent border-none outline-none pl-[12px] pr-[20px] text-[13px] font-normal text-black"
-            />
-          </div>
-        </div>
-        
-        {/* 이메일 입력 그룹 - 클릭 불가 */}
-        <div className="flex flex-col gap-[8px]">
-          <label className="text-[13px] font-normal text-black">이메일</label>
-          <div className="relative w-full max-w-[350px] h-[45px] flex items-center">
-            <img 
-              src={getAssetUrl(currentTheme, 'boxes', 'profile_info_box_x3')}
-              alt="이메일 배경" 
-              className="absolute top-0 left-0 w-full h-full z-10" 
-            />
-            <input 
-              type="email" 
-              value={email} 
-              readOnly 
-              className="relative z-20 w-full h-full bg-transparent border-none outline-none pl-[12px] pr-[20px] text-[13px] font-normal text-[#969696] cursor-not-allowed" 
-            />
-          </div>
-        </div>
+      {/* 닉네임 입력 */}
+      <InputField 
+        label="닉네임"
+        value={nickname}
+        onChange={(e) => setNickname(e.target.value)}
+        placeholder="닉네임을 입력하세요"
+      />
+
+      {/* 이메일 입력 - 수정 불가 */}
+      <InputField 
+        label="이메일"
+        type="email"
+        value={email}
+        readOnly={true}
+      />
+
       </section>
 
       {/* 수정 완료 메시지 */}
@@ -143,19 +115,11 @@ return (
       </div>
 
       {/* 내 정보 수정하기 버튼 */}
-      <button 
-        className="relative bg-transparent border-none p-0 cursor-pointer w-[220px] mt-0 transition-transform duration-100 ease-in flex justify-center items-center font-normal" 
+      <ImageButton
+        label="내 정보 수정하기"
+        imageSrc={getAssetUrl(currentTheme, 'buttons', 'profile_info_patch_button_x3')}
         onClick={handleUpdate}
-      >
-        <img 
-          src={getAssetUrl(currentTheme, 'buttons', 'profile_info_patch_button_x3')} 
-          alt="수정하기 버튼" 
-          className="w-full h-auto"
-        />
-        <span className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-white text-[12px] font-normal pointer-events-none whitespace-nowrap">
-          내 정보 수정하기
-        </span>
-      </button>
+      />
     </div>
   );
 };

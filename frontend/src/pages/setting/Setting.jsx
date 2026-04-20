@@ -4,9 +4,10 @@ import { useTheme } from '../../hooks/useTheme'; // useTheme 불러오기
 import { getAssetUrl } from "../../utils/AssetHelper"; // 헬퍼 불러오기
 
 // 컴포넌트 불러오기
-import LogoutDialog from '../../components/dialog/LogoutDialog';
-import WithdrawalDialog from '../../components/dialog/WithdrawalDialog';
-import ResultDialog from '../../components/dialog/ResultDialog';
+import LogoutDialog from '../../components/common/dialog/LogoutDialog';
+import WithdrawalDialog from '../../components/common/dialog/WithdrawalDialog';
+import ResultDialog from '../../components/common/dialog/ResultDialog';
+import Header from "../../components/common/Header";
 
 // 설정 메뉴 항목들 - 배열을 전역으로 선언
 const settingItems = [
@@ -63,20 +64,7 @@ return (
     >
       
       {/* 상단 헤더 (뒤로 가기 & 제목) */}
-      <header className="flex items-center justify-center relative mb-[50px] px-[20px]">
-        {/* 버튼 클릭 시 뒤로 가기 */}
-        <button 
-          className="bg-transparent border-none cursor-pointer p-0 absolute left-[20px] top-1/2 -translate-y-1/2 outline-none" 
-          onClick={handleBack}
-        >
-          <img 
-            src={getAssetUrl(currentTheme,'icons', 'back_icon_x3')} 
-            alt="뒤로 가기" 
-            className="w-auto h-[40px]" 
-          />
-        </button>
-        <h1 className="text-[36px] text-black m-0">설정</h1>
-      </header>
+      <Header title="설정" />
 
       {/* 설정 메뉴 리스트 영역 */}
       <ul className="list-none p-0 m-0 flex flex-col">
@@ -106,11 +94,6 @@ return (
           </li>
         ))}
       </ul>
-
-      {/* 어두운 배경 오버레이 */}
-      {(dialog || resultDialog) && (
-        <div className="fixed top-0 left-0 w-full h-full bg-black/60 z-10" />
-      )}
 
       {/* 로그아웃 다이얼로그 */}
       {dialog === 'logout' && (

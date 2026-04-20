@@ -3,6 +3,9 @@ import { useNavigate } from 'react-router-dom';
 import { useTheme } from '../../hooks/useTheme'; // useTheme 불러오기
 import { getAssetUrl } from "../../utils/AssetHelper"; // 헬퍼 불러오기
 
+// 컴포넌트 불러오기
+import ProfileBar from "../../components/common/profile/ProfileBar";
+
 // 배열 전역으로 선언
 const menuItems = [
   { id: 'shop', label: '상점', iconName: 'shop_icon_x3', path: '/more/shop' },
@@ -20,9 +23,11 @@ const MorePage = () => {
 
   // 사용자 정보 상태 관리
   // 나중에 context나 zuStand로 전역 관리 하는 게 좋을 듯
-  const [nickname, setNickname] = useState("nickname"); // TODO: API 연동 시 useState("")로 변경
-  const [email, setEmail] = useState("email@email.com"); // TODO: API 연동 시 useState("")로 변경
-  const [profileImage, setProfileImage] = useState(null); 
+  const [user] = useState({
+  nickname: "nickname", // TODO: API 연동 시 useState("")로 변경
+  email: "email@email.com", // TODO: API 연동 시 useState("")로 변경
+  profileImage: null
+  });
 
   useEffect(() => {
     // TODO: API 연동 시 api 파일에서 불러오기
@@ -53,35 +58,11 @@ return (
       </header>
 
       {/* 프로필 영역 */}
-      {/* section 전체에 onClick을 걸어서, 이미지 어디를 누르든 이동하게 만듦 */}
-      <section 
-        className="mb-[40px] cursor-pointer flex justify-center w-full" 
-        onClick={() => navigate('/more/profile')}
-      >
-        <div className="relative w-[90%] max-w-[350px] flex transition-transform duration-100 ease-in">
-          
-          {/* 배경이 되는 박스+선 이미지 */}
-          <img 
-            src={getAssetUrl(currentTheme, 'boxes', 'profile_bar_box_x3')} 
-            alt="프로필" 
-            className="w-full h-auto block" 
-          />
-
-          {/* 그 위에 올라가는 프로필 사진 */}
-          <img 
-            // profileImage가 null, undefined, 빈 문자열일 때 모두 방어
-            src={profileImage ? profileImage : getAssetUrl(currentTheme, 'icons', 'app_icon_x2')}
-            alt="프로필 사진"
-            className="absolute left-[3.7%] top-[43.5%] -translate-y-1/2 w-[21.5%] aspect-square object-cover"
-          />
-
-          {/* 그 위에 올라가는 닉네임 + 이메일 */}
-          <div className="absolute left-[29%] top-1/2 -translate-y-1/2 flex flex-col gap-[5px]">
-            <span className="text-[16px] font-bold text-black">{nickname}</span>
-            <span className="text-[12px] font-bold text-gray-500">{email}</span>
-          </div>
-        </div>
-      </section>
+      <ProfileBar 
+        nickname={user.nickname} 
+        email={user.email} 
+        profileImage={user.profileImage} 
+      />
 
       {/* 더보기 메뉴 아이콘 그리드 영역 */}
       <nav className="grid grid-cols-3 gap-x-[15px] gap-y-[30px] px-[10px]">
