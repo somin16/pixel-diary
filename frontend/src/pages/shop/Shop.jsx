@@ -191,6 +191,18 @@ const Shop = () => {
     )}
     </div>
     ))}
+
+    {/* 아이템이 추가되거나 줄어들어도 아이템 목록이 항상 16개로 뜨도록 설정 */}
+        {Array.from({ length: Math.max(0, 16 - MOCK_ITEMS.length) }).map((_, idx) => (
+          <div key={`empty-${idx}`} className="relative w-full">
+            <img 
+              src={getAssetUrl(currentTheme, 'boxes', 'store_item_box_x2')} 
+              className="w-full h-auto block pointer-events-none" 
+              alt="빈 슬롯" 
+            />
+          </div>
+        ))}
+
     </div>
     </div>
 
