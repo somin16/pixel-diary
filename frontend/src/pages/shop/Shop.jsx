@@ -8,7 +8,6 @@ import Header from "../../components/common/Header";
 import ImageButton from "../../components/common/ImageButton";
 import DialogBox from "../../components/common/dialog/DialogBox";
 import ResultDialog from "../../components/common/dialog/ResultDialog";
-import PreviewDialog from "../../components/common/dialog/PreviewDialog";
 
 const TABS = ["모두", "스티커", "이모티콘", "테마"];
 
