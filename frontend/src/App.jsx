@@ -10,6 +10,7 @@ import Login from "./pages/auth/Login"; // 로그인 화면
 import AuthRedirect from "./pages/auth/AuthRedirect"; // 소셜 로그인 성공 시 페이지
 import Signup from "./pages/auth/SignUp"; // 회원가입 화면
 import Setting from "./pages/setting/Setting"; // 더보기 - 설정 메인화면
+import Shop from "./pages/shop/Shop"; // 더보기 - 상점 화면
 
 function App() {
   return (
@@ -44,6 +45,9 @@ function App() {
 
           {/* 주소가 /more/setting 이면 설정 메인 화면을 보여줘 */}
           <Route path="/more/setting" element={<Setting />} />
+
+          {/* 주소가 /more/shop 이면 상점 화면을 보여줘 */}
+          <Route path="/more/shop" element={<Shop />} />
         </Route>
       </Routes>
     </BrowserRouter>
