@@ -5,7 +5,7 @@
 # <예시> 
 # Feat : 새로운 기능 추가
 # Fix : 버그 수정
-# Docs : 문서 수정 (Bruno, txt파일)
+# Docs : 문서 수정 (Bruno, txt파일, 주석)
 # Asset : 이미지, 폰트 추가
 # Refactor : 코드 리팩토링 (더 좋은 코드로 변경,기능 변경x)
 # Test : 테스트 코드 추가, 테스트만을 위한 코드 변경
