@@ -14,7 +14,7 @@ team.CANVAS가 만드는 생성형AI그림일기앱 개발 프로젝트입니다
 ❗각자 터미널에서 실행할 명령어:
 
 ```bash
- git clone https://github.com/your-repo/pixel-diary.git
+ git clone https://github.com/somin16/pixel-diary.git
 cd pixel-diary
 git checkout develop
  ```
