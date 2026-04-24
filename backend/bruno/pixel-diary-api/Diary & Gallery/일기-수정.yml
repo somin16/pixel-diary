@@ -1,5 +1,5 @@
 info:
-  name: EditDiary
+  name: 일기-수정
   type: http
   seq: 2
 

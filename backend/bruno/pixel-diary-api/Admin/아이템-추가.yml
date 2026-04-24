@@ -1,5 +1,5 @@
 info:
-  name: AddItem
+  name: 아이템-추가
   type: http
   seq: 1
 
