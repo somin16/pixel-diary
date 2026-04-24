@@ -1,0 +1,40 @@
+info:
+  name: 게임-보유재화-추가
+  type: http
+  seq: 2
+
+http:
+  method: PATCH
+  url: http://127.0.0.1:8000/api/v1/games/users/coins/add/
+  headers:
+    - name: Authorization
+      value: "Bearer "
+  body:
+    type: json
+    data: |-
+      {
+        "game_score": 0,
+        "coin": 0
+      }
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |-
+  ***
+  ### Body / Json
+  - game_score: 게임에서 얻은 점수
+  - coin: 추가할 코인
+  ***
+  ### Headers
+  - Authorization: Bearer 로그인할 시 받는 access_token
+  ***
+  ### Status Code
+  - 200 OK: 재화 추가 성공
+  - 400 Bad Request: 필수값 누락 (Authorization Bearer 헤더 access_token)
+  - 401 Unauthorized: 유효하지 않은 access_token인 경우
+  - 404 Not Found: 유저 정보 없음

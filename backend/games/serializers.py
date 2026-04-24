@@ -12,3 +12,26 @@ class GameScoreSerializer(serializers.Serializer):
             "min_value": "game_score는 0 이상이어야 합니다.",
         }
     )
+
+class AddUserCoinSerializer(serializers.Serializer):
+    # game_score 필드 - 정수형, 기본값 0
+    game_score = serializers.IntegerField(
+        required=False,   # 키가 없어도 됨
+        default=0,        # 기본값은 0
+        min_value=0,      # 0 이상이어야 함
+        error_messages={
+            "invalid": "game_score는 숫자여야 합니다.",
+            "min_value": "game_score는 0 이상이어야 합니다.",
+        }
+    )
+
+    # coin 필드 - 정수형, 기본값 0
+    coin = serializers.IntegerField(
+        required=False,   # 키가 없어도 됨
+        default=0,        # 기본값은 0
+        min_value=0,      # 0 이상이어야 함
+        error_messages={
+            "invalid": "coin은 숫자여야 합니다.",
+            "min_value": "coin은 0 이상이어야 합니다.",
+        }
+    )

@@ -18,6 +18,7 @@ from utils import extract_access_token, get_user_from_token
 
 # 시리얼라이저 가져오기
 from .serializers import GameScoreSerializer
+from .serializers import AddUserCoinSerializer
 
 
 def get_supabase_headers():
@@ -35,6 +36,7 @@ def get_supabase_headers():
 
 
 class GameScoreView(APIView):
+
     "게임 결과 저장 api"
 
     # POST 요청이 오면 실행 (id = URL에서 받은 게임 번호)
@@ -132,5 +134,105 @@ class GameScoreView(APIView):
             print(f"=== GAME SCORE ERROR ===\n{error}\n========================")
             return Response(
                 {"message": "게임 점수 저장 중 오류가 발생했습니다."},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
+
+class AddUserCoinView(APIView):
+    """보유 재화 추가 API"""
+
+    def patch(self, request):
+        """
+        PATCH /api/v1/users/coins/
+        - Authorization 헤더의 access_token으로 현재 유저 확인
+        - game_score, coin을 받아서 재화 추가
+        - 추가된 total_coin 반환
+        """
+        # Authorization 헤더에서 access_token 추출
+        access_token = extract_access_token(request)
+
+        # 토큰이 없으면 400 에러 반환
+        if not access_token:
+            return Response(
+                {"message": "Authorization 헤더에 유효한 Bearer 토큰이 필요합니다."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        # 시리얼라이저로 데이터 검증
+        serializer = AddUserCoinSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        game_score = serializer.validated_data["game_score"]
+        coin = serializer.validated_data["coin"]
+
+        try:
+            # 토큰으로 Supabase에서 유저 정보 조회
+            user = get_user_from_token(access_token)
+
+            # 유효하지 않은 토큰인 경우 401 반환
+            if not user:
+                return Response(
+                    {"message": "유효하지 않은 토큰입니다."},
+                    status=status.HTTP_401_UNAUTHORIZED,
+                )
+
+            # 유저 ID 추출
+            user_id = user.get("id")
+
+            # Supabase URL 및 헤더 설정
+            supabase_url = os.getenv("SUPABASE_URL")
+            headers = get_supabase_headers()
+
+            # users 테이블에서 현재 코인 조회
+            # ?user_id=eq.{user_id} → user_id가 일치하는 행만
+            # &select=coin → coin 컬럼만 가져오기
+            get_response = requests.get(
+                f"{supabase_url}/rest/v1/users?user_id=eq.{user_id}&select=coin",
+                headers=headers,
+            )
+
+            # 조회 실패 시 예외 발생
+            if get_response.status_code not in [200, 201]:
+                raise Exception(f"Supabase API 오류: {get_response.text}")
+
+            data = get_response.json()
+
+            # 유저 데이터가 없으면 404 에러 반환
+            if not data:
+                return Response(
+                    {"message": "유저 정보를 찾을 수 없습니다."},
+                    status=status.HTTP_404_NOT_FOUND,
+                )
+
+            # 현재 보유 코인
+            current_coin = data[0].get("coin", 0)
+
+            # 현재 코인 + 추가 코인 = 총 코인
+            # 나중에 game_score 환산 공식 나오면 여기 수정!
+            total_coin = current_coin + coin
+
+            # users 테이블에서 해당 유저의 coin 값 업데이트
+            update_response = requests.patch(
+                f"{supabase_url}/rest/v1/users?user_id=eq.{user_id}",
+                headers={**headers, "Prefer": "return=representation"},
+                json={"coin": total_coin},
+            )
+
+            # 업데이트 실패 시 예외 발생
+            if update_response.status_code not in [200, 201]:
+                raise Exception(f"Supabase API 오류: {update_response.text}")
+
+             # 성공 응답 반환
+            return Response(
+                {
+                    "total_coin": total_coin,           # 추가 후 총 코인
+                    "message": "재화가 추가되었습니다.",          # 메시지
+                },
+                status=status.HTTP_200_OK,
+            )
+
+        except Exception as error:
+            # 개발 중 오류 확인용 (개발 완료 후 삭제 예정)
+            print(f"=== ADD USER COIN ERROR ===\n{error}\n==========================")
+            return Response(
+                {"message": "재화 추가 중 오류가 발생했습니다."},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
