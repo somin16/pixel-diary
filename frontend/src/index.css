@@ -7,8 +7,8 @@
 ──────────────────────────────────────────────────────── */
 @font-face {
   font-family: 'Mona';
-  src: url('./assets/fonts/Mona12.woff2') format('woff2'),
-       url('./assets/fonts/Mona12.ttf') format('truetype');
+  src: url('/assets/fonts/Mona12.woff2') format('woff2'),
+       url('/assets/fonts/Mona12.ttf') format('truetype');
   font-weight: normal;
   font-style: normal;
   /* 폰트 로딩 전에는 글자를 숨겼다가 로딩 완료되면 한 번에 보여줌 */
@@ -67,7 +67,11 @@ html, body {
 #root {
   /* AppShell에서 비율을 잡으므로 여기서는 꽉 채워주기 */
   height: 100%;      /* 화면 높이에 꽉 채움 */
-  width: auto;        /* 높이에 맞춰서 가로 너비가 비율대로 자동 조절됨 */
+  width: 100%; 
+  
+  /* 내부 컨텐츠가 화면보다 커지면 스크롤 발생 */
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch; /* 부드러운 스크롤 */
 
   /* 픽셀아트 선명도 유지 — 확대해도 도트가 흐릿해지지 않음 */
   image-rendering: pixelated;
@@ -91,6 +95,11 @@ html, body {
 input, textarea, [contenteditable="true"], .selectable {
   user-select: text;
   -webkit-user-select: text;
+}
+
+/* 전역 설정 보강 */
+button, input, textarea, select {
+  font-family: 'Mona', sans-serif !important;
 }
 
 @layer utilities {
