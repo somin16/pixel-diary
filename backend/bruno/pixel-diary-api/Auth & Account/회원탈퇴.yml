@@ -1,11 +1,11 @@
 info:
-  name: Change-Username
+  name: 회원탈퇴
   type: http
-  seq: 7
+  seq: 6
 
 http:
-  method: PATCH
-  url: http://127.0.0.1:8000/api/v1/auth/username/
+  method: POST
+  url: http://127.0.0.1:8000/api/v1/auth/withdrawal/
   headers:
     - name: Authorization
       value: "Bearer "
@@ -13,7 +13,7 @@ http:
     type: json
     data: |-
       {
-        "user_name": ""
+        "password": ""
       }
   auth: inherit
 
@@ -25,13 +25,14 @@ settings:
 
 docs: |-
   ### Body / Json
-  - user_name: 새로 변경할 닉네임
+  - password: 회원 탈퇴할 계정의 비밀번호
   ***
   ### Headers
   - Authorization: Bearer 로그인할 시 받는 access_token
   ***
   ### Status Code
-  - 200 OK: 유저 이름 변경 성공
+  - 200 OK: 회원 탈퇴 성공
   - 400 BAD Request: 필수값 누락 (Authorization Bearer 헤더 acces_token)
-  - 400 BAD Request: 필수값 누락 (user_name)
+  - 400 BAD Request: 필수값 누락 (본인 확인 비밀번호)
   - 401 Unauthorized: 유효하지 않은 access_token인 경우
+  - 401 Unauthorized: 입력한 비밀번호가 일치하지 않을 경우

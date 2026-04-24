@@ -1,5 +1,5 @@
 info:
-  name: Prompt-Transform
+  name: 프롬프트-변환
   type: http
   seq: 1
 
@@ -44,4 +44,3 @@ docs: |-
   - 400 Bad Request: age 값이 유효하지 않음 (1 이상의 정수여야 함)
   - 400 Bad Requset: gender와 age는 둘 다 입력하거나 둘 다 생략해야함
   - 429 Too Many Requests: Cerebras 트래픽 과부하 (잠시 후 재시도)
-

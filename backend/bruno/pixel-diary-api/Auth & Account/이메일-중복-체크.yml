@@ -1,5 +1,5 @@
 info:
-  name: Check-Email
+  name: 이메일-중복-체크
   type: http
   seq: 1
 

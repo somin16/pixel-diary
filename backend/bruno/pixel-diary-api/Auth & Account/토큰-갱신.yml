@@ -1,5 +1,5 @@
 info:
-  name: TokenRefresh
+  name: 토큰-갱신
   type: http
   seq: 11
 
