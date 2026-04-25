@@ -23,6 +23,7 @@ urlpatterns = [
     path("api/v1/prompt/", include("prompt.urls")),     # 프롬프트 변환 관련 URL
     path("api/v1/diaries/", include("diaries.urls")),   # 일기 관련 URL
     path("api/v1/admin/", include("management.urls")),  # 관리자 전용 관련 URL
+
+    path("api/v1/", include("games.urls")),       # 게임 관련 URL                            
     path("api/v1/", include("store.urls")),             # 보관함 및 아이템 관련 URL
-    path("api/v1/games/", include("games.urls")),       # 게임 관련 URL
 ]

@@ -18,6 +18,7 @@ from utils import extract_access_token, get_user_from_token
 
 # 시리얼라이저 가져오기
 from .serializers import GameScoreSerializer
+from .serializers import AddUserCoinSerializer
 
 
 def get_supabase_headers():
@@ -35,6 +36,7 @@ def get_supabase_headers():
 
 
 class GameScoreView(APIView):
+
     "게임 결과 저장 api"
 
     # POST 요청이 오면 실행 (id = URL에서 받은 게임 번호)
@@ -132,5 +134,93 @@ class GameScoreView(APIView):
             print(f"=== GAME SCORE ERROR ===\n{error}\n========================")
             return Response(
                 {"message": "게임 점수 저장 중 오류가 발생했습니다."},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
+
+class AddUserCoinView(APIView):
+    """보유 재화 추가 API"""
+
+    def patch(self, request):
+        """
+        PATCH api/v1/users/coins/
+        - Authorization 헤더의 access_token으로 현재 유저 확인
+        - game_score, coin을 받아서 재화 추가
+        - 추가된 total_coin 반환
+        """
+        # ── 1. 토큰 추출 ──────────────────────────────────
+        access_token = extract_access_token(request)
+
+        if not access_token:
+            return Response(
+                {"message": "Authorization 헤더에 유효한 Bearer 토큰이 필요합니다."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        # ── 2. 유저 조회 (시리얼라이저 검증 전에 먼저 수행) ──
+        user = get_user_from_token(access_token)
+
+        if not user:
+            return Response(
+                {"message": "유효하지 않은 토큰입니다."},
+                status=status.HTTP_401_UNAUTHORIZED,
+            )
+
+        user_id = user.get("id")
+
+        # ── 3. 시리얼라이저로 데이터 검증 ─────────────────
+        serializer = AddUserCoinSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        game_score = serializer.validated_data["game_score"]
+        coin = serializer.validated_data["coin"]
+
+        try:
+            supabase_url = os.getenv("SUPABASE_URL")
+            headers = get_supabase_headers()
+
+            # ── 4. 현재 코인 조회 ──────────────────────────
+            get_response = requests.get(
+                f"{supabase_url}/rest/v1/users?user_id=eq.{user_id}&select=coin",
+                headers=headers,
+            )
+
+            if get_response.status_code not in [200, 201]:
+                raise Exception(f"Supabase API 오류: {get_response.text}")
+
+            data = get_response.json()
+
+            if not data:
+                return Response(
+                    {"message": "유저 정보를 찾을 수 없습니다."},
+                    status=status.HTTP_404_NOT_FOUND,
+                )
+
+            current_coin = data[0].get("coin", 0)
+
+            # ── 5. 코인 업데이트 ───────────────────────────
+            # 나중에 game_score 환산 공식 나오면 여기 수정!
+            total_coin = current_coin + coin
+
+            update_response = requests.patch(
+                f"{supabase_url}/rest/v1/users?user_id=eq.{user_id}",
+                headers={**headers, "Prefer": "return=representation"},
+                json={"coin": total_coin},
+            )
+
+            if update_response.status_code not in [200, 201]:
+                raise Exception(f"Supabase API 오류: {update_response.text}")
+
+            # ── 6. 성공 응답 반환 ─────────────────────────
+            return Response(
+                {
+                    "total_coin": total_coin,
+                    "message": "재화가 추가되었습니다.",
+                },
+                status=status.HTTP_200_OK,
+            )
+
+        except Exception as error:
+            print(f"=== ADD USER COIN ERROR ===\n{error}\n==========================")
+            return Response(
+                {"message": "재화 추가 중 오류가 발생했습니다."},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
