@@ -7,10 +7,11 @@ import Game2 from "./game/game2/Game2"; // 게임2 화면
 import MorePage from "./pages/more/MorePage"; // 더보기 화면
 import Profile from "./pages/profile/Profile"; // 더보기 - 프로필 화면
 import Login from "./pages/auth/Login"; // 로그인 화면
-import AuthRedirect from "./pages/auth/AuthRedirect"; // 소셜 로그인 성공 시 페이지
+import AuthRedirect from "./pages/auth/AuthRedirect"; // 로그인, 회원가입 진행 시 화면
 import Signup from "./pages/auth/SignUp"; // 회원가입 화면
 import Setting from "./pages/setting/Setting"; // 더보기 - 설정 메인화면
 import Shop from "./pages/shop/Shop"; // 더보기 - 상점 화면
+import SendResetPasswordLink from "./pages/auth/SendResetPasswordLink"; // 비밀번호 재설정 링크 이메일 발송 화면
 
 function App() {
   return (
@@ -25,29 +26,32 @@ function App() {
 
         {/* 2. AppShell 레이아웃을 공유하는 일반 페이지들 */}
         <Route element={<AppShell />}>
-          {/* 주소가 / 이면 홈화면을 보여줘 */}
-          <Route path="/" element={<Home />} />
+            {/* 주소가 / 이면 홈화면을 보여줘 */}
+            <Route path="/" element={<Home />} />
 
-          {/* 주소가 /more 이면 더보기 화면을 보여줘 */}
-          <Route path="/more" element={<MorePage />} />
+            {/* 주소가 /auth/login 이면 로그인 화면을 보여줘 */}
+            <Route path="/auth/login" element={<Login />} />
 
-          {/* 주소가 /more/profile 이면 프로필 화면을 보여줘 */}
-          <Route path="/more/profile" element={<Profile />} />
+            {/* 주소가 /auth/auth-redirect 이면 로그인/ 회원가입 정보 화면을 보여줘 */}
+            <Route path="/auth/auth-redirect" element={<AuthRedirect />} />
 
-          {/* 주소가 /login 이면 로그인 화면을 보여줘 */}
-          <Route path="/login" element={<Login />} />
+            {/* 주소가 /signup 이면 회원가입 화면을 보여줘 */}
+            <Route path="/auth/signup" element={<Signup />} />
 
-          {/* 주소가 /auth-redirect 이면 로그인/ 회원가입 정보 화면을 보여줘 */}
-          <Route path="/auth-redirect" element={<AuthRedirect />} />
+            {/* 주소가 /password/send-reset-link 이면 비밀번호 재설정 이메일 발송 화면을 보여줘 */}
+            <Route path="/auth/password/send-reset-link" element={<SendResetPasswordLink />} />
+            
+            {/* 주소가 /more 이면 더보기 화면을 보여줘 */}
+            <Route path="/more" element={<MorePage />} />
 
-          {/* 주소가 /signup 이면 회원가입 화면을 보여줘 */}
-          <Route path="/signup" element={<Signup />} />
+            {/* 주소가 /more/profile 이면 프로필 화면을 보여줘 */}
+            <Route path="/more/profile" element={<Profile />} />
+            
+            {/* 주소가 /more/setting 이면 설정 메인 화면을 보여줘 */}
+            <Route path="/more/setting" element={<Setting />} />
 
-          {/* 주소가 /more/setting 이면 설정 메인 화면을 보여줘 */}
-          <Route path="/more/setting" element={<Setting />} />
-
-          {/* 주소가 /more/shop 이면 상점 화면을 보여줘 */}
-          <Route path="/more/shop" element={<Shop />} />
+            {/* 주소가 /more/shop 이면 상점 화면을 보여줘 */}
+            <Route path="/more/shop" element={<Shop />} />
         </Route>
       </Routes>
     </BrowserRouter>

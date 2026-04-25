@@ -32,10 +32,10 @@ export default function AuthRedirect() {
       if (from === 'signup' && isMounted) {
         if (errorMessage) {
           setStatus('signup_error'); // 실패
-          setTimeout(() => navigate('/signup'), 2500); // 2.5초 후 가입창으로
+          setTimeout(() => navigate('/auth/signup'), 2500); // 2.5초 후 가입창으로
         } else {
           setStatus('signup_success'); // 성공
-          setTimeout(() => navigate('/login'), 2000); // 2초 후 로그인창으로
+          setTimeout(() => navigate('/auth/login'), 2000); // 2초 후 로그인창으로
         }
         return;
       }
@@ -61,12 +61,12 @@ export default function AuthRedirect() {
             setTimeout(() => navigate('/'), 1500);
           } else {
             setStatus('error');
-            setTimeout(() => navigate('/login'), 2000);
+            setTimeout(() => navigate('/auth/login'), 2000);
           }
         } catch (err) {
           console.error("네이버 로그인 에러:", err);
           setStatus('error');
-          setTimeout(() => navigate('/login'), 2000);
+          setTimeout(() => navigate('/auth/login'), 2000);
         }
         return;
       }
@@ -86,13 +86,13 @@ export default function AuthRedirect() {
         } catch (err) {
           console.error("토큰 저장 에러:", err);
           setStatus('error');
-          setTimeout(() => navigate('/login'), 2000);
+          setTimeout(() => navigate('/auth/login'), 2000);
         }
       } else {
         // 데이터 없는 잘못된 접근
           if (isMounted) {
             setStatus('error');
-            setTimeout(() => navigate('/login'), 2000);
+            setTimeout(() => navigate('/auth/login'), 2000);
           }
         }
         

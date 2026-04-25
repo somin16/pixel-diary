@@ -10,24 +10,13 @@ export default function AppShell({ children }) {
   // 예시: <AppShell><Home /></AppShell> 에서 Home이 children으로 들어옴
 
   const location = useLocation();
+  const path = location.pathname;
 
   // 네비게이션 바가 보이지 않는 페이지 경로를 여기에 작성
-  const hideNavigationBarPaths = [
-    '/login',
-    '/auth-redirect',
-    '/signup',
-    '/game1run',
-    '/more/setting',
-    '/more/setting/account',
-    '/more/setting/notification',
-    '/more/profile',
-    '/more/shop',
-    '/more/inventory',
-    '/more/daily',
-    '/more/info'];
-
-  // 현재 경로가 제외 리스트에 포함되어 있는지 확인
-  const checkHideNavigationBarPaths = hideNavigationBarPaths.includes(location.pathname);
+  const hideNavigationBarPaths = 
+    path.startsWith('/auth') ||
+    path.startsWith('/game1run') ||
+    (path.startsWith('/more/') && path !== '/more'); // /more은 보이고, /more/..부터는 안보이도록 조건 설정
 
   return (
     // 브라우저 전체 화면을 채우는 바깥 래퍼 — 레터박스(검은 여백) 역할
@@ -59,7 +48,7 @@ export default function AppShell({ children }) {
 
         {/* 하단 네비게이션 바 — 조건부 렌더링 : 네비게이션바 표시X 페이지 리스트에 없을 때만 출력 */}
         <footer className="w-full shrink-0">
-          { !checkHideNavigationBarPaths && <NavigationBar/> }
+          { !hideNavigationBarPaths && <NavigationBar/> }
         </footer>
 
       </div>

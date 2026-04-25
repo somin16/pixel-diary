@@ -88,7 +88,7 @@ export default function Login() { // 로그인 페이지 내보내기
                     provider: 'email'
                 });
 
-                navigate(`/auth-redirect?${params.toString()}`);
+                navigate(`/auth/auth-redirect?${params.toString()}`);
             } else {
                 // 서버에서 온 에러 처리
                 setEmailStatus({
@@ -185,7 +185,9 @@ export default function Login() { // 로그인 페이지 내보내기
             </form>
 
             {/* 비밀번호 찾기 링크 */}
-            <button className="text-sm text-gray-700 underline mb-5 font-medium outline-none">
+            <button
+                onClick={() => navigate('/auth/password/send-reset-link')} 
+                className="text-sm text-gray-700 underline mb-5 font-medium outline-none">
                 비밀번호를 잊어버리셨나요?
             </button>
 
@@ -197,7 +199,7 @@ export default function Login() { // 로그인 페이지 내보내기
 
             {/* 회원가입 링크 */}
             <button
-                onClick={() => navigate('/signup')}
+                onClick={() => navigate('/auth/signup')}
                 className="text-sm text-gray-800 underline font-medium outline-none">
                 회원가입 하러가기
             </button>
