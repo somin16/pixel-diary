@@ -15,6 +15,7 @@ import Signup from "./pages/auth/SignUp"; // 회원가입 화면
 import Setting from "./pages/setting/Setting"; // 더보기 - 설정 메인화면
 import Shop from "./pages/shop/Shop"; // 더보기 - 상점 화면
 import SendResetPasswordLink from "./pages/auth/SendResetPasswordLink"; // 비밀번호 재설정 링크 이메일 발송 화면
+import ListDiary from "./pages/diary/ListDiary"; // 일기 목록 화면
 
 function App() {
     const [session, setSession] = useState(null);
@@ -70,6 +71,9 @@ function App() {
                         <Route element={<AppShell />}>
                             {/* 주소가 / 이면 홈화면을 보여줘 */}
                             <Route path="/" element={<Home />} />
+
+                            {/* 주소가 /diary/list 이면 일기 목록 화면을 보여줘 */}
+                            <Route path="/diary/list" element={<ListDiary />} />
 
                             {/* 주소가 /more 이면 더보기 화면을 보여줘 */}
                             <Route path="/more" element={<MorePage />} />
