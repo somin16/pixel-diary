@@ -103,12 +103,12 @@ export default function Signup() { // 회원가입 페이지 내보내기
             });
 
             if (response.ok) {
-                navigate('/auth-redirect?from=signup');
+                navigate('/auth/auth-redirect?from=signup');
             } else {
                 // 실패 시 (서버에서 준 에러 메시지 포함)
                 const err = await response.json();
                 const message = encodeURIComponent(err.message || "알 수 없는 오류가 발생했습니다.");
-                navigate(`/auth-redirect?from=signup&message=${message}`);
+                navigate(`/auth/auth-redirect?from=signup&message=${message}`);
             }
         } catch (err) {
             console.error(err);
