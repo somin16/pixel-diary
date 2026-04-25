@@ -114,7 +114,7 @@ export default function Login() { // 로그인 페이지 내보내기
         // 네이버는 Supabase SDK가 지원하지 않아서 별도로 처리
         if (provider === 'naver') {
             const NAVER_CLIENT_ID = import.meta.env.VITE_NAVER_CLIENT_ID; // .env에서 네이버 Client ID 가져오기
-            const REDIRECT_URI = `${window.location.origin}/auth-redirect?provider=naver`; // 로그인 후 돌아올 주소
+            const REDIRECT_URI = `${window.location.origin}/auth/auth-redirect?provider=naver`; // 로그인 후 돌아올 주소
             const STATE = Math.random().toString(36).substring(2); // CSRF 공격 방지용 랜덤값
 
             localStorage.setItem('naver_state', STATE); // 콜백에서 검증하기 위해 state 저장
@@ -128,7 +128,7 @@ export default function Login() { // 로그인 페이지 내보내기
         const { data, error } = await supabase.auth.signInWithOAuth({
             provider: provider,
             options: {
-                redirectTo: `${window.location.origin}/auth-redirect?provider=${provider}`,
+                redirectTo: `${window.location.origin}/auth/auth-redirect?provider=${provider}`,
                 skipBrowserRedirect: false,
             },
         });
