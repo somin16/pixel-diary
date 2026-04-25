@@ -142,7 +142,7 @@ class AddUserCoinView(APIView):
 
     def patch(self, request):
         """
-        PATCH api/v1/games/users/coins/
+        PATCH api/v1/users/coins/
         - Authorization 헤더의 access_token으로 현재 유저 확인
         - game_score, coin을 받아서 재화 추가
         - 추가된 total_coin 반환

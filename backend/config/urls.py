@@ -24,5 +24,5 @@ urlpatterns = [
     path("api/v1/diaries/", include("diaries.urls")),   # 일기 관련 URL
     path("api/v1/admin/", include("management.urls")),  # 관리자 전용 관련 URL
     path("api/v1/items/", include("store.urls")),       # 상점 및 보관함 관련 URL
-    path("api/v1/games/", include("games.urls")),       # 게임 관련 URL                            
+    path("api/v1/", include("games.urls")),       # 게임 관련 URL                            
 ]
