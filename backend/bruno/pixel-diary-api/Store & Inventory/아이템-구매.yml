@@ -25,9 +25,9 @@ settings:
 
 docs: |-
   ### Body / Json
-  {
-    item_count: 구매할 아이템 수량 (기본값이 1이라 미리 입력해 두었습니다.)
-  }
+  - item_count: 구매할 아이템 수량 (기본값이 1이라 미리 입력해 두었습니다.)
+  ### Headers
+  - Authorization: Bearer 로그인할 시 받는 access_token
   ***
   ### Status Code
   - 201 Created: 아이템 구매 성공
