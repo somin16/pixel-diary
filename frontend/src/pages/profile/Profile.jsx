@@ -6,7 +6,7 @@ import { getAssetUrl } from "../../utils/AssetHelper"; // 헬퍼 불러오기
 // 컴포넌트 불러오기
 import Header from "../../components/common/Header";
 import ImageButton from "../../components/common/ImageButton";
-import InputField from "../../components/common/InputField";
+import InputField from "../../components/more/auth/InputField";
 
 const Profile = () => {
   // navigate('/경로') 처럼 사용하여 원하는 주소로 화면을 전환
