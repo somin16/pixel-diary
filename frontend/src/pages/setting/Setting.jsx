@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { useNavigate } from 'react-router-dom';
 import { useTheme } from '../../hooks/useTheme'; // useTheme 불러오기
 import { getAssetUrl } from "../../utils/AssetHelper"; // 헬퍼 불러오기
+import { supabase } from "../../utils/SupabaseClient"; // supabase 불러오기
 
 // 컴포넌트 불러오기
 import LogoutDialog from '../../components/common/dialog/LogoutDialog';
@@ -35,10 +36,31 @@ const Setting = () => {
   };
 
   // 로그아웃 확인
-  const handleLogout = () => {
-    setDialog(null);
-    setResultDialog('logout');
-    // TODO: API 연동 시 코드 추가
+  const handleLogout = async () => {
+    try {
+        // 현재 세션에서 토큰들 가져오기
+        const { data: { session } } = await supabase.auth.getSession();
+        
+        if (session) {
+            // 백엔드 로그아웃 API 호출해서 백엔드 세션만 먼저 만료시킴
+            await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/v1/auth/logout/`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${session.access_token}` // 헤더에 억세스 토큰
+                },
+                body: JSON.stringify({
+                    refresh_token: session.refresh_token // 바디에 리프레시 토큰
+                })
+            });
+        }
+        setDialog(null);
+        setResultDialog('logout'); // "로그아웃 되었습니다" 팝업 노출
+
+    } catch (error) {
+        console.error("로그아웃 중 에러 발생:", error);
+        alert("로그아웃에 실패했습니다. 다시 시도해 주세요.");
+    }
   };
 
   // 회원탈퇴 확인
@@ -49,9 +71,15 @@ const Setting = () => {
   };
 
   // 결과 확인 버튼 - 결과 확인 버튼 클릭 시 로그인 화면으로 이동
-  const handleResultConfirm = () => {
+  const handleResultConfirm = async () => {
+    if (resultDialog === 'logout') {
+        // 실제 세션 파괴
+        // Supabase 세션 삭제 (이걸 해야 App.jsx가 반응해서 로그인창으로 보냄)
+        await supabase.auth.signOut();
+    }
     setResultDialog(null);
-    navigate('/login');
+    // Navigate는 App.jsx가 알아서 해주겠지만, 확실히 하기 위해 유지
+    navigate('/auth/login', { replace: true });
   };
 
 return (
