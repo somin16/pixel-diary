@@ -11,7 +11,7 @@ import AuthRedirect from "./pages/auth/AuthRedirect"; // 로그인, 회원가입
 import Signup from "./pages/auth/SignUp"; // 회원가입 화면
 import Setting from "./pages/setting/Setting"; // 더보기 - 설정 메인화면
 import Shop from "./pages/shop/Shop"; // 더보기 - 상점 화면
-// import SendResetPasswordLink from "./pages/auth/SendResetPasswordLink"; // 비밀번호 재설정 링크 이메일 발송 화면
+import SendResetPasswordLink from "./pages/auth/SendResetPasswordLink"; // 비밀번호 재설정 링크 이메일 발송 화면
 
 function App() {
   return (
@@ -38,8 +38,8 @@ function App() {
             {/* 주소가 /signup 이면 회원가입 화면을 보여줘 */}
             <Route path="/auth/signup" element={<Signup />} />
 
-            {/* 주소가 /password/send-reset-link 이면 비밀번호 재설정 이메일 발송 화면을 보여줘
-            <Route path="/auth/password/send-reset-link" element={<SendResetPasswordLink />} /> */}
+            {/* 주소가 /password/send-reset-link 이면 비밀번호 재설정 이메일 발송 화면을 보여줘 */}
+            <Route path="/auth/password/send-reset-link" element={<SendResetPasswordLink />} />
             
             {/* 주소가 /more 이면 더보기 화면을 보여줘 */}
             <Route path="/more" element={<MorePage />} />
