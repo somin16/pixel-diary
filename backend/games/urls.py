@@ -11,5 +11,5 @@ urlpatterns = [
     # /api/v1/games/1/scores/ 처럼 숫자(id)를 받아서 GameScoreView로 연결
     path("<int:id>/scores/", GameScoreView.as_view(), name="game-score"),
     # 코인 추가
-    path("users/coins/add/", AddUserCoinView.as_view(), name="add-user-coin"),
+    path("users/coins/", AddUserCoinView.as_view(), name="add-user-coin"),
 ]
