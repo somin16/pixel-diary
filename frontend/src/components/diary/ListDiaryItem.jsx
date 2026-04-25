@@ -18,8 +18,8 @@ import { getAssetUrl } from "../../utils/AssetHelper";
  * - **방식**: 투명 프레임을 그림 위에 덮어씌우는 크로마키 합성 방식
  */
 
-// diary/ListItem 컴포넌트 선언
-const ListItem = ({ currentTheme, imageUrl, date, onClick }) => {
+// diary/ListDiaryItem 컴포넌트 선언
+const ListDiaryItem = ({ currentTheme, imageUrl, date, onClick }) => {
 
     // 전체 아이템의 비율을 정의하는 스타일 (픽셀 왜곡 방지)
     const itemContainerStyle = {
@@ -67,4 +67,4 @@ const ListItem = ({ currentTheme, imageUrl, date, onClick }) => {
     )
 }
 
-export default ListItem;
+export default ListDiaryItem;
