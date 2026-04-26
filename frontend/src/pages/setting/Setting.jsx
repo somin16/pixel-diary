@@ -5,8 +5,8 @@ import { getAssetUrl } from "../../utils/AssetHelper"; // 헬퍼 불러오기
 import { supabase } from "../../utils/SupabaseClient"; // supabase 불러오기
 
 // 컴포넌트 불러오기
-import LogoutDialog from '../../components/common/dialog/LogoutDialog';
-import WithdrawalDialog from '../../components/common/dialog/WithdrawalDialog';
+import LogoutDialog from '../../components/more/auth/LogoutDialog';
+import WithdrawalDialog from '../../components/more/auth/WithdrawalDialog';
 import ResultDialog from '../../components/common/dialog/ResultDialog';
 import Header from "../../components/common/Header";
 

@@ -1,6 +1,6 @@
 import React from "react";
-import { useTheme } from "../../hooks/useTheme"; // useTheme 불러오기
-import { getAssetUrl } from "../../utils/AssetHelper"; // 헬퍼 불러오기
+import { useTheme } from "../../../hooks/useTheme"; // useTheme 불러오기
+import { getAssetUrl } from "../../../utils/AssetHelper"; // 헬퍼 불러오기
 
 /**
  * InputField (공통 입력창 컴포넌트)
@@ -21,7 +21,7 @@ const InputField = ({
   value, 
   onChange, 
   placeholder, 
-  boxImageName = "profile_info_box_x3", // 배경 이미지 기본값
+  boxImageName = "info_box_x3", // 배경 이미지 기본값
   readOnly = false,
   textAlign = "left" // 정렬 옵션(left 또는 center)
 }) => {

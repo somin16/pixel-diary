@@ -3,8 +3,8 @@ import { useTheme } from '../../../hooks/useTheme'; // useTheme 불러오기
 import { getAssetUrl } from "../../../utils/AssetHelper"; // 헬퍼 불러오기
 
 // 컴포넌트 불러오기
-import DialogBox from './DialogBox';
-import ImageButton from '../ImageButton';
+import DialogBox from '../../common/dialog/DialogBox';
+import ImageButton from '../../common/ImageButton';
 
 /**
  * LogoutDialog (로그아웃 확인 창)
