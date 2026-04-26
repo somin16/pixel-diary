@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { supabase } from '../../utils/SupabaseClient';
 
 export default function AuthRedirect() {
   const navigate = useNavigate();
@@ -54,11 +55,21 @@ export default function AuthRedirect() {
 
           if (response.ok) {
             const data = await response.json();
-            localStorage.setItem('access_token', data.access_token);   // 토큰 저장
-            localStorage.setItem('refresh_token', data.refresh_token); // 토큰 저장
+            // Supabase 엔진에 세션을 직접 주입
+            const { error } = await supabase.auth.setSession({
+                access_token: data.access_token,
+                refresh_token: data.refresh_token,
+            });
+
+            if (error) {
+                console.error("세션 주입 실패:", error.message);
+                setStatus('error');
+                setTimeout(() => navigate('/auth/login'), 2000);
+                return;
+            }
             localStorage.removeItem('naver_state'); // 사용한 state 삭제
             setStatus('success');
-            setTimeout(() => navigate('/'), 1500);
+            setTimeout(() => navigate('/', { replace: true }), 1500);
           } else {
             setStatus('error');
             setTimeout(() => navigate('/auth/login'), 2000);
@@ -79,12 +90,22 @@ export default function AuthRedirect() {
 
       if (finalAccess && isMounted) {
         try {
-          localStorage.setItem('access_token', finalAccess);
-          localStorage.setItem('refresh_token', finalRefresh);
-          setStatus('success');
-          setTimeout(() => navigate('/'), 1500);
+            // Supabase 라이브러리에게 토큰을 넘겨서 세션을 강제로 설정
+            const { data, error } = await supabase.auth.setSession({
+            access_token: finalAccess,
+            refresh_token: finalRefresh,
+            });
+
+            if (error) throw error;
+
+            // 세션 설정이 성공하면 Supabase 내부 상태가 변하면서 
+            // App.jsx의 onAuthStateChange가 자동으로 실행
+            setStatus('success');
+            
+            // 페이지 이동 (App.jsx의 Navigate와 충돌나지 않게 replace 사용)
+            setTimeout(() => navigate('/', { replace: true }), 1500);
         } catch (err) {
-          console.error("토큰 저장 에러:", err);
+          console.error("인증 처리 에러", err);
           setStatus('error');
           setTimeout(() => navigate('/auth/login'), 2000);
         }
