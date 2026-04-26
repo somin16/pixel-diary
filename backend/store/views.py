@@ -251,3 +251,91 @@ class InventoryView(APIView):
                 {"message": "인벤토리 조회 중 오류가 발생했습니다."},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
+
+
+class DecorationItemView(APIView):
+    """꾸미기 아이템 목록 조회 API"""
+
+    def get(self, request):
+        """
+        GET /api/v1/users/deco-item/
+        - Authorization 헤더의 access_token으로 현재 유저 확인
+        - 해당 유저가 보유한 꾸미기 아이템(emoji, diary_theme, sticker) 목록 반환
+        - item_type별로 분류하여 반환
+        """
+        # Authorization 헤더에서 access_token 추출
+        access_token = extract_access_token(request)
+        if not access_token:
+            return Response(
+                {"message": "Authorization 헤더에 유효한 Bearer 토큰이 필요합니다."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        try:
+            # access_token으로 유저 정보 조회
+            user = get_user_from_token(access_token)
+
+            # 유효하지 않은 토큰인 경우 401 반환
+            if not user:
+                return Response(
+                    {"message": "유효하지 않은 토큰입니다."},
+                    status=status.HTTP_401_UNAUTHORIZED,
+                )
+
+            user_id = user.get("id")
+            supabase_url = os.getenv("SUPABASE_URL")
+            headers = get_supabase_headers()
+
+            # 인벤토리에서 해당 유저의 아이템 목록 조회 후 items 테이블과 조인
+            response = requests.get(
+                f"{supabase_url}/rest/v1/inventory",
+                headers=headers,
+                params={
+                    "user_id": f"eq.{user_id}",
+                    "select": "item_id,item_count,items(item_id,item_name,item_type,item_image_url)",
+                },
+            )
+
+            if response.status_code != 200:
+                raise Exception(f"Supabase API 오류: {response.text}")
+
+            # 꾸미기 아이템 타입 필터링 및 분류
+            decoration_types = ["emoji", "diary_theme", "sticker"]
+            emojis = []
+            diary_themes = []
+            stickers = []
+
+            for inventory_item in response.json():
+                item = inventory_item.get("items")
+                if not item or item.get("item_type") not in decoration_types:
+                    continue
+
+                item_data = {
+                    "item_id": item.get("item_id"),
+                    "name": item.get("item_name"),
+                    "image_url": item.get("item_image_url"),
+                    "item_count": inventory_item.get("item_count"),
+                }
+
+                if item.get("item_type") == "emoji":
+                    emojis.append(item_data)
+                elif item.get("item_type") == "diary_theme":
+                    diary_themes.append(item_data)
+                elif item.get("item_type") == "sticker":
+                    stickers.append(item_data)
+
+            return Response(
+                {
+                    "emojis": emojis,
+                    "diary_themes": diary_themes,
+                    "stickers": stickers,
+                },
+                status=status.HTTP_200_OK,
+            )
+
+        except Exception as error:
+            print(f"=== DECORATION ITEM LIST ERROR ===\n{error}\n==================================")
+            return Response(
+                {"message": "꾸미기 아이템 목록 조회 중 오류가 발생했습니다."},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
