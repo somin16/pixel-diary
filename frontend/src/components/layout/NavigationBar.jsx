@@ -18,7 +18,7 @@ const NAVIGATION_ITEMS = [
   {
     id: 'diary',
     label: '일기',
-    path: '/diarylist',
+    path: '/diary/list',
     iconActive: getAssetUrl('winter_light', 'icons', 'gallery_icon_x3'),
     iconInactive: getAssetUrl('winter_light', 'icons', 'gallery_icon_x3'),
   },
