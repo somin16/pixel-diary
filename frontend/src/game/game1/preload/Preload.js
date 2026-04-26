@@ -51,6 +51,14 @@ export function loadAllSprite(scene) {
     // 슬라임 소대(몬스터11)
     scene.load.image("phalanx_move1", "/assets/game1/monster/elite/phalanx_move1.png")
     scene.load.image("phalanx_move2", "/assets/game1/monster/elite/phalanx_move2.png")
+
+    // 킹슬라임?(몬스터101)
+    // 스프라이트 시트로 만들어졌으니 .image가 아닌 .spritesheet로 생성
+    scene.load.spritesheet("king_slime_move", "/assets/game1/monster/boss/king_slime_move.png", {
+        frameWidth: 64,
+        frameHeight: 48
+    });
+
     // =======================타일======================================
 
     // 타일

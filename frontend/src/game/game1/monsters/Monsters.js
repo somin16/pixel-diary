@@ -7,6 +7,7 @@ import RedSlime from "./RedSlime.js";
 import Phalanx from "./Phalanx.js";
 import { addDropItemMagnet } from "../object/Magnet.js";
 import { addDropItemMeat } from "../object/Meat.js";
+import KingSlime from "./KingSlime.js";
 
 // 몬스터 이동 로직
 export function monsterMove(scene) {
@@ -81,6 +82,21 @@ export function monstersHitDamageBase(monster, knockback, scene) {
     monsterDead(monster, scene);
   }
 
+// 보스 몬스터 스폰
+export function spawnBossMonster(scene) {
+
+    // 생성범위
+    const SPAWN_RADIUS = 400;
+    // Between을 통해 랜덤한 각도를 뽑아낸다
+    const randomAngle = Phaser.Math.FloatBetween(0, Math.PI * 2);
+
+    // 플레이어의 현재 위치와 비교하여 원의 테두리 좌표에 몬스터가 스폰될 위치를 정합니다
+    const SPAWN_X = scene.player.x + Math.cos(randomAngle) * SPAWN_RADIUS;
+    const SPAWN_Y = scene.player.y + Math.sin(randomAngle) * SPAWN_RADIUS;
+
+    spawnKingSlime(SPAWN_X,SPAWN_Y,scene);
+}
+
 // 엘리트 몬스터 스폰
 function spawnEliteMonster(scene) {
 
@@ -146,7 +162,7 @@ function spawnSlime(PosX, PosY, scene) { // 함수를 따로 할당했기에 어
     // 현재 클래스(씬)의 X좌표, Y좌표값에 현재 난이도증가정도(mosnterStatus)를 적용해서 슬라임을 소환한다
     let slime = new Slime(scene, PosX, PosY, scene.monsterStatus);
     scene.monsters.add(slime); // monsters 배열에 넣는다
-    }
+}
 
 // 큐브골렘 생성
 function spawnCubegolem(PosX, PosY, scene) {
@@ -179,6 +195,13 @@ function spawnRedSlime(scene) {
     let redSlime = new RedSlime(scene, SPAWN_X + offsetX, SPAWN_Y + offsetY, scene.monsterStatus);
     scene.monsters.add(redSlime); // monsters 배열에 넣는다
   }
+}
+
+// 킹슬라임? 생성
+function spawnKingSlime(PosX, PosY, scene) {
+
+  let kingSlime = new KingSlime(scene, PosX, PosY, scene.monsterStatus);
+  scene.monsters.add(kingSlime);
 }
 
 // 레드 슬라임 생성(전용)

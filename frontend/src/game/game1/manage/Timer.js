@@ -1,8 +1,10 @@
+import { spawnBossMonster } from "../monsters/Monsters";
+
 export function TimerSetting(scene) {
 
     // ====================타이머===================
 
-    scene.gamePlayTime = 300; // 기본모드는 5분에서 시작
+    scene.gamePlayTime = 5; // 기본모드는 5분에서 시작
     scene.timeOver = false;
 
     // 타이머 텍스트 구성
@@ -54,5 +56,7 @@ export function TimerEnd(scene) {
       // 원래는 보스가 나와야하지만 아직 구현이 안되어있음으로 타이머 파괴로 대체
       scene.timerText.destroy();
       scene.timeOver = true; // 시간이 끝났으니 시간 계산을 더 하지 않도록 timeOver를 true로 변경
+
+      spawnBossMonster(scene);
     }
 }
