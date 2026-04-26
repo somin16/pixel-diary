@@ -61,6 +61,20 @@ export function createAllAnimations(scene) {
       repeat: -1,
     });
 
+    // 몬스터101
+    // 킹슬라임? 애니메이션
+    scene.anims.create({
+      key: "king_slime_animation",
+      
+      // 10프레임을 받는다
+      frames: scene.anims.generateFrameNumbers("king_slime_move", {
+        start: 0,
+        end: 9
+      }),
+      duration: 1500,
+      repeat: -1
+    });
+
     // 기본 공격(블레이드) 애니메이션
     scene.anims.create({
       key: "blade_animation",
