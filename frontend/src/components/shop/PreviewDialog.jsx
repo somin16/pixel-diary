@@ -30,7 +30,7 @@ const PreviewDialog = ({ previews, onClose }) => {
           onClick={onClose}
         >
           <img
-            src={getAssetUrl(currentTheme, 'icons', 'cancle_icon_x3')}
+            src={getAssetUrl(currentTheme, 'icons', 'close_icon_x3')}
             className="w-[35px] h-auto"
             alt="닫기"
           />

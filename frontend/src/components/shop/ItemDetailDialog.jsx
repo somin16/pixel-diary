@@ -33,7 +33,7 @@ const ItemDetailDialog = ({ selectedItem, setDialogStep, closeDialog, width = "1
           className="absolute -top-[45px] -right-[15px] p-2 z-50 cursor-pointer outline-none transition-transform" 
           onClick={closeDialog}
         >
-          <img src={getAssetUrl(currentTheme, 'icons', 'cancle_icon_x3')} className="w-[35px] h-auto" alt="닫기" />
+          <img src={getAssetUrl(currentTheme, 'icons', 'close_icon_x3')} className="w-[35px] h-auto" alt="닫기" />
         </button>
 
         {/* 아이템 가격 */}
