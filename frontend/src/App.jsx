@@ -80,7 +80,7 @@ function App() {
                             {/* 주소가 /diary/:date 이면 일기 상세 보기 화면을 보여줘 */}
                             <Route path="/diary/:date" element={<DiaryDetail />} />
 
-                            {/* 주소가 /diary/wirte/:date 이면 일기 작성 화면을 보여줘 */}
+                            {/* 주소가 /diary/write/:date 이면 일기 작성 화면을 보여줘 */}
                             {/* <Route path="/diary/write/:date" element={<DiaryForm />} /> */}
                             {/* 주소가 /diary/edit/:date 이면 일기 수정 화면을 보여줘 */}
                             {/* <Route path="/diary/edit/:date" element={<DiaryForm />} /> */}
