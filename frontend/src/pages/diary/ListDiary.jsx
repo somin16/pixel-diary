@@ -37,8 +37,8 @@ export default function ListDiary() {
                         'Authorization': `Bearer ${access_token}`
                     }
                 }),
-                // 무조건 1.2초(1200ms)는 기다림
-                new Promise(resolve => setTimeout(resolve, 1200))
+                // 무조건 1초(1000ms)는 기다림
+                new Promise(resolve => setTimeout(resolve, 1000))
             ]);
 
             if (!response.ok) {
@@ -59,7 +59,6 @@ export default function ListDiary() {
 
     // 컴포넌트 마운트 시 실행
     useEffect(() => {
-        console.log("요청이 2번 갈 경우 개발 모드라서 그런겁니다")
         fetchDiaries();
     }, []);
 
@@ -73,7 +72,7 @@ export default function ListDiary() {
         >
             <div className='flex-1 overflow-y-auto no-scrollbar pb-[120%]'>
                 {loading ? (
-                    <div className="flex justify-center mt-20 text-[#4A4A4A] font-bold">일기를 불러오는 중...</div>
+                    <div className="flex justify-center mt-[50%] text-3xl text-[#4A4A4A] font-bold animate-bounce">일기를 불러오는 중...</div>
                 ) : (
                     /* 3열 그리드 설정 */
                     < div 
