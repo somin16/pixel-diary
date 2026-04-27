@@ -1,4 +1,3 @@
-import DetailDiaryDialog from "../../components/diary/DetailDiaryDialog";
 import { useTheme } from "../../hooks/useTheme";
 import { getAssetUrl } from "../../utils/AssetHelper";
 
