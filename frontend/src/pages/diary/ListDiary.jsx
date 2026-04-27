@@ -37,7 +37,7 @@ export default function ListDiary() {
                         'Authorization': `Bearer ${access_token}`
                     }
                 }),
-                // 무조건 1.5초(1500ms)는 기다림
+                // 무조건 1.2초(1200ms)는 기다림
                 new Promise(resolve => setTimeout(resolve, 1200))
             ]);
 
