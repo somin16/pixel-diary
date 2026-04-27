@@ -19,7 +19,7 @@ const Header = ({ title }) => {
     <header className="flex items-center justify-center relative mb-[50px] px-[20px] w-full h-[60px] shrink-0">
       {/* 뒤로 가기 버튼 */}
       <button 
-        className="bg-transparent border-none cursor-pointer p-0 absolute left-[20px] top-1/2 -translate-y-1/2 outline-none active:scale-95 transition-transform" 
+        className="bg-transparent border-none cursor-pointer p-0 absolute left-[20px] top-1/2 -translate-y-1/2 outline-none transition-transform" 
         onClick={() => navigate(-1)}
       >
         <img 
