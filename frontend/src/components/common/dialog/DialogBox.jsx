@@ -6,9 +6,11 @@ import { getAssetUrl } from "../../../utils/AssetHelper"; // 헬퍼 불러오기
  * DialogBox (어두운 배경이 오버레이로 들어가는 다이얼로그 컴포넌트)
  * @param {string} boxImageName - 'boxes' 카테고리의 배경 이미지 파일명 (기본값: popup_message_box_x3)
  * @param {React.ReactNode} children - 팝업 내부에 들어갈 본문 요소 (텍스트, 입력창 등)
+ * @param {string} width - 가로 너비 (기본값: "auto")
+ * @param {string} maxWidth - 최대 가로 너비 (기본값: "360px")
  */
 
-const DialogBox = ({ boxImageName = 'popup_message_box_x3', children }) => {
+const DialogBox = ({ boxImageName = 'popup_message_box_x3', children, width = "auto", maxWidth = "360px" }) => {
   const currentTheme = useTheme((state) => state.currentTheme);
 
   return (
@@ -17,7 +19,10 @@ const DialogBox = ({ boxImageName = 'popup_message_box_x3', children }) => {
       <div className="fixed top-0 left-0 w-full h-full bg-black/60 z-40" />
 
       {/* 다이얼로그 본체 컨테이너 (화면 중앙 정렬) */}
-      <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-50 w-[80%] max-w-[300px]">
+      <div 
+        className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-50"
+        style={{ width: width, maxWidth: maxWidth }}
+      >
         
         {/* 배경 이미지 (넘겨받은 boxImageName에 따라 동적으로 변경됨) */}
         <img

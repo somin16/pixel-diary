@@ -1,25 +1,28 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from 'react-router-dom';
 import { useTheme } from '../../hooks/useTheme'; // useTheme 불러오기
-import { getAssetUrl } from "../../utils/AssetHelper"; // 헬퍼 불러오기
+import { getAssetUrl } from "../../utils/AssetHelper"; // 헬퍼 불러오기 
 
 // 컴포넌트 불러오기
 import Header from "../../components/common/Header";
-import ImageButton from "../../components/common/ImageButton";
-import DialogBox from "../../components/common/dialog/DialogBox";
 import ResultDialog from "../../components/common/dialog/ResultDialog";
+import PreviewDialog from "../../components/shop/PreviewDialog";
+import ShopItem from "../../components/shop/ShopItemGrid";
+import ItemDetailDialog from "../../components/shop/ItemDetailDialog";
+import PurchaseDialog from "../../components/shop/PurchaseDialog"; 
 
+// 아이템 카테고리 목록
 const TABS = ["모두", "스티커", "이모티콘", "테마"];
 
+// 아이템 더미 데이터
 const MOCK_ITEMS = [
-    {
+  {
     id: 1,
     name: "겨울 테마",
     price: 30,
     icon: "home_icon_x3",
     type: "테마",
     isSoldOut: false,
-    // 미리보기 이미지가 들어가는 위치
     previews: [
       "winter_light_preview_1",
       "winter_light_preview_2",
@@ -28,40 +31,49 @@ const MOCK_ITEMS = [
       "winter_light_preview_5"
     ]
   },
-  { id: 2, type: "티켓", name: "티켓", price: 10000, icon: "ticket_icon", previews: [], isSoldOut: false, owned: 0 },
-  { id: 3, type: "티켓", name: "저렴한 티켓", price: 3, icon: "ticket_icon", previews: [], isSoldOut: false },
-  { id: 4, type: "티켓", name: "품절 티켓", price: 0, icon: "ticket_icon", previews: [], isSoldOut: true },
+  { id: 2, type: "티켓", name: "티켓", price: 10000, icon: "ticket_icon", isSoldOut: false, owned: 0 },
+  { id: 3, type: "티켓", name: "저렴한 티켓", price: 3, icon: "ticket_icon", isSoldOut: false },
+  { id: 4, type: "티켓", name: "품절 티켓", price: 0, icon: "ticket_icon", isSoldOut: true },
 ];
 
 const Shop = () => {
   // navigate('/경로') 처럼 사용하여 원하는 주소로 화면을 전환
   const navigate = useNavigate();
 
-  // 테마 전역 관리
+  //  테마 전역 관리
   const currentTheme = useTheme((state) => state.currentTheme);
 
+  // 컴포넌트 상태 관리 (State)
   const [activeTab, setActiveTab] = useState("모두");
   const [myCoins, setMyCoins] = useState(100);
-  
   const [selectedItem, setSelectedItem] = useState(null);
-  const [dialogStep, setDialogStep] = useState(null); // 'detail' | 'confirm' | 'success' | 'fail' | 'preview'
+  const [dialogStep, setDialogStep] = useState(null); 
 
-  // 구매 처리 함수
+  // 아이템 구매 처리 로직
   const handlePurchase = () => {
+    // 보유 코인이 아이템 가격보다 크거나 같은지 검사
     if (myCoins >= selectedItem.price) {
-      setMyCoins(prev => prev - selectedItem.price);
-      setDialogStep("success");
+      setMyCoins(prev => prev - selectedItem.price); // 코인 차감
+      setDialogStep("success"); // 성공 팝업으로 이동
     } else {
-      setDialogStep("fail");
+      setDialogStep("fail"); // 코인 부족 시 실패 팝업으로 이동
     }
   };
 
+  // 모든 다이얼로그 창을 닫고 선택된 아이템 상태를 초기화하는 함수
   const closeDialog = () => {
     setSelectedItem(null);
     setDialogStep(null);
   };
 
+  // 아이템 카테고리 필터링 
+  // activeTab이 "모두"일 때는 전체 리스트를, 아니면 타입이 일치하는 것만 걸러내서 나타냄
+  const filteredItems = activeTab === "모두" 
+    ? MOCK_ITEMS 
+    : MOCK_ITEMS.filter(item => item.type === activeTab);
+
   return (
+    // 상점 전체 화면 컨테이너 (배경 이미지 적용)
     <div 
       className="relative w-full h-full pt-[60px] pb-0 flex flex-col items-center bg-[length:100%_100%]"
       style={{ backgroundImage: `url(${getAssetUrl(currentTheme, 'backgrounds', 'store_background_x3')})` }}
@@ -70,60 +82,56 @@ const Shop = () => {
       <Header isBackButton={true} />
 
       {/* 상점 타이틀 영역 */}
-   <div className="absolute top-[155px] left-[55px] z-20 pointer-events-none">
-    <h1 
-    className="text-[54px] font-extrabold m-0 text-left"
-    style={{ 
-      color: '#926653', // 💡 안쪽 갈색
-      WebkitTextStroke: '10px white', // 💡 테두리 흰색 (Chrome, Safari용)
-      textShadow: '0 0 1px white', // 💡 테두리를 보강하기 위한 그림자 효과
-      paintOrder: 'stroke fill', // 💡 테두리가 글자를 갉아먹지 않게 설정
-      letterSpacing: '-4px'
-    }}
-    >
-    상점
-    </h1>
-   </div>
+      <div className="absolute top-[155px] left-[55px] z-20 pointer-events-none">
+        <h1 
+          className="text-[54px] font-extrabold m-0 text-left"
+          style={{ 
+            color: '#926653', 
+            WebkitTextStroke: '10px white', // 글자 외곽선
+            textShadow: '0 0 1px white', 
+            paintOrder: 'stroke fill', 
+            letterSpacing: '-4px' // 자간 조정
+          }}
+        >
+          상점
+        </h1>
+      </div>
 
-    {/* 인벤토리 & 재화 영역 */}
-    <div className="absolute top-[130px] right-[10px] flex flex-col items-end z-10 gap-3">
+      {/* 인벤토리 & 재화 영역 */}
+      <div className="absolute top-[130px] right-[10px] flex flex-col items-end z-10 gap-3">
+        {/* 보관함 아이콘 */}
+        <button 
+          onClick={() => navigate('/more/inventory')} 
+          className="bg-transparent border-none p-0 cursor-pointer outline-none"
+        >
+          <img src={getAssetUrl(currentTheme, 'icons', 'inventory_icon_x3')} className="w-[80px] h-auto block" alt="보관함" />
+        </button>
   
-    {/* 보관함 아이콘 */}
-    <button 
-      onClick={() => navigate('/more/inventory')} 
-      className="bg-transparent border-none p-0 cursor-pointer outline-none"
-    >
-      <img src={getAssetUrl(currentTheme, 'icons', 'inventory_icon_x3')} className="w-[80px] h-auto block" alt="보관함" />
-     </button>
-  
-    {/* 코인 박스 + 안쪽 플러스 버튼 */}
-    <div className="relative flex items-center justify-center h-[44px]"> 
-  
-    <img 
-      src={getAssetUrl(currentTheme, 'boxes', 'have_money_box_x2')} 
-      className="h-full w-auto block pointer-events-none" 
-      alt="코인 배경" 
-    />
-    
-    {/* 코인 개수 텍스트 */}
-    <span className="absolute right-[30px] top-1/2 -translate-y-1/2 text-[15px] font-bold text-black tracking-wider pointer-events-none">
-      {myCoins}
-    </span>
-
-    <div className="absolute right-[2px] inset-y-0 flex items-center justify-center">
-    <button 
-      className="bg-transparent border-none p-0 cursor-pointer outline-none"
-    >
-      <img 
-        src={getAssetUrl(currentTheme, 'buttons', 'add_money_button_x2')} 
-        className="h-[26px] w-auto block" 
-        alt="충전하기" 
-      />
-     </button>
-     </div>
-     </div>
-
-     </div>
+        {/* 코인 박스 + 안쪽 플러스 버튼 */}
+        <div className="relative flex items-center justify-center h-[44px]"> 
+          {/* 코인 배경 이미지 */}
+          <img 
+            src={getAssetUrl(currentTheme, 'boxes', 'have_money_box_x2')} 
+            className="h-full w-auto block pointer-events-none" 
+            alt="코인 배경" 
+          />
+          {/* 현재 보유 코인 텍스트 */}
+          <span className="absolute right-[30px] top-1/2 -translate-y-1/2 text-[15px] font-bold text-black tracking-wider pointer-events-none">
+            {myCoins}
+          </span>
+          
+          {/* 재화 충전 버튼 */}
+          <div className="absolute right-[2px] inset-y-0 flex items-center justify-center mt-[-1.5px]">
+            <button className="bg-transparent border-none p-0 cursor-pointer outline-none">
+              <img 
+                src={getAssetUrl(currentTheme, 'buttons', 'add_money_button_x2')} 
+                className="h-[26px] w-auto block" 
+                alt="충전하기" 
+              />
+            </button>
+          </div>
+        </div>
+      </div>
 
       {/* 카테고리 탭 */}
       <div className="w-full flex px-[10px] mt-[100px] gap-2 z-10">
@@ -133,11 +141,13 @@ const Shop = () => {
             onClick={() => setActiveTab(tab)}
             className="relative flex-1 h-[38px] bg-transparent border-none flex items-center justify-center cursor-pointer"
           >
+            {/* 선택 여부에 따라 배경 이미지 변경 (on/off) */}
             <img 
               src={getAssetUrl(currentTheme, 'boxes', activeTab === tab ? 'store_filter_box_on_x2' : 'store_filter_box_off_x2')} 
               className="absolute inset-0 w-full h-full object-fill" 
               alt="" 
             />
+            {/* 선택 여부에 따라 텍스트 색상 변경 */}
             <span className={`relative z-10 text-[13px] font-bold ${activeTab === tab ? 'text-black' : 'text-[#666666]'}`}>
               {tab}
             </span>
@@ -145,66 +155,84 @@ const Shop = () => {
         ))}
       </div>
 
-    {/* 아이템 그리드 영역 */}
-    <div 
-      className="w-full flex-1 p-[15px] pb-0 overflow-y-auto bg-[length:100%_100%]"
-      style={{ backgroundImage: `url(${getAssetUrl(currentTheme, 'boxes', 'store_box_x3')})` }}
-    > 
-      <div className="grid grid-cols-4 gap-3 pb-[20px]"> {/* 스크롤 시 맨 아래가 안 잘리게 그리드 자체에 pb 추가 */}
-    {MOCK_ITEMS.map((item, idx) => (
-      <div 
-        key={idx}
-        onClick={() => {
-        if (!item.isSoldOut) {
-          setSelectedItem(item);
-          setDialogStep("detail");
-      }
-    }}
-    className="relative w-full cursor-pointer"
-  >
-    <img 
-      src={getAssetUrl(currentTheme, 'boxes', 'store_item_box_x2')} 
-      className="w-full h-auto block pointer-events-none" 
-      alt="아이템 배경" 
-    />
-
-    {/* 아이템 */}
-    <img 
-      src={getAssetUrl(currentTheme, 'icons', item.icon)} 
-      className="absolute top-[15%] left-1/2 -translate-x-1/2 w-[55%] h-auto z-10 pointer-events-none" 
-      alt={item.name} 
-    />
-    
-    {/* 코인 + 가격 */}
-    <div className="absolute bottom-[8%] w-full flex justify-center items-center gap-[3px] z-10 pointer-events-none">
-      <img src={getAssetUrl(currentTheme, 'icons', 'coin_icon_x3')} className="w-[14px] h-auto" alt="코인" />
-      <span className="text-[14px] text-black leading-none">{item.price}</span>
-    </div>
-
-    {/* 품절 오버레이 */}
-    {item.isSoldOut && (
-      <img 
-        src={getAssetUrl(currentTheme, 'boxes', 'store_item_box_select_x2')} 
-        className="absolute inset-0 w-full h-full z-20 pointer-events-none" 
-        alt="품절" 
+      {/* 아이템 그리드 분리 - ShopItem에 filteredItems를 전달*/}
+      {/* 탭 조건에 맞게 필터링된 아이템 목록을 화면에 렌더링 */}
+      <ShopItem 
+        items={filteredItems} 
+        onItemClick={(item) => {
+          setSelectedItem(item); // 클릭한 아이템 정보 저장
+          setDialogStep("detail"); // 상세 정보 팝업 띄우기
+        }} 
       />
-    )}
-    </div>
-    ))}
+    
+      {/* 다이얼로그 영역(dialogStep 상태에 따라 다른 팝업을 렌더링) */}
 
-    {/* 아이템이 추가되거나 줄어들어도 아이템 목록이 항상 16개로 뜨도록 설정 */}
-        {Array.from({ length: Math.max(0, 16 - MOCK_ITEMS.length) }).map((_, idx) => (
-          <div key={`empty-${idx}`} className="relative w-full">
-            <img 
-              src={getAssetUrl(currentTheme, 'boxes', 'store_item_box_x2')} 
-              className="w-full h-auto block pointer-events-none" 
-              alt="빈 슬롯" 
-            />
-          </div>
-        ))}
+      {/* 아이템 상세 정보 팝업 */}
+      {dialogStep === 'detail' && (
+        <ItemDetailDialog 
+          selectedItem={selectedItem} 
+          setDialogStep={setDialogStep} 
+          closeDialog={closeDialog}
+          maxWidth="380px"
+        />
+      )}
 
-    </div>
-    </div>
+      {/* 구매 확인 팝업 */}
+      {dialogStep === 'confirm' && (
+        <PurchaseDialog 
+          selectedItem={selectedItem} 
+          setDialogStep={setDialogStep} 
+          handlePurchase={handlePurchase}
+          maxWidth="380px"
+        />
+      )}
+
+      {/* 결과 알림 및 미리보기 창 */}
+
+      {/* 구매 성공 알림 팝업 */}
+      {dialogStep === 'success' && (
+        <ResultDialog 
+          message="구매가 완료되었습니다" 
+          onConfirm={closeDialog} 
+          boxImageName="store_item_popup_box_x3"
+          width="100%" 
+          maxWidth="380px"
+          textMt="mt-[18%]"
+          textSize="text-[14px]"
+        />
+      )}
+
+      {/* 구매 실패 (재화 부족) 알림 팝업 */}
+      {dialogStep === 'fail' && (
+        <ResultDialog 
+          message={
+            <>
+              재화가 부족합니다<br />
+              {/* 부족한 재화 표시 */}
+              <span className="text-[14px] font-medium block mt-1">
+              부족한 재화 : {selectedItem.price - myCoins} 코인
+              </span>
+            </>
+            
+          }
+          onConfirm={closeDialog} 
+          boxImageName="store_item_popup_box_x3"
+          width="100%" 
+          maxWidth="380px"
+          textMt="mt-[15%]"
+          textSize="text-[15px]"
+        />
+      )}
+
+      {/* 테마 미리보기 팝업 */}
+      {dialogStep === "preview" && (
+        <PreviewDialog
+          previews={selectedItem?.previews}
+          onClose={() => setDialogStep("detail")}
+          width="100%" 
+          maxWidth="480px"
+        />
+      )}
 
     </div>
   );
