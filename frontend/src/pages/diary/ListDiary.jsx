@@ -30,7 +30,7 @@ export default function ListDiary() {
             //  Promise.all을 사용하여 병렬 처리
             // [API 호출, 최소 대기 시간] 두 가지를 동시에 시작
             const [response] = await Promise.all([
-                fetch(`${import.meta.env.VITE_BACKEND_URL}/api/v1/diaries/`, {
+                fetch(`${import.meta.env.VITE_BACKEND_URL}api/v1/diaries/`, {
                     method: 'GET',
                     headers: {
                         'Content-Type': 'application/json',
@@ -59,6 +59,7 @@ export default function ListDiary() {
 
     // 컴포넌트 마운트 시 실행
     useEffect(() => {
+        console.log("요청이 2번 갈 경우 개발 모드라서 그런겁니다")
         fetchDiaries();
     }, []);
 
