@@ -15,6 +15,7 @@ export default function AppShell({ children }) {
   // 네비게이션 바가 보이지 않는 페이지 경로를 여기에 작성
   const hideNavigationBarPaths = 
     path.startsWith('/auth') ||
+    (path.startsWith('/diary/') && path !== '/diary/list') // /diary/list를 제외한 /diary/.. 은 안보이도록 설정
     path.startsWith('/game1run') ||
     (path.startsWith('/more/') && path !== '/more'); // /more은 보이고, /more/..부터는 안보이도록 조건 설정
 
