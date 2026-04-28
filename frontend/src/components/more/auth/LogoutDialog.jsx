@@ -11,13 +11,15 @@ import ImageButton from '../../common/ImageButton';
  * 사용자가 로그아웃 버튼을 눌렀을 때 나타나는 확인 팝업
  * @param {function} onConfirm - '로그아웃' 버튼 클릭 시 실행할 함수
  * @param {function} onCancel - '취소하기' 버튼 클릭 시 실행할 함수
+ * @param {string} [width="100%"] - 다이얼로그의 가로 너비 (기본값: "100%")
+ * @param {string} [maxWidth="320px"] - 다이얼로그의 최대 가로 너비 (기본값: "320px")
  */
 
-const LogoutDialog = ({ onConfirm, onCancel }) => {
+const LogoutDialog = ({ onConfirm, onCancel, width = "100%", maxWidth = "320px" }) => {
   // 테마 전역 관리
   const currentTheme = useTheme((state) => state.currentTheme);
   return (
-    <DialogBox boxImageName="popup_message_box_x3">
+    <DialogBox boxImageName="popup_message_box_x3" width={width} maxWidth={maxWidth}>
       <p className="text-[13px] font-bold text-center m-0 mt-[30px]"> 
         로그아웃 하시겠습니까?
       </p>

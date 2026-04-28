@@ -128,6 +128,7 @@ return (
         <LogoutDialog
           onConfirm={handleLogout}
           onCancel={() => setDialog(null)}
+          maxWidth="320px"
         />
       )}
 
@@ -136,6 +137,7 @@ return (
         <WithdrawalDialog
           onConfirm={handleWithdrawal}
           onCancel={() => setDialog(null)}
+          maxWidth="320px"
         />
       )}
 
@@ -144,6 +146,7 @@ return (
         <ResultDialog
           message={resultDialog === 'logout' ? '로그아웃 되었습니다' : <>회원 탈퇴가<br />완료 되었습니다</>}
           onConfirm={handleResultConfirm}
+          maxWidth="320px"
         />
       )}
 

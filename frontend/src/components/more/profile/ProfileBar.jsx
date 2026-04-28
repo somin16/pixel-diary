@@ -19,7 +19,7 @@ const ProfileBar = ({ nickname, email, profileImage }) => {
 
   return (
     <section 
-      className="mb-[40px] cursor-pointer flex justify-center w-full active:scale-[0.98] transition-transform duration-100 ease-in" 
+      className="mb-[40px] cursor-pointer flex justify-center w-full transition-transform duration-100 ease-in" 
       onClick={() => navigate('/more/profile')} // section 전체에 onClick을 걸어서, 이미지 어디를 누르든 이동하게 만듦
     >
       <div className="relative w-[90%] max-w-[350px] flex">
