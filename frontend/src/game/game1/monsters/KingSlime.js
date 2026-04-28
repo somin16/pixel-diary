@@ -46,7 +46,7 @@ export default class KingSlime extends Phaser.Physics.Arcade.Sprite {
     }
 
     // 킹슬라임?의 돌진패턴
-    redayAttackDash(player) {
+    readyAttackDash(player) {
 
         // 이미 돌진중이거나 몬스터가 죽었으면 취소(버그방지용)
         if (this.isDash || !this.active) return;
