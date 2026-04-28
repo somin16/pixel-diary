@@ -59,6 +59,19 @@ export function loadAllSprite(scene) {
         frameHeight: 48
     });
 
+    // 킹슬라임?의 돌진모션
+    // 프레임이 적어서 시트로 안받아도 되지만 스프라이트 시트 사용에 익숙해지기 위해 시트로 사용하겠습니다
+    scene.load.spritesheet("king_slime_dash", "/assets/game1/monster/boss/king_slime_dash.png", {
+        frameWidth: 64,
+        frameHeight: 48
+    });
+
+    // 킹슬라임?의 돌진 준비모션
+    scene.load.spritesheet("king_slime_dash_ready", "/assets/game1/monster/boss/king_slime_dash_ready.png", {
+        frameWidth: 64,
+        frameHeight: 48
+    });
+
     // =======================타일======================================
 
     // 타일
