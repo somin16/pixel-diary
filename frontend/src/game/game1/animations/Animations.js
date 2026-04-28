@@ -64,7 +64,7 @@ export function createAllAnimations(scene) {
     // 몬스터101
     // 킹슬라임? 애니메이션
     scene.anims.create({
-      key: "king_slime_animation",
+      key: "king_slime_move_animation",
       
       // 10프레임을 받는다
       frames: scene.anims.generateFrameNumbers("king_slime_move", {
@@ -72,6 +72,33 @@ export function createAllAnimations(scene) {
         end: 9
       }),
       duration: 1500,
+      repeat: -1
+    });
+
+    // 킹슬라임? 돌진 준비모션 애니메이션
+    // 프레임이 적어서 시트로 안받아도 되지만 스프라이트 시트 사용에 익숙해지기 위해 시트로 사용하겠습니다
+    scene.anims.create({
+      key: "king_slime_dash_ready_animation",
+      
+      // 3프레임을 받는다
+      frames: scene.anims.generateFrameNumbers("king_slime_dash_ready", {
+        start: 0,
+        end: 2
+      }),
+      duration: 500,
+      repeat: -1
+    });
+
+    // 킹슬라임? 돌진 모션 애니메이션
+        scene.anims.create({
+      key: "king_slime_dash_animation",
+      
+      // 2프레임을 받는다
+      frames: scene.anims.generateFrameNumbers("king_slime_dash", {
+        start: 0,
+        end: 1
+      }),
+      duration: 200,
       repeat: -1
     });
 

@@ -57,8 +57,8 @@ export function monstersHitDamageBase(monster, knockback, scene) {
 
     // 몬스터가 바라보는 방향에 따라서 넉백으로 변경
 
-    // 레드 슬라임은 해당 넉백에서 제외(velocity가 한번만 작동하는 몬스터라 멈추는 오류가 발생)
-    if (monster.monsterID != 3) {
+    // 넉백이 되지않는 몬스터들(resistance가 0으로 설정)은 해당 로직을 사용하지 않는다(버그방지용)
+    if (monster.resistance != 0) {
 
         if (monster.flipX) { 
           monster.body.setVelocityX(-knockbackValue); 
@@ -202,6 +202,14 @@ function spawnKingSlime(PosX, PosY, scene) {
 
   let kingSlime = new KingSlime(scene, PosX, PosY, scene.monsterStatus);
   scene.monsters.add(kingSlime);
+
+  // 킹슬라임? 의 공격 타이머
+  scene.kingslimeAttackEvent = scene.time.addEvent({
+    delay: 5000,
+    callback: () => kingSlime.redayAttackDash(scene.player),
+    callbackScope: scene,
+    loop: true,
+  });
 }
 
 // 레드 슬라임 생성(전용)
