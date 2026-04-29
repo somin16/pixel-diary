@@ -13,7 +13,7 @@ import InputField from '../auth/InputField';
  * @param {function} onConfirm - 최종 비밀번호 입력 후 '확인' 클릭 시 실행 (password 인자 전달)
  * @param {function} onCancel - '취소하기' 클릭 시 팝업을 닫는 함수
  * @param {string} [width="100%"] - 다이얼로그의 가로 너비 (기본값: "100%")
- * @param {string} [maxWidth="320px"] - 다이얼로그의 최대 가로 너비 (기본값: "320px")
+ * @param {string} [maxWidth="320px"] - 다이얼로그의 최대 가로 너비 (기본값: "320px") -> 상한선 값이기 때문에 px로 유지
  */
 
 const WithdrawalDialog = ({ onConfirm, onCancel, width = "100%", maxWidth = "320px" }) => {
@@ -28,13 +28,13 @@ const WithdrawalDialog = ({ onConfirm, onCancel, width = "100%", maxWidth = "320
       {/* 1단계 - 탈퇴 확인 */}
       {step === 'confirm' && (
         <DialogBox boxImageName="popup_message_box_x3" width={width} maxWidth={maxWidth}>
-          <div className="flex flex-col items-center mt-[10px] gap-3">
+          <div className="flex flex-col items-center mt-[5%] gap-[20%]">
             <p className="text-[13px] font-bold text-center m-0">정말 탈퇴 하시겠습니까?</p>
             <p className="text-[13px] font-bold text-[#ef4444] text-center m-0 leading-tight">탈퇴 버튼 선택 시, 계정은 삭제되며 <br />복구되지 않습니다.</p>
           </div>
 
           {/* 하단 버튼 영역 */}
-          <div className="flex gap-[12px] justify-center w-full">
+          <div className="flex gap-[5%] justify-center w-full">
             <ImageButton
               label="회원탈퇴"
               imageSrc={getAssetUrl(currentTheme, 'buttons', 'red_button_x3')}
@@ -55,7 +55,7 @@ const WithdrawalDialog = ({ onConfirm, onCancel, width = "100%", maxWidth = "320
           <p className="text-[13px] font-bold text-center m-0">현재 비밀번호를 입력하세요</p>
           
           {/* 입력창 배경 이미지 위에 투명하게 겹쳐서 배치 */}
-          <div className="w-[90%] mb-[4px]">
+          <div className="w-[90%] mb-[2%]">
           <InputField 
             type="password"
             value={password}
@@ -66,7 +66,7 @@ const WithdrawalDialog = ({ onConfirm, onCancel, width = "100%", maxWidth = "320
           </div>
 
           {/* 취소하기&확인 버튼 영역 */}
-          <div className="flex gap-[12px] justify-center w-full">
+          <div className="flex gap-[5%] justify-center w-full">
             <ImageButton
               label="취소하기"
               imageSrc={getAssetUrl(currentTheme, 'buttons', 'blue_button_x3')}

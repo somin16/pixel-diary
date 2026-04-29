@@ -13,7 +13,7 @@ import ImageButton from "../common/ImageButton";
  * @param {function} setDialogStep - 다이얼로그 단계를 변경하는 함수 ('취소하기' 클릭 시 상세 화면인 'detail'로 돌아가기 위해 사용)
  * @param {function} handlePurchase - '구매하기' 버튼 클릭 시 실제 재화 차감 및 구매 로직을 처리하는 함수
  * @param {string} [width="100%"] - 다이얼로그의 기본 가로 너비
- * @param {string} [maxWidth="320px"] - 다이얼로그의 최대 가로 너비 (화면이 커져도 이 이상 커지지 않음)
+ * @param {string} [maxWidth="320px"] - 다이얼로그의 최대 가로 너비 (화면이 커져도 이 이상 커지지 않음) -> 상한선 값이기 때문에 px로 유지
  */
 
 const PurchaseDialog = ({ 
@@ -35,7 +35,7 @@ const PurchaseDialog = ({
       <div className="relative flex flex-col items-center w-full px-2 py-4 top-[-17%]" >
         
         {/* 중앙 아이템 박스 */}
-        <div className="relative w-[100px] h-[100px] mt-[10px] flex items-center justify-center">
+        <div className="relative w-[31%] h-25 mt-[3%] flex items-center justify-center">
           <img src={getAssetUrl(currentTheme, 'boxes', 'store_popup_item_box_x2')} className="absolute inset-0 w-full h-full object-fill pointer-events-none" alt="아이템 배경" />
           <img src={getAssetUrl(currentTheme, 'icons', selectedItem.icon)} className="relative z-10 w-[70%] h-auto mb-[5%]" alt="" />
         </div>

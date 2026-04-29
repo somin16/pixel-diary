@@ -12,7 +12,7 @@ import ImageButton from '../../common/ImageButton';
  * @param {function} onConfirm - '로그아웃' 버튼 클릭 시 실행할 함수
  * @param {function} onCancel - '취소하기' 버튼 클릭 시 실행할 함수
  * @param {string} [width="100%"] - 다이얼로그의 가로 너비 (기본값: "100%")
- * @param {string} [maxWidth="320px"] - 다이얼로그의 최대 가로 너비 (기본값: "320px")
+ * @param {string} [maxWidth="320px"] - 다이얼로그의 최대 가로 너비 (기본값: "320px") -> 상한선 값이기 때문에 px로 유지
  */
 
 const LogoutDialog = ({ onConfirm, onCancel, width = "100%", maxWidth = "320px" }) => {
@@ -20,12 +20,12 @@ const LogoutDialog = ({ onConfirm, onCancel, width = "100%", maxWidth = "320px" 
   const currentTheme = useTheme((state) => state.currentTheme);
   return (
     <DialogBox boxImageName="popup_message_box_x3" width={width} maxWidth={maxWidth}>
-      <p className="text-[13px] font-bold text-center m-0 mt-[30px]"> 
+      <p className="text-[13px] font-bold text-center m-0 mt-[11%]"> 
         로그아웃 하시겠습니까?
       </p>
 
       {/* 하단 버튼 영역 */}
-      <div className="flex gap-[12px] justify-center w-full">
+      <div className="flex gap-[5%] justify-center w-full">
         <ImageButton
           label="로그아웃"
           imageSrc={getAssetUrl(currentTheme, 'buttons', 'red_button_x3')}

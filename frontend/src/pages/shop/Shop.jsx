@@ -75,14 +75,14 @@ const Shop = () => {
   return (
     // 상점 전체 화면 컨테이너 (배경 이미지 적용)
     <div 
-      className="relative w-full h-full pt-[60px] pb-0 flex flex-col items-center bg-[length:100%_100%]"
+      className="relative w-full h-full pt-[13%] pb-0 flex flex-col items-center bg-[length:100%_100%]"
       style={{ backgroundImage: `url(${getAssetUrl(currentTheme, 'backgrounds', 'store_background_x3')})` }}
     >
       {/* 뒤로가기 버튼만 있는 헤더 */}
       <Header isBackButton={true} />
 
       {/* 상점 타이틀 영역 */}
-      <div className="absolute top-[155px] left-[55px] z-20 pointer-events-none">
+      <div className="absolute top-[17%] left-[12%] z-20 pointer-events-none">
         <h1 
           className="text-[54px] font-extrabold m-0 text-left"
           style={{ 
@@ -98,13 +98,14 @@ const Shop = () => {
       </div>
 
       {/* 인벤토리 & 재화 영역 */}
-      <div className="absolute top-[130px] right-[10px] flex flex-col items-end z-10 gap-3">
+      <div className="absolute top-[14.5%] right-[2%] flex flex-col items-end z-10 gap-3">
         {/* 보관함 아이콘 */}
         <button 
           onClick={() => navigate('/more/inventory')} 
           className="bg-transparent border-none p-0 cursor-pointer outline-none"
         >
-          <img src={getAssetUrl(currentTheme, 'icons', 'inventory_icon_x3')} className="w-[80px] h-auto block" alt="보관함" />
+          {/* 부모 너비가 명확하지 않아서 px로 유지 */}
+          <img src={getAssetUrl(currentTheme, 'icons', 'inventory_icon_x3')} className="w-[80px] h-auto block" alt="보관함" /> 
         </button>
   
         {/* 코인 박스 + 안쪽 플러스 버튼 */}
@@ -116,16 +117,16 @@ const Shop = () => {
             alt="코인 배경" 
           />
           {/* 현재 보유 코인 텍스트 */}
-          <span className="absolute right-[30px] top-1/2 -translate-y-1/2 text-[15px] font-bold text-black tracking-wider pointer-events-none">
+          <span className="absolute right-[25%] top-1/2 -translate-y-1/2 text-[15px] font-bold text-black tracking-wider pointer-events-none">
             {myCoins}
           </span>
           
           {/* 재화 충전 버튼 */}
-          <div className="absolute right-[2px] inset-y-0 flex items-center justify-center mt-[-1.5px]">
+          <div className="absolute right-[1.6%] inset-y-0 flex items-center justify-center mt-[-1%]">
             <button className="bg-transparent border-none p-0 cursor-pointer outline-none">
               <img 
                 src={getAssetUrl(currentTheme, 'buttons', 'add_money_button_x2')} 
-                className="h-[26px] w-auto block" 
+                className="h-[59%] w-auto block" 
                 alt="충전하기" 
               />
             </button>

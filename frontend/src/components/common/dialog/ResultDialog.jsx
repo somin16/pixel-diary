@@ -13,7 +13,7 @@ import ImageButton from '../ImageButton';
  * @param {function} onConfirm - '확인' 버튼 클릭 시 실행할 함수
  * @param {string} boxImageName - 배경 이미지 파일명 (기본값: popup_message_box_x3)
  * @param {string} [width="auto"] - 다이얼로그의 가로 길이 (기본값: "auto")
- * @param {string} [maxWidth="360px"] - 다이얼로그의 최대 가로 길이 (기본값: "360px")
+ * @param {string} [maxWidth="360px"] - 다이얼로그의 최대 가로 길이 (기본값: "360px") -> 상한선 값이기 때문에 px로 유지
  * @param {string} [textMt="mt-[10%]"] - 메시지 텍스트의 상단 여백 클래스 (기본값: "mt-[10%]") 
  * @param {string} [textSize="text-[13px]"] - 메시지 텍스트의 크기 클래스 (기본값: "text-[13px]")
 */
