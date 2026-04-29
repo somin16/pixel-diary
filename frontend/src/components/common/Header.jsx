@@ -16,22 +16,22 @@ const Header = ({ title }) => {
   const currentTheme = useTheme((state) => state.currentTheme);
 
   return (
-    <header className="flex items-center justify-center relative mb-[50px] px-[20px] w-full h-[60px] shrink-0">
+    <header className="flex items-center justify-center relative mb-12.5 px-5 w-full h-16 shrink-0">
       {/* 뒤로 가기 버튼 */}
       <button 
-        className="bg-transparent border-none cursor-pointer p-0 absolute left-[20px] top-1/2 -translate-y-1/2 outline-none transition-transform" 
+        className="bg-transparent border-none cursor-pointer p-0 absolute left-5 top-1/2 -translate-y-1/2 outline-none transition-transform" 
         onClick={() => navigate(-1)}
       >
         <img 
           src={getAssetUrl(currentTheme, 'icons', 'back_icon_x3')} 
           alt="뒤로 가기" 
-          className="w-auto h-[40px]" 
+          className="w-auto h-10" 
         />
       </button>
 
       {/* 제목이 있을 때만 표시 */}
       {title && (
-        <h1 className="text-[36px] text-black m-0 select-none">
+        <h1 className="text-4xl text-black m-0 select-none">
           {title}
         </h1>
       )}

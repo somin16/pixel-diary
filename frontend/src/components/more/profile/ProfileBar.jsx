@@ -19,16 +19,18 @@ const ProfileBar = ({ nickname, email, profileImage }) => {
 
   return (
     <section 
-      className="mb-[40px] cursor-pointer flex justify-center w-full transition-transform duration-100 ease-in" 
+      className="mb-10 cursor-pointer flex justify-center w-full transition-transform duration-100 ease-in" 
       onClick={() => navigate('/more/profile')} // section 전체에 onClick을 걸어서, 이미지 어디를 누르든 이동하게 만듦
     >
-      <div className="relative w-[90%] max-w-[350px] flex">
+      {/* 상한선이므로 px 유지 */}
+      <div className="relative w-[90%] max-w-[350px]"> 
         
         {/* 프로필 배경 이미지 (박스+선 이미지) */}
         <img 
           src={getAssetUrl(currentTheme, 'boxes', 'profile_bar_box_x3')} 
           alt="프로필 배경" 
-          className="w-full h-auto block pointer-events-none" 
+          className="w-full h-auto block pointer-events-none"
+          style={{ imageRendering: 'pixelated' }}
         />
 
         {/* 배경 이미지에 올라가는 사용자 프로필 사진*/}
@@ -39,6 +41,7 @@ const ProfileBar = ({ nickname, email, profileImage }) => {
         />
 
         {/* 사용자 정보 (닉네임 & 이메일) */}
+        {/* flex-col 정렬에서 gap을 %로 조절 불가하여 px로 유지 */}
         <div className="absolute left-[29%] top-1/2 -translate-y-1/2 flex flex-col gap-[5px]">
           <span className="text-[16px] font-bold text-black">{nickname}</span>
           <span className="text-[12px] font-bold text-gray-500">{email}</span>

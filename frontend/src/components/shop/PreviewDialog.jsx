@@ -19,6 +19,7 @@ const PreviewDialog = ({ previews, onClose }) => {
       <div className="fixed inset-0 bg-black/60 z-40" onClick={onClose} />
 
       {/* 중앙에 뜨는 핑크색 프리뷰 박스 */}
+      {/* 상한선 값이기 때문에 px로 유지 */}
       <div 
         className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-50 w-[90%] max-w-[450px] h-[65vh] flex flex-col items-center justify-center bg-[length:100%_100%] bg-no-repeat"
         style={{ backgroundImage: `url(${getAssetUrl(currentTheme, 'boxes', 'store_box_x3')})` }} 
@@ -26,12 +27,12 @@ const PreviewDialog = ({ previews, onClose }) => {
         
         {/* 닫기 버튼 */}
         <button
-          className="absolute -top-[60px] -right-[5px] p-2 z-[60] cursor-pointer outline-none transition-transform"
+          className="absolute -top-15 -right-1 p-2 z-60 cursor-pointer outline-none transition-transform"
           onClick={onClose}
         >
           <img
             src={getAssetUrl(currentTheme, 'icons', 'close_icon_x3')}
-            className="w-[35px] h-auto"
+            className="w-8.75 h-auto"
             alt="닫기"
           />
         </button>

@@ -85,7 +85,7 @@ const Setting = () => {
 return (
     // 전체 페이지를 감싸는 컨테이너 (배경 이미지가 깔리는 곳)
     <div 
-      className="w-full h-screen overflow-hidden pt-[60px] pb-[30px] flex flex-col bg-[length:100%_100%]"
+      className="w-full h-screen overflow-hidden pt-[16%] pb-[8%] flex flex-col bg-[length:100%_100%]"
       style={{ 
         backgroundImage: `url(${getAssetUrl(currentTheme,'backgrounds','menu_background_x3')})`
       }}
@@ -99,7 +99,7 @@ return (
         {settingItems.map((item) => (
           <li
             key={item.id}
-            className="cursor-pointer w-full -mt-[4px] first:mt-0"
+            className="cursor-pointer w-full -mt-1 first:mt-0"
             onClick={() => {
               if (item.id === 'logout') setDialog('logout');
               else if (item.id === 'withdrawal') setDialog('withdrawal');
@@ -114,7 +114,7 @@ return (
                 className="relative w-full h-auto block" 
               />
               <span 
-                className={`absolute z-10 top-1/2 -translate-y-1/2 left-[25px] text-[16px] ${item.isDanger ? 'text-[#ef4444]' : 'text-black'}`}
+                className={`absolute z-10 top-1/2 -translate-y-1/2 left-[6%] text-[16px] ${item.isDanger ? 'text-[#ef4444]' : 'text-black'}`}
               >
                 {item.label}
               </span>

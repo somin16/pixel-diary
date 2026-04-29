@@ -29,12 +29,12 @@ const InputField = ({
   const currentTheme = useTheme((state) => state.currentTheme);
 
   return (
-    <div className="flex flex-col gap-[8px] w-full">
+    <div className="flex flex-col gap-2 w-full">
       {/* 라벨 영역: 값이 전달되었을 때만 화면에 표시됨 */}
       {label && <label className="text-[13px] text-black">{label}</label>}
       
       {/* 배경 이미지 */}
-      <div className="relative w-full h-[45px] flex items-center">
+      <div className="relative w-full h-11 flex items-center">
         <img
           src={getAssetUrl(currentTheme, 'boxes', boxImageName)}
           alt="입력창 배경"
@@ -48,7 +48,7 @@ const InputField = ({
           onChange={onChange}
           placeholder={placeholder}
           disabled={readOnly}
-          className={`relative z-20 w-full h-full bg-transparent border-none outline-none px-[15px] text-[13px]
+          className={`relative z-20 w-full h-full bg-transparent border-none outline-none px-4 text-[13px]
             ${readOnly ? 'text-[#969696] cursor-not-allowed' : 'text-black'}
             ${textAlign === 'center' ? 'text-center' : 'text-left'}
           `}

@@ -13,7 +13,7 @@ import ImageButton from "../common/ImageButton";
  * @param {function} setDialogStep - 다이얼로그 단계를 변경하는 함수 (미리보기 'preview' 또는 구매 확인 'confirm'으로 이동 시 사용)
  * @param {function} closeDialog - 다이얼로그를 완전히 닫는 함수 (우측 상단 X 버튼 클릭 시 실행)
  * @param {string} [width="100%"] - 다이얼로그의 기본 가로 너비
- * @param {string} [maxWidth="320px"] - 다이얼로그의 최대 가로 너비 (화면이 커져도 이 이상 커지지 않음)
+ * @param {string} [maxWidth="320px"] - 다이얼로그의 최대 가로 너비 (화면이 커져도 이 이상 커지지 않음) -> 상한선 값이기 때문에 px로 유지
  */
 
 const ItemDetailDialog = ({ selectedItem, setDialogStep, closeDialog, width = "100%", maxWidth = "320px"}) => {
@@ -30,24 +30,24 @@ const ItemDetailDialog = ({ selectedItem, setDialogStep, closeDialog, width = "1
         
         {/* 우측 상단 X 닫기 버튼 */}
         <button 
-          className="absolute -top-[45px] -right-[15px] p-2 z-50 cursor-pointer outline-none transition-transform" 
+          className="absolute -top-11 -right-4 p-2 z-50 cursor-pointer outline-none transition-transform" 
           onClick={closeDialog}
         >
-          <img src={getAssetUrl(currentTheme, 'icons', 'close_icon_x3')} className="w-[35px] h-auto" alt="닫기" />
+          <img src={getAssetUrl(currentTheme, 'icons', 'close_icon_x3')} className="w-9 h-auto" alt="닫기" />
         </button>
 
         {/* 아이템 가격 */}
         {/* 컨테이너 기준 우측 상단에 고정되도록 top과 right 위치값 지정 */}
-        <div className="absolute top-[30px] right-[0px] flex items-center gap-1">
-          <img src={getAssetUrl(currentTheme, 'icons', 'coin_icon_x3')} className="w-[30px] h-auto" alt="코인" />
+        <div className="absolute top-8 right-0 flex items-center gap-1">
+          <img src={getAssetUrl(currentTheme, 'icons', 'coin_icon_x3')} className="w-8 h-auto" alt="코인" />
           <span className="text-[24px] text-black tracking-wider">{selectedItem.price}</span>
         </div>
 
         {/* 아이템 박스와 제목을 위한 가로 배열 컨테이너 */}
-        <div className="flex flex-row items-center w-full mt-[15px] px-4">
+        <div className="flex flex-row items-center w-full mt-4 px-4">
           
           {/* 아이템 박스: 왼쪽에 배치 */}
-          <div className="relative w-[44%] aspect-square flex-shrink-0 flex items-center justify-center ml-[-24px]">
+          <div className="relative w-[44%] aspect-square flex-shrink-0 flex items-center justify-center -ml-6">
             
             {/* 아이템 박스 배경 이미지 */}
             <img 

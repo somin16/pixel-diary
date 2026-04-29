@@ -7,7 +7,7 @@ import { getAssetUrl } from "../../../utils/AssetHelper"; // 헬퍼 불러오기
  * @param {string} boxImageName - 'boxes' 카테고리의 배경 이미지 파일명 (기본값: popup_message_box_x3)
  * @param {React.ReactNode} children - 팝업 내부에 들어갈 본문 요소 (텍스트, 입력창 등)
  * @param {string} width - 가로 너비 (기본값: "auto")
- * @param {string} maxWidth - 최대 가로 너비 (기본값: "360px")
+ * @param {string} maxWidth - 최대 가로 너비 (기본값: "360px") -> 상한선 값이기 때문에 px로 유지
  */
 
 const DialogBox = ({ boxImageName = 'popup_message_box_x3', children, width = "auto", maxWidth = "360px" }) => {

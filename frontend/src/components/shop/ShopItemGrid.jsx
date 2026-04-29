@@ -15,10 +15,10 @@ const ShopItemGrid = ({ items, onItemClick }) => {
 
   return (
     <div 
-      className="w-full flex-1 p-[15px] pb-0 overflow-y-auto bg-[length:100%_100%]"
+      className="w-full flex-1 p-[3%] pb-0 overflow-y-auto bg-[length:100%_100%]"
       style={{ backgroundImage: `url(${getAssetUrl(currentTheme, 'boxes', 'store_box_x3')})` }}
     > 
-      <div className="grid grid-cols-4 gap-3 pb-[20px]">
+      <div className="grid grid-cols-4 gap-3 pb-[5.5%]">
         
         {/* 실제 아이템 렌더링 */}
         {items.map((item, idx) => (
@@ -47,8 +47,8 @@ const ShopItemGrid = ({ items, onItemClick }) => {
             />
 
             {/* 가격 정보 (코인 아이콘 + 가격 텍스트) */}
-            <div className="absolute bottom-[12%] w-full flex justify-center items-center gap-[3px] z-10 pointer-events-none">
-              <img src={getAssetUrl(currentTheme, 'icons', 'coin_icon_x3')} className="w-[14px] h-auto" alt="코인" />
+            <div className="absolute bottom-[12%] w-full flex justify-center items-center gap-[4%] z-10 pointer-events-none">
+              <img src={getAssetUrl(currentTheme, 'icons', 'coin_icon_x3')} className="w-[19%] h-auto" alt="코인" />
               <span className={`text-[14px] leading-none ${item.isSoldOut ? 'text-[#FF4D4D]' : 'text-black'}`}>
                 {item.isSoldOut ? "품절" : item.price}
               </span>
@@ -65,7 +65,7 @@ const ShopItemGrid = ({ items, onItemClick }) => {
           </div>
         ))}
 
-        {/* 아이템 칸 18개로 고정 */}
+        {/* 아이템 칸 16개로 고정 */}
         {Array.from({ length: Math.max(0, 16 - items.length) }).map((_, idx) => (
           <div key={`empty-${idx}`} className="relative w-full">
             <img 
