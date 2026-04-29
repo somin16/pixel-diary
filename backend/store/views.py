@@ -83,6 +83,24 @@ class ItemPurchaseView(APIView):
             item_stackable = item.get("item_stackable")
             item_price = item.get("item_price")
 
+            # item_stackable이 False인 경우 중복 구매 제한
+            if not item_stackable:
+                existing_response = requests.get(
+                    f"{supabase_url}/rest/v1/inventory",
+                    headers=headers,
+                    params={
+                        "user_id": f"eq.{user_id}",
+                        "item_id": f"eq.{item_id}",
+                        "select": "inventory_id",
+                    },
+                )
+
+                if existing_response.json():
+                    return Response(
+                        {"message": "이미 보유한 아이템입니다."},
+                        status=status.HTTP_400_BAD_REQUEST,
+                    )
+
             # 관리자 권한 확인
             role = user.get("user_metadata", {}).get("role", "")
             is_admin = role == "admin"
@@ -107,24 +125,6 @@ class ItemPurchaseView(APIView):
                 if current_coin < item_price * item_count:
                     return Response(
                         {"message": "코인이 부족합니다."},
-                        status=status.HTTP_400_BAD_REQUEST,
-                    )
-
-            # item_stackable이 False인 경우 중복 구매 제한
-            if not item_stackable:
-                existing_response = requests.get(
-                    f"{supabase_url}/rest/v1/inventory",
-                    headers=headers,
-                    params={
-                        "user_id": f"eq.{user_id}",
-                        "item_id": f"eq.{item_id}",
-                        "select": "inventory_id",
-                    },
-                )
-
-                if existing_response.json():
-                    return Response(
-                        {"message": "이미 보유한 아이템입니다."},
                         status=status.HTTP_400_BAD_REQUEST,
                     )
 
