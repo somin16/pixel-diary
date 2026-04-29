@@ -17,8 +17,8 @@ from rest_framework import status
 from utils import extract_access_token, get_user_from_token
 
 # 시리얼라이저 가져오기
-from .serializers import GameScoreSerializer
-from .serializers import AddUserCoinSerializer
+from .serializers import GameScoreSerializer # 게임 결과 저장 시리얼라이저
+from .serializers import UserCoinSerializer # 보유 재화 조회 및 추가 시리얼라이저
 
 
 def get_supabase_headers():
@@ -137,8 +137,8 @@ class GameScoreView(APIView):
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
 
-class AddUserCoinView(APIView):
-    """보유 재화 추가 API"""
+class UserCoinView(APIView):
+    """보유 재화 추가 및 조회 API"""
 
     def patch(self, request):
         """
@@ -224,3 +224,66 @@ class AddUserCoinView(APIView):
                 {"message": "재화 추가 중 오류가 발생했습니다."},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
+
+    def get(self, request):
+        """
+        보유 재화 조회 
+        GET api/v1/users/coins/
+        - Authorization 헤더의 access_token으로 현재 유저 확인
+        - 현재 보유 coin 반환
+        """
+        access_token = extract_access_token(request)
+
+        if not access_token:
+            return Response(
+                {"message": "Authorization 헤더에 유효한 Bearer 토큰이 필요합니다."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        user = get_user_from_token(access_token)
+
+        if not user:
+            return Response(
+                {"message": "유효하지 않은 토큰입니다."},
+                status=status.HTTP_401_UNAUTHORIZED,
+            )
+
+        user_id = user.get("id")
+
+        try:
+            supabase_url = os.getenv("SUPABASE_URL") # Supabase URL 및 헤더 설정
+            headers = get_supabase_headers()
+
+            get_response = requests.get(
+                f"{supabase_url}/rest/v1/users?user_id=eq.{user_id}&select=coin",
+                headers=headers,
+            )
+
+            if get_response.status_code not in [200, 201]:
+                raise Exception(f"Supabase API 오류: {get_response.text}")
+
+            data = get_response.json()
+
+            if not data:
+                return Response(
+                    {"message": "유저 정보를 찾을 수 없습니다."},
+                    status=status.HTTP_404_NOT_FOUND,
+                )
+
+            # 현재 보유 코인
+            coin = data[0].get("coin", 0)
+
+            return Response(
+                {
+                    "message": "보유 재화 조회 성공",
+                    "coin": coin,
+                },
+                status=status.HTTP_200_OK,
+            )
+
+        except Exception as error:
+            print(f"=== GET USER COIN ERROR ===\n{error}\n==========================")
+            return Response(
+                {"message": "재화 조회 중 오류가 발생했습니다."},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )        

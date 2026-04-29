@@ -18,7 +18,7 @@ class GameScoreSerializer(GameBaseScoreSerializer):
     pass
 
 # AddUserCoinSerializer는 공통 필드 + coin 추가
-class AddUserCoinSerializer(GameBaseScoreSerializer):
+class UserCoinSerializer(GameBaseScoreSerializer):
     coin = serializers.IntegerField(
         required=False,
         default=0,
