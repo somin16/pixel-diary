@@ -81,22 +81,7 @@ class ItemPurchaseView(APIView):
 
             item = item_response.json()[0]
             item_stackable = item.get("item_stackable")
-            # item_price = item.get("item_price")  # 코인 차감 기능 구현 후 활성화 예정
-
-            # 유저 정보 조회 (코인 확인)
-            # user_response = requests.get(
-            #     f"{supabase_url}/rest/v1/users",
-            #     headers=headers,
-            #     params={"user_id": f"eq.{user_id}", "select": "coin"},
-            # )
-            # current_coin = user_response.json()[0].get("coin")
-
-            # 코인 잔액 확인
-            # if current_coin < item_price * item_count:
-            #     return Response(
-            #         {"message": "코인이 부족합니다."},
-            #         status=status.HTTP_400_BAD_REQUEST,
-            #     )
+            item_price = item.get("item_price")
 
             # item_stackable이 False인 경우 중복 구매 제한
             if not item_stackable:
@@ -113,6 +98,33 @@ class ItemPurchaseView(APIView):
                 if existing_response.json():
                     return Response(
                         {"message": "이미 보유한 아이템입니다."},
+                        status=status.HTTP_400_BAD_REQUEST,
+                    )
+
+            # 관리자 권한 확인
+            role = user.get("user_metadata", {}).get("role", "")
+            is_admin = role == "admin"
+
+            if not is_admin:
+                # 일반 유저인 경우 코인 잔액 확인
+                user_response = requests.get(
+                    f"{supabase_url}/rest/v1/users",
+                    headers=headers,
+                    params={"user_id": f"eq.{user_id}", "select": "coin"},
+                )
+
+                if user_response.status_code != 200 or not user_response.json():
+                    return Response(
+                        {"message": "유저 정보를 찾을 수 없습니다."},
+                        status=status.HTTP_404_NOT_FOUND,
+                    )
+
+                current_coin = user_response.json()[0].get("coin")
+
+                # 코인 잔액 확인
+                if current_coin < item_price * item_count:
+                    return Response(
+                        {"message": "코인이 부족합니다."},
                         status=status.HTTP_400_BAD_REQUEST,
                     )
 
@@ -165,18 +177,22 @@ class ItemPurchaseView(APIView):
 
             inventory = inventory_response.json()[0]
 
-            # 코인 차감
-            # updated_coin = current_coin - item_price * item_count
-            # requests.patch(
-            #     f"{supabase_url}/rest/v1/users?user_id=eq.{user_id}",
-            #     headers=headers,
-            #     json={"coin": updated_coin},
-            # )
+            # 관리자가 아닌 경우에만 코인 차감
+            if not is_admin:
+                updated_coin = current_coin - item_price * item_count
+                requests.patch(
+                    f"{supabase_url}/rest/v1/users?user_id=eq.{user_id}",
+                    headers=headers,
+                    json={"coin": updated_coin},
+                )
+            else:
+                updated_coin = None  # 관리자는 코인 차감 없음
 
             return Response(
                 {
                     "item_id": item_id,
-                    "current_coin": None,  # 코인 차감 기능 구현 후 실제 값으로 교체 예정
+                    "used_coin": item_price * item_count if not is_admin else None,  # 사용한 코인
+                    "current_coin": updated_coin,  # 남은 코인
                     "inventory_id": inventory.get("inventory_id"),
                     "message": "아이템을 구매했습니다.",
                 },
