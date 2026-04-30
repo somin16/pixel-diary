@@ -1,5 +1,5 @@
 info:
-  name: 게임-보유재화-추가
+  name: 보유-재화-추가
   type: http
   seq: 2
 
@@ -13,8 +13,7 @@ http:
     type: json
     data: |-
       {
-        "game_score": 0,
-        "coin": 0
+        "game_score": 0
       }
   auth: inherit
 
@@ -24,7 +23,7 @@ settings:
   followRedirects: true
   maxRedirects: 5
 
-docs: |-
+docs: |
   ***
   ### Body / Json
   - game_score: 게임에서 얻은 점수
@@ -37,4 +36,3 @@ docs: |-
   - 200 OK: 재화 추가 성공
   - 400 Bad Request: 필수값 누락 (Authorization Bearer 헤더 access_token)
   - 401 Unauthorized: 유효하지 않은 access_token인 경우
-  - 404 Not Found: 유저 정보 없음

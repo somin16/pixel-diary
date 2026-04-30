@@ -1,5 +1,5 @@
 info:
-  name: 게임-보유재화-조회
+  name: 보유-재화-조회
   type: http
   seq: 3
 
@@ -25,4 +25,3 @@ docs: |-
   - 200 OK: 재화 조회 성공
   - 400 Bad Request: 필수값 누락 (Authorization Bearer 헤더 access_token)
   - 401 Unauthorized: 유효하지 않은 access_token인 경우
-  - 404 Not Found: 유저 정보 없음

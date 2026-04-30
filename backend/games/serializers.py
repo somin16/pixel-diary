@@ -17,14 +17,6 @@ class GameBaseScoreSerializer(serializers.Serializer):
 class GameScoreSerializer(GameBaseScoreSerializer):
     pass
 
-# AddUserCoinSerializer는 공통 필드 + coin 추가
+# UserCoinSerializer는 보안을 위해 coin 필드 없이 공통 필드만 사용
 class UserCoinSerializer(GameBaseScoreSerializer):
-    coin = serializers.IntegerField(
-        required=False,
-        default=0,
-        min_value=0,
-        error_messages={
-            "invalid": "coin은 숫자여야 합니다.",
-            "min_value": "coin은 0 이상이어야 합니다.",
-        }
-    )
+    pass
