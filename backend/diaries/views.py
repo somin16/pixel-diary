@@ -361,3 +361,189 @@ class DiaryDetailView(APIView):
                 {"message": "일기 삭제 중 오류가 발생했습니다."},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
+
+
+class DiaryDecoView(APIView):
+    """일기 꾸미기 API"""
+
+    def post(self, request, diary_id):
+        """
+        POST /api/v1/diaries/{diary_id}/deco/
+        - Authorization 헤더의 access_token으로 현재 유저 확인
+        - emoji_id, diary_frame_id, sticker를 받아 diary_deco 테이블에 저장
+        - 완료 메시지 반환
+        """
+        # Authorization 헤더에서 access_token 추출
+        access_token = extract_access_token(request)
+        if not access_token:
+            return Response(
+                {"message": "Authorization 헤더에 유효한 Bearer 토큰이 필요합니다."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        # 요청 Body에서 값 추출
+        emoji_id = request.data.get("emoji_id", None)
+        diary_frame_id = request.data.get("diary_frame_id", None)
+        sticker = request.data.get("sticker", [])
+
+        # sticker 유효성 검증
+        if not isinstance(sticker, list):
+            return Response(
+                {"message": "sticker는 리스트 형식이어야 합니다."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        try:
+            # access_token으로 유저 정보 조회
+            user = get_user_from_token(access_token)
+
+            # 유효하지 않은 토큰인 경우 401 반환
+            if not user:
+                return Response(
+                    {"message": "유효하지 않은 토큰입니다."},
+                    status=status.HTTP_401_UNAUTHORIZED,
+                )
+
+            user_id = user.get("id")
+            supabase_url = os.getenv("SUPABASE_URL")
+            headers = get_supabase_headers()
+
+            # 해당 일기가 본인 것인지 확인
+            diary_response = requests.get(
+                f"{supabase_url}/rest/v1/diaries",
+                headers=headers,
+                params={
+                    "id": f"eq.{diary_id}",
+                    "user_id": f"eq.{user_id}",
+                    "select": "id",
+                },
+            )
+
+            if not diary_response.json():
+                return Response(
+                    {"message": "일기를 찾을 수 없거나 권한이 없습니다."},
+                    status=status.HTTP_404_NOT_FOUND,
+                )
+
+            # emoji_id 인벤토리 보유 및 타입 확인
+            if emoji_id:
+                emoji_check = requests.get(
+                    f"{supabase_url}/rest/v1/inventory",
+                    headers=headers,
+                    params={
+                        "user_id": f"eq.{user_id}",
+                        "item_id": f"eq.{emoji_id}",
+                        "select": "inventory_id,items(item_type)",
+                    },
+                )
+                if not emoji_check.json():
+                    return Response(
+                        {"message": "보유하지 않은 이모티콘 아이템입니다."},
+                        status=status.HTTP_400_BAD_REQUEST,
+                    )
+                if emoji_check.json()[0].get("items", {}).get("item_type") != "emoji":
+                    return Response(
+                        {"message": "이모티콘 아이템이 아닙니다."},
+                        status=status.HTTP_400_BAD_REQUEST,
+                    )
+
+            # diary_frame_id 인벤토리 보유 및 타입 확인
+            if diary_frame_id:
+                frame_check = requests.get(
+                    f"{supabase_url}/rest/v1/inventory",
+                    headers=headers,
+                    params={
+                        "user_id": f"eq.{user_id}",
+                        "item_id": f"eq.{diary_frame_id}",
+                        "select": "inventory_id,items(item_type)",
+                    },
+                )
+                if not frame_check.json():
+                    return Response(
+                        {"message": "보유하지 않은 일기 프레임 아이템입니다."},
+                        status=status.HTTP_400_BAD_REQUEST,
+                    )
+                if frame_check.json()[0].get("items", {}).get("item_type") != "diary_theme":
+                    return Response(
+                        {"message": "일기 프레임 아이템이 아닙니다."},
+                        status=status.HTTP_400_BAD_REQUEST,
+                    )
+
+            # sticker 인벤토리 보유 및 타입 확인
+            for sticker in sticker:
+                sticker_id = sticker.get("item_id")
+                if not sticker_id:
+                    return Response(
+                        {"message": "sticker의 각 항목에 item_id가 필요합니다."},
+                        status=status.HTTP_400_BAD_REQUEST,
+                    )
+
+                sticker_check = requests.get(
+                    f"{supabase_url}/rest/v1/inventory",
+                    headers=headers,
+                    params={
+                        "user_id": f"eq.{user_id}",
+                        "item_id": f"eq.{sticker_id}",
+                        "select": "inventory_id,items(item_type)",
+                    },
+                )
+                if not sticker_check.json():
+                    return Response(
+                        {"message": f"보유하지 않은 스티커 아이템입니다. (item_id: {sticker_id})"},
+                        status=status.HTTP_400_BAD_REQUEST,
+                    )
+                if sticker_check.json()[0].get("items", {}).get("item_type") != "sticker":
+                    return Response(
+                        {"message": f"스티커 아이템이 아닙니다. (item_id: {sticker_id})"},
+                        status=status.HTTP_400_BAD_REQUEST,
+                    )
+
+            # diary_deco 테이블에 저장 (기존 꾸미기가 있으면 수정, 없으면 새로 생성)
+            existing_deco = requests.get(
+                f"{supabase_url}/rest/v1/diary_deco",
+                headers=headers,
+                params={
+                    "diary_id": f"eq.{diary_id}",
+                    "select": "deco_id",
+                },
+            )
+
+            if existing_deco.json():
+                # 기존 꾸미기가 있으면 수정
+                deco_id = existing_deco.json()[0].get("deco_id")
+                deco_response = requests.patch(
+                    f"{supabase_url}/rest/v1/diary_deco?deco_id=eq.{deco_id}",
+                    headers={**headers, "Prefer": "return=representation"},
+                    json={
+                        "emoji_id": emoji_id,
+                        "diary_frame_id": diary_frame_id,
+                        "sticker_id": sticker,
+                    },
+                )
+            else:
+                # 없으면 새로 생성
+                deco_response = requests.post(
+                    f"{supabase_url}/rest/v1/diary_deco",
+                    headers={**headers, "Prefer": "return=representation"},
+                    json={
+                        "diary_id": diary_id,
+                        "emoji_id": emoji_id,
+                        "diary_frame_id": diary_frame_id,
+                        "sticker_id": sticker,
+                    },
+                )
+
+            if deco_response.status_code not in [200, 201]:
+                raise Exception(f"Supabase API 오류: {deco_response.text}")
+
+            return Response(
+                {"message": "꾸미기 아이템 추가 성공."},
+                status=status.HTTP_200_OK,
+            )
+
+        except Exception as error:
+            print(f"=== DIARY DECO ERROR ===\n{error}\n=======================")
+            return Response(
+                {"message": "일기 꾸미기 중 오류가 발생했습니다."},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
