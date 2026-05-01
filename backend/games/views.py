@@ -17,8 +17,8 @@ from rest_framework import status
 from utils import extract_access_token, get_user_from_token
 
 # 시리얼라이저 가져오기
-from .serializers import GameScoreSerializer
-from .serializers import AddUserCoinSerializer
+from .serializers import GameScoreSerializer # 게임 결과 저장 시리얼라이저
+from .serializers import UserCoinSerializer # 보유 재화 조회 및 추가 시리얼라이저
 
 
 def get_supabase_headers():
@@ -36,8 +36,9 @@ def get_supabase_headers():
 
 
 class GameScoreView(APIView):
-
-    "게임 결과 저장 api"
+    """
+    게임 결과 저장 API
+    """
 
     # POST 요청이 오면 실행 (id = URL에서 받은 게임 번호)
     def post(self, request, id):
@@ -137,11 +138,14 @@ class GameScoreView(APIView):
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
 
-class AddUserCoinView(APIView):
-    """보유 재화 추가 API"""
+class UserCoinView(APIView):
+    """
+    보유 재화 추가 및 조회 API
+    """
 
     def patch(self, request):
         """
+        보유 재화 추가
         PATCH api/v1/users/coins/
         - Authorization 헤더의 access_token으로 현재 유저 확인
         - game_score, coin을 받아서 재화 추가
@@ -168,10 +172,9 @@ class AddUserCoinView(APIView):
         user_id = user.get("id")
 
         # ── 3. 시리얼라이저로 데이터 검증 ─────────────────
-        serializer = AddUserCoinSerializer(data=request.data)
+        serializer = UserCoinSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         game_score = serializer.validated_data["game_score"]
-        coin = serializer.validated_data["coin"]
 
         try:
             supabase_url = os.getenv("SUPABASE_URL")
@@ -186,19 +189,14 @@ class AddUserCoinView(APIView):
             if get_response.status_code not in [200, 201]:
                 raise Exception(f"Supabase API 오류: {get_response.text}")
 
-            data = get_response.json()
-
-            if not data:
-                return Response(
-                    {"message": "유저 정보를 찾을 수 없습니다."},
-                    status=status.HTTP_404_NOT_FOUND,
-                )
-
-            current_coin = data[0].get("coin", 0)
+            user_data = get_response.json()
 
             # ── 5. 코인 업데이트 ───────────────────────────
-            # 나중에 game_score 환산 공식 나오면 여기 수정!
-            total_coin = current_coin + coin
+            # 나중에 game_score 환산 공식 나오면 여기 수정
+            # 임시 환산식: 점수 100점당 1코인 (필요에 따라 교체)
+            current_coin = user_data[0].get("coin", 0)
+            added_coin = game_score // 100
+            total_coin = current_coin + added_coin
 
             update_response = requests.patch(
                 f"{supabase_url}/rest/v1/users?user_id=eq.{user_id}",
@@ -224,3 +222,61 @@ class AddUserCoinView(APIView):
                 {"message": "재화 추가 중 오류가 발생했습니다."},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
+
+    def get(self, request):
+        """
+        보유 재화 조회 
+        GET api/v1/users/coins/
+        - Authorization 헤더의 access_token으로 현재 유저 확인
+        - 현재 보유 coin 반환
+        """
+        access_token = extract_access_token(request)
+
+        if not access_token:
+            return Response(
+                {"message": "Authorization 헤더에 유효한 Bearer 토큰이 필요합니다."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        user = get_user_from_token(access_token)
+
+        if not user:
+            return Response(
+                {"message": "유효하지 않은 토큰입니다."},
+                status=status.HTTP_401_UNAUTHORIZED,
+            )
+
+        user_id = user.get("id")
+
+        try:
+            supabase_url = os.getenv("SUPABASE_URL") # Supabase URL 및 헤더 설정
+            headers = get_supabase_headers()
+
+            get_response = requests.get(
+                f"{supabase_url}/rest/v1/users?user_id=eq.{user_id}&select=coin",
+                headers=headers,
+            )
+
+            if get_response.status_code not in [200, 201]:
+                raise Exception(f"Supabase API 오류: {get_response.text}")
+
+            user_data = get_response.json()
+
+            # 현재 보유 코인
+            # 데이터가 없을 경우 안전하게 0원 반환
+            coin = user_data[0].get("coin", 0) if user_data else 0
+
+            return Response(
+                {
+                    "message": "보유 재화 조회 성공",
+                    "coin": coin,
+                },
+                status=status.HTTP_200_OK,
+            )
+
+        except Exception as error:
+            print(f"=== GET USER COIN ERROR ===\n{error}\n==========================")
+            return Response(
+                {"message": "재화 조회 중 오류가 발생했습니다."},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )        
