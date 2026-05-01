@@ -21,6 +21,29 @@ def get_supabase_headers():
     }
 
 
+def check_inventory_item(supabase_url, headers, user_id, item_id, expected_type, item_label):
+    """
+    인벤토리 보유 여부 및 아이템 타입 확인
+    - 보유하지 않은 아이템이면 에러 메시지 반환
+    - 타입이 다르면 에러 메시지 반환
+    - 정상이면 None 반환
+    """
+    check = requests.get(
+        f"{supabase_url}/rest/v1/inventory",
+        headers=headers,
+        params={
+            "user_id": f"eq.{user_id}",
+            "item_id": f"eq.{item_id}",
+            "select": "inventory_id,items(item_type)",
+        },
+    )
+    if not check.json():
+        return f"보유하지 않은 {item_label} 아이템입니다."
+    if check.json()[0].get("items", {}).get("item_type") != expected_type:
+        return f"{item_label} 아이템이 아닙니다."
+    return None
+
+
 class DiaryView(APIView):
     """일기 작성 및 저장, 목록 조회 API"""
 
@@ -336,6 +359,10 @@ class DiaryDetailView(APIView):
                 headers={**headers, "Prefer": "return=representation"},
             )
 
+            # 삭제 실패 시 예외 발생
+            if delete_response.status_code not in [200, 204]:
+                raise Exception(f"Supabase API 오류: {delete_response.text}")
+
             # 빈 리스트면 일기가 없거나 본인 일기가 아닌 경우
             # Supabase PostgREST는 조건절(id, user_id)이 둘 다 맞아야 수정되므로
             # GET으로 먼저 확인할 필요 없이 DELETE 결과로 바로 확인 가능
@@ -344,10 +371,6 @@ class DiaryDetailView(APIView):
                     {"message": "일기를 찾을 수 없거나 삭제 권한이 없습니다."},
                     status=status.HTTP_404_NOT_FOUND,
                 )
-
-            # 삭제 실패 시 예외 발생
-            if delete_response.status_code not in [200, 204]:
-                raise Exception(f"Supabase API 오류: {delete_response.text}")
 
             return Response(
                 {"message": "일기가 삭제되었습니다."},
@@ -359,5 +382,168 @@ class DiaryDetailView(APIView):
             print(f"=== DIARY DELETE ERROR ===\n{error}\n=========================")
             return Response(
                 {"message": "일기 삭제 중 오류가 발생했습니다."},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
+
+
+class DiaryDecoView(APIView):
+    """일기 꾸미기 API"""
+
+    def post(self, request, diary_id):
+        """
+        POST /api/v1/diaries/{diary_id}/deco/
+        - Authorization 헤더의 access_token으로 현재 유저 확인
+        - emoji_id, diary_frame_id, sticker를 받아 diary_deco 테이블에 저장
+        - 완료 메시지 반환
+        """
+        # Authorization 헤더에서 access_token 추출
+        access_token = extract_access_token(request)
+        if not access_token:
+            return Response(
+                {"message": "Authorization 헤더에 유효한 Bearer 토큰이 필요합니다."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        # 요청 Body에서 값 추출
+        emoji_id = request.data.get("emoji_id", None)
+        diary_frame_id = request.data.get("diary_frame_id", None)
+        sticker_list = request.data.get("sticker", [])
+
+        # sticker 유효성 검증
+        if not isinstance(sticker_list, list):
+            return Response(
+                {"message": "sticker는 리스트 형식이어야 합니다."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        try:
+            # access_token으로 유저 정보 조회
+            user = get_user_from_token(access_token)
+
+            # 유효하지 않은 토큰인 경우 401 반환
+            if not user:
+                return Response(
+                    {"message": "유효하지 않은 토큰입니다."},
+                    status=status.HTTP_401_UNAUTHORIZED,
+                )
+
+            user_id = user.get("id")
+            supabase_url = os.getenv("SUPABASE_URL")
+            headers = get_supabase_headers()
+
+            # 해당 일기가 본인 것인지 확인
+            diary_response = requests.get(
+                f"{supabase_url}/rest/v1/diaries",
+                headers=headers,
+                params={
+                    "id": f"eq.{diary_id}",
+                    "user_id": f"eq.{user_id}",
+                    "select": "id",
+                },
+            )
+
+            if not diary_response.json():
+                return Response(
+                    {"message": "일기를 찾을 수 없거나 권한이 없습니다."},
+                    status=status.HTTP_404_NOT_FOUND,
+                )
+
+            # emoji_id 확인
+            if emoji_id:
+                error = check_inventory_item(supabase_url, headers, user_id, emoji_id, "emoji", "이모티콘")
+                if error:
+                    return Response({"message": error}, status=status.HTTP_400_BAD_REQUEST)
+
+            # diary_frame_id 확인
+            if diary_frame_id:
+                error = check_inventory_item(supabase_url, headers, user_id, diary_frame_id, "diary_theme", "일기 프레임")
+                if error:
+                    return Response({"message": error}, status=status.HTTP_400_BAD_REQUEST)
+
+            # sticker 인벤토리 보유 및 타입 확인
+            if sticker_list:
+                sticker_ids = [sticker.get("item_id") for sticker in sticker_list]
+
+                if not all(sticker_ids):
+                    return Response(
+                        {"message": "sticker의 각 항목에 item_id가 필요합니다."},
+                        status=status.HTTP_400_BAD_REQUEST,
+                    )
+
+                # in 연산자로 한 번에 조회
+                sticker_check = requests.get(
+                    f"{supabase_url}/rest/v1/inventory",
+                    headers=headers,
+                    params={
+                        "user_id": f"eq.{user_id}",
+                        "item_id": f"in.({','.join(map(str, sticker_ids))})",
+                        "select": "inventory_id,item_id,items(item_type)",
+                    },
+                )
+
+                # 보유 여부 확인
+                found_ids = {item.get("item_id") for item in sticker_check.json()}
+                for sticker_id in sticker_ids:
+                    if sticker_id not in found_ids:
+                        return Response(
+                            {"message": f"보유하지 않은 스티커 아이템입니다. (item_id: {sticker_id})"},
+                            status=status.HTTP_400_BAD_REQUEST,
+                        )
+
+                # 타입 확인
+                for item in sticker_check.json():
+                    if item.get("items", {}).get("item_type") != "sticker":
+                        return Response(
+                            {"message": f"스티커 아이템이 아닙니다. (item_id: {item.get('item_id')})"},
+                            status=status.HTTP_400_BAD_REQUEST,
+                        )
+
+            # diary_deco 테이블에 저장 (기존 꾸미기가 있으면 수정, 없으면 새로 생성)
+            existing_deco = requests.get(
+                f"{supabase_url}/rest/v1/diary_deco",
+                headers=headers,
+                params={
+                    "diary_id": f"eq.{diary_id}",
+                    "select": "deco_id",
+                },
+            )
+
+            if existing_deco.json():
+                # 기존 꾸미기가 있으면 수정
+                deco_id = existing_deco.json()[0].get("deco_id")
+                deco_response = requests.patch(
+                    f"{supabase_url}/rest/v1/diary_deco?deco_id=eq.{deco_id}",
+                    headers={**headers, "Prefer": "return=representation"},
+                    json={
+                        "emoji_id": emoji_id,
+                        "diary_frame_id": diary_frame_id,
+                        "sticker_id": sticker_list,
+                    },
+                )
+            else:
+                # 없으면 새로 생성
+                deco_response = requests.post(
+                    f"{supabase_url}/rest/v1/diary_deco",
+                    headers={**headers, "Prefer": "return=representation"},
+                    json={
+                        "diary_id": diary_id,
+                        "emoji_id": emoji_id,
+                        "diary_frame_id": diary_frame_id,
+                        "sticker_id": sticker_list,
+                    },
+                )
+
+            if deco_response.status_code not in [200, 201]:
+                raise Exception(f"Supabase API 오류: {deco_response.text}")
+
+            return Response(
+                {"message": "꾸미기 아이템 추가 성공."},
+                status=status.HTTP_200_OK,
+            )
+
+        except Exception as error:
+            print(f"=== DIARY DECO ERROR ===\n{error}\n=======================")
+            return Response(
+                {"message": "일기 꾸미기 중 오류가 발생했습니다."},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
