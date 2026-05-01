@@ -36,6 +36,9 @@ def get_supabase_headers():
 
 
 class GameScoreView(APIView):
+    """
+    게임 결과 저장 API
+    """
 
     # POST 요청이 오면 실행 (id = URL에서 받은 게임 번호)
     def post(self, request, id):
@@ -136,6 +139,9 @@ class GameScoreView(APIView):
             )
 
 class UserCoinView(APIView):
+    """
+    보유 재화 추가 및 조회 API
+    """
 
     def patch(self, request):
         """

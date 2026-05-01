@@ -26,8 +26,7 @@ settings:
 docs: |
   ***
   ### Body / Json
-  - game_score: 게임에서 얻은 점수
-  - coin: 추가할 코인
+  - game_score:  game_score: 게임에서 얻은 점수 (임시로 100점당 1코인으로 환산)
   ***
   ### Headers
   - Authorization: Bearer 로그인할 시 받는 access_token
