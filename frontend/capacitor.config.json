@@ -1,5 +1,10 @@
 {
   "appId": "com.pixeldiary",
   "appName": "Pixel Diary",
-  "webDir": "dist"
+  "webDir": "dist",
+  "plugins":{
+    "keyboard": {
+        "resize": "none"
+    }
+  }
 }
