@@ -1,0 +1,51 @@
+info:
+  name: 일기-꾸미기
+  type: http
+  seq: 6
+
+http:
+  method: POST
+  url: http://127.0.0.1:8000/api/v1/diaries/{diary_id}/deco/
+  headers:
+    - name: Authorization
+      value: "Bearer "
+  body:
+    type: json
+    data: |-
+      {
+          "emoji_id": 0,
+          "diary_frame_id": 0,
+          "sticker": [
+              {"item_id": 0, "pos_x": 0, "pos_y": 0}
+          ]
+      }
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |-
+  ### Body / Json (파싱 오류 방지를 위해 기본값 0 입력)
+  - diary_frame_id: 일기 프레임 아이디
+  - emoji_id: 이모티콘 아이디
+  - sticker: [
+    {item_id: 스티커 아이디, pos_x: 스티커 위치 x 값, pos_y: 스티커 위치 y 값}
+  ***
+  ### Headers
+  - Authorization: Bearer 로그인할 시 받는 access_token
+  ***
+  ### Status Code
+  - 200 OK: 꾸미기 아이템 추가 성공
+  - 400 Bad Request: 필수값 누락 (Authorization Bearer 헤더 access_token)
+  - 400 Bad Request: 유효성 검사 (stickers: 리스트 형식)
+  - 400 Bad Request: 보유하지 않은 이모티콘 아이템
+  - 400 Bad Request: 이모티콘 타입이 아닌 아이템
+  - 400 Bad Request: 보유하지 않은 일기 프레임 아이템
+  - 400 Bad Request: 일기 프레임 타입이 아닌 아이템
+  - 400 Bad Request: 보유하지 않은 스티커 아이템
+  - 400 Bad Request: 스티커 타입이 아닌 아이템
+  - 401 Unauthorized: 유효하지 않은 access_token인 경우
+  - 404 Not Found: 일기를 찾을 수 없거나 권한이 없는 경우
