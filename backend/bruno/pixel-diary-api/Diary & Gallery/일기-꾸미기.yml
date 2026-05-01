@@ -13,8 +13,8 @@ http:
     type: json
     data: |-
       {
-          "diary_frame_id": 0,
           "emoji_id": 0,
+          "diary_frame_id": 0,
           "sticker": [
               {"item_id": 0, "pos_x": 0, "pos_y": 0}
           ]
