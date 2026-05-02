@@ -205,8 +205,8 @@ function spawnKingSlime(PosX, PosY, scene) {
 
   // 킹슬라임? 의 공격 타이머
   scene.kingslimeAttackEvent = scene.time.addEvent({
-    delay: 5000,
-    callback: () => kingSlime.readyAttackDash(scene.player),
+    delay: 10000,
+    callback: () => kingSlime.readyAttackJump(scene.player),
     callbackScope: scene,
     loop: true,
   });

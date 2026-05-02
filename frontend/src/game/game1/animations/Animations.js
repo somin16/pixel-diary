@@ -90,7 +90,7 @@ export function createAllAnimations(scene) {
     });
 
     // 킹슬라임? 돌진 모션 애니메이션
-        scene.anims.create({
+    scene.anims.create({
       key: "king_slime_dash_animation",
       
       // 2프레임을 받는다
@@ -100,6 +100,34 @@ export function createAllAnimations(scene) {
       }),
       duration: 200,
       repeat: -1
+    });
+
+    // 킹슬라임? 점프 모션 애니메이션 1~3( 위에랑 다 똑같으니 가독성을 위해 이렇게 작성했습니다 )
+    scene.anims.create({ key: "king_slime_jump_1_animation", frames: scene.anims.generateFrameNumbers("king_slime_jump_1", {
+
+        start: 0,
+        end: 5
+      }),
+      duration: 800,
+      repeat: -1
+    });
+
+    scene.anims.create({ key: "king_slime_jump_2_animation", frames: scene.anims.generateFrameNumbers("king_slime_jump_2", {
+
+        start: 0,
+        end: 1
+      }),
+      duration: 400,
+      repeat: 0
+    });
+
+    scene.anims.create({ key: "king_slime_jump_3_animation", frames: scene.anims.generateFrameNumbers("king_slime_jump_3", {
+
+        start: 0,
+        end: 3
+      }),
+      duration: 600,
+      repeat: 0
     });
 
     // 기본 공격(블레이드) 애니메이션
