@@ -50,7 +50,7 @@ const Inventory = () => {
       <Header isBackButton={true} backPath="/more" />
 
       {/* 보관함 타이틀 영역 */}
-      <div className="absolute top-[16%] left-[12%] z-20 pointer-events-none">
+      <div className="absolute top-[17%] left-[12%] z-20 pointer-events-none">
         <h1 
           className="text-[54px] font-extrabold m-0 text-left"
           style={{ 
@@ -66,14 +66,14 @@ const Inventory = () => {
       </div>
 
       {/* 상점 & 재화 영역 */}
-      <div className="absolute top-[14%] right-[2%] flex flex-col items-end z-10 gap-3">
+      <div className="absolute top-[15%] right-[2%] flex flex-col items-end z-10 gap-3">
         {/* 상점 아이콘 */}
         <button 
           onClick={() => navigate('/more/shop')} 
           className="bg-transparent border-none p-0 cursor-pointer outline-none"
         >
           {/* 부모 너비가 명확하지 않아서 px로 유지 */}
-          <img src={getAssetUrl(currentTheme, 'icons', 'shop_icon_x3')} className="w-[80px] h-[75px] block" alt="상점" /> 
+          <img src={getAssetUrl(currentTheme, 'icons', 'shop_icon_x3')} className="w-[80px] h-auto block" alt="상점" /> 
         </button>
   
         {/* 코인 박스 + 안쪽 플러스 버튼 */}
