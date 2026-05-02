@@ -114,4 +114,116 @@ export default class KingSlime extends Phaser.Physics.Arcade.Sprite {
             }
         });
     }
+
+    // 점프 시작
+    readyAttackJump(player) {
+
+        // 이미 다른 공격 중이거나 죽었으면 취소(버그 방지용)
+        if (this.isAttack || !this.active) return;
+
+        this.isAttack = true;
+        this.body.setVelocity(0, 0); // 패턴 준비도중엔 제자리 고정
+
+        // 애니메이션 재생
+        this.play("king_slime_jump_1_animation", true);
+
+        // 1초후 실행
+        this.scene.time.delayedCall(1000, () => {
+
+            this.startAttackJump(player)
+        })
+    }
+
+    // 점프 시작
+    startAttackJump(player) {
+
+        // 죽었으면 취소(버그 방지용)
+        if (!this.active) return;
+
+        // 점프 도중의 애니메이션 재생
+        this.play("king_slime_jump_2_animation", true);
+
+        // 물리충돌 해제(모션도중에는 판정이 없어진다)
+        this.body.checkCollision.none = true; 
+
+        // tweens : 특정 위치로 n초동안 이동시킬때 사용
+        this.scene.tweens.add({
+
+            targets: this,          // 누구를 이동시킬건가(this{킹슬라임})
+            y: this.y - 1200,       // 현재 위치에서 어디 y좌표까지? (위로 1200픽셀)
+            duration: 800,          // 0.8초안에
+            ease: 'Sine.easeOut',   // 이동을 부드럽게 해주는 효과
+            onComplete: () => {     // onComplete: 종료될때 작동
+
+                // 이동후, 0.8초뒤에 내려찍기 함수를 실행 
+                this.scene.time.delayedCall(800, () => {
+                    this.endAttackJump(player);
+                });
+            }
+        });
+    }
+
+    // 점프 후 내려찍기
+    endAttackJump(player) {
+
+        // 죽었으면 취소(버그방지용)
+        if (!this.active) return;
+
+        // 플레이어 위치 받아오기
+        const targetX = player.x;
+        const targetY = player.y;
+
+        // 공격범위 표시
+        // 플레이어의 위치에 120의 넓이와 투명도 40%의 빨간색 동그라미(redZone)를 소환
+        const redZone = this.scene.add.circle(targetX, targetY, 120, 0xff0000, 0.4)
+            .setDepth(9);
+
+        // 킹슬라임의 위치를 플레이어의 머리위로 이동
+        this.x = targetX;
+        this.y = targetY - 1200; 
+
+        // 공격범위(redZone) 생성 후 1.5초 뒤에 그 위치에 내려찍기 시작
+        this.scene.time.delayedCall(1500, () => {
+
+            // 버그방지용
+            if (!this.active) {
+                redZone.destroy();
+                return;
+            }
+
+            // tweens을 이용해 내려찍기 이동을 구현
+            this.scene.tweens.add({
+
+                targets: this,
+                y: targetY,             // 받아둔 플레이어의 y위치로
+                duration: 200,          // 0.2초 만에 빠르게 이동
+                ease: 'Expo.easeIn',    // 점점 빨라지는 이동효과
+                onComplete: () => {     // onComplete: 종료될때 작동
+                    
+                    // 공격범위 장판 지우기
+                    redZone.destroy();
+
+                    // 물리 판정 다시키기
+                    this.body.checkCollision.none = false;
+
+                    // shake: 흔들림 효과
+                    // 0.2초동안 0.03의 강도로 카메라 흔들기
+                    this.scene.cameras.main.shake(200, 0.02);
+
+                    // 착지시 애니메이션
+                    this.play("king_slime_jump_3_animation", true);
+
+                    // 1초 동안 멈춘뒤 공격로직 완전히 종료
+                    this.scene.time.delayedCall(1000, () => {
+
+                        if (this.active) {
+
+                            this.isAttack = false;
+                            this.play("king_slime_move_animation", true);
+                        }
+                    });
+                }
+            });
+        });
+    }
 }

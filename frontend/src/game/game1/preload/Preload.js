@@ -72,6 +72,22 @@ export function loadAllSprite(scene) {
         frameHeight: 48
     });
 
+    // 킹슬라임?의 점프 모션 1~4
+    scene.load.spritesheet("king_slime_jump_1", "/assets/game1/monster/boss/king_slime_jump_1.png", {
+        frameWidth: 64,
+        frameHeight: 48
+    });
+
+    scene.load.spritesheet("king_slime_jump_2", "/assets/game1/monster/boss/king_slime_jump_2.png", {
+        frameWidth: 64,
+        frameHeight: 48
+    });
+
+    scene.load.spritesheet("king_slime_jump_3", "/assets/game1/monster/boss/king_slime_jump_3.png", {
+        frameWidth: 64,
+        frameHeight: 48
+    });
+
     // =======================타일======================================
 
     // 타일
