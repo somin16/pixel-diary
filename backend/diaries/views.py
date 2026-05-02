@@ -387,7 +387,7 @@ class DiaryDetailView(APIView):
 
 
 class DiaryDecoView(APIView):
-    """일기 꾸미기 API"""
+    """일기 꾸미기, 꾸미기 초기화 API"""
 
     def post(self, request, diary_id):
         """
@@ -545,5 +545,79 @@ class DiaryDecoView(APIView):
             print(f"=== DIARY DECO ERROR ===\n{error}\n=======================")
             return Response(
                 {"message": "일기 꾸미기 중 오류가 발생했습니다."},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
+
+    def delete(self, request, diary_id):
+        """
+        DELETE /api/v1/diaries/{diary_id}/deco/
+        - Authorization 헤더의 access_token으로 현재 유저 확인
+        - 해당 일기의 diary_deco 정보 삭제
+        - 삭제 완료 메시지 반환
+        """
+        # Authorization 헤더에서 access_token 추출
+        access_token = extract_access_token(request)
+        if not access_token:
+            return Response(
+                {"message": "Authorization 헤더에 유효한 Bearer 토큰이 필요합니다."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        try:
+            # access_token으로 유저 정보 조회
+            user = get_user_from_token(access_token)
+
+            # 유효하지 않은 토큰인 경우 401 반환
+            if not user:
+                return Response(
+                    {"message": "유효하지 않은 토큰입니다."},
+                    status=status.HTTP_401_UNAUTHORIZED,
+                )
+
+            user_id = user.get("id")
+            supabase_url = os.getenv("SUPABASE_URL")
+            headers = get_supabase_headers()
+
+            # 해당 일기가 본인 것인지 확인
+            diary_response = requests.get(
+                f"{supabase_url}/rest/v1/diaries",
+                headers=headers,
+                params={
+                    "id": f"eq.{diary_id}",
+                    "user_id": f"eq.{user_id}",
+                    "select": "id",
+                },
+            )
+
+            if not diary_response.json():
+                return Response(
+                    {"message": "일기를 찾을 수 없거나 권한이 없습니다."},
+                    status=status.HTTP_404_NOT_FOUND,
+                )
+
+            # diary_deco 테이블에서 해당 일기의 꾸미기 정보 삭제
+            delete_response = requests.delete(
+                f"{supabase_url}/rest/v1/diary_deco?diary_id=eq.{diary_id}",
+                headers={**headers, "Prefer": "return=representation"},
+            )
+
+            if delete_response.status_code not in [200, 204]:
+                raise Exception(f"Supabase API 오류: {delete_response.text}")
+
+            if not delete_response.json():
+                return Response(
+                    {"message": "꾸미기 정보를 찾을 수 없습니다."},
+                    status=status.HTTP_404_NOT_FOUND,
+                )
+
+            return Response(
+                {"message": "해당 일기의 모든 꾸미기 아이템이 삭제되었습니다."},
+                status=status.HTTP_200_OK,
+            )
+
+        except Exception as error:
+            print(f"=== DIARY DECO DELETE ERROR ===\n{error}\n==============================")
+            return Response(
+                {"message": "일기 꾸미기 초기화 중 오류가 발생했습니다."},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
