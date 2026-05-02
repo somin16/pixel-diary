@@ -7,9 +7,10 @@ import { getAssetUrl } from "../../utils/AssetHelper"; // 헬퍼 불러오기
 import Header from "../../components/common/Header";
 import ResultDialog from "../../components/common/dialog/ResultDialog";
 import PreviewDialog from "../../components/shop/PreviewDialog";
-import ShopItem from "../../components/shop/ShopItemGrid";
+import ShopItemGrid from "../../components/shop/ShopItemGrid";
 import ItemDetailDialog from "../../components/shop/ItemDetailDialog";
-import PurchaseDialog from "../../components/shop/PurchaseDialog"; 
+import PurchaseDialog from "../../components/shop/PurchaseDialog";
+import CategoryTabs from "../../components/shop/CategoryTabs";  
 
 // 아이템 카테고리 목록
 const TABS = ["모두", "스티커", "이모티콘", "테마"];
@@ -79,7 +80,7 @@ const Shop = () => {
       style={{ backgroundImage: `url(${getAssetUrl(currentTheme, 'backgrounds', 'store_background_x3')})` }}
     >
       {/* 뒤로가기 버튼만 있는 헤더 */}
-      <Header isBackButton={true} />
+      <Header isBackButton={true} backPath="/more" />
 
       {/* 상점 타이틀 영역 */}
       <div className="absolute top-[17%] left-[12%] z-20 pointer-events-none">
@@ -97,8 +98,8 @@ const Shop = () => {
         </h1>
       </div>
 
-      {/* 인벤토리 & 재화 영역 */}
-      <div className="absolute top-[14.5%] right-[2%] flex flex-col items-end z-10 gap-3">
+      {/* 보관함 & 재화 영역 */}
+      <div className="absolute top-[14%] right-[2%] flex flex-col items-end z-10 gap-3">
         {/* 보관함 아이콘 */}
         <button 
           onClick={() => navigate('/more/inventory')} 
@@ -135,30 +136,16 @@ const Shop = () => {
       </div>
 
       {/* 카테고리 탭 */}
-      <div className="w-full flex px-[10px] mt-[100px] gap-2 z-10">
-        {TABS.map(tab => (
-          <button
-            key={tab}
-            onClick={() => setActiveTab(tab)}
-            className="relative flex-1 h-[38px] bg-transparent border-none flex items-center justify-center cursor-pointer"
-          >
-            {/* 선택 여부에 따라 배경 이미지 변경 (on/off) */}
-            <img 
-              src={getAssetUrl(currentTheme, 'boxes', activeTab === tab ? 'store_filter_box_on_x2' : 'store_filter_box_off_x2')} 
-              className="absolute inset-0 w-full h-full object-fill" 
-              alt="" 
-            />
-            {/* 선택 여부에 따라 텍스트 색상 변경 */}
-            <span className={`relative z-10 text-[13px] font-bold ${activeTab === tab ? 'text-black' : 'text-[#666666]'}`}>
-              {tab}
-            </span>
-          </button>
-        ))}
-      </div>
+      <CategoryTabs 
+        tabs={TABS} 
+        activeTab={activeTab} 
+        setActiveTab={setActiveTab} 
+        marginTop="mt-[100px]" // 필요 시 상단 여백 조절 가능
+      />
 
       {/* 아이템 그리드 분리 - ShopItem에 filteredItems를 전달*/}
       {/* 탭 조건에 맞게 필터링된 아이템 목록을 화면에 렌더링 */}
-      <ShopItem 
+      <ShopItemGrid 
         items={filteredItems} 
         onItemClick={(item) => {
           setSelectedItem(item); // 클릭한 아이템 정보 저장
