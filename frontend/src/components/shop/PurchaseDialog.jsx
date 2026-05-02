@@ -1,5 +1,5 @@
 import React from "react";
-import { useTheme } from '../../hooks/useTheme';
+import { useTheme } from '../../store/useThemeStore';
 import { getAssetUrl } from "../../utils/AssetHelper";
 
 // 컴포넌트 불러오기

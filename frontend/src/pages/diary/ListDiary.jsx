@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useTheme } from '../../hooks/useTheme';
+import { useTheme } from '../../store/useThemeStore';
 import { getAssetUrl } from "../../utils/AssetHelper";
 import { formatDisplayDate } from '../../utils/DateFormatter';
 import { useNavigate } from 'react-router-dom';

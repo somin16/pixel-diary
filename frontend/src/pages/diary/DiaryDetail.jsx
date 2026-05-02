@@ -1,6 +1,6 @@
 import { useParams } from "react-router-dom";
 import DetailDiaryDialog from "../../components/diary/DetailDiaryDialog";
-import { useTheme } from "../../hooks/useTheme";
+import { useTheme } from "../../store/useThemeStore";
 import { getAssetUrl } from "../../utils/AssetHelper";
 
 export default function DiaryDetail(){
