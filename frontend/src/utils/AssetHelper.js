@@ -21,3 +21,10 @@ export const getAssetUrl = (currentThemeName, assetFolderName, fileName) => {
     return `/assets/theme/${DEFALUT_THEME_NAME}/${assetFolderName}/${fileName}.png`;
   }
 };
+
+// 데코 아이템 에셋 불러오기
+export const getDecoAssetUrl = (category, fileName) => {
+    // category: 'frames', 'stickers', 'emojis'
+    // fileName: 'sticker_cat' (확장자 제외)
+    return `/assets/decorations/${category}/${fileName}.png`;
+};
