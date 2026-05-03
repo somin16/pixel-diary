@@ -84,7 +84,7 @@ const DetailDiaryDialog = ({
     const navigate = useNavigate();
 
     const MAX_LENGTH = 160;
-    const length = new Intl.Segmenter().segment(content || '').length;
+    const length = (content || '').length
 
     // ── 스티커 드래그용 ref ───────────────────────────────────────────────────
     // containerRef: 일기장 컨테이너 DOM 참조 → 드래그 위치를 % 로 계산할 때 기준점
