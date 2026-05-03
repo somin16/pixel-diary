@@ -4,7 +4,7 @@ import DetailDiaryDialog from "../../components/diary/DetailDiaryDialog";
 import { useTheme } from "../../store/useThemeStore";
 import { getAssetUrl } from "../../utils/AssetHelper";
 import ImageButton from "../../components/common/ImageButton";
-import DiaryOptionSelector from "../../components/diary/diaryOptionSelector";
+import DiaryOptionSelector from "../../components/diary/diaryOptionSelector__";
 import ImageZoomOverlay from "../../components/diary/ImageZoomOverlay";
 import DecoPanel from "../../components/diary/DecoPanel";
 
