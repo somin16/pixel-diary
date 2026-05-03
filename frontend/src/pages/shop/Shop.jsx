@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from 'react-router-dom';
-import { useTheme } from '../../hooks/useTheme'; // useTheme 불러오기
+import { useTheme } from '../../store/useThemeStore'; // useTheme 불러오기
 import { getAssetUrl } from "../../utils/AssetHelper"; // 헬퍼 불러오기 
 
 // 컴포넌트 불러오기
@@ -24,6 +24,7 @@ const MOCK_ITEMS = [
     icon: "home_icon_x3",
     type: "테마",
     isSoldOut: false,
+    themeKey: "winter_light",
     previews: [
       "winter_light_preview_1",
       "winter_light_preview_2",

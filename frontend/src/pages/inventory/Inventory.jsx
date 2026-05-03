@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from 'react-router-dom';
-import { useTheme } from '../../hooks/useTheme'; // useTheme 불러오기
+import toast from 'react-hot-toast'; // 토스트메세지 라이브러리
+import { useTheme } from '../../store/useThemeStore'; // useTheme 불러오기
 import { getAssetUrl } from "../../utils/AssetHelper"; // 헬퍼 불러오기 
 
 // 컴포넌트 불러오기
@@ -13,15 +14,17 @@ const TABS = ["모두", "스티커", "이모티콘", "테마"];
 
 // 보관함 더미 데이터
 const MOCK_INVENTORY = [
-  { id: 1, name: "겨울테마", icon: "home_icon_x3", type: "테마" },
+  { id: 1, name: "겨울테마", icon: "home_icon_x3", type: "테마", themeKey: "winter_light" },
 ];
 
 const Inventory = () => {
   // navigate('/경로') 처럼 사용하여 원하는 주소로 화면을 전환
   const navigate = useNavigate();
 
-  //  테마 전역 관리
+  // 현재 테마 가져오기
   const currentTheme = useTheme((state) => state.currentTheme);
+  // 변경 테마 가져오기
+  const setTheme = useTheme((state) => state.setTheme);
 
   // 컴포넌트 상태 관리 (State) - 임시
   const [activeTab, setActiveTab] = useState("모두");
@@ -34,10 +37,35 @@ const Inventory = () => {
     ? MOCK_INVENTORY 
     : MOCK_INVENTORY.filter(item => item.type === activeTab);
 
-  // 아이템 클릭 핸들러
+  // 보관함을 열었을 시 현재 적용된 테마 아이템에 초록색 테두리 씌우기(보관함의 초록색 선택 테두리 위치를 현재 테마에 맞게 업데이트)
+  useEffect(() => {
+    // MOCK_INVENTORY는 서버에서 받아온 내 아이템 목록이라고 가정
+    const appliedThemeItem = MOCK_INVENTORY.find(
+      // 아이템의 themeKey가 '현재 Zustand 스토어에 저장된 테마 값(currentTheme)'과 일치해야 함
+      (item) => item.type === "테마" && item.themeKey === currentTheme
+    );
+    if (appliedThemeItem) {
+      setSelectedItemId(appliedThemeItem.id);
+    }
+  }, [currentTheme]);
+
+  // 아이템 클릭 핸들러 로직
   const handleItemClick = (item) => {
-    // 이미 선택된 아이템을 다시 누르면 선택 해제, 아니면 새 아이템 선택
-    setSelectedItemId(prev => prev === item.id ? null : item.id);
+    if (item.type === "테마") {
+        // 이미 적용된 테마인지 확인
+        if (item.themeKey === currentTheme) {
+            // 토스트 호출
+            toast("이미 적용 중인 테마입니다", {
+            });
+            return; 
+        }
+
+      setTheme(item.themeKey); // 클릭 즉시 전역 테마 변경
+      setSelectedItemId(item.id); // 방금 클릭한 테마에 초록색 테두리 (null로 풀리지 않음)
+    } else {
+      // 이미 선택된 아이템을 다시 누르면 선택 해제, 아니면 새 아이템 선택
+      setSelectedItemId(prev => prev === item.id ? null : item.id);
+    }
   };
 
   return (

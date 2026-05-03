@@ -7,7 +7,7 @@ import { getAssetUrl } from "../../utils/AssetHelper";
 import AuthValidator from '../../utils/AuthValidator';
 
 // 3. 커스텀 훅 불러오기
-import { useTheme } from "../../hooks/useTheme";
+import { useTheme } from "../../store/useThemeStore";
 import useDebounce from '../../hooks/useDebounce';
 
 // 4. 슈파베이스 불러오기

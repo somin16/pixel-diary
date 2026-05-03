@@ -1,5 +1,6 @@
 import { useLocation, Outlet } from 'react-router-dom'; // 경로 읽어오기
 import NavigationBar from './NavigationBar'; // 네비게이션 바
+import { Toaster } from 'react-hot-toast'; // Toaster 불러오기
 
 // 기준 해상도 상수 — 모든 UI는 이 크기 안에서 작업 (9 : 20)
 const BASE_WIDTH = 360;
@@ -51,6 +52,19 @@ export default function AppShell({ children }) {
         <footer className="w-full shrink-0">
           { !hideNavigationBarPaths && <NavigationBar/> }
         </footer>
+
+        {/* Toaster 추가 */}
+        <Toaster 
+          position="bottom-center" // 모바일 앱 느낌이 나도록 하단 중앙에 배치
+          toastOptions={{
+            className: 'instant-toast',
+            duration: 2000, // 2초 동안 노출
+            style: {
+              marginBottom: hideNavigationBarPaths ? '20px' : '80px', // 네비바 유무에 따라 높이 조절 가능
+              animation: 'none !important',
+            },
+          }} 
+        />
 
       </div>
     </div>

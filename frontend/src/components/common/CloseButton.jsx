@@ -1,6 +1,6 @@
 import { getAssetUrl } from "../../utils/AssetHelper"
 import ImageButton from "./ImageButton"
-import { useTheme } from "../../hooks/useTheme"
+import { useTheme } from "../../store/useThemeStore"
 import { useState } from "react"
 import { Navigate, useNavigate } from "react-router-dom"
 

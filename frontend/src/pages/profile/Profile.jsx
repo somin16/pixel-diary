@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from 'react-router-dom';
-import { useTheme } from '../../hooks/useTheme'; // useTheme 불러오기
+import { useTheme } from '../../store/useThemeStore'; // useTheme 불러오기
 import { getAssetUrl } from "../../utils/AssetHelper"; // 헬퍼 불러오기
 
 // 컴포넌트 불러오기
