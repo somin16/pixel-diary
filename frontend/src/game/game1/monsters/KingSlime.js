@@ -15,7 +15,7 @@ export default class KingSlime extends Phaser.Physics.Arcade.Sprite {
         // 스탯 
         this.isBoss = true;                   // 보스 확인용
         this.monsterID = 101;                 // 몬스터 번호 (보스몬스터는 101부터 시작하는걸로 구분하겠습니다)
-        this.hp = 15 + monsterStatus;         // 체력
+        this.hp = 30 + monsterStatus;         // 체력
         this.damage = -10;                    // 대미지
         this.resistance = 0;                  // 공격을 받았을때 밀려나는 저항정도
                                               // ※ 1은 저항없음, 0에 가까울수록 안밀린다
@@ -24,6 +24,9 @@ export default class KingSlime extends Phaser.Physics.Arcade.Sprite {
         this.setScale(3);   // 이미지 크기조정
         this.setDepth(10);     // 다른 몬스터에게 가려지지않도록 레이어를 조금 위로 설정
         this.play("king_slime_move_animation", true); // 애니메이션 재생
+
+        // 킹슬라임의 실제 피격판정 설정
+        this.body.setSize(48, 32);
 
         // 패턴 확인용 변수
         this.isAttack = false;
@@ -113,6 +116,20 @@ export default class KingSlime extends Phaser.Physics.Arcade.Sprite {
                 this.play("king_slime_move_animation", true);
             }
         });
+    }
+
+    // 점프와 돌진중에 랜덤선택
+    selectAttack(player) {
+
+        // 돌진을 기준점으로 잡는다(70%)
+        const DASH_PERCENT = 70;
+
+        // Between을 통해 1부터 100사이의 랜덤수를 뽑는다
+        const JUMP_PERCENT = Phaser.Math.Between(1, 100); 
+
+        // 70%확률로 돌진, 30%확률로 점프를 사용한다
+        if (JUMP_PERCENT <= DASH_PERCENT) this.readyAttackDash(player);
+        else this.readyAttackJump(player);
     }
 
     // 점프 시작

@@ -85,8 +85,14 @@ export function monstersHitDamageBase(monster, knockback, scene) {
 // 보스 몬스터 스폰
 export function spawnBossMonster(scene) {
 
+    // 보스 스폰 확인
+    scene.isBossSpawn = true;
+
+    // 보스 몬스터가 스폰되면 엘리트 몬스터 타이머를 파괴
+    scene.eliteMonsterSpawnTimer.destroy();
+
     // 생성범위
-    const SPAWN_RADIUS = 400;
+    const SPAWN_RADIUS = 450;
     // Between을 통해 랜덤한 각도를 뽑아낸다
     const randomAngle = Phaser.Math.FloatBetween(0, Math.PI * 2);
 
@@ -101,7 +107,7 @@ export function spawnBossMonster(scene) {
 function spawnEliteMonster(scene) {
 
     // 생성범위
-    const SPAWN_RADIUS = 400;
+    const SPAWN_RADIUS = 450;
     // Between을 통해 랜덤한 각도를 뽑아낸다
     const randomAngle = Phaser.Math.FloatBetween(0, Math.PI * 2);
 
@@ -131,13 +137,15 @@ function spawnMonster(scene) {
     // 슬라임 생성확률을 기준으로 계산한다
     let slimeSpawnPercent = 100; //
 
-    // 20초가 지나기전까진 슬라임만 생성되며, 시간이 지나면 다른 몬스터의 확률이 증가
-    if (scene.gamePlayTime > 280) {
-      slimeSpawnPercent = 100;
+    // 20초가 지나기전까지 슬라임만 생성되며, 시간이 지나면 다른 몬스터의 확률이 증가
+    // 하지만 보스 몬스터(킹슬라임)가 스폰됐을 경우에는 슬라임만 등장한다(난이도 조절)
+    if (scene.gamePlayTime < 280 && !scene.isBossSpawn) {
+
+      slimeSpawnPercent = 80;
     }
 
     else {
-      slimeSpawnPercent = 80;
+      slimeSpawnPercent = 100;
     }
 
     // 1부터 100을 랜덤으로 뽑는다
@@ -176,7 +184,7 @@ function spawnCubegolem(PosX, PosY, scene) {
 function spawnRedSlime(scene) {
 
   // 생성범위
-  const SPAWN_RADIUS = 400;
+  const SPAWN_RADIUS = 450;
   // Between을 통해 랜덤한 각도를 뽑아낸다
   const randomAngle = Phaser.Math.FloatBetween(0, Math.PI * 2);
 
@@ -205,8 +213,8 @@ function spawnKingSlime(PosX, PosY, scene) {
 
   // 킹슬라임? 의 공격 타이머
   scene.kingslimeAttackEvent = scene.time.addEvent({
-    delay: 10000,
-    callback: () => kingSlime.readyAttackJump(scene.player),
+    delay: 8000,
+    callback: () => kingSlime.selectAttack(scene.player),
     callbackScope: scene,
     loop: true,
   });
@@ -248,7 +256,6 @@ function monsterLevelUp(scene) {
 
     scene.monsterStatus += 1; // 현재는 임시로 전체 가중치1 증가로 설정
     updateMonsterSpawn(scene);    // 몬스터 스폰 갱신
-    addEventRedSlimeSpawn(scene); // 갱신
 }
 
 // 몬스터 스폰률 업데이트
@@ -311,12 +318,18 @@ export function monsterDead(monster, scene) {
       else {
 
         // 1%확률로 자석이 생성
+        // 대신 보스가 있으면 고기로 변경
         const magnetDropPercent = 1;
         const randomValue = Phaser.Math.Between(1, 100);
 
-        if (magnetDropPercent >= randomValue) addDropItemMagnet(monster.x, monster.y, scene);
+        // 보스가 없을때 자석을 생성
+        if (magnetDropPercent >= randomValue && !scene.isBossSpawn) addDropItemMagnet(monster.x, monster.y, scene);
+        
+        // 보스가 있을땐 자석이 아닌 고기를 생성
+        else if (magnetDropPercent >= randomValue && scene.isBossSpawn) addDropItemMeat(monster.x, monster.y, scene);
         else addExpBall(monster.x, monster.y, scene);
       }
+
       monster.destroy(); // 체력이 다 달면 없애기
     }
 

@@ -77,7 +77,7 @@ function addExp(value, player ,scene) {
       const percent = player.expCount / player.MAX_EXP; //퍼센트 계산
 
       const expBarPercentValue = Math.max(2, 150 * percent);// 2: setScale 즉 처음 생성될때부터 이미지 크기 정해놓는것
-                                                                                                                         // 150 * percent인 이유: 150이 기본 크기여서 150의 n%로 하면 딱 맞는다  
+                                                            // 150 * percent인 이유: 150이 기본 크기여서 150의 n%로 하면 딱 맞는다  
       scene.addExpValue.width = expBarPercentValue; // 계산 완료된걸 exp바에 넣어준다
     }
 }
