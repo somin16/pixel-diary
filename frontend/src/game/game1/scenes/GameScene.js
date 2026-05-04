@@ -127,6 +127,9 @@ export default class GameScene extends Phaser.Scene {
 
     // ====================몬스터===================
 
+    // 보스 몬스터가 소환됐는지 확인용
+    this.isBossSpawn = false;
+
     // 몬스터에 사용될 가중치
     this.monsterStatus = 0;
 
