@@ -6,17 +6,19 @@ const Game1 = () => {
   const gameContainer = useRef(null);
 
   useEffect(() => {
-    // 페이저 게임 환경 설정
+
     const config = {
       type: Phaser.AUTO,
       pixelArt: true, // 업스케일링 해도 픽셀이 깨지지 않도록 설정
+      roundPixels: true, // 픽셀 찌그러짐 방지
 
-      scale: {
-        mode: Phaser.Scale.FIT, // 화면에 꽉 채워주게 줌인한다
+    scale: {
+        mode: Phaser.Scale.ENVELOP, // FIT 대신 ENVELOP 사용: 
+        // 화면을 꽉 채우기 위해 확대하며, 비율이 다르면 일부가 잘릴 수 있음
         autoCenter: Phaser.Scale.CENTER_BOTH,
         parent: gameContainer.current, // 렌더링 기준 설정
         width: 360,
-        height: 720,
+        height: 800,
       },
 
       physics: {

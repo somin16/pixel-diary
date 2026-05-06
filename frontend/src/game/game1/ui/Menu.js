@@ -6,6 +6,9 @@ export function createMenu(scene) {
     const centerX = scene.cameras.main.width / 2;     // X좌표 가운데
     const centerY = scene.cameras.main.height / 2;     // Y좌표 가운데
 
+    // 현재 기기의 화면크기
+    const sceneWidth = scene.scale.width;
+
     // 버튼 템플릿
     const buttonWidth = 100;   // 버튼 넓이
     const buttonHeight = 25;   // 버튼 높이
@@ -21,7 +24,7 @@ export function createMenu(scene) {
     );
     
     // 메뉴아이콘을 화면기준 우측위에 생성
-    const menuOpenButton = scene.add.image(340, 50, "menu_icon").setInteractive();
+    const menuOpenButton = scene.add.image(sceneWidth - 25, 50, "menu_icon").setInteractive();
     menuOpenButton.setDepth(100);      // 레이어를 위에 설정
     menuOpenButton.setScrollFactor(0); // 가운데 고정
     menuOpenButton.setScale(2);        // 해상도x2
