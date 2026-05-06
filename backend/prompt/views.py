@@ -32,10 +32,10 @@ CEREBRAS_MODEL = "qwen-3-235b-a22b-instruct-2507"
 # ============================================================
 
 # ▼ 픽셀아트 스타일 고정 토큰 - 바꾸면 그림체가 달라집니다
-FIXED_PREFIX = "(pixel art:1.3), (medium shot:1.4), (character focus:1.3), low resolution, retro video game style, flat coloring, simplistic shapes, sharp pixel edges, consistent pixel grid"
+FIXED_PREFIX = "(pixel art:1.3), (medium shot:1.4), low resolution, retro video game style, flat coloring, simplistic shapes, sharp pixel edges, consistent pixel grid"
 
 # ▼ 시점 토큰 - 수정 가능 (예: isometric view:0.8, wide shot:1.2 등)
-FIXED_SUFFIX = ""
+FIXED_SUFFIX = "(character focus:1.3)"
 
 # ▼ 부정 프롬프트 - 이미지에 나오지 않았으면 하는 요소들
 NEGATIVE_PROMPT = "(realistic:1.4), (smooth skin:1.3), (photorealistic:1.3), anti-aliasing, blurry, gradient shading, soft edges, 3d render, distorted limbs, ugly face, deformed face, (close up face:1.3), neon, dark, busy background"
