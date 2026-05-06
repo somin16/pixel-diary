@@ -8,15 +8,19 @@ import { getAssetUrl } from "../../../utils/AssetHelper"; // 헬퍼 불러오기
  * @param {React.ReactNode} children - 팝업 내부에 들어갈 본문 요소 (텍스트, 입력창 등)
  * @param {string} width - 가로 너비 (기본값: "auto")
  * @param {string} maxWidth - 최대 가로 너비 (기본값: "360px") -> 상한선 값이기 때문에 px로 유지
+ * @param {function} onClose - 오버레이(어두운 배경) 클릭 시 다이얼로그를 닫는 함수
  */
 
-const DialogBox = ({ boxImageName = 'popup_message_box_x3', children, width = "auto", maxWidth = "360px" }) => {
+const DialogBox = ({ boxImageName = 'popup_message_box_x3', children, width = "auto", maxWidth = "360px", onClose }) => {
   const currentTheme = useTheme((state) => state.currentTheme);
 
   return (
     <>
       {/* 어두운 배경 오버레이 */}
-      <div className="fixed top-0 left-0 w-full h-full bg-black/60 z-40" />
+      <div 
+        className="fixed top-0 left-0 w-full h-full bg-black/60 z-40" 
+        onClick={onClose}  
+      />
 
       {/* 다이얼로그 본체 컨테이너 (화면 중앙 정렬) */}
       <div 
