@@ -43,8 +43,8 @@ docs: |-
   - 400 Bad Request: 유효성 검사 (stickers: 리스트 형식)
   - 400 Bad Request: 보유하지 않은 이모티콘 아이템
   - 400 Bad Request: 이모티콘 타입이 아닌 아이템
-  - 400 Bad Request: 보유하지 않은 일기 프레임 아이템
-  - 400 Bad Request: 일기 프레임 타입이 아닌 아이템
+  - 400 Bad Request: 보유하지 않은 일기장 테마 아이템
+  - 400 Bad Request: 일기장 테마 타입이 아닌 아이템
   - 400 Bad Request: 보유하지 않은 스티커 아이템
   - 400 Bad Request: 스티커 타입이 아닌 아이템
   - 401 Unauthorized: 유효하지 않은 access_token인 경우
