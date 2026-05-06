@@ -14,7 +14,7 @@ http:
     data: |-
       {
           "emoji_id": 0,
-          "diary_frame_id": 0,
+          "diary_theme_id": 0,
           "sticker": [
               {"item_id": 0, "pos_x": 0, "pos_y": 0}
           ]
@@ -29,7 +29,7 @@ settings:
 
 docs: |-
   ### Body / Json (파싱 오류 방지를 위해 기본값 0 입력)
-  - diary_frame_id: 일기 프레임 아이디
+  - diary_theme_id: 일기장 테마 아이디
   - emoji_id: 이모티콘 아이디
   - sticker: [
     {item_id: 스티커 아이디, pos_x: 스티커 위치 x 값, pos_y: 스티커 위치 y 값}
