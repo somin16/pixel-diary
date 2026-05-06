@@ -224,7 +224,7 @@ const DetailDiaryDialog = ({
 
     // ── 렌더링 ──────────────────────────────────────────────────────────────
     return (
-        <div className="relative w-full h-full flex flex-col justify-end items-center">
+        <div className="relative w-full h-full flex flex-col items-center justify-between">
 
             {/* ── 닫기 버튼 ── */}
             <div className="absolute w-full h-full z-40 pointer-events-none">
@@ -235,7 +235,7 @@ const DetailDiaryDialog = ({
             {/* containerRef: 스티커 드래그 위치 % 계산의 기준점으로 사용 */}
             <div
                 ref={containerRef}
-                className="relative w-[85%] h-fit flex justify-center aspect-[312/522]"
+                className="relative w-[85%] h-fit flex justify-center top-5/10 -translate-y-1/2 aspect-[312/522]"
             >
 
                 {/* ── 날짜 + 이모지 영역 (z-60) ─────────────────────────────── */}
@@ -245,7 +245,7 @@ const DetailDiaryDialog = ({
                     <div className="absolute flex items-center">
                         <span
                             onClick={handleDateTextClick}
-                            className={`text-[#5A5A5A] font-bold text-lg tracking-tighter ${(mode === 'create' || mode === 'edit') ? 'cursor-pointer hover:text-blue-500' : ''
+                            className={`text-[#5A5A5A] font-bold text-sm tracking-tighter ${(mode === 'create' || mode === 'edit') ? 'cursor-pointer hover:text-blue-500' : ''
                                 }`}
                         >
                             {formatDisplayDate(diaryDate)}
@@ -276,7 +276,7 @@ const DetailDiaryDialog = ({
                         - 없음: 테마 기본 이모지 이미지 사용
                         - onError: 이미지 로드 실패 시 숨김 처리 (레이아웃 깨짐 방지)
                     */}
-                    <div className="absolute h-full w-[20%] aspect-square right-[1%] pr-[5%] pointer-events-none">
+                    <div className="absolute h-full w-[17%] aspect-square right-[1%] pr-[5%] pointer-events-none">
                         <img
                             src={emojiImageSrc}
                             alt="emoji"
@@ -305,9 +305,9 @@ const DetailDiaryDialog = ({
                                     backgroundSize: '100% 100%',
                                 }}
                             >
-                                <button className="mt-[2%] w-full p-[6.6%] font-semibold outline-none" onClick={handleEditNavigation}>수정</button>
-                                <button className="w-full p-[6.6%] text-red-500 text-sm font-semibold outline-none" onClick={handleDelete}>삭제</button>
-                                <button className="w-full p-[6.6%] text-sm font-semibold outline-none" onClick={handleShare}>공유</button>
+                                <button className="mt-[2%] w-full h-[32%] font-semibold outline-none text-xs" onClick={handleEditNavigation}>수정</button>
+                                <button className="w-full h-[32%] text-red-500 text-xs font-semibold outline-none" onClick={handleDelete}>삭제</button>
+                                <button className="w-full h-[32%]  text-xs font-semibold outline-none" onClick={handleShare}>공유</button>
                             </div>
                         )}
                     </div>
@@ -337,7 +337,7 @@ const DetailDiaryDialog = ({
                     ) : (
                         // 이미지 없을 때: 흰색 배경 + 현재 단계에 맞는 안내 문구
                         <div className="w-full h-full bg-white flex items-center justify-center">
-                            <span className="text-gray-400 text-xl text-center px-2">
+                            <span className="text-gray-400 text-sm text-center px-2">
                                 {step === 1 && (isCreate || isEdit)
                                     ? '본문 작성 후 그림 칸 클릭!'
                                     : step === 4
@@ -427,7 +427,7 @@ const DetailDiaryDialog = ({
                         {isTextEditable ? (
                             <>
                                 <textarea
-                                    className="w-full h-full text-[16px] text-[#4A4A4A] leading-relaxed outline-none resize-none placeholder:text-[#A0A0A0] bg-transparent"
+                                    className="w-full h-full text-xs text-[#4A4A4A] leading-relaxed outline-none resize-none placeholder:text-[#A0A0A0] bg-transparent"
                                     value={content}
                                     onChange={(e) => {
                                         const input = e.target.value;
@@ -437,12 +437,12 @@ const DetailDiaryDialog = ({
                                     placeholder="오늘의 일기를 작성해 보세요"
                                     autoFocus
                                 />
-                                <div className="absolute top-[50%] right-[1%] text-right text-sm text-gray-400">
+                                <div className="absolute top-[50%] right-[1%] text-right text-xs text-gray-400">
                                     {length} / 160
                                 </div>
                             </>
                         ) : (
-                            <p className="text-base text-[#4A4A4A] leading-relaxed w-full whitespace-pre-wrap overflow-y-auto no-scrollbar">
+                            <p className="text-xs text-[#4A4A4A] leading-relaxed w-full whitespace-pre-wrap overflow-y-auto no-scrollbar">
                                 {content}
                             </p>
                         )}
@@ -452,7 +452,7 @@ const DetailDiaryDialog = ({
             </div>
 
             {/* ── 하단 버튼 슬롯 (부모에서 주입) ── */}
-            <div className="w-full h-[15%] flex justify-center z-30">
+            <div className="w-full h-[20%] flex justify-center z-30">
                 {footer}
             </div>
         </div>

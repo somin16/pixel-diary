@@ -52,8 +52,11 @@ const Profile = () => {
 
 return (
     <div 
-      className="w-full h-full pt-[60px] pb-[30px] flex flex-col items-center bg-[length:100%_100%]"
-      style={{ backgroundImage: `url(${getAssetUrl(currentTheme,'backgrounds','menu_background_x3')})` }}
+        className="w-full h-full pt-[60px] pb-[30px] flex flex-col items-center"
+        style={{
+        backgroundImage: `url(${getAssetUrl(currentTheme,'backgrounds','menu_background_x3')})`,
+        backgroundSize: "100% 100%",
+        }}
     >
       
       {/* 상단 헤더 - 뒤로 가기 버튼 */}
@@ -97,7 +100,7 @@ return (
       </section>
 
       {/* 입력 필드 영역 */}
-      <section className="w-[220px] flex flex-col gap-[10px] mb-[30px]">
+      <section className="px-[10%] flex flex-col gap-[10%] mb-[10%]">
       {/* 닉네임 입력 */}
       <InputField 
         label="닉네임"
@@ -117,9 +120,9 @@ return (
       </section>
 
       {/* 수정 완료 메시지 */}
-      <div className="w-full h-[60px] flex justify-center items-center mb-[3px]">
+      <div className="w-full h-[5%] flex justify-center items-center mb-[3%]">
         {showSuccessMessage && (
-          <p className="m-0 mt-[3px] text-[13px] font-normal text-[#00A40B]">
+          <p className=" text-xs font-normal text-[#00A40B]">
             정보가 수정되었습니다
           </p>
         )}

@@ -39,7 +39,7 @@ export default function Home() {
     };
     return (
         <div
-            className="relative w-full h-full overflow-hidden"
+            className="relative w-full h-full"
             style={backgroundStyle}
         >
             <div className="w-full h-full flex items-center justify-center pb-[38%]">
@@ -50,7 +50,7 @@ export default function Home() {
                     onDateClick={handleDateClick}
                 />    
             </div>
-            <div className="absolute w-20 h-auto bottom-[14%] right-[7%]">
+            <div className="absolute bottom-[12%] right-[5%]">
                 <FloatingActionButton
                     onClick={handleFabClick}
                 />

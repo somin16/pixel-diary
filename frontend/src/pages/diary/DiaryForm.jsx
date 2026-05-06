@@ -224,10 +224,10 @@ export default function DiaryForm() {
     // ── 렌더링 ──────────────────────────────────────────────────────────────
     return (
         <div
-            className="relative w-full h-full overflow-hidden"
+             className={`relative w-full h-full ${step === 1 ? '' : 'overflow-hidden'}`}
             style={{
                 backgroundImage: `url(${getAssetUrl(currentTheme, 'backgrounds', 'background_x3')})`,
-                backgroundSize: '100% 100%',
+                backgroundSize: 'cover',
             }}
         >
             {/* 배경 블러 오버레이 */}
@@ -257,15 +257,6 @@ export default function DiaryForm() {
                 footer={
                     <>
                         {/* Step 1: 본문 작성 완료 → 그림 선택으로 */}
-                        {step === 1 && (
-                            <ImageButton
-                                label="저장하기"
-                                onClick={() => setStep(2)}
-                                className="w-[30%] aspect-[120/48]"
-                                imageSrc={getAssetUrl(currentTheme, 'buttons', 'green_button_x3')}
-                                textSize="18px"
-                            />
-                        )}
 
                         {/* Step 6: 꾸미기 완료 → 처음부터 or 저장 */}
                         {step === 6 && (
@@ -275,21 +266,21 @@ export default function DiaryForm() {
                                     onClick={handleRestartFromBeginning}
                                     className="w-[30%] aspect-[120/48]"
                                     imageSrc={getAssetUrl(currentTheme, 'buttons', 'red_button_x3')}
-                                    textSize="18px"
+                                    textOption="text-sm text-white"
                                 />
                                 <ImageButton
                                     label="다시 그리기"
                                     onClick={handleRegenerateImage}
                                     className="w-[30%] aspect-[120/48]"
                                     imageSrc={getAssetUrl(currentTheme, 'buttons', 'blue_button_x3')}
-                                    textSize="18px"
+                                    textOption="text-sm text-white"
                                 />
                                 <ImageButton
                                     label="저장하기"
                                     onClick={handleFinalSave}
                                     className="w-[30%] aspect-[120/48]"
                                     imageSrc={getAssetUrl(currentTheme, 'buttons', 'green_button_x3')}
-                                    textSize="18px"
+                                    textOption="text-sm text-white"
                                 />
                             </div>
                         )}
@@ -307,15 +298,13 @@ export default function DiaryForm() {
                             <ImageButton label="그냥 그리기"   
                             onClick={handleDrawWithoutOption} 
                             className="w-[60%] aspect-[237/72]" 
-                            imageSrc={getAssetUrl(currentTheme, 'buttons', 'babypink_button_x3')} 
-                            textSize="30px" 
-                            textColor="#FF7396" />
+                            imageSrc={getAssetUrl(currentTheme, 'buttons', 'babypink_button_x3')}  
+                            textOption="text-2xl text-[#FF7396]" />
                             <ImageButton label="옵션 적용하기" 
                             onClick={handleSelectOption}       
                             className="w-[60%] aspect-[237/72]" 
                             imageSrc={getAssetUrl(currentTheme, 'buttons', 'skyblue_button_x3')}  
-                            textSize="30px" 
-                            textColor="#4C8AE8" />
+                            textOption="text-2xl text-[#4C8AE8]" />
                         </div>
                     }
                 />
@@ -333,8 +322,7 @@ export default function DiaryForm() {
                         onClick={handleGenerateImage} 
                         className="w-[60%] aspect-[237/72]" 
                         imageSrc={getAssetUrl(currentTheme, 'buttons', 'skyblue_button_x3')} 
-                        textSize="30px" 
-                        textColor="#4C8AE8" />
+                        textOption="text-2xl text-[#4C8AE8]" />
                     }
                 />
             )}
@@ -360,13 +348,12 @@ export default function DiaryForm() {
                             onClick={handleRegenerateImage} 
                             className="w-[60%] aspect-[237/72]" 
                             imageSrc={getAssetUrl(currentTheme, 'buttons', 'babypink_button_x3')} 
-                            textSize="30px" 
-                            textColor="#FF7396" />
+                            textOption="text-2xl text-[#FF7396]" />
                             <ImageButton label="꾸미기"      
                             onClick={handleDecorate}         
                             className="w-[60%] aspect-[237/72]" 
                             imageSrc={getAssetUrl(currentTheme, 'buttons', 'skyblue_button_x3')}  
-                            textSize="30px" textColor="#4C8AE8" />
+                            textOption="text-2xl text-[#4C8AE8]" />
                         </div>
                     }
                 />

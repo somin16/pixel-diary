@@ -46,7 +46,8 @@ const CloseButton = ({ onClose, className}) => {
         <ImageButton
             onClick = {handleClose}
             imageSrc = {getAssetUrl(currentTheme, 'icons', 'close_icon_x3')}
-            className = {`aspect-[27/24] w-[35px] ${className}`}
+            className = {`aspect-[27/24] ${className}`}
+            style={{ width: 'calc(var(--scale, 1) * 35px)' }}
         />
     )
 }

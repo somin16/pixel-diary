@@ -119,7 +119,7 @@ export default function Signup() { // 회원가입 페이지 내보내기
 
     return(
         // 전체 컨테이너
-        <div className='w-full h-full items-center flex flex-col p-25'>
+        <div className='w-full h-full items-center justify-center flex flex-col p-25'>
             {/* 회원가입 글씨 */}
             <h1 className='text-5xl font-bold text-center mt-10'>Pixel Diary</h1><br/>
             <h1 className='text-3xl font-bold text-center mb-10'>회원가입</h1>
@@ -157,6 +157,7 @@ export default function Signup() { // 회원가입 페이지 내보내기
                     onChange={(e) => setPassword(e.target.value)}
                     status={passwordStatus}
                     currentTheme={currentTheme}
+                    autoComplete='new-password'
                 />
 
                 {/* 비밀번호 확인창 */}

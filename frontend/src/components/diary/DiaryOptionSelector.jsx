@@ -71,7 +71,7 @@ const DiaryOptionSelector = ({ currentTheme, tags = [], onTagsChange, onGenerate
                     <div className="w-full h-[53%] overflow-y-auto no-scrollbar flex flex-wrap content-start gap-[3%] p-[5%] ">
                         {tags.map((tag) => (
                             <div key={tag}
-                                className={`flex items-center px-[2%] py-[1%] rounded text-[16px] border ${tag.startsWith('-')
+                                className={`flex items-center px-[2%] py-[1%] rounded text-sm border ${tag.startsWith('-')
                                         ? 'bg-[#FFF0F0] border-[#FFC7C7] border-[3px] rounded-lg text-[#FF7396]' // 제거 태그 스타일
                                         : 'bg-[#FCFFE2] border-[#C9EA77] border-[3px] rounded-lg text-[#769357]' // 추가 태그 스타일
                                     }`}
@@ -90,9 +90,9 @@ const DiaryOptionSelector = ({ currentTheme, tags = [], onTagsChange, onGenerate
                             backgroundSize: '100% 100%',
                         }}
                     >
-                        <span className="text-base text-[#4A4A4A] m-[4%] shrink-0">추가:</span>
+                        <span className="text-sm text-[#4A4A4A] m-[4%] shrink-0">추가:</span>
                         <input
-                            className="w-full bg-transparent outline-none text-base text-[#4A4A4A]"
+                            className="w-full bg-transparent outline-none text-sm text-[#4A4A4A]"
                             value={inputValue}
                             onChange={(e) => setInputValue(e.target.value)}
                             onKeyDown={(e) => e.key === 'Enter' && handleAddTag()}
@@ -102,8 +102,7 @@ const DiaryOptionSelector = ({ currentTheme, tags = [], onTagsChange, onGenerate
                             onClick={handleAddTag}
                             className=" w-[17%] aspect-square m-[4%]"
                             imageSrc={getAssetUrl(currentTheme, 'boxes', 'positive_option_box_x2')}
-                            textSize="30px"
-                            textColor="yellowgreen"
+                            textOption="text-sm text-[yellowgreen]"
                         />
                     </div>
 
@@ -115,9 +114,9 @@ const DiaryOptionSelector = ({ currentTheme, tags = [], onTagsChange, onGenerate
                             backgroundSize: '100% 100%',
                         }}
                     >
-                        <span className="text-base text-[#4A4A4A] m-[4%] shrink-0">제거:</span>
+                        <span className="text-sm text-[#4A4A4A] m-[4%] shrink-0">제거:</span>
                         <input
-                            className="w-full bg-transparent outline-none text-base text-[#4A4A4A]"
+                            className="w-full bg-transparent outline-none text-sm text-[#4A4A4A]"
                             value={removeValue}
                             onChange={(e) => setRemoveValue(e.target.value)}
                             onKeyDown={(e) => e.key === 'Enter' && handleAddNegativeTag()}
@@ -127,8 +126,7 @@ const DiaryOptionSelector = ({ currentTheme, tags = [], onTagsChange, onGenerate
                             onClick={handleAddNegativeTag}
                             className=" w-[17%] m-[4%] aspect-square"
                             imageSrc={getAssetUrl(currentTheme, 'boxes', 'negative_option_box_x2')}
-                            textSize="30px"
-                            textColor="#FF7396"
+                            textOption="text-sm text-[#FF7396]"
                         />
                     </div>
                 </div>

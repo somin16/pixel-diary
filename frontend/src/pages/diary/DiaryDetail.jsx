@@ -42,14 +42,14 @@ export default function DiaryDetail() {
 
     return (
         <div
-            className="relative w-full h-full"
+            className="relative w-full h-full overflow-hidden"
             style={{
                 backgroundImage: `url(${getAssetUrl(currentTheme, 'backgrounds', 'background_x3')})`,
                 backgroundSize: '100% 100%',
             }}
         >
             {/* 배경 블러 오버레이 */}
-            <div className="absolute inset-0 bg-black/60 backdrop-blur-xs z-1" />
+            <div className="absolute inset-0 bg-black/60 backdrop-blur-xs" />
 
             <DetailDiaryDialog
                 currentTheme={currentTheme}
