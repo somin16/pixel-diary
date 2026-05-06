@@ -385,6 +385,163 @@ class DiaryDetailView(APIView):
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
 
+    def get(self, request, diary_id):
+        """
+        일기 상세 조회
+        GET /api/v1/diaries/{diary_id}/
+        - Authorization 헤더의 access_token으로 현재 유저 확인
+        - 해당 일기의 내용, 생성일, 꾸미기 아이템 정보 반환
+        """
+        # Authorization 헤더에서 access_token 추출
+        access_token = extract_access_token(request)
+        if not access_token:
+            return Response(
+                {"message": "Authorization 헤더에 유효한 Bearer 토큰이 필요합니다."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        try:
+            # access_token으로 유저 정보 조회
+            user = get_user_from_token(access_token)
+
+            # 유효하지 않은 토큰인 경우 401 반환
+            if not user:
+                return Response(
+                    {"message": "유효하지 않은 토큰입니다."},
+                    status=status.HTTP_401_UNAUTHORIZED,
+                )
+
+            user_id = user.get("id")
+            supabase_url = os.getenv("SUPABASE_URL")
+            headers = get_supabase_headers()
+
+            # 해당 일기 조회 (본인 일기인지 확인)
+            diary_response = requests.get(
+                f"{supabase_url}/rest/v1/diaries",
+                headers=headers,
+                params={
+                    "id": f"eq.{diary_id}",
+                    "user_id": f"eq.{user_id}",
+                    "select": "id,content,created_at",
+                    # "select": "id,content,image_id,created_at",  # 이미지 기능 구현 후 활성화 예정
+                },
+            )
+
+            if not diary_response.json():
+                return Response(
+                    {"message": "일기를 찾을 수 없거나 권한이 없습니다."},
+                    status=status.HTTP_404_NOT_FOUND,
+                )
+
+            diary = diary_response.json()[0]
+
+            # created_at을 한국 시간으로 변환
+            kst = timezone(timedelta(hours=9))
+            created_at_str = diary.get("created_at")
+            created_at = datetime.fromisoformat(created_at_str.replace("Z", "+00:00"))
+            created_at_kst = created_at.astimezone(kst).strftime("%Y-%m-%dT%H:%M:%S+09:00")
+
+            # diary_deco 테이블에서 꾸미기 정보 조회
+            deco_response = requests.get(
+                f"{supabase_url}/rest/v1/diary_deco",
+                headers=headers,
+                params={
+                    "diary_id": f"eq.{diary_id}",
+                    "select": "emoji_id,diary_theme_id,sticker_id",
+                },
+            )
+
+            emotion_item = None
+            theme_item = None
+            sticker_list = []
+
+            if deco_response.json():
+                deco = deco_response.json()[0]
+                emoji_id = deco.get("emoji_id")
+                diary_theme_id = deco.get("diary_theme_id")
+                sticker_id = deco.get("sticker_id")
+
+                # emoji 아이템 정보 조회
+                if emoji_id:
+                    emoji_response = requests.get(
+                        f"{supabase_url}/rest/v1/items",
+                        headers=headers,
+                        params={
+                            "item_id": f"eq.{emoji_id}",
+                            "select": "item_id",
+                            # "select": "item_id,item_image_url",  # 이미지 추가 후 활성화 예정
+                        },
+                    )
+                    if emoji_response.json():
+                        emoji = emoji_response.json()[0]
+                        emotion_item = {
+                            "item_id": emoji.get("item_id"),
+                            # "image_url": emoji.get("item_image_url"),  # 이미지 추가 후 활성화 예정
+                        }
+
+                # diary_theme 아이템 정보 조회
+                if diary_theme_id:
+                    theme_response = requests.get(
+                        f"{supabase_url}/rest/v1/items",
+                        headers=headers,
+                        params={
+                            "item_id": f"eq.{diary_theme_id}",
+                            "select": "item_id,item_type",
+                            # "select": "item_id,item_type,item_image_url",  # 이미지 추가 후 활성화 예정
+                        },
+                    )
+                    if theme_response.json():
+                        theme = theme_response.json()[0]
+                        theme_item = {
+                            "item_id": theme.get("item_id"),
+                            "item_type": theme.get("item_type"),
+                            # "image_url": theme.get("item_image_url"),  # 이미지 추가 후 활성화 예정
+                        }
+
+                # sticker 아이템 정보 조회
+                if sticker_id:
+                    sticker_item_ids = [s.get("item_id") for s in sticker_id]
+                    if sticker_item_ids:
+                        sticker_response = requests.get(
+                            f"{supabase_url}/rest/v1/items",
+                            headers=headers,
+                            params={
+                                "item_id": f"in.({','.join(map(str, sticker_item_ids))})",
+                                "select": "item_id",
+                                # "select": "item_id,item_image_url",  # 이미지 기능 구현 후 활성화 예정
+                            },
+                        )
+                        # item_id별 아이템 정보 매핑
+                        item_map = {item.get("item_id"): item for item in sticker_response.json()}
+                        for s in sticker_id:
+                            item = item_map.get(s.get("item_id"), {})
+                            sticker_list.append({
+                                "item_id": s.get("item_id"),
+                                "pos_x": s.get("pos_x"),
+                                "pos_y": s.get("pos_y"),
+                                # "image_url": item.get("item_image_url"),  # 이미지 기능 구현 후 활성화 예정
+                            })
+
+            return Response(
+                {
+                    "diary_id": diary.get("id"),
+                    "content": diary.get("content"),
+                    # "image_url": diary.get("image_id"),  # 이미지 기능 구현 후 활성화 예정
+                    "emotion_item": emotion_item,
+                    "theme_item": theme_item,
+                    "sticker": sticker_list,
+                    "created_at": created_at_kst,
+                },
+                status=status.HTTP_200_OK,
+            )
+
+        except Exception as error:
+            print(f"=== DIARY DETAIL ERROR ===\n{error}\n=========================")
+            return Response(
+                {"message": "일기 상세 조회 중 오류가 발생했습니다."},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
+
 
 class DiaryDecoView(APIView):
     """일기 꾸미기, 꾸미기 초기화 API"""
@@ -393,7 +550,7 @@ class DiaryDecoView(APIView):
         """
         POST /api/v1/diaries/{diary_id}/deco/
         - Authorization 헤더의 access_token으로 현재 유저 확인
-        - emoji_id, diary_frame_id, sticker를 받아 diary_deco 테이블에 저장
+        - emoji_id, diary_theme_id, sticker를 받아 diary_deco 테이블에 저장
         - 완료 메시지 반환
         """
         # Authorization 헤더에서 access_token 추출
@@ -406,7 +563,7 @@ class DiaryDecoView(APIView):
 
         # 요청 Body에서 값 추출
         emoji_id = request.data.get("emoji_id", None)
-        diary_frame_id = request.data.get("diary_frame_id", None)
+        diary_theme_id = request.data.get("diary_theme_id", None)
         sticker_list = request.data.get("sticker", [])
 
         # sticker 유효성 검증
@@ -454,9 +611,9 @@ class DiaryDecoView(APIView):
                 if error:
                     return Response({"message": error}, status=status.HTTP_400_BAD_REQUEST)
 
-            # diary_frame_id 확인
-            if diary_frame_id:
-                error = check_inventory_item(supabase_url, headers, user_id, diary_frame_id, "diary_theme", "일기 프레임")
+            # diary_theme_id 확인
+            if diary_theme_id:
+                error = check_inventory_item(supabase_url, headers, user_id, diary_theme_id, "diary_theme", "일기장 테마")
                 if error:
                     return Response({"message": error}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -516,7 +673,7 @@ class DiaryDecoView(APIView):
                     headers={**headers, "Prefer": "return=representation"},
                     json={
                         "emoji_id": emoji_id,
-                        "diary_frame_id": diary_frame_id,
+                        "diary_theme_id": diary_theme_id,
                         "sticker_id": sticker_list,
                     },
                 )
@@ -528,7 +685,7 @@ class DiaryDecoView(APIView):
                     json={
                         "diary_id": diary_id,
                         "emoji_id": emoji_id,
-                        "diary_frame_id": diary_frame_id,
+                        "diary_theme_id": diary_theme_id,
                         "sticker_id": sticker_list,
                     },
                 )
