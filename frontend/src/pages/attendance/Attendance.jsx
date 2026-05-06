@@ -97,7 +97,7 @@ const handleDayClick = (day) => {
 
       <div className="w-full h-full flex flex-col items-center pt-[1%]">
 
-        <h1 className="text-4xl font-bold tracking-widest text-black mt-[2%] mb-[12%]">
+        <h1 className="text-3xl font-bold tracking-widest text-black mt-[1%] mb-[12%]">
           출석 체크
         </h1>
 
