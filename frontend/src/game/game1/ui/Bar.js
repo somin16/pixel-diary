@@ -23,14 +23,14 @@ export function barUiSetting(scene) {
     const expBarPosY = scene.cameras.main.height / 8;
 
     // 차오르는 경험치바 한정 위치
-    const addExpPosX = expBarPosX - 150;
+    const addExpPosX = expBarPosX - scene.scale.width / 2.5;
 
     // 경험치 바 배경(expBar)
     // nieslice는 상하좌우 n픽셀은 건들지않고 크기를 조정할 수 있다.
     // (x,y, 텍스쳐이름, 프레임, 가로, 세로, 보호픽셀 좌,우,위,아래)
     scene.expBar = scene.add.nineslice(expBarPosX, expBarPosY, 'background_bar', 0, 16, 8, 1, 1, 1, 1); 
     scene.expBar.setScrollFactor(0); // 카메라를 따라오도록 설정한다
-    scene.expBar.width = 150; // 배경UI 넓이 설정
+    scene.expBar.width = scene.scale.width / 2.5; // 배경UI 넓이 설정
     scene.expBar.setDepth(100); // 레이어 우선순위(높을수록 우선)
     scene.expBar.setScale(2); // setScale: 해상도 조정, N배만큼 키워준다
 

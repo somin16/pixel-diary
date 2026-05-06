@@ -4,7 +4,7 @@ export function TimerSetting(scene) {
 
     // ====================타이머===================
 
-    scene.gamePlayTime = 5; // 기본모드는 5분에서 시작
+    scene.gamePlayTime = 300; // 기본모드는 5분에서 시작
     scene.timeOver = false;
 
     // 타이머 텍스트 구성
