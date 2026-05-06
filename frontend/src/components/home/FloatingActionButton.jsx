@@ -8,23 +8,22 @@ import { getAssetUrl } from "../../utils/AssetHelper"
  */
 
 // home/FloatingActionButton FAB버튼 컴포넌트 선언
-const FloatingActionButton = ({onClick, currentTheme, ariaLabel = "일기작성버튼"}) => {
+const FloatingActionButton = ({ onClick, currentTheme, ariaLabel = "일기작성버튼" }) => {
 
-    const FloatingActionButtonStyle = {// 픽셀 아트 배경 이미지 & 비율 설정
-        backgroundImage: `url(${getAssetUrl(currentTheme, 'icons', 'add_icon_x3')})`,
-        backgroundSize: '100% 100%',// 이미지를 박스 크기에 꽉 채움
-        aspectRatio: '1/1'// 비율을 유지해 픽셀 왜곡 방지
-    };
-    
-    return(
+    return (
         <button
-            className=" w-20 h-auto outline-none"
+            className="h-auto outline-none"
             onClick={onClick}
             aria-label={ariaLabel} // 눈에 보이지 않는 텍스트 이름표 (화면 낭독기가 어떤 버튼인지 음성으로 읽어줌(기본값: 일기작성버튼))
-            style={FloatingActionButtonStyle} // 텍스트가 없는 닫기X / 추가+ / 뒤로가기 > 같은 버튼에는 aria-label 속성 부여
+            style={{
+                backgroundImage: `url(${getAssetUrl(currentTheme, 'icons', 'add_icon_x3')})`,
+                backgroundSize: '100% 100%',// 이미지를 박스 크기에 꽉 채움
+                aspectRatio: '1/1',// 비율을 유지해 픽셀 왜곡 방지
+                width: 'calc(var(--scale, 1) * 60px)'
+            }}
         />
     )
-    
+
 }
 
 export default FloatingActionButton

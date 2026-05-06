@@ -39,17 +39,26 @@ export default function Login() { // 로그인 페이지 내보내기
     // 현재 테마
     const currentTheme = useTheme((state) => state.currentTheme)
 
+    // ✅ 수정: 이메일 입력값이 바뀌는 즉시 (디바운스 전) default로 리셋
+    // → 입력 중에 이전 에러/성공 메시지가 잔류하는 것 방지
+    const handleEmailChange = (e) => {
+        setUser_email(e.target.value);
+        setEmailStatus({ state: 'default', message: '' }); // 즉시 초기화
+    };
+
     // 유효성 검사 이메일: 두 번째 인자를 false로 전달해 이메일 형식만 검사 ( 로그인 시 중복검사 필요X )
     useEffect(() => {
-        const checkEmail = async () => {
-            
-            if (debouncedUserEmail) {
-                const status = await AuthValidator.validateEmail(debouncedUserEmail, false);
-                setEmailStatus(status);
-            }
-        };
-        checkEmail();
-    }, [debouncedUserEmail]);
+    const checkEmail = async () => {
+        // ✅ 수정: 빈 문자열일 때도 처리 — if 없이 항상 분기
+        if (!debouncedUserEmail) {
+            setEmailStatus({ state: 'default', message: '' }); // 지우면 메시지 초기화
+            return;
+        }
+        const status = await AuthValidator.validateEmail(debouncedUserEmail, false);
+        setEmailStatus(status);
+    };
+    checkEmail();
+}, [debouncedUserEmail]);
 
     // 유효성 검사 비밀번호: 형식
     useEffect(() => {
@@ -75,19 +84,20 @@ export default function Login() { // 로그인 페이지 내보내기
             const response = await fetch(loginEndpoint, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ user_email: user_email, password: password })
+                body: JSON.stringify({ user_email: user_email, password: password }),
+                credentials: 'include'
             });
 
             const authData = await response.json();
 
             if (response.ok) {
-                // 직접 저장하지 않고, 토큰을 쿼리 스트링에 담아 리다이렉트 페이지로 이동
                 const params = new URLSearchParams({
                     access_token: authData.access_token,
                     refresh_token: authData.refresh_token || '',
                     provider: 'email'
                 });
 
+                // 세션 설정을 여기서 하지 않고, 정보를 담아 리다이렉트 페이지로 넘깁니다.
                 navigate(`/auth/auth-redirect?${params.toString()}`);
             } else {
                 // 서버에서 온 에러 처리
@@ -139,14 +149,14 @@ export default function Login() { // 로그인 페이지 내보내기
     return (
         // 전체 컨테이너 (AppShell 안에서 좌우 꽉 차게)
         // h-full, w-full로 설정해서 AppShell 중앙에 배치
-        <div className="w-full h-full items-center flex flex-col p-25 ">
+        <div className="w-full h-full items-center justify-center flex flex-col px-[20%] ">
 
             {/* 앱 아이콘 */}
-            <div className="p-20">{/* 여백(패딩) 증가 */}
+            <div className="pb-[30%]">{/* 여백(패딩) 증가 */}
                 <img
                     src={getAssetUrl(currentTheme, 'icons', 'app_icon_32_x3')}
                     alt="앱 아이콘"
-                    className="w-auto h-auto scale-150"// 이미지 스케일 150% 증가
+                    className="w-auto h-auto scale-[130%]"// 이미지 스케일 150% 증가
                 />
             </div>
 
@@ -159,7 +169,7 @@ export default function Login() { // 로그인 페이지 내보내기
                     type="email"
                     placeholder="이메일을 입력하세요"
                     value={user_email}
-                    onChange={(e) => setUser_email(e.target.value)}
+                    onChange={handleEmailChange}
                     status={emailStatus}
                     currentTheme={currentTheme}
                 />
@@ -173,6 +183,7 @@ export default function Login() { // 로그인 페이지 내보내기
                     onChange={(e) => setPassword(e.target.value)}
                     status={passwordStatus}
                     currentTheme={currentTheme}
+                    autoComplete='current-password'
                 />
 
                 {/* 로그인 버튼 */}
@@ -186,8 +197,8 @@ export default function Login() { // 로그인 페이지 내보내기
 
             {/* 비밀번호 찾기 링크 */}
             <button
-                onClick={() => navigate('/auth/password/send-reset-link')} 
-                className="text-sm text-gray-700 underline mb-5 font-medium outline-none">
+                onClick={() => navigate('/auth/password/send-reset-link')}
+                className="text-3xs text-gray-700 underline mb-5 font-medium outline-none">
                 비밀번호를 잊어버리셨나요?
             </button>
 
@@ -200,7 +211,7 @@ export default function Login() { // 로그인 페이지 내보내기
             {/* 회원가입 링크 */}
             <button
                 onClick={() => navigate('/auth/signup')}
-                className="text-sm text-gray-800 underline font-medium outline-none">
+                className="text-3xs text-gray-800 underline font-medium outline-none">
                 회원가입 하러가기
             </button>
 

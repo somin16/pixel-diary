@@ -50,14 +50,14 @@ const Calendar = ({ onDateClick, onMonthChange, viewDate, currentTheme }) => {
         <div style={CalendarStyle} className="relative min-w-19/20 h-auto max-w-full flex flex-col">
 
             {/* 상단 타이틀 헤더: pixel calendar 표시 */}
-            <span className="w-full h-[15%] flex justify-center items-center text-white text-[33px] p-[1.5%]">Pixel Diary</span>
+            <span className="w-full h-[15%] flex justify-center items-center text-white text-2xl p-[1.5%]">Pixel Diary</span>
 
             {/* 연/월 네비게이션: 월 이동 버튼 및 연/월 표시 영역 */}
             <div className="relative w-full flex h-[9%]">
 
                 {/* 중앙 년월 표시 */}
                 <div className="absolute w-full h-full flex items-center justify-center">
-                    <span className=" text-black text-[28px]">
+                    <span className=" text-black text-lg">
                         {year}.{String(month + 1).padStart(2, '0')}
                     </span>
                 </div>
@@ -65,7 +65,7 @@ const Calendar = ({ onDateClick, onMonthChange, viewDate, currentTheme }) => {
                 {/*왼쪽 버튼 모음 ( 투명 버튼 <> ) */}
                 <div className="absolute w-[15%] pl-[3%] h-full flex items-center justify-between">
                     <button onClick={() => onMonthChange(-1)} className="w-5 h-7 flex items-center justify-center outline-none" aria-label="이전 달"/>
-                    <span className="text-3xl">{String(month + 1)}</span>
+                    <span className="text-2xl">{String(month + 1)}</span>
                     <button onClick={() => onMonthChange(1)} className=" w-5 h-7 flex items-center justify-center outline-none" aria-label="다음 달" />
                 </div>
             </div>
@@ -74,7 +74,7 @@ const Calendar = ({ onDateClick, onMonthChange, viewDate, currentTheme }) => {
             <div className="absolute inset-0 flex flex-col mt-[26%] pl-[3%] pr-[9.5%]">
 
                 {/* 요일 헤더 1. 일요일 시작 (일 월 화 수 목 금 토) */}
-                <div className="grid grid-cols-7 w-full h-[8%] text-[13px] text-center items-center justify-center gap-[1.5%]">
+                <div className="grid grid-cols-7 w-full h-[8%] text-xs text-center items-center justify-center gap-[1.5%]">
                     {['일', '월', '화', '수', '목', '금', '토'].map((d, index) =>
                         <div
                             className={`
@@ -100,7 +100,7 @@ const Calendar = ({ onDateClick, onMonthChange, viewDate, currentTheme }) => {
                                 // 이번 달 날짜만 클릭 가능하도록 핸들러 제안 (조건문)
                                 onClick={() => !isNotCurrent && onDateClick(`${year}-${String(month + 1).padStart(2, '0')}-${String(item.day).padStart(2, '0')}`)}
                                 className={`
-                                    aspect-[14/12] flex items-start pl-[8%] pt-[2%] justify-start text-m 
+                                    aspect-[14/12] flex items-start pl-[8%] pt-[2%] justify-start text-xs
                                     ${isNotCurrent ? 'opacity-60 grayscale' : 'cursor-pointer hover:bg-white/10'} // 이번달 아니면 흐리게 처리
                                     ${isSunday ? 'text-red-800' : isSaturday ? 'text-blue-800' : 'text-black'}
                                 `}

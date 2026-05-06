@@ -47,9 +47,8 @@ html, body {
   margin: 0;
   padding: 0;
   width: 100%;
-  height: 100dvh; /* appshell.jsx와 같이 dvh로 통일 */
+  height: 100%;
   overflow: hidden;
-  position: fixed;    /* 모바일 바운스 방지 */
 
   /* 레터박스 설정 */
   background-color: #000000;
@@ -69,7 +68,6 @@ html, body {
   height: 100%;      /* 화면 높이에 꽉 채움 */
   width: 100%; 
   
-  /* 내부 컨텐츠가 화면보다 커지면 스크롤 발생 */
   overflow-y: auto;
   -webkit-overflow-scrolling: touch; /* 부드러운 스크롤 */
 
@@ -78,13 +76,14 @@ html, body {
   image-rendering: crisp-edges; /* Firefox 대응 */
 
   /* 배경화면 가로 고정 및 위아래 컷팅 설정 */
-  background-size: 100% auto;   /* 가로를 무조건 100%에 맞춤 (세로가 길면 위아래가 삐져나감) */
+  background-size: cover; 
   background-position: center; /* 삐져나간 위아래를 똑같이 배분해서 중앙 유지 */
   background-repeat: no-repeat; /* 배경 반복 방지 */
+  background-color: #000000; /* 짤리는 부분은 검은색으로 처리 */
 
   /* 아이폰 노치/홈바 대응 */
-  padding-top: env(safe-area-inset-top, 20px);
-  padding-bottom: env(safe-area-inset-bottom, 20px);
+  padding-top: env(safe-area-inset-top, 0px);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
 
 }
 
@@ -125,3 +124,36 @@ button, input, textarea, select {
 div[role='status'] {
   animation: none !important;
 }
+
+/* ── 반응형 폰트 스케일링 ──────────────────────────────────
+   캔버스(360px) 기준으로 폰트가 비율에 맞게 자동 축소됨
+   --scale: AppShell에서 JS로 계산한 비율 (캔버스너비 / 360)
+   예) 캔버스 270px → --scale: 0.75 → text-base 16px → 12px
+──────────────────────────────────────────────────────── */
+.app-root {
+  /* 기준 폰트 크기: 16px × scale */
+  font-size: calc(16px * var(--scale, 1)) !important;
+}
+
+/* 기존보다 더 작은 폰트 단계 */
+.app-root .text-5xs   { font-size: calc(4px * var(--scale, 1)) !important; }
+.app-root .text-4xs   { font-size: calc(6px * var(--scale, 1)) !important; }
+.app-root .text-3xs   { font-size: calc(8px * var(--scale, 1)) !important; }
+.app-root .text-2xs   { font-size: calc(10px * var(--scale, 1)) !important; }
+
+/* Tailwind 폰트 클래스들을 scale 기반으로 덮어씌우기 */
+.app-root .text-xs     { font-size: calc(12px * var(--scale, 1)) !important; }
+.app-root .text-sm     { font-size: calc(14px * var(--scale, 1)) !important; }
+.app-root .text-base   { font-size: calc(16px * var(--scale, 1)) !important; }
+.app-root .text-lg     { font-size: calc(18px * var(--scale, 1)) !important; }
+.app-root .text-xl     { font-size: calc(20px * var(--scale, 1)) !important; }
+.app-root .text-2xl    { font-size: calc(24px * var(--scale, 1)) !important; }
+.app-root .text-3xl    { font-size: calc(30px * var(--scale, 1)) !important; }
+.app-root .text-4xl    { font-size: calc(36px * var(--scale, 1)) !important; }
+.app-root .text-5xl    { font-size: calc(48px * var(--scale, 1)) !important; }
+.app-root .text-6xl    { font-size: calc(60px * var(--scale, 1)) !important; }
+
+/* text-[px] 인라인 스타일로 직접 쓴 경우는 위 방법으로 못 잡으니
+   style 속성에 직접 쓴 font-size도 scale 적용하려면
+   AppShell에서 주입한 --scale을 직접 calc()로 써야 함
+   예) style={{ fontSize: `calc(54px * var(--scale, 1))` }}       */

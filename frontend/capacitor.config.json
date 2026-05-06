@@ -2,9 +2,14 @@
   "appId": "com.pixeldiary",
   "appName": "Pixel Diary",
   "webDir": "dist",
-  "plugins":{
-    "keyboard": {
-        "resize": "none"
+  "plugins": {
+    "Keyboard": {
+      "resize": "body",
+      "resizeOnFullScreen": true
     }
+  },
+  "server": {
+    "androidScheme": "http",
+    "cleartext": "true"
   }
 }

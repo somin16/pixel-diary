@@ -24,7 +24,7 @@ const SubmitButton = ({ onClick, loading, disabled, currentTheme, text }) => {
             onClick={onClick}
             disabled={disabled || loading} // 로딩 중이거나 비활성화 상태일 때 클릭 이벤트 차단
             type="submit"
-            className={`w-full p-5 text-white font-bold text-2xl transition-opacity outline-none
+            className={`w-full p-5 text-white font-bold text-lg transition-opacity outline-none
                 ${(disabled || loading) ? 'opacity-50' : 'opacity-100'}`} // 로딩 중이거나 비활성화 상태일 때 버튼이 흐려짐
             style={SubmitButtonStyle}
         >

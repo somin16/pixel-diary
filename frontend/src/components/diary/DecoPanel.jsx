@@ -1,11 +1,16 @@
-import React from 'react';
+import {useRef} from 'react';
 import { motion } from 'framer-motion';
 import { getAssetUrl, getDecoAssetUrl } from '../../utils/AssetHelper';
 import ImageButton from '../common/ImageButton';
 
 const DecoPanel = ({ currentTheme, mode, isOpen, onSelectMode, onSelectItem }) => {
+    const dragStartY = useRef(null);
     // mode가 null이면 화면 밖(100%)으로 완전히 숨김 (우측 버튼 토글용)
     const isHidden = !mode;
+
+    // 목표 y값 계산
+    const targetY = isHidden ? "100%" : (isOpen ? "0%" : "88%");
+
     // 더미 데이터
     const DECO_ITEM_LIST = {
         frame: [
@@ -38,9 +43,9 @@ const DecoPanel = ({ currentTheme, mode, isOpen, onSelectMode, onSelectItem }) =
     return (
         <>
             {/* 1. 우측 사이드 버튼들 */}
-            <div className="absolute inset-0 w-full h-full flex flex-col items-end gap-[1%] pt-[15%] z-30 pointer-events-none">
+            <div className="absolute inset-0 w-full h-full flex flex-col items-end gap-[1%] mt-[50%] z-30 pointer-events-none">
                 {/* 버튼 1: Frame */}
-                <div className="h-[8%] aspect-[48/45] relative pointer-events-auto">
+                <div className="h-[6%] aspect-[48/45] relative pointer-events-auto">
                     <ImageButton
                         label="frame"
                         onClick={() => handleModeClick('frame')}
@@ -49,59 +54,60 @@ const DecoPanel = ({ currentTheme, mode, isOpen, onSelectMode, onSelectItem }) =
                             }`}
                         // 이미지는 하나로 고정 (on/off 구분이 필요 없다면 하나만 쓰셔도 됩니다)
                         imageSrc={getAssetUrl(currentTheme, 'buttons', 'diary_frame_button_x3')}
-                        textSize="0px"
+                        textOption="text-[0px]"
                     />
                 </div>
 
                 {/* 버튼 2: Sticker */}
-                <div className="h-[8%] aspect-[48/45] relative pointer-events-auto">
+                <div className="h-[6%] aspect-[48/45] relative pointer-events-auto">
                     <ImageButton
                         label="sticker"
                         onClick={() => handleModeClick('sticker')}
                         className={`w-full h-full transition-transform duration-200 ease-out ${mode === 'sticker' ? 'translate-x-0' : 'translate-x-[25%]'
                             }`}
                         imageSrc={getAssetUrl(currentTheme, 'buttons', 'sticker_button_x3')}
-                        textSize="0px"
+                        textOption="text-[0px]"
                     />
                 </div>
 
                 {/* 버튼 3: Emoji */}
-                <div className="h-[8%] aspect-[48/45] relative pointer-events-auto">
+                <div className="h-[6%] aspect-[48/45] relative pointer-events-auto">
                     <ImageButton
                         label="emoji"
                         onClick={() => handleModeClick('emoji')}
                         className={`w-full h-full transition-transform duration-200 ease-out ${mode === 'emoji' ? 'translate-x-0' : 'translate-x-[25%]'
                             }`}
                         imageSrc={getAssetUrl(currentTheme, 'buttons', 'emoji_button_x3')}
-                        textSize="0px"
+                        textOption="text-[0px]"
                     />
                 </div>
             </div>
 
             {/* 2. 바텀 시트 본체 */}
             <motion.div
-                initial={{ y: "100%" }}
-                animate={{
-                    // mode가 없으면 100%(완전 숨김), 있으면 isOpen 상태에 따라 0%(완전 활성) 또는 88%(빼꼼 남기기)
-                    y: isHidden ? "100%" : (isOpen ? "0%" : "88%")
-                }}
+                animate={{ y: targetY }}
                 transition={{ type: "spring", damping: 25, stiffness: 200 }}
 
-                // --- 드래그 설정 ---
-                drag={isHidden ? false : "y"}
-                dragConstraints={{ top: 0, bottom: 600 }}
-                dragElastic={{ top: 0, bottom: 0 }}
-                dragMomentum={false}
-                onDragEnd={(e, info) => {
-                    // 아래로 100px 이상 내리면 빼꼼(isOpen: false)
-                    if (info.offset.y > 100) {
+                // drag 완전히 제거, 터치 이벤트로 직접 제어
+                onPointerDown={(e) => {
+                    if (isHidden) return;
+                    dragStartY.current = e.clientY;
+                }}
+                onPointerUp={(e) => {
+                    if (isHidden || dragStartY.current === null) return;
+                    const deltaY = e.clientY - dragStartY.current;
+                    dragStartY.current = null;
+
+                    if (isOpen && deltaY > 80) {
+                        // 열린 상태 → 아래로 스와이프 → 빼꼼
                         onSelectMode(mode, false);
-                    }
-                    // 빼꼼 상태에서 위로 50px 이상 올리면 전체 열기(isOpen: true)
-                    else if (info.offset.y < -50) {
+                    } else if (!isOpen && deltaY < -80) {
+                        // 빼꼼 상태 → 위로 스와이프 → 전체 열기
                         onSelectMode(mode, true);
                     }
                 }}
+                onPointerCancel={() => { dragStartY.current = null; }}
+
                 className="absolute w-full inset-x-0 bottom-0 z-[101] flex flex-col items-center pointer-events-auto touch-none"
             >
                 <div className="relative w-full aspect-[360/312] max-h-[60vh] flex flex-col overflow-hidden">
@@ -142,7 +148,7 @@ const DecoPanel = ({ currentTheme, mode, isOpen, onSelectMode, onSelectItem }) =
                                                 <div
                                                     key={item.id}
                                                     className={`relative flex items-center justify-center ${isFrameMode ? 'aspect-[311/522]' : 'aspect-square'
-                                                    }`}
+                                                        }`}
                                                     onClick={() => {
                                                         if (isOwned) {
                                                             onSelectItem(mode, item);

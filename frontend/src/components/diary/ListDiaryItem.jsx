@@ -60,7 +60,7 @@ const ListDiaryItem = ({ currentTheme, imageUrl, date, onClick }) => {
             />
             
             {/* 레이어 3: 날짜 텍스트 (프레임의 파란 바 위에 위치) */}
-            <span className="w-full absolute bottom-[5.5%] text-center text-base z-30">
+            <span className="w-full absolute bottom-[5.5%] text-center text-xs z-30">
                 {date}
             </span>    
         </div>

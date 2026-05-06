@@ -9,7 +9,7 @@ import { getAssetUrl } from "../../utils/AssetHelper"; // 이미지 url
 
 // auth/SocialLoginButton 컴포넌트 선언
 const SocialLoginButton = ({ onLogin, currentTheme }) => {
-    
+
     // SNS 플랫폼 데이터 객체 배열
     const socialPlatforms = [
         { id: 'google', name: 'google_icon_x3' },
@@ -17,13 +17,17 @@ const SocialLoginButton = ({ onLogin, currentTheme }) => {
         { id: 'naver', name: 'naver_icon_x3' }
     ];
 
-    return (// 버튼 간격(gap-4(16px))및 중앙 정렬 레이아웃
-        <div className="flex gap-4 mb-5"> 
+    return (
+        <div className="flex justify-center items-center mb-[10%] gap-[3%]"        >
             {socialPlatforms.map(social => (
                 <button
                     key={social.id} // 리스트 렌더링 시 고유 식별자 설정
                     onClick={() => onLogin(social.id)} // 클릭 시 해당 플랫폼 ID 전달
-                    className="w-20 h-20 transition-transform outline-none" // 버튼 크기 고정 및 버튼 테두리 제거
+                    className="transition-transform outline-none" // 버튼 크기 고정 및 버튼 테두리 제거
+                    style={{
+                        width: 'calc(var(--scale) * 60px)',
+                        height: 'calc(var(--scale) * 60px)'
+                    }}
                 >
                     <img
                         src={getAssetUrl(currentTheme, 'icons', social.name)}
