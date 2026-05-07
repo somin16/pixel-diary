@@ -90,7 +90,7 @@ function AppInner() {
                         <Route path="/diary/edit/:date" element={<DiaryForm />} />
 
                         {/* 주소가 /more 이면 더보기 화면을 보여줘 */}
-                        <Route path="/more" element={<MorePage />} />
+                        <Route path="/more/*" element={<MorePage />} />
 
                         {/* 주소가 /more/profile 이면 프로필 화면을 보여줘 */}
                         <Route path="/more/profile" element={<Profile />} />

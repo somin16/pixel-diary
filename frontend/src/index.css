@@ -115,6 +115,8 @@ button, input, textarea, select {
 /* 토스트 메시지의 모든 애니메이션(올라오는 효과 등) 제거 */
 .instant-toast {
   animation: none !important;
+  font-size: 17px !important;
+  padding: 8px 16px !important;
 }
 
 /* 
