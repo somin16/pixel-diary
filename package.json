@@ -1,0 +1,18 @@
+{
+  "name": "pixel-diary-root",
+  "scripts": {
+    "--- [ 1. 개발 서버 실행 ] ---": "",
+    "1. FE 실행 (React)": "cd frontend && npm run dev",
+    "2. BE 실행 (Django)": "cd backend && .\\venv\\Scripts\\activate && python manage.py runserver",
+    "3. AI 실행 (ComfyUI)": "cd ai_engine && .\\run_comfy.bat",
+
+    "--- [ 2. 모바일/캐퍼시터 ] ---": "",
+    "Android: 빌드 및 동기화": "cd frontend && npm run build && npx cap sync android",
+    "Android: 스튜디오 열기": "cd frontend && npx cap open android",
+    "iOS: 빌드 및 동기화": "cd frontend && npm run build && npx cap sync ios",
+    "iOS: Xcode 열기": "cd frontend && npx cap open ios",
+
+    "--- [ 3. 초기 설정 ] ---": "",
+    "Git 템플릿 적용": "git config --local commit.template .gitmessage.txt"
+  }
+}
