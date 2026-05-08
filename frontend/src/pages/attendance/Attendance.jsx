@@ -87,7 +87,7 @@ const handleDayClick = (day) => {
     <DialogBox 
       boxImageName="daily_check_frame_box_x3" 
       maxWidth="458px" 
-      width="100%"
+      width="95%"
       onClose={onClose}
     >
       {/* 공통 CloseButton 컴포넌트 */}
