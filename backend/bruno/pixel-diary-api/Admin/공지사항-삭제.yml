@@ -1,0 +1,29 @@
+info:
+  name: 공지사항-삭제
+  type: http
+  seq: 3
+
+http:
+  method: DELETE
+  url: http://127.0.0.1:8000/api/v1/admin/announcements/{id}/
+  headers:
+    - name: Authorization
+      value: "Bearer "
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |
+  ### Headers
+  - Authorization: Bearer 로그인할 시 받는 access_token
+  ***
+  ### Status Code
+  - 200 OK: 공지사항 삭제 성공
+  - 400 Bad Request: 필수값 누락 (Authorization Bearer 헤더 access_token)
+  - 401 Unauthorized: 유효하지 않은 access_token인 경우
+  - 403 Forbidden: access_token의 role이 admin이 아닌 경우
+  - 404 Not Found: 공지사항을 찾을 수 없는 경우
