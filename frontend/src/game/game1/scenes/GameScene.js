@@ -27,13 +27,7 @@ import { magnetActive } from "../object/Magnet.js";
 import { addEventMonsterLevelUp, addEventRedSlimeSpawn, addEliteMonsterSpawn, monsterMove, overlapMonstersHit } from "../monsters/Monsters.js";
 
 
-// ============이미지, 애니메이션====================
-
-// 이미지 불러오기
-import { loadAllSprite } from "../preload/Preload.js";            
-
-// 애니메이션 선언
-import { createAllAnimations } from "../animations/Animations.js"; 
+// ============이미지====================
 
 // UI바 세팅
 import { barUiSetting, hpBarPosSet } from "../ui/Bar.js";
@@ -57,13 +51,6 @@ import { createMenu } from "../ui/Menu.js";
 export default class GameScene extends Phaser.Scene {
   constructor() {
     super("GameScene");
-  }
-
-  // perload: 이미지 불러오기
-  preload() {
-
-    // 모든 이미지 불러오기(preload/Preload.js)
-    loadAllSprite(this);
   }
 
   create() { // create: 말그대로 생성, 오브젝트를 작성하는 곳
@@ -138,9 +125,6 @@ export default class GameScene extends Phaser.Scene {
 
     // 몬스터에게 피격시 이벤트
     overlapMonstersHit(this);
-
-    // 모든 애니메이션 불러오기(aniations/Aniations.js)
-    createAllAnimations(this);
 
     // 상자생성 이벤트(Object/Chest.js)
     addEventSpawnChest(this);

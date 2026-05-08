@@ -32,7 +32,7 @@ export function overlapAddExp(scene) {
     // 타입에 따라 주는양을 다르게 한다
     if (expBalls.type == "small") {
 
-      addExp(50, scene.player, scene); // 경험치 수치
+      addExp(30, scene.player, scene); // 경험치 수치
     }
 
     else if (expBalls.type == "big") {

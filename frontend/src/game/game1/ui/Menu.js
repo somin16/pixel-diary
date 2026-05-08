@@ -49,9 +49,9 @@ export function createMenu(scene) {
 
     // 돌아가기 텍스트
     const returnText = scene.add.text(centerX , centerY - 90, "돌아가기", {
+        fontFamily: "Mona",
         fontSize: "18px",
-        fill: "#ffffff",
-        fontFamily: "Arial"
+        fill: "#ffffff"
     }).setOrigin(0.5, 0.5); // 가운데 정렬
 
     // 게임종료 버튼
@@ -62,9 +62,9 @@ export function createMenu(scene) {
 
     // 게임종료 텍스트
     const gameEndText = scene.add.text(centerX , centerY, "게임종료", {
+        fontFamily: "Mona",
         fontSize: "18px",
-        fill: "#ffffff",
-        fontFamily: "Arial"
+        fill: "#ffffff"
     }).setOrigin(0.5, 0.5); // 가운데 정렬
 
     // 소리 온오프 버튼
