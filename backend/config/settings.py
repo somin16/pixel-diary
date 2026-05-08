@@ -42,6 +42,7 @@ INSTALLED_APPS = [
     "management",       # 관리자 관련 앱
     "store",            # 상점 및 보관함 관련 앱
     "games",            # 게임 관련 앱
+    "profiles",         # 프로필 및 설정 관련 앱
 ]
 
 MIDDLEWARE = [
