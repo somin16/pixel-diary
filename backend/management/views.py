@@ -136,3 +136,89 @@ class AdminItemView(APIView):
                 {"message": "아이템 추가 중 오류가 발생했습니다."},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
+
+class AdminAnnouncementView(APIView):
+    """공지사항 작성 API (관리자 전용)"""
+
+    def post(self, request):
+        """
+        POST /api/v1/admin/announcements/
+        - Authorization 헤더의 access_token으로 관리자 권한 확인
+        - title, content, category를 받아 Supabase announcements 테이블에 저장
+        - 저장된 announcement_id, created_at과 완료 메시지 반환
+        """
+        # Authorization 헤더에서 access_token 추출
+        access_token = extract_access_token(request)
+        if not access_token:
+            return Response(
+                {"message": "Authorization 헤더에 유효한 Bearer 토큰이 필요합니다."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        # 요청 Body에서 값 추출
+        title = request.data.get("title", "").strip()
+        content = request.data.get("content", "").strip()
+        category = request.data.get("category", "").strip() # category는 선택값
+
+        # 필수값 누락 시 400 반환
+        if not all([title, content]):
+            return Response(
+                {"message": "제목과 내용은 필수입니다."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        try:
+            # access_token으로 유저 정보 조회
+            user = get_user_from_token(access_token)
+
+            # 유효하지 않은 토큰인 경우 401 반환
+            if not user:
+                return Response(
+                    {"message": "유효하지 않은 토큰입니다."},
+                    status=status.HTTP_401_UNAUTHORIZED,
+                )
+
+            # 관리자 권한 확인 (user_metadata의 role이 admin인 경우만 허용)
+            role = user.get("user_metadata", {}).get("role", "")
+            if role != "admin":
+                return Response(
+                    {"message": "관리자 권한이 필요합니다."},
+                    status=status.HTTP_403_FORBIDDEN,
+                )
+
+            supabase_url = os.getenv("SUPABASE_URL")
+            headers = get_supabase_headers()
+
+            # Supabase announcements 테이블에 공지사항 저장
+            response = requests.post(
+                f"{supabase_url}/rest/v1/announcements",
+                headers={**headers, "Prefer": "return=representation"},
+                json={
+                    "title": title,
+                    "content": content,
+                    "category": category or None,  # 값이 없으면 None으로 저장
+                },
+            )
+
+            # 저장 실패 시 예외 발생
+            if response.status_code not in [200, 201]:
+                raise Exception(f"Supabase API 오류: {response.text}")
+
+            announcement = response.json()[0]
+
+            return Response(
+                {
+                    "message": "공지사항이 등록되었습니다.",
+                    "announcement_id": announcement.get("announcement_id"),
+                    "created_at": announcement.get("created_at"),
+                },
+                status=status.HTTP_201_CREATED,
+            )
+
+        except Exception as error:
+            # 오류 발생 시 터미널에 출력 (개발 완료 후 삭제 예정)
+            print(f"=== ADMIN ANNOUNCEMENT CREATE ERROR ===\n{error}\n=======================================")
+            return Response(
+                {"message": "공지사항 작성 중 오류가 발생했습니다."},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
