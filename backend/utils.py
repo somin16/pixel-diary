@@ -31,3 +31,26 @@ def get_user_from_token(access_token):
     if response.status_code == 200:
         return response.json()
     return None
+
+def get_supabase_headers():
+    """
+    Supabase API 요청에 필요한 헤더 반환
+    - apikey: Supabase 서비스 키
+    - Authorization: Bearer 토큰 방식으로 인증
+    - Content-Type: JSON 형식으로 데이터 전송
+    """
+    return {
+        "apikey": os.getenv("SUPABASE_SERVICE_KEY"),
+        "Authorization": f"Bearer {os.getenv('SUPABASE_SERVICE_KEY')}",
+        "Content-Type": "application/json",
+    }
+
+def get_supabase_anon_headers():
+    """
+    Supabase 로그인 API 요청에 필요한 헤더 반환
+    - 로그인은 anon key를 사용
+    """
+    return {
+        "apikey": os.getenv("SUPABASE_ANON_KEY"),
+        "Content-Type": "application/json",
+    }

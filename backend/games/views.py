@@ -14,25 +14,12 @@ from rest_framework.response import Response
 from rest_framework import status
 
 # utils.py에서 토큰 관련 함수 가져오기
-from utils import extract_access_token, get_user_from_token
+from utils import extract_access_token, get_user_from_token, get_supabase_headers
 
 # 시리얼라이저 가져오기
 from .serializers import GameScoreSerializer # 게임 결과 저장 시리얼라이저
 from .serializers import UserCoinSerializer # 보유 재화 조회 및 추가 시리얼라이저
 from .serializers import TicketUseSerializer # 티켓관련 시리얼라이저
-
-def get_supabase_headers():
-    """
-    Supabase에 요청할 때 필요한 헤더 반환
-    """
-    return {
-        # Supabase 서비스 키 (환경변수에서 읽어옴)
-        "apikey": os.getenv("SUPABASE_SERVICE_KEY"),
-        # Bearer 토큰 방식으로 인증
-        "Authorization": f"Bearer {os.getenv('SUPABASE_SERVICE_KEY')}",
-        # JSON 형식으로 데이터 주고받기
-        "Content-Type": "application/json",
-    }
 
 
 class GameScoreView(APIView):
