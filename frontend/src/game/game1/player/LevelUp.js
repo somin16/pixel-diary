@@ -108,9 +108,9 @@ export function levelUpMenu(scene) {
 
       // 텍스트를 넣는다
       const buttonText = scene.add.text(textX, buttonY, skill.name, {
+        fontFamily: "Mona",
         fontSize: "18px",
-        fill: "#ffffff",
-        fontFamily: "Arial"
+        fill: "#ffffff"
       }).setOrigin(0, 0.5); // 좌측정렬
       buttonComponents.push(buttonText); // 완성된 텍스트를 배경에 넣는다
 

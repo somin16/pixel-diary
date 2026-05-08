@@ -1,6 +1,7 @@
 import React, { useEffect, useRef } from "react";
 import Phaser from "phaser";
 import GameScene from "./scenes/GameScene";
+import ModeSelectScene from "./scenes/ModeSelectScene";
 
 const Game1 = () => {
   const gameContainer = useRef(null);
@@ -26,7 +27,8 @@ const Game1 = () => {
         arcade: { gravity: { y: 0 } }, // 중력제거
       },
       
-      scene: [GameScene],
+      // 모드 선택 씬을 먼저 실행
+      scene: [ModeSelectScene, GameScene],
     };
 
     // 게임 실행

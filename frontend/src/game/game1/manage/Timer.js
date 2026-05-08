@@ -12,8 +12,8 @@ export function TimerSetting(scene) {
       scene.cameras.main.width / 2,    // x좌표
       scene.cameras.main.height / 12,  // y좌표
       "05:00" , {  // 기본 텍스트(5분)
+      fontFamily: "Mona",
       fontSize: "32px",
-      fontFamily: "Arial",
       fill: "#000000",
     })
     .setOrigin(0.5)     // 중앙

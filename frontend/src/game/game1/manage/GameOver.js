@@ -29,10 +29,10 @@ export function gameOver(scene) {
 
     // 게임오버 텍스트
     const gameOverText = scene.add.text(centerX, centerY - 150, "GAME OVER", {
+      fontFamily: "Mona",
       fontSize: "48px",
       fontStyle: "bold",
-      fill: "#ff4444",
-      fontFamily: "Arial"
+      fill: "#ff4444"
     }).setOrigin(0.5);
 
     // 재시작 버튼 위치
@@ -49,10 +49,10 @@ export function gameOver(scene) {
 
     // 재시작 버튼 텍스트
     const restartButtonText = scene.add.text(centerX, restartButtonPosY, "다시 도전하기!", {
+      fontFamily: "Mona",
       fontSize: "24px",
       fontStyle: "bold",
-      fill: "#ffffff",
-      fontFamily: "Arial"
+      fill: "#ffffff"
     }).setOrigin(0.5);
 
     // 만든걸 모두 gameEndUI에 넣기
