@@ -1,4 +1,5 @@
 import os
+import re
 import requests as http_requests
 from groq import Groq
 from cerebras.cloud.sdk import Cerebras
@@ -15,7 +16,7 @@ OLLAMA_URL = "http://localhost:11434/api/chat"
 OLLAMA_MODEL = "qwen2.5:7b"
 
 # ▼ Groq 모델명 (.env의 GROQ_API_KEY 필요)
-GROQ_MODEL = "llama-3.3-70b-versatile"
+GROQ_MODEL = "qwen/qwen3-32b"
 
 # ▼ Cerebras 모델명 (.env의 CEREBRAS_API_KEY 필요)
 CEREBRAS_MODEL = "qwen-3-235b-a22b-instruct-2507"
@@ -67,7 +68,9 @@ def call_llm_model_engine_type(messages, llm_model_engine_type="groq"):
             model=GROQ_MODEL,
             messages=messages
         )
-        return response.choices[0].message.content.strip()
+        content = response.choices[0].message.content.strip()
+        # ▼ Qwen3 thinking 모드의 <think>...</think> 블록 제거
+        return re.sub(r'<think>.*?</think>', '', content, flags=re.DOTALL).strip()
 
 
 class PromptTransformView(APIView):
@@ -76,15 +79,16 @@ class PromptTransformView(APIView):
 
     POST /api/v1/prompt/transform
     Body: {
-        "llm_model_engine_type": "groq",                        (필수 / groq, local, cerebras)
         "diary": "오늘 비가 와서 집에서 독서를 했다.",              (필수)
-        "gender": "girl",                                        (선택 / 예: man, boy, woman 등)
-        "age": 20                                                (선택 / 자연수, gender와 함께 입력 시 인물모드)
+        "mode": "character",                                     (필수 / character, landscape)
+        "gender": "girl",                                        (character 모드 시 필수 / 예: man, boy, woman 등)
+        "age": 20                                                (character 모드 시 필수 / 자연수)
     }
 
-    - gender와 age 둘 다 입력 → 인물 중심 프롬프트 (주인공이 화면 중앙에 등장)
-    - gender와 age 둘 다 생략 → 풍경/사물 중심 프롬프트 (인물 없음)
-    - 둘 중 하나만 입력      → 400 에러
+    - mode: "character" + gender + age → 인물 중심 프롬프트 (주인공이 화면 중앙에 등장)
+    - mode: "landscape"               → 풍경/사물 중심 프롬프트 (인물 없음, gender/age 무시)
+    - mode 미입력 또는 잘못된 값       → 400 에러
+    - mode: "character"인데 gender 또는 age 없음 → 400 에러
 
     Response:
     {
@@ -96,12 +100,32 @@ class PromptTransformView(APIView):
 
     def post(self, request):
         diary = request.data.get("diary", "").strip()
-        gender = request.data.get("gender", "").strip()  # ▼ 주인공 성별 (선택 / girl, man 등)
-        age_raw = request.data.get("age", "").strip()    # ▼ 주인공 나이 (선택 / 자연수, gender와 함께 입력)
-        llm_model_engine_type = request.data.get("llm_model_engine_type", "").strip()  # ▼ groq / local / cerebras
-        # ▼ gender, age 둘 다 있으면 인물모드 / 둘 다 없으면 풍경모드 / 하나만 있으면 400
-        is_character_mode = False
-        if gender and age_raw:
+        mode = request.data.get("mode", "").strip()              # ▼ character / landscape
+        gender = request.data.get("gender", "").strip()          # ▼ 주인공 성별 (character 모드 시 필수)
+        age_raw = request.data.get("age", "").strip()            # ▼ 주인공 나이 (character 모드 시 필수)
+        llm_model_engine_type = "groq"                            # ▼ Qwen(Groq)으로 고정
+
+        valid_modes = ["character", "landscape"]
+        if not mode:
+            return Response(
+                {"message": "mode를 입력해주세요. (character / landscape)"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        if mode not in valid_modes:
+            return Response(
+                {"message": f"mode는 {', '.join(valid_modes)} 중 하나여야 합니다."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # ▼ character 모드일 때만 gender, age 검증
+        is_character_mode = mode == "character"
+        age = None
+        if is_character_mode:
+            if not gender or not age_raw:
+                return Response(
+                    {"message": "character 모드에서는 gender와 age가 필수입니다."},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
             try:
                 age = int(age_raw)
                 if age <= 0:
@@ -109,31 +133,11 @@ class PromptTransformView(APIView):
                         {"message": "age는 1 이상의 정수여야 합니다."},
                         status=status.HTTP_400_BAD_REQUEST
                     )
-                is_character_mode = True
-            except (ValueError):
+            except ValueError:
                 return Response(
                     {"message": "age는 1 이상의 정수여야 합니다."},
                     status=status.HTTP_400_BAD_REQUEST
                 )
-        elif gender or age_raw:
-            # 둘 중 하나만 입력된 경우
-            return Response(
-                {"message": "gender와 age는 둘 다 입력하거나 둘 다 생략해야 합니다. (인물 중심 프롬프트를 원하시면 둘 다 입력해주세요)"},
-                status=status.HTTP_400_BAD_REQUEST
-            )
-
-        if not llm_model_engine_type:
-            return Response(
-                {"message": "llm_model_engine_type을 입력해주세요. (groq / local / cerebras)"},
-                status=status.HTTP_400_BAD_REQUEST
-            )
-
-        valid_llm_types = ["groq", "local", "cerebras"]
-        if llm_model_engine_type not in valid_llm_types:
-            return Response(
-                {"message": f"llm_model_engine_type은 {', '.join(valid_llm_types)} 중 하나여야 합니다."},
-                status=status.HTTP_400_BAD_REQUEST
-            )
 
         if not diary:
             return Response(
@@ -162,6 +166,7 @@ class PromptTransformView(APIView):
                     f"- Write in natural descriptive phrases (not just keywords)\n"   # 자연스러운 문장 (키워드만 나열 금지)
                     f"- Up to 100 words, be vivid and expressive\n"                  # 최대 100단어, 생동감 있게
                     f"- Describe the scene, mood, characters, setting, weather, and atmosphere in detail\n"  # 장면/분위기/날씨 등 묘사
+                    f"- Do NOT use style words like 'pixel', 'pixelated', '8-bit', 'retro' in the scene description\n"  # 스타일 단어 금지 (FIXED_PREFIX에서 처리)
                     f"- Output in English only, no extra explanation\n\n"            # 영어만 출력, 설명 없이
                     f"Diary: {diary}"
                 )
