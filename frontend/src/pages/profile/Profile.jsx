@@ -52,7 +52,7 @@ const Profile = () => {
 
 return (
     <div 
-        className="w-full h-full pt-[60px] pb-[30px] flex flex-col items-center"
+        className="w-full h-full py-[20%] flex flex-col items-center"
         style={{
         backgroundImage: `url(${getAssetUrl(currentTheme,'backgrounds','menu_background_x3')})`,
         backgroundSize: "100% 100%",
@@ -63,14 +63,14 @@ return (
       <Header />
 
       {/* 프로필 사진 영역 */}
-      <section className="relative w-auto h-auto mt-[10px] mb-[65px] flex justify-center items-center">
+      <section className="relative w-auto h-auto my-[10%] flex justify-center items-center">
         <img 
           src={getAssetUrl(currentTheme, 'boxes', 'profile_image_box_x3')} 
           alt="프로필 프레임" 
-          className="w-[200px] h-[200px] z-10 pointer-events-none relative" 
+          className="scale-[120%] z-10 pointer-events-none relative" 
         />
         {/* 클릭하면 파일 선택창 열리도록 */}
-        <label htmlFor="profileImageInput" className="absolute top-[15px] left-[15px] w-[170px] h-[170px] z-20 block cursor-pointer overflow-hidden">
+        <label htmlFor="profileImageInput" className="absolute w-full aspect-square z-20 block cursor-pointer overflow-hidden">
           <img 
             src={profileImage || getAssetUrl(currentTheme, 'icons', 'app_icon_x2')} 
             alt="프로필 사진" 

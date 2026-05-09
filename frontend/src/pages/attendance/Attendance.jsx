@@ -101,7 +101,7 @@ const handleDayClick = (day) => {
           출석 체크
         </h1>
 
-        <div className="w-[100%] flex flex-col gap-[9%] z-10">
+        <div className="w-full flex flex-col gap-[9%] z-10">
           {/* 1~4일차 */}
           <div className="grid grid-cols-4 gap-[2%] w-full">
             {ATTENDANCE_DAYS.slice(0, 4).map((item) => (
