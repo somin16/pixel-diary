@@ -7,5 +7,5 @@ from .views import AdminAnnouncementView
 urlpatterns = [
     path("items/", AdminItemView.as_view(), name="admin-items"),    # 아이템 추가 
     path('announcements/', AdminAnnouncementView.as_view(), name="admin-announcements"),    # 공지사항 작성
-    path("announcements/<int:announcement_id>/", AdminAnnouncementView.as_view(), name="admin-delete-announcements"),  # 공지사항 삭제
+    path("announcements/<int:announcement_id>/", AdminAnnouncementView.as_view(), name="admin-announcements-detail"),  # 공지사항 삭제, 수정
 ]
