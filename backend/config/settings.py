@@ -43,6 +43,7 @@ INSTALLED_APPS = [
     "store",            # 상점 및 보관함 관련 앱
     "games",            # 게임 관련 앱
     "profiles",         # 프로필 및 설정 관련 앱
+    "announcements",    # 공지사항 조회 관련 앱
 ]
 
 MIDDLEWARE = [
