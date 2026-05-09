@@ -3,21 +3,7 @@ import requests
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
-from utils import extract_access_token, get_user_from_token
-
-
-def get_supabase_headers():
-    """
-    Supabase API 요청에 필요한 헤더 반환
-    - apikey: Supabase 서비스 키
-    - Authorization: Bearer 토큰 방식으로 인증
-    - Content-Type: JSON 형식으로 데이터 전송
-    """
-    return {
-        "apikey": os.getenv("SUPABASE_SERVICE_KEY"),
-        "Authorization": f"Bearer {os.getenv('SUPABASE_SERVICE_KEY')}",
-        "Content-Type": "application/json",
-    }
+from utils import extract_access_token, get_user_from_token, get_supabase_headers
 
 
 class ProfileView(APIView):
