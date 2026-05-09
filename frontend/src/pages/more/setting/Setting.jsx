@@ -1,14 +1,14 @@
 import React, { useState } from "react";
 import { useNavigate } from 'react-router-dom';
-import { useTheme } from '../../store/useThemeStore'; // useTheme 불러오기
-import { getAssetUrl } from "../../utils/AssetHelper"; // 헬퍼 불러오기
-import { supabase } from "../../utils/SupabaseClient"; // supabase 불러오기
+import { useTheme } from '../../../store/useThemeStore'; // useTheme 불러오기
+import { getAssetUrl } from "../../../utils/AssetHelper"; // 헬퍼 불러오기
+import { supabase } from "../../../utils/SupabaseClient"; // supabase 불러오기
 
 // 컴포넌트 불러오기
-import LogoutDialog from '../../components/more/auth/LogoutDialog';
-import WithdrawalDialog from '../../components/more/auth/WithdrawalDialog';
-import ResultDialog from '../../components/common/dialog/ResultDialog';
-import Header from "../../components/common/Header";
+import LogoutDialog from '../../../components/more/auth/LogoutDialog';
+import WithdrawalDialog from '../../../components/more/auth/WithdrawalDialog';
+import ResultDialog from '../../../components/common/dialog/ResultDialog';
+import Header from "../../../components/common/Header";
 
 // 설정 메뉴 항목들 - 배열을 전역으로 선언
 const settingItems = [

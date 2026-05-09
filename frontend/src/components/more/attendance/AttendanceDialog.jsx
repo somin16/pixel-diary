@@ -1,12 +1,12 @@
 import React, { useState } from "react";
-import { useTheme } from "../../store/useThemeStore";
-import { getAssetUrl } from "../../utils/AssetHelper";
+import { useTheme } from "../../../store/useThemeStore";
+import { getAssetUrl } from "../../../utils/AssetHelper";
 import toast from "react-hot-toast";
 
 // 컴포넌트 불러오기
-import DialogBox from "../../components/common/dialog/DialogBox";
-import CloseButton from "../../components/common/CloseButton";
-import DayBox from "../../components/attendance/DayBox";
+import DialogBox from "../../common/dialog/DialogBox";
+import CloseButton from "../../common/CloseButton";
+import DayBox from "./DayBox";
 
 // 7일 출석 보상 데이터 구조 (서버 연동 시 초기화 기준이 됨)
 const ATTENDANCE_DAYS = [
@@ -19,7 +19,7 @@ const ATTENDANCE_DAYS = [
   { day: 7, type: "special", ticketCount: 2 },
 ];
 
-const Attendance = ({ onClose }) => {
+const AttendanceDialog = ({ onClose }) => {
   const currentTheme = useTheme((state) => state.currentTheme);
   
   // TODO: 실제 재화 스토어(Zustand) 연결 필요
@@ -135,4 +135,4 @@ const handleDayClick = (day) => {
   );
 };
 
-export default Attendance;
+export default AttendanceDialog;

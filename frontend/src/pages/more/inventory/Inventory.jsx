@@ -1,13 +1,13 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast'; // 토스트메세지 라이브러리
-import { useTheme } from '../../store/useThemeStore'; // useTheme 불러오기
-import { getAssetUrl } from "../../utils/AssetHelper"; // 헬퍼 불러오기 
+import { useTheme } from '../../../store/useThemeStore'; // useTheme 불러오기
+import { getAssetUrl } from "../../../utils/AssetHelper"; // 헬퍼 불러오기 
 
 // 컴포넌트 불러오기
-import Header from "../../components/common/Header";
-import CategoryTabs from "../../components/shop/CategoryTabs";  
-import InventoryItemGrid from "../../components/inventory/InventoryItemGrid";
+import Header from "../../../components/common/Header";
+import CategoryTabs from "../../../components/more/shop/CategoryTabs";  
+import InventoryItemGrid from "../../../components/more/inventory/InventoryItemGrid";
 
 // 아이템 카테고리 목록
 const TABS = ["모두", "스티커", "이모티콘", "테마"];

@@ -1,5 +1,5 @@
 import React from "react";
-import { getAssetUrl } from "../../utils/AssetHelper";
+import { getAssetUrl } from "../../../utils/AssetHelper";
 
 // 특별 보상(4일차, 7일차) 박스에 부착되는 티켓 뱃지 컴포넌트
 const TicketBadge = ({ ticketCount, isAttended, currentTheme }) => {
