@@ -8,7 +8,7 @@ http:
   url: http://127.0.0.1:8000/api/v1/admin/announcements/{id}/
   headers:
     - name: Authorization
-      value: Bearer
+      value: "Bearer "
   body:
     type: json
     data: |-
