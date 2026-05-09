@@ -25,7 +25,7 @@ class AnnouncementListView(APIView):
                 f"{supabase_url}/rest/v1/announcements",
                 headers=headers,
                 params={
-                    "select": "announcement_id,title,category,view_count,created_at",
+                    "select": "announcement_id,title,content,category,view_count,created_at",
                     "order": "created_at.desc",
                 },
             )
@@ -34,6 +34,12 @@ class AnnouncementListView(APIView):
                 raise Exception(f"Supabase API 오류: {response.text}")
 
             announcements = response.json()
+
+            # content 앞 100자만 잘라서 preview로 내려줌
+            for announcement in announcements:
+                content = announcement.get("content", "")
+                announcement["content_preview"] = content[:100]
+                del announcement["content"]  # content 전체는 제거
 
             return Response(
                 {
