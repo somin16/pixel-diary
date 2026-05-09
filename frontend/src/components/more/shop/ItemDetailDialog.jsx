@@ -1,10 +1,10 @@
 import React from "react";
-import { useTheme } from '../../store/useThemeStore';
-import { getAssetUrl } from "../../utils/AssetHelper";
+import { useTheme } from '../../../store/useThemeStore';
+import { getAssetUrl } from "../../../utils/AssetHelper";
 
 // 컴포넌트 불러오기
-import DialogBox from "../common/dialog/DialogBox"; 
-import ImageButton from "../common/ImageButton";
+import DialogBox from "../../common/dialog/DialogBox"; 
+import ImageButton from "../../common/ImageButton";
 
 /**
  * ItemDetailDialog 컴포넌트

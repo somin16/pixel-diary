@@ -18,13 +18,13 @@ const DialogBox = ({ boxImageName = 'popup_message_box_x3', children, width = "a
     <>
       {/* 어두운 배경 오버레이 */}
       <div 
-        className="fixed top-0 left-0 w-full h-full bg-black/60 z-40" 
+        className="fixed top-0 left-0 w-full h-full bg-black/60 z-60" 
         onClick={onClose}  
       />
 
       {/* 다이얼로그 본체 컨테이너 (화면 중앙 정렬) */}
       <div 
-        className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-50"
+        className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-70"
         style={{ width: width, maxWidth: maxWidth }}
       >
         

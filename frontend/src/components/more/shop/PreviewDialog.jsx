@@ -1,6 +1,6 @@
 import React from "react";
-import { useTheme } from '../../store/useThemeStore';
-import { getAssetUrl } from "../../utils/AssetHelper";
+import { useTheme } from '../../../store/useThemeStore';
+import { getAssetUrl } from "../../../utils/AssetHelper";
 
 /**
  * PreviewDialog 

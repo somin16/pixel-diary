@@ -1,5 +1,5 @@
 import React from "react";
-import { getAssetUrl } from "../../utils/AssetHelper";
+import { getAssetUrl } from "../../../utils/AssetHelper";
 
 // 컴포넌트 불러오기
 import TicketBadge from "./TicketBadge";

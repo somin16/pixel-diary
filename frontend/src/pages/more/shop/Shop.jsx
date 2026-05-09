@@ -1,16 +1,16 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from 'react-router-dom';
-import { useTheme } from '../../store/useThemeStore'; // useTheme 불러오기
-import { getAssetUrl } from "../../utils/AssetHelper"; // 헬퍼 불러오기 
+import { useTheme } from '../../../store/useThemeStore'; // useTheme 불러오기
+import { getAssetUrl } from "../../../utils/AssetHelper"; // 헬퍼 불러오기 
 
 // 컴포넌트 불러오기
-import Header from "../../components/common/Header";
-import ResultDialog from "../../components/common/dialog/ResultDialog";
-import PreviewDialog from "../../components/shop/PreviewDialog";
-import ShopItemGrid from "../../components/shop/ShopItemGrid";
-import ItemDetailDialog from "../../components/shop/ItemDetailDialog";
-import PurchaseDialog from "../../components/shop/PurchaseDialog";
-import CategoryTabs from "../../components/shop/CategoryTabs";  
+import Header from "../../../components/common/Header";
+import ResultDialog from "../../../components/common/dialog/ResultDialog";
+import PreviewDialog from "../../../components/more/shop/PreviewDialog";
+import ShopItemGrid from "../../../components/more/shop/ShopItemGrid";
+import ItemDetailDialog from "../../../components/more/shop/ItemDetailDialog";
+import PurchaseDialog from "../../../components/more/shop/PurchaseDialog";
+import CategoryTabs from "../../../components/more/shop/CategoryTabs";  
 
 // 아이템 카테고리 목록
 const TABS = ["모두", "스티커", "이모티콘", "테마"];

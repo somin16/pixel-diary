@@ -9,17 +9,17 @@ import Home from "./pages/home/Home"; // 홈 화면 부품을 가져온다
 import Game1 from "./game/game1/Game1"; // 게임1 화면
 import Game2 from "./game/game2/Game2"; // 게임2 화면
 import MorePage from "./pages/more/MorePage"; // 더보기 화면
-import Profile from "./pages/profile/Profile"; // 더보기 - 프로필 화면
+import Profile from "./pages/more/profile/Profile"; // 더보기 - 프로필 화면
 import Login from "./pages/auth/Login"; // 로그인 화면
 import AuthRedirect from "./pages/auth/AuthRedirect"; // 로그인, 회원가입 진행 시 화면
 import Signup from "./pages/auth/SignUp"; // 회원가입 화면
-import Setting from "./pages/setting/Setting"; // 더보기 - 설정 메인화면
-import Shop from "./pages/shop/Shop"; // 더보기 - 상점 화면
+import Setting from "./pages/more/setting/Setting"; // 더보기 - 설정 메인화면
+import Shop from "./pages/more/shop/Shop"; // 더보기 - 상점 화면
 import SendResetPasswordLink from "./pages/auth/SendResetPasswordLink"; // 비밀번호 재설정 링크 이메일 발송 화면
 import ListDiary from "./pages/diary/ListDiary"; // 일기 목록 화면
 import DiaryDetail from "./pages/diary/diaryDetail"; // 일기 상세 보기 화면
 import DiaryForm from "./pages/diary/DiaryForm"; // 일기 작성/수정 화면
-import Inventory from "./pages/inventory/Inventory"; // 더보기 - 보관함 화면
+import Inventory from "./pages/more/inventory/Inventory"; // 더보기 - 보관함 화면
 
 // BrowserRouter 안에서 훅을 호출하는 내부 컴포넌트
 function AppInner() {
@@ -90,7 +90,7 @@ function AppInner() {
                         <Route path="/diary/edit/:date" element={<DiaryForm />} />
 
                         {/* 주소가 /more 이면 더보기 화면을 보여줘 */}
-                        <Route path="/more/*" element={<MorePage />} />
+                        <Route path="/more" element={<MorePage />} />
 
                         {/* 주소가 /more/profile 이면 프로필 화면을 보여줘 */}
                         <Route path="/more/profile" element={<Profile />} />
