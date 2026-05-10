@@ -3,6 +3,7 @@ import requests
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
+from datetime import datetime, timezone
 from utils import extract_access_token, get_user_from_token, get_supabase_headers
 
 
@@ -134,7 +135,7 @@ class AdminItemView(APIView):
 
 
 class AdminAnnouncementView(APIView):
-    """공지사항 작성, 삭제 API (관리자 전용)"""
+    """공지사항 작성,수정 및 삭제 API (관리자 전용)"""
 
     def post(self, request):
         """
@@ -289,5 +290,104 @@ class AdminAnnouncementView(APIView):
             )
             return Response(
                 {"message": "공지사항 삭제 중 오류가 발생했습니다."},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
+        
+    def patch(self, request, announcement_id):
+        """
+        공지사항 수정
+        PATCH /api/v1/admin/announcements/{announcement_id}/
+        - Authorization 헤더의 access_token으로 관리자 권한 확인
+        - title, content, category 중 하나 이상을 받아 Supabase announcements 테이블에서 해당 공지사항 수정
+        - 수정된 announcement_id, updated_at과 완료 메시지 반환
+        """
+        # Authorization 헤더에서 access_token 추출
+        access_token = extract_access_token(request)
+        if not access_token:
+            return Response(
+                {"message": "Authorization 헤더에 유효한 Bearer 토큰이 필요합니다."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        # 요청 Body에서 값 추출
+        title = request.data.get("title", "").strip()
+        content = request.data.get("content", "").strip()
+        category = request.data.get("category", "").strip()  # 선택값
+
+        # title, content, category 중 하나 이상 필요
+        if not any([title, content, category]):
+            return Response(
+                {"message": "title, content, category 중 하나 이상 필요합니다."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        try:
+            # access_token으로 유저 정보 조회
+            user = get_user_from_token(access_token)
+
+            # 유효하지 않은 토큰인 경우 401 반환
+            if not user:
+                return Response(
+                    {"message": "유효하지 않은 토큰입니다."},
+                    status=status.HTTP_401_UNAUTHORIZED,
+                )
+
+            # 관리자 권한 확인 (user_metadata의 role이 admin인 경우만 허용)
+            role = user.get("user_metadata", {}).get("role", "")
+            if role != "admin":
+                return Response(
+                    {"message": "관리자 권한이 필요합니다."},
+                    status=status.HTTP_403_FORBIDDEN,
+                )
+
+            supabase_url = os.getenv("SUPABASE_URL")
+            headers = get_supabase_headers()
+
+            # 수정할 필드만 업데이트 데이터에 포함
+            update_data = {}
+            if title:
+                update_data["title"] = title
+            if content:
+                update_data["content"] = content
+            if category:
+                update_data["category"] = category
+
+            # 수정 시간 추가
+            update_data["updated_at"] = datetime.now(timezone.utc).isoformat()
+
+            # Supabase announcements 테이블에서 공지사항 수정
+            response = requests.patch(
+                f"{supabase_url}/rest/v1/announcements",
+                headers={**headers, "Prefer": "return=representation"},
+                params={"announcement_id": f"eq.{announcement_id}"},
+                json=update_data,
+            )
+
+            if response.status_code not in [200, 204]:
+                raise Exception(f"Supabase API 오류: {response.text}")
+
+            # 존재하지 않는 공지사항인 경우 404 반환
+            if not response.json():
+                return Response(
+                    {"message": "존재하지 않는 공지사항입니다."},
+                    status=status.HTTP_404_NOT_FOUND,
+                )
+
+            announcement = response.json()[0]
+
+            return Response(
+                {
+                    "message": "공지사항이 수정되었습니다.",
+                    "announcement_id": announcement.get("announcement_id"),
+                    "updated_at": announcement.get("updated_at"),
+                },
+                status=status.HTTP_200_OK,
+            )
+
+        except Exception as error:
+            # 오류 발생 시 터미널에 출력 (개발 완료 후 삭제 예정)
+            print(f"=== ADMIN ANNOUNCEMENT UPDATE ERROR ===\n{error}\n=======================================")
+            return Response(
+                {"message": "공지사항 수정 중 오류가 발생했습니다."},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
