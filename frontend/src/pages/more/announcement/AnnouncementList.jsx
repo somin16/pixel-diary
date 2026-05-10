@@ -67,13 +67,13 @@ export default function AnnouncementList() {
             />
 
             {/* 목록 */}
-            <div className="flex-1 overflow-y-auto no-scrollbar px-[2%] pb-[30%]">
+            <div className="flex-1 overflow-y-auto no-scrollbar flex justify-center">
                 {loading ? (
                     <div className="flex justify-center mt-[50%] text-xl text-gray-600 font-bold animate-bounce">
                         불러오는 중...
                     </div>
                 ) : (
-                    <div className="flex flex-col">
+                    <div className="flex flex-col w-[95%]">
                         {announcements.map((announcement) => (
                             <AnnouncementCard
                                 key={announcement.announcement_id}
