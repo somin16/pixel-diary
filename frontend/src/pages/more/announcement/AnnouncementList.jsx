@@ -79,6 +79,7 @@ export default function AnnouncementList() {
                                 key={announcement.announcement_id}
                                 title={announcement.title}
                                 contentPreview={announcement.content_preview}
+                                category={announcement.category}
                                 date={formatDisplayDate(announcement.created_at)}
                                 viewCount={announcement.view_count}
                                 onClick={() => navigate(`/announcement/${announcement.announcement_id}`)}
