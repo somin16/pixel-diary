@@ -12,7 +12,7 @@ const menuItems = [
   { id: 'shop', label: '상점', iconName: 'shop_icon_x3', path: '/more/shop' },
   { id: 'storage', label: '보관함', iconName: 'inventory_icon_x3', path: '/more/inventory' },
   { id: 'attendance', label: '출석', iconName: 'daily_icon_x3' },
-  { id: 'notice', label: '공지사항', iconName: 'info_icon_x3', path: '/more/info' },
+  { id: 'notice', label: '공지사항', iconName: 'info_icon_x3', path: '/more/announcement/list' },
 ];
 
 const MorePage = () => {
