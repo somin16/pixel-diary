@@ -47,6 +47,7 @@ import { addEventSpawnChest } from "../object/Chest.js";
 // 타이머
 import { TimerEnd, TimerSetting } from "../manage/Timer.js";
 import { createMenu } from "../ui/Menu.js";
+import { createJoystick } from "../manage/Joystick.js";
 
 export default class GameScene extends Phaser.Scene {
   constructor() {
@@ -58,6 +59,10 @@ export default class GameScene extends Phaser.Scene {
     // 게임이 재시작할때 버그방지용
     this.time.paused = false;
     this.physics.resume();
+
+    // =================조이스틱(터치조작)=========
+
+    createJoystick(this);
 
     // ===================플레이어=================
 
@@ -165,7 +170,7 @@ export default class GameScene extends Phaser.Scene {
     hpBarPosSet(this);
 
     // Player.js에서 playerMove를 받아오고 사용
-    this.player.playerMove(this.cursors, this.wasd);
+    this.player.playerMove(this.cursors, this.wasd, this);
 
     // 오브젝트- 자석효과
     magnetActive(this);

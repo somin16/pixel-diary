@@ -32,7 +32,7 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
     }
 
     // 플레이어 이동
-    playerMove(cursors, wasd) {
+    playerMove(cursors, wasd, scene) {
 
         // 기본 설정
         const DEFAULT_SPEED = 150; // 기본 속도
@@ -40,10 +40,20 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
 
         let isMove = false; // 움직이고 있는지 감지
 
+        // 터치조작용
+        let joystickKeys = null;
+
+        // 조이스틱이 있을때만(혹시 모를 버그 방지용)
+        if (scene.joyStick) {
+
+            // 조이스틱의 움직임을 키보드 조작처럼 변환
+            joystickKeys = scene.joyStick.createCursorKeys(); 
+        }
+
         // 방향키 입력에 따른 플레이어 이동 로직
         // WASD도 추가했습니다.
         // 왼쪽
-        if (cursors.left.isDown || wasd.A.isDown) {
+        if (cursors.left.isDown || wasd.A.isDown || joystickKeys.left.isDown) {
             
             isMove = true;
 
@@ -53,7 +63,7 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
         }
 
             // 오른쪽
-            else if (cursors.right.isDown || wasd.D.isDown) {
+            else if (cursors.right.isDown || wasd.D.isDown || joystickKeys.right.isDown) {
             isMove = true;
 
             this.setVelocityX(DEFAULT_SPEED + 15 * this.speed);
@@ -61,14 +71,14 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
         }
 
         // 위아래
-        if (cursors.up.isDown || wasd.W.isDown) {
+        if (cursors.up.isDown || wasd.W.isDown || joystickKeys.up.isDown) {
 
             this.setVelocityY(-DEFAULT_SPEED - 15 * this.speed);
             isMove = true;
 
         } 
         
-        else if (cursors.down.isDown || wasd.S.isDown) {
+        else if (cursors.down.isDown || wasd.S.isDown || joystickKeys.down.isDown) {
 
             this.setVelocityY(DEFAULT_SPEED + 15 * this.speed);
             isMove = true;
