@@ -82,7 +82,7 @@ export default function AnnouncementList() {
                                 category={announcement.category}
                                 date={formatDisplayDate(announcement.created_at)}
                                 viewCount={announcement.view_count}
-                                onClick={() => navigate(`/announcement/${announcement.announcement_id}`)}
+                                onClick={() => navigate(`/more/announcement/detail/${announcement.announcement_id}`)}
                                 currentTheme={currentTheme}
                             />
                         ))}
@@ -95,7 +95,7 @@ export default function AnnouncementList() {
                 <div className='absolute right-[5%] bottom-[5%]'>
                 <FloatingActionButton
                     ariaLabel='공지사항작성버튼'
-                    onClick={() => navigate("/announcement/write")}
+                    onClick={() => navigate("/more/announcement/write")}
                 />
                 </div>
             )}
