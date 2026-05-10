@@ -80,52 +80,35 @@ class PromptTransformView(APIView):
     POST /api/v1/prompt/transform
     Body: {
         "diary": "오늘 비가 와서 집에서 독서를 했다.",              (필수)
-        "mode": "character",                                     (필수 / character, landscape)
-        "gender": "girl",                                        (character 모드 시 필수 / 예: man, boy, woman 등)
-        "age": 20                                                (character 모드 시 필수 / 자연수)
+        "gender": "girl",                                        (선택 / 예: man, boy, woman 등)
+        "age": 20,                                               (선택 / 자연수, gender와 함께 입력 시 인물모드)
+        "request": "고양이를 추가해줘",                           (선택 / 변환과 동시에 추가·강조할 요소, 한국어 가능)
+        "remove": "비를 없애줘"                                   (선택 / 변환과 동시에 제거할 요소, 부정 프롬프트에 자동 추가)
     }
 
-    - mode: "character" + gender + age → 인물 중심 프롬프트 (주인공이 화면 중앙에 등장)
-    - mode: "landscape"               → 풍경/사물 중심 프롬프트 (인물 없음, gender/age 무시)
-    - mode 미입력 또는 잘못된 값       → 400 에러
-    - mode: "character"인데 gender 또는 age 없음 → 400 에러
+    - gender와 age 둘 다 입력 → 인물 중심 프롬프트 (주인공이 화면 중앙에 등장)
+    - gender와 age 둘 다 생략 → 풍경/사물 중심 프롬프트 (인물 없음)
+    - 둘 중 하나만 입력      → 400 에러
 
     Response:
     {
         "model": "사용한 LLM 모델명",
         "positive_prompt": "FIXED_PREFIX + LLM 생성 장면 + FIXED_SUFFIX",
-        "negative_prompt": "NEGATIVE_PROMPT 고정값"
+        "negative_prompt": "NEGATIVE_PROMPT 고정값 (remove 입력 시 키워드 추가)"
     }
     """
 
     def post(self, request):
         diary = request.data.get("diary", "").strip()
-        mode = request.data.get("mode", "").strip()              # ▼ character / landscape
-        gender = request.data.get("gender", "").strip()          # ▼ 주인공 성별 (character 모드 시 필수)
-        age_raw = request.data.get("age", "").strip()            # ▼ 주인공 나이 (character 모드 시 필수)
-        llm_model_engine_type = "groq"                            # ▼ Qwen(Groq)으로 고정
+        gender = request.data.get("gender", "").strip()       # ▼ 주인공 성별 (선택 / girl, man 등)
+        age_raw = request.data.get("age", "").strip()         # ▼ 주인공 나이 (선택 / 자연수, gender와 함께 입력)
+        user_request = request.data.get("request", "").strip()  # ▼ 추가·강조할 요소 (선택 / 한국어 가능)
+        remove = request.data.get("remove", "").strip()         # ▼ 제거할 요소 (선택 / 한국어 가능)
+        llm_model_engine_type = "groq"                          # ▼ Qwen(Groq)으로 고정
 
-        valid_modes = ["character", "landscape"]
-        if not mode:
-            return Response(
-                {"message": "mode를 입력해주세요. (character / landscape)"},
-                status=status.HTTP_400_BAD_REQUEST
-            )
-        if mode not in valid_modes:
-            return Response(
-                {"message": f"mode는 {', '.join(valid_modes)} 중 하나여야 합니다."},
-                status=status.HTTP_400_BAD_REQUEST
-            )
-
-        # ▼ character 모드일 때만 gender, age 검증
-        is_character_mode = mode == "character"
-        age = None
-        if is_character_mode:
-            if not gender or not age_raw:
-                return Response(
-                    {"message": "character 모드에서는 gender와 age가 필수입니다."},
-                    status=status.HTTP_400_BAD_REQUEST
-                )
+        # ▼ gender, age 둘 다 있으면 인물모드 / 둘 다 없으면 풍경모드 / 하나만 있으면 400
+        is_character_mode = False
+        if gender and age_raw:
             try:
                 age = int(age_raw)
                 if age <= 0:
@@ -133,11 +116,17 @@ class PromptTransformView(APIView):
                         {"message": "age는 1 이상의 정수여야 합니다."},
                         status=status.HTTP_400_BAD_REQUEST
                     )
+                is_character_mode = True
             except ValueError:
                 return Response(
                     {"message": "age는 1 이상의 정수여야 합니다."},
                     status=status.HTTP_400_BAD_REQUEST
                 )
+        elif gender or age_raw:
+            return Response(
+                {"message": "gender와 age는 둘 다 입력하거나 둘 다 생략해야 합니다. (인물 중심 프롬프트를 원하시면 둘 다 입력해주세요)"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
 
         if not diary:
             return Response(
@@ -145,14 +134,11 @@ class PromptTransformView(APIView):
                 status=status.HTTP_400_BAD_REQUEST
             )
 
-        # ▼ 인물모드 / 풍경모드에 따라 LLM 지시 규칙과 부정 프롬프트 분기
+        # ▼ 인물모드 / 풍경모드에 따라 LLM 지시 규칙 분기
         if is_character_mode:
             character_rule = f"- The main character is a {age}-year-old {gender} (the diary writer) and must be clearly visible and centered"
-            current_negative_prompt = NEGATIVE_PROMPT
         else:
             character_rule = "- The scene must be a landscape or an environment description WITHOUT any human characters or figures"
-            # ▼ 풍경모드에서는 landscape focus 제외 (풍경이 잘 나오도록)
-            current_negative_prompt = NEGATIVE_PROMPT.replace("(landscape focus:1.5), ", "")
 
         try:
             scene = call_llm_model_engine_type([{
@@ -172,13 +158,41 @@ class PromptTransformView(APIView):
                 )
             }], llm_model_engine_type=llm_model_engine_type)
 
+            # ▼ request가 있으면 생성된 장면에 추가/강조 적용
+            if user_request:
+                scene = call_llm_model_engine_type([{
+                    "role": "user",
+                    "content": (
+                        f"You are given a scene description from an image generation prompt. Add or emphasize the requested element while keeping ALL original details.\n"
+                        f"Output only the scene description in one line. No explanations, no extra text.\n"
+                        f"Do NOT include any style tokens like '(pixel art:1.2)', '(medium shot:1.4)', '(Close-up:0.8)' or similar tags in your output.\n"
+                        f"Original scene: {scene}\n"
+                        f"Additional request (may be in Korean): {user_request}\n"
+                        f"Rules: keep main character as described, natural descriptive English, under 100 words, one line only."
+                    )
+                }], llm_model_engine_type=llm_model_engine_type)
+
             positive_prompt = f"{FIXED_PREFIX}, {scene}, {FIXED_SUFFIX}"  # ▼ 앞뒤 고정 토큰과 합치기
+
+            # ▼ remove가 있으면 LLM으로 부정 프롬프트 키워드 변환 후 추가
+            remove_keywords = ""
+            if remove:
+                remove_keywords = call_llm_model_engine_type([{
+                    "role": "user",
+                    "content": (
+                        f"transform the following removal request into short English keywords for a ComfyUI negative prompt.\n"
+                        f"Output only comma-separated English keywords, no explanation.\n"
+                        f"Request (may be in Korean): {remove}"
+                    )
+                }], llm_model_engine_type=llm_model_engine_type)
+
+            negative_prompt = f"{NEGATIVE_PROMPT}, {remove_keywords}" if remove_keywords else NEGATIVE_PROMPT
 
             model_used = OLLAMA_MODEL if llm_model_engine_type == "local" else CEREBRAS_MODEL if llm_model_engine_type == "cerebras" else GROQ_MODEL
             return Response({
                 "model": model_used,
                 "positive_prompt": positive_prompt,
-                "negative_prompt": current_negative_prompt,
+                "negative_prompt": negative_prompt,
             }, status=status.HTTP_200_OK)
 
         except Exception as e:

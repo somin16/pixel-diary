@@ -11,9 +11,10 @@ http:
     data: |-
       {
         "diary": "",
-        "mode": "",
         "gender": "",
-        "age": ""
+        "age": "",
+        "request": "",
+        "remove": ""
       }
   auth: inherit
 
@@ -26,21 +27,26 @@ settings:
 docs: |-
   ### Body / Json
   - diary: 변환할 일기 내용 (한국어로 입력해 주세요)(필수)
-  - mode: character / landscape (필수)
-  - gender: 주인공 성별 (girl / man / boy / woman 등)(character 모드 시 필수)
-  - age: 주인공 나이 (character 모드 시 필수)
-  - landscape 모드에서는 gender와 age를 입력해도 무시됩니다
+  - gender: 주인공 성별 (girl / man / boy / woman 등)(선택)
+  - age: 주인공 나이 (선택)
+  - 풍경 중심 프롬프트를 원할 경우 gender와 age 모두 생략
+  - request: 변환과 동시에 추가하거나 강조하고 싶은 내용 (한국어 가능)(선택)
+  - remove: 변환과 동시에 제거하고 싶은 요소 (한국어 가능)(선택)
+  ***
+  ### LLM 모델
+  - Groq Qwen (qwen/qwen3-32b) 고정 사용
   ***
   ### Response
-  - model: 사용된 LLM 모델명 (Qwen 고정)
+  - model: 사용된 LLM 모델명
   - positive_prompt: ComfyUI 긍정 프롬프트에 추가해 주세요
   - negative_prompt: ComfyUI 부정 프롬프트에 추가해 주세요
   ***
   ### Status Code
   - 200 OK: 프롬프트 변환 성공
-  - 400 Bad Request: mode 값 누락
-  - 400 Bad Request: mode 값이 유효하지 않음 (character, landscape 중 하나여야 함)
-  - 400 Bad Request: character 모드에서 gender 또는 age 누락
   - 400 Bad Request: diary 값 누락
   - 400 Bad Request: age 값이 유효하지 않음 (1 이상의 정수여야 함)
-  - 429 Too Many Requests: Cerebras 트래픽 과부하 (잠시 후 재시도)
+  - 400 Bad Request: gender와 age는 둘 다 입력하거나 둘 다 생략해야 함
+  ***
+  ### 프롬프트-수정과의 차이
+  - request / remove를 여기서 함께 보내면 변환과 수정을 한 번에 처리
+  - 변환 후 추가 수정이 필요한 경우 POST /api/v1/prompt/restyle 사용
