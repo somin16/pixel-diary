@@ -25,6 +25,7 @@ import Profile from "./pages/more/profile/Profile"; // 더보기 - 프로필 화
 import Setting from "./pages/more/setting/Setting"; // 더보기 - 설정 메인화면
 import Shop from "./pages/more/shop/Shop"; // 더보기 - 상점 화면
 import Inventory from "./pages/more/inventory/Inventory"; // 더보기 - 보관함 화면
+import AnnouncementList from "./pages/more/announcement/AnnouncementList"; // 더보기 - 공지사항 목록 화면
 
 // BrowserRouter 안에서 훅을 호출하는 내부 컴포넌트
 function AppInner() {
@@ -108,6 +109,9 @@ function AppInner() {
 
                         {/* 주소가 /more/inventory 이면 보관함 화면을 보여줘 */}
                         <Route path="/more/inventory" element={<Inventory />} />
+
+                        {/* 주소가 /more/announcement/list이면 공지사항 목록 화면을 보여줘 */}
+                        <Route path="/more/announcement/list" element={<AnnouncementList />} />
 
                         {/* ⚠️ 이미 로그인했는데 로그인창 가려하면 홈으로 보내기 */}
                         <Route path="/auth/*" element={<Navigate to="/" replace />} />
