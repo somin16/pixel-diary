@@ -42,7 +42,7 @@ const AnnouncementCard = ({ title, contentPreview, category, date, viewCount, on
                     <div className="flex items-center gap-[6%]">
                         <p className="text-xs text-gray-500 whitespace-nowrap">{date}</p>
                         {category && (
-                            <p className={`text-2xs rounded-sm border-[1.5px] whitespace-nowrap px-[5%] pb-[1%] pt-[2%] ${CATEGORY_STYLE[category]}`}>
+                            <p className={`text-2xs rounded-sm border-[1.5px] whitespace-nowrap px-[5%] pb-[2%] pt-[2%] ${CATEGORY_STYLE[category]}`}>
                                 {category}
                             </p>
                         )}

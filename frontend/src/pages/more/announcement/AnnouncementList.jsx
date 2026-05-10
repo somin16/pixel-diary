@@ -20,20 +20,16 @@ export default function AnnouncementList() {
         try {
             setLoading(true);
 
-            // 관리자 여부 확인
-            const { data: { session } } = await supabase.auth.getSession();
-            const role = session?.user?.user_metadata?.role;
-            setIsAdmin(role === 'admin');
-
-            // 공지사항 목록 조회 (토큰 불필요)
-            const [response] = await Promise.all([
+            const [{ data: { session } }, response] = await Promise.all([
+                supabase.auth.getSession(),
                 fetch(`${import.meta.env.VITE_BACKEND_URL}api/v1/announcements/`, {
                     method: 'GET',
                     headers: { 'Content-Type': 'application/json' },
-                }),
-                // 무조건 1초(1000ms)는 기다림
-                new Promise(resolve => setTimeout(resolve, 1000))
+                })
             ]);
+
+            const role = session?.user?.user_metadata?.role;
+            setIsAdmin(role === 'admin');
 
             if (!response.ok) {
                 const errorBody = await response.text();
@@ -69,7 +65,7 @@ export default function AnnouncementList() {
             {/* 목록 */}
             <div className="flex-1 overflow-y-auto no-scrollbar flex justify-center">
                 {loading ? (
-                    <div className="flex justify-center mt-[50%] text-xl text-gray-600 font-bold animate-bounce">
+                    <div className="flex h-[10%] justify-center mt-[50%] text-3xl text-gray-600 font-bold animate-bounce">
                         불러오는 중...
                     </div>
                 ) : (
@@ -93,10 +89,10 @@ export default function AnnouncementList() {
             {/* FAB 버튼 : 관리자인 경우에만 FAB 버튼 표시 (공지사항 작성 페이지로 이동) */}
             {isAdmin && (
                 <div className='absolute right-[5%] bottom-[5%]'>
-                <FloatingActionButton
-                    ariaLabel='공지사항작성버튼'
-                    onClick={() => navigate("/more/announcement/write")}
-                />
+                    <FloatingActionButton
+                        ariaLabel='공지사항작성버튼'
+                        onClick={() => navigate("/more/announcement/write")}
+                    />
                 </div>
             )}
         </div>
