@@ -40,10 +40,11 @@ const Account = () => {
   useEffect(() => {
     const fetchUser = async () => {
       const { data: { user } } = await supabase.auth.getUser();
-      if (user) 
+      if (user) {
         setUserEmail(user.email);
         // provider 정보 추출 (google, kakao, naver, email 등)
         setLoginProvider(user.app_metadata.provider);
+      }
     };
     fetchUser();
   }, []);
