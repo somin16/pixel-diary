@@ -43,7 +43,7 @@ const Header = ({ title, backPath }) => {
 
       {/* 제목이 있을 때만 표시 */}
       {title && (
-        <h1 className="text-4xl text-black m-0 select-none">
+        <h1 className="text-3xl text-black m-0 select-none">
           {title}
         </h1>
       )}
