@@ -64,15 +64,41 @@ const Setting = () => {
   };
 
   // 회원탈퇴 확인
-  const handleWithdrawal = (password) => {
-    setDialog(null);
-    setResultDialog('withdrawal');
-    // TODO: API 연동 시 코드 추가
-  };
+  const handleWithdrawal = async (password) => {
+    try {
+        const { data: { session } } = await supabase.auth.getSession();
+
+        const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/v1/auth/withdrawal/`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${session?.access_token}`,
+            },
+            body: JSON.stringify({ password }),
+        });
+
+        if (!response.ok) {
+            const error = await response.json();
+            if (response.status === 401) {
+                alert('비밀번호가 일치하지 않습니다.');
+            } else {
+                alert(error.message || '회원탈퇴에 실패했습니다.');
+            }
+            return;
+        }
+
+        setDialog(null);
+        setResultDialog('withdrawal');
+
+    } catch (error) {
+        console.error('회원탈퇴 중 에러 발생:', error);
+        alert('회원탈퇴에 실패했습니다. 다시 시도해 주세요.');
+    }
+};
 
   // 결과 확인 버튼 - 결과 확인 버튼 클릭 시 로그인 화면으로 이동
   const handleResultConfirm = async () => {
-    if (resultDialog === 'logout') {
+    if (resultDialog === 'logout' || resultDialog === 'withdrawal') {
         // 실제 세션 파괴
         // Supabase 세션 삭제 (이걸 해야 App.jsx가 반응해서 로그인창으로 보냄)
         await supabase.auth.signOut();
