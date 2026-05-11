@@ -216,15 +216,30 @@ class AttendanceView(APIView):
                 },
             )
 
-            current_coin = user_response.json()[0].get("coin")
+            # 유저 데이터 확인
+            user_data = user_response.json()
+            if not user_data:
+                return Response(
+                    {"message": "사용자 정보를 찾을 수 없습니다."},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+
+            current_coin = user_data.json()[0].get("coin")
             updated_coin = current_coin + coin_reward
 
             # 코인 업데이트
-            requests.patch(
+            coin_res = requests.patch(
                 f"{supabase_url}/rest/v1/users?user_id=eq.{user_id}",
                 headers=headers,
                 json={"coin": updated_coin},
             )
+
+            # 코인 지급 중 오류 발생
+            if coin_res.status_code not in [200, 204]:
+                return Response(
+                    {"message": "보상 지급 중 오류가 발생했습니다."},
+                    status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                )
 
             total_tickets = 0
 
@@ -245,15 +260,20 @@ class AttendanceView(APIView):
                     # 기존 티켓이 있으면 수량 증가
                     existing = existing_ticket.json()[0]
                     new_count = existing.get("item_count") + ticket_reward
-                    requests.patch(
+                    ticket_res = requests.patch(
                         f"{supabase_url}/rest/v1/inventory?inventory_id=eq.{existing.get('inventory_id')}",
                         headers=headers,
                         json={"item_count": new_count},
                     )
+                    if ticket_res.status_code not in [200, 204]:
+                        return Response(
+                            {"message": "티켓 지급 중 오류가 발생했습니다."},
+                            status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                        )
                     total_tickets = new_count
                 else:
                     # 없으면 새로 생성
-                    requests.post(
+                    ticket_res = requests.post(
                         f"{supabase_url}/rest/v1/inventory",
                         headers=headers,
                         json={
@@ -262,7 +282,14 @@ class AttendanceView(APIView):
                             "item_count": ticket_reward,
                         },
                     )
+                    # 티켓 지급 중 오류 발생
+                    if ticket_res.status_code not in [200, 201]:
+                        return Response(
+                            {"message": "티켓 지급 중 오류가 발생했습니다."},
+                            status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                        )
                     total_tickets = ticket_reward
+
             else:
                 # 티켓 보상이 없는 경우 현재 보유 티켓 수 조회
                 existing_ticket = requests.get(

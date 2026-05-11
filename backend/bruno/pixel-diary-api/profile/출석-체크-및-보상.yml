@@ -26,3 +26,5 @@ docs: |-
   - 400 Bad Request: 필수값 누락 (Authorization Bearer 헤더 access_token)
   - 400 Bad Request: 오늘 이미 출석 체크를 완료한 경우
   - 401 Unauthorized: 유효하지 않은 access_token인 경우
+  - 500 Internal Server Error: 보상 지급 중 오류 (코인)
+  - 500 Internal Server Error: 보상 지급 중 오류 (티켓)
