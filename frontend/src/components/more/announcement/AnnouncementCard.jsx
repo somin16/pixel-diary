@@ -32,7 +32,7 @@ const AnnouncementCard = ({ title, contentPreview, category, date, viewCount, on
         >
             <div className="absolute w-full h-full p-[5%]">
                 {/* 제목 */}
-                <p className="font-bold text-base text-gray-800">{title}</p>
+                <p className="font-bold text-base line-clamp-1 text-gray-800">{title}</p>
 
                 {/* 내용 미리보기 (최대 2줄)*/}
                 <p className="h-[45%] text-2xs line-clamp-2 text-gray-600">{contentPreview}</p>
