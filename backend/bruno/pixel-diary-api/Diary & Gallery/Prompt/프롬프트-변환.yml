@@ -6,13 +6,14 @@ info:
 http:
   method: POST
   url: http://127.0.0.1:8000/api/v1/prompt/transform
+  headers:
+    - name: Authorization
+      value: "Bearer "
   body:
     type: json
     data: |-
       {
         "diary": "",
-        "gender": "",
-        "age": "",
         "request": "",
         "remove": ""
       }
@@ -25,11 +26,12 @@ settings:
   maxRedirects: 5
 
 docs: |-
+  ### Headers
+  - Authorization: Bearer <access_token> (필수 / POST /api/v1/auth/login/ 으로 발급)
+  - users 테이블에 gender/age가 설정된 경우 → 인물 중심 프롬프트 자동 적용
+  ***
   ### Body / Json
   - diary: 변환할 일기 내용 (한국어로 입력해 주세요)(필수)
-  - gender: 주인공 성별 (girl / man / boy / woman 등)(선택)
-  - age: 주인공 나이 (선택)
-  - 풍경 중심 프롬프트를 원할 경우 gender와 age 모두 생략
   - request: 변환과 동시에 추가하거나 강조하고 싶은 내용 (한국어 가능)(선택)
   - remove: 변환과 동시에 제거하고 싶은 요소 (한국어 가능)(선택)
   ***
@@ -43,9 +45,11 @@ docs: |-
   ***
   ### Status Code
   - 200 OK: 프롬프트 변환 성공
-  - 400 Bad Request: diary 값 누락
-  - 400 Bad Request: age 값이 유효하지 않음 (1 이상의 정수여야 함)
-  - 400 Bad Request: gender와 age는 둘 다 입력하거나 둘 다 생략해야 함
+  - 400 Bad Request: 필수값 누락 (diary)
+  - 400 Bad Request: users 테이블에 gender 또는 age 미설정
+  - 401 Unauthorized: 필수값 누락 (Authorization Bearer 헤더 access_token)
+  - 401 Unauthorized: 유효하지 않은 access_token인 경우
+  - 404 Not Found: 유저 정보를 찾을 수 없는 경우
   ***
   ### 프롬프트-수정과의 차이
   - request / remove를 여기서 함께 보내면 변환과 수정을 한 번에 처리

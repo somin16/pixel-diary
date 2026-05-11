@@ -7,6 +7,7 @@ from dotenv import load_dotenv
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
+from utils import extract_access_token, get_user_from_token, get_supabase_headers
 
 # backend/.env 파일에서 환경변수 로드
 load_dotenv(os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '.env'))
@@ -79,16 +80,10 @@ class PromptTransformView(APIView):
 
     POST /api/v1/prompt/transform
     Body: {
-        "diary": "오늘 비가 와서 집에서 독서를 했다.",              (필수)
-        "gender": "girl",                                        (선택 / 예: man, boy, woman 등)
-        "age": 20,                                               (선택 / 자연수, gender와 함께 입력 시 인물모드)
-        "request": "고양이를 추가해줘",                           (선택 / 변환과 동시에 추가·강조할 요소, 한국어 가능)
-        "remove": "비를 없애줘"                                   (선택 / 변환과 동시에 제거할 요소, 부정 프롬프트에 자동 추가)
+        "diary": "오늘 비가 와서 집에서 독서를 했다.",  (필수)
+        "request": "고양이를 추가해줘",                 (선택 / 변환과 동시에 추가·강조할 요소, 한국어 가능)
+        "remove": "비를 없애줘"                         (선택 / 변환과 동시에 제거할 요소, 부정 프롬프트에 자동 추가)
     }
-
-    - gender와 age 둘 다 입력 → 인물 중심 프롬프트 (주인공이 화면 중앙에 등장)
-    - gender와 age 둘 다 생략 → 풍경/사물 중심 프롬프트 (인물 없음)
-    - 둘 중 하나만 입력      → 400 에러
 
     Response:
     {
@@ -100,33 +95,9 @@ class PromptTransformView(APIView):
 
     def post(self, request):
         diary = request.data.get("diary", "").strip()
-        gender = request.data.get("gender", "").strip()       # ▼ 주인공 성별 (선택 / girl, man 등)
-        age_raw = request.data.get("age", "").strip()         # ▼ 주인공 나이 (선택 / 자연수, gender와 함께 입력)
         user_request = request.data.get("request", "").strip()  # ▼ 추가·강조할 요소 (선택 / 한국어 가능)
         remove = request.data.get("remove", "").strip()         # ▼ 제거할 요소 (선택 / 한국어 가능)
         llm_model_engine_type = "groq"                          # ▼ Qwen(Groq)으로 고정
-
-        # ▼ gender, age 둘 다 있으면 인물모드 / 둘 다 없으면 풍경모드 / 하나만 있으면 400
-        is_character_mode = False
-        if gender and age_raw:
-            try:
-                age = int(age_raw)
-                if age <= 0:
-                    return Response(
-                        {"message": "age는 1 이상의 정수여야 합니다."},
-                        status=status.HTTP_400_BAD_REQUEST
-                    )
-                is_character_mode = True
-            except ValueError:
-                return Response(
-                    {"message": "age는 1 이상의 정수여야 합니다."},
-                    status=status.HTTP_400_BAD_REQUEST
-                )
-        elif gender or age_raw:
-            return Response(
-                {"message": "gender와 age는 둘 다 입력하거나 둘 다 생략해야 합니다. (인물 중심 프롬프트를 원하시면 둘 다 입력해주세요)"},
-                status=status.HTTP_400_BAD_REQUEST
-            )
 
         if not diary:
             return Response(
@@ -134,11 +105,47 @@ class PromptTransformView(APIView):
                 status=status.HTTP_400_BAD_REQUEST
             )
 
-        # ▼ 인물모드 / 풍경모드에 따라 LLM 지시 규칙 분기
-        if is_character_mode:
-            character_rule = f"- The main character is a {age}-year-old {gender} (the diary writer) and must be clearly visible and centered"
-        else:
-            character_rule = "- The scene must be a landscape or an environment description WITHOUT any human characters or figures"
+        # ▼ Authorization 토큰으로 users 테이블에서 gender/age 자동 조회
+        # ▼ 풍경 모드는 추후 구현 예정 (현재 비활성화)
+        # character_rule = "- The scene must be a landscape or an environment description WITHOUT any human characters or figures"
+        access_token = extract_access_token(request)
+        if not access_token:
+            return Response(
+                {"message": "로그인이 필요합니다. Authorization 헤더에 Bearer 토큰을 입력해주세요."},
+                status=status.HTTP_401_UNAUTHORIZED
+            )
+
+        user = get_user_from_token(access_token)
+        if not user:
+            return Response(
+                {"message": "유효하지 않은 토큰입니다."},
+                status=status.HTTP_401_UNAUTHORIZED
+            )
+
+        user_id = user.get("id")
+        supabase_url = os.getenv("SUPABASE_URL")
+        user_response = http_requests.get(
+            f"{supabase_url}/rest/v1/users",
+            headers=get_supabase_headers(),
+            params={"user_id": f"eq.{user_id}", "select": "gender,age"},
+        )
+        if user_response.status_code != 200 or not user_response.json():
+            return Response(
+                {"message": "유저 정보를 찾을 수 없습니다."},
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+        user_data = user_response.json()[0]
+        gender = user_data.get("gender") or ""
+        age = user_data.get("age")
+
+        if not gender or not age:
+            return Response(
+                {"message": "프로필에 성별과 나이를 설정해주세요."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        character_rule = f"- The main character is a {age}-year-old {gender} (the diary writer) and must be clearly visible and centered"
 
         try:
             scene = call_llm_model_engine_type([{
