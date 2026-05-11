@@ -66,8 +66,10 @@ const Setting = () => {
   // 회원탈퇴 확인
   const handleWithdrawal = async (password) => {
     try {
+        // 현재 세션에서 액세스 토큰 가져오기
         const { data: { session } } = await supabase.auth.getSession();
 
+        // 회원탈퇴 API 호출 (헤더에 토큰, 바디에 비밀번호)
         const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/v1/auth/withdrawal/`, {
             method: 'POST',
             headers: {
@@ -79,6 +81,7 @@ const Setting = () => {
 
         if (!response.ok) {
             const error = await response.json();
+            // 401: 비밀번호 불일치 또는 유효하지 않은 토큰
             if (response.status === 401) {
                 alert('비밀번호가 일치하지 않습니다.');
             } else {
@@ -86,7 +89,7 @@ const Setting = () => {
             }
             return;
         }
-
+        // 탈퇴 성공 시 다이얼로그 닫고 결과 팝업 노출
         setDialog(null);
         setResultDialog('withdrawal');
 
@@ -96,7 +99,7 @@ const Setting = () => {
     }
 };
 
-  // 결과 확인 버튼 - 결과 확인 버튼 클릭 시 로그인 화면으로 이동
+  // 결과 확인 버튼 - 로그아웃/탈퇴 완료 후 세션 파괴 및 로그인 화면으로 이동
   const handleResultConfirm = async () => {
     if (resultDialog === 'logout' || resultDialog === 'withdrawal') {
         // 실제 세션 파괴
