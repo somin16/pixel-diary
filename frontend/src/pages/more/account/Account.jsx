@@ -41,9 +41,11 @@ const Account = () => {
     const fetchUser = async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
-        setUserEmail(user.email);
+        // user_metadata.provider를 먼저 확인하고, 없으면 app_metadata 확인
+        const provider = user.user_metadata?.provider || user.app_metadata?.provider || "email";
         // provider 정보 추출 (google, kakao, naver, email 등)
-        setLoginProvider(user.app_metadata.provider);
+        setLoginProvider(provider);
+        setUserEmail(user.email);
       }
     };
     fetchUser();
