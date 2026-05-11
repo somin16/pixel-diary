@@ -2,7 +2,7 @@
 from django.urls import path
 
 # 같은 폴더의 views.py에서 GameScoreView 가져오기
-from .views import GameScoreView, UserCoinView,TicketUseView
+from .views import GameScoreView, UserCoinView,TicketView
 
 # URL 목록
 urlpatterns = [
@@ -11,5 +11,5 @@ urlpatterns = [
     # 코인 추가
     path("users/coins/", UserCoinView.as_view(), name="user-coin"),
     #티켓관련
-    path("users/inventory/tickets/use/", TicketUseView.as_view(), name="ticket-use"),
+    path("users/inventory/tickets/", TicketView.as_view(), name="ticket"),
 ]
