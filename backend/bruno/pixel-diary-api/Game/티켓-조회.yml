@@ -29,5 +29,6 @@ docs: |
 
   Status Code:
   - 200 OK: 티켓 조회 성공
+  - 400 Bad Request: 필수값 누락 (Authorization Bearer 헤더 acces_token)
   - 400 Bad Request: 필수값(item_id) 누락 또는 숫자 형식이 아님, 티켓 아이템이 아님, 보유한 티켓 없음
   - 401 Unauthorized: 토큰이 유효하지 않거나, 존재하지 않는 유저
