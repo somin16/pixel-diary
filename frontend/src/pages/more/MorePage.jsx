@@ -6,6 +6,8 @@ import { getAssetUrl } from "../../utils/AssetHelper"; // 헬퍼 불러오기
 // 컴포넌트 불러오기
 import ProfileBar from "../../components/more/profile/ProfileBar";
 import Attendance from "../../components/more/attendance/AttendanceDialog"; // 출석
+import ContactDialog from "../../components/more/contact/ContactDialog"; 
+import ResultDialog from '../../components/common/dialog/ResultDialog';
 
 // 배열 전역으로 선언
 const menuItems = [
@@ -13,6 +15,8 @@ const menuItems = [
   { id: 'storage', label: '보관함', iconName: 'inventory_icon_x3', path: '/more/inventory' },
   { id: 'attendance', label: '출석', iconName: 'daily_icon_x3' },
   { id: 'notice', label: '공지사항', iconName: 'info_icon_x3', path: '/more/announcement/list' },
+  { id: 'notification', label: '알림 설정', iconName: 'alarm_icon_x3', path: '/more/notification' },
+  { id: 'contact', label: '문의 하기', iconName: 'help_center_icon_x3' },
 ];
 
 const MorePage = () => {
@@ -27,6 +31,10 @@ const MorePage = () => {
 
   // 출석 다이얼로그 열림 상태를 관리하는 상태
   const [isAttendanceOpen, setIsAttendanceOpen] = useState(false);
+
+  // 문의하기 다이얼로그 상태 관리
+  const [activeDialog, setActiveDialog] = useState(null); 
+  const [resultDialog, setResultDialog] = useState(null);
 
   // 사용자 정보 상태 관리
   // 나중에 context나 zuStand로 전역 관리 하는 게 좋을 듯
@@ -44,10 +52,30 @@ const MorePage = () => {
   const handleMenuClick = (item) => {
     if (item.id === 'attendance') {
       setIsAttendanceOpen(true); // 출석 버튼이면 상태값 변경
+    } else if (item.id === 'contact') { 
+      setActiveDialog('contact'); // 문의하기 버튼이면 상태값 변경
     } else if (item.path) {
       navigate(item.path); // 그 외에는 페이지 이동
     }
   };
+
+  const handleSendContact = async (content) => {
+  try {
+    // TODO : API 연동
+    
+    // 전송 성공 시 로직
+    setActiveDialog(null); // 입력 다이얼로그 닫기
+    setResultDialog('contact_success'); // 완료 다이얼로그 띄우기
+  } catch (error) {
+    console.error("문의 전송 실패:", error);
+    // 실패 시에도 에러 다이얼로그를 띄우는 것이 좋습니다.
+
+    // 실패 시 로직
+    setActiveDialog(null); // 입력 다이얼로그 닫기
+    setResultDialog('contact_error'); // 에러 다이얼로그 상태로 변경
+  }
+};
+
 return (
     // 전체 페이지를 감싸는 컨테이너 (배경 이미지가 깔리는 곳)
     <div 
@@ -109,6 +137,32 @@ return (
         <Attendance onClose={() => setIsAttendanceOpen(false)} /> 
       )}
 
+      {/* 문의 입력 다이얼로그 */}
+      {activeDialog === 'contact' && (
+        <ContactDialog 
+          onCancel={() => setActiveDialog(null)} 
+          onSend={handleSendContact}
+          maxWidth="320px"
+        />
+      )}
+
+      {/* 문의 완료 결과 다이얼로그 */}
+      {resultDialog === 'contact_success' && (
+        <ResultDialog 
+          message={<>문의가 성공적으로 <br /> 접수되었습니다</>}
+          onConfirm={() => setResultDialog(null)}
+          maxWidth="320px"
+        />
+      )}
+
+      {/* 문의 실패 에러 다이얼로그 */}
+      {resultDialog === 'contact_error' && (
+        <ResultDialog 
+          message={<>일시적인 오류로<br />전송에 실패했습니다.<br />잠시 후 다시 시도해주세요.</>}
+          onConfirm={() => setResultDialog(null)}
+          maxWidth="320px"
+        />
+      )}
     </div>
   );
 };
