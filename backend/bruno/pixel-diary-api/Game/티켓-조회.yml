@@ -1,14 +1,14 @@
 info:
-  name: 티켓-사용
+  name: 티켓-조회
   type: http
-  seq: 4
+  seq: 5
 
 http:
-  method: PATCH
+  method: GET
   url: http://127.0.0.1:8000/api/v1/users/inventory/tickets/
   headers:
     - name: Authorization
-      value: Bearer
+      value: "Bearer "
   body:
     type: json
     data: |-
@@ -23,12 +23,12 @@ settings:
   followRedirects: true
   maxRedirects: 5
 
-docs: |+
+docs: |
   Headers:
   - Authorization: Bearer 로그인할 시 받는 access_token
 
   Status Code:
-  - 200 OK: 티켓 사용 성공
-  - 400 Bad Request: 필수값(item_id) 누락 또는 숫자 형식이 아님, 티켓 아이템이 아님, 보유한 티켓 없음
+  - 200 OK: 티켓 조회 성공
+  - 400 Bad Request: 필수값 누락 (Authorization Bearer 헤더 access_token)
+  - 400 Bad Request: 필수값(item_id) 누락 또는 숫자 형식이 아님, 티켓 아이템이 아님, 아이템번호가 음수일 경우
   - 401 Unauthorized: 토큰이 유효하지 않거나, 존재하지 않는 유저
-
