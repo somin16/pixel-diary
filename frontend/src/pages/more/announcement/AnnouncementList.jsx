@@ -60,6 +60,7 @@ export default function AnnouncementList() {
         >
             <Header
                 title="공지사항"
+                backPath="/more"
             />
 
             {/* 목록 */}
@@ -76,7 +77,7 @@ export default function AnnouncementList() {
                                 title={announcement.title}
                                 contentPreview={announcement.content_preview}
                                 category={announcement.category}
-                                date={formatDisplayDate(announcement.created_at)}
+                                date={formatDisplayDate(announcement.updated_at || announcement.created_at)}
                                 viewCount={announcement.view_count}
                                 onClick={() => navigate(`/more/announcement/detail/${announcement.announcement_id}`)}
                                 currentTheme={currentTheme}

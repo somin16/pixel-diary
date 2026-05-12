@@ -25,7 +25,10 @@ import Profile from "./pages/more/profile/Profile"; // 더보기 - 프로필 화
 import Setting from "./pages/more/setting/Setting"; // 더보기 - 설정 메인화면
 import Shop from "./pages/more/shop/Shop"; // 더보기 - 상점 화면
 import Inventory from "./pages/more/inventory/Inventory"; // 더보기 - 보관함 화면
+// ---------------------- 더보기 (공지사항) -----------------------------
 import AnnouncementList from "./pages/more/announcement/AnnouncementList"; // 더보기 - 공지사항 목록 화면
+import AnnouncementDetail from "./pages/more/announcement/AnnouncementDetail"; // 더보기 - 공지사항 상세 조회 화면
+import AnnouncementForm from "./pages/more/announcement/AnnouncementForm"; // 더보기 - 공지사항 작성/수정 화면
 import Account from "./pages/more/account/Account"; // 더보기 - 계정 설정 화면
 
 // BrowserRouter 안에서 훅을 호출하는 내부 컴포넌트
@@ -85,10 +88,10 @@ function AppInner() {
                         {/* 주소가 / 이면 홈화면을 보여줘 */}
                         <Route path="/" element={<Home />} />
 
-                        {/* 주소가 /diary/list 이면 일기 목록 화면을 보여줘 */}
+                        {/* 주소가 /diary/list 이면 일기 목록 조회 화면을 보여줘 */}
                         <Route path="/diary/list" element={<ListDiary />} />
 
-                        {/* 주소가 /diary/:date 이면 일기 상세 보기 화면을 보여줘 */}
+                        {/* 주소가 /diary/:date 이면 일기 상세 조회 화면을 보여줘 */}
                         <Route path="/diary/:date" element={<DiaryDetail />} />
 
                         {/* 주소가 /diary/write/:date 이면 일기 작성 화면을 보여줘 */}
@@ -114,6 +117,13 @@ function AppInner() {
                         {/* 주소가 /more/announcement/list이면 공지사항 목록 화면을 보여줘 */}
                         <Route path="/more/announcement/list" element={<AnnouncementList />} />
 
+                        {/* 주소가 /more/announcement/detail이면 공지사항 상세 조회 화면을 보여줘 */}
+                        <Route path="/more/announcement/detail/:announcement_id" element={<AnnouncementDetail />} />
+
+                        {/* 주소가 /more/announcement/write이면 공지사항 작성 화면을 보여줘 */}
+                        <Route path="/more/announcement/write" element={<AnnouncementForm />} />
+                        {/* 주소가 /more/announcement/edit/:announcement_id이면 공지사항 수정 화면을 보여줘 */}
+                        <Route path="/more/announcement/edit/:announcement_id" element={<AnnouncementForm />} />
                         {/* 주소가 /more/account 이면 계정 설정 화면을 보여줘 */}
                         <Route path="/more/setting/account" element={<Account />} />
 

@@ -11,9 +11,12 @@ export const formatDisplayDate = (dateStr) => {
     // 유효하지 않은 날짜인 경우 처리
     if (isNaN(d.getTime())) return "00년 00월 00일";
 
-    const year = d.getFullYear().toString().slice(-2);
-    const month = (d.getMonth() + 1).toString().padStart(2, '0');
-    const day = d.getDate().toString().padStart(2, '0');
+    // KST(UTC+9)로 변환
+    const kst = new Date(d.getTime() + 9 * 60 * 60 * 1000);
+
+    const year = kst.getFullYear().toString().slice(-2);
+    const month = (kst.getMonth() + 1).toString().padStart(2, '0');
+    const day = kst.getDate().toString().padStart(2, '0');
 
     return `${year}년 ${month}월 ${day}일`;
 };
