@@ -476,13 +476,13 @@ class WithdrawalView(APIView):
             
             user_id = user_info_res.json().get("id")
 
-            # 4. 비밀번호로 본인 계정 재검증 로직
-            email = user_info_res.json().get("email")
-            login_check = requests.post(
-                f"{supabase_url}/auth/v1/token?grant_type=password",
-                headers={"apikey": os.getenv("SUPABASE_ANON_KEY")},
-                json={"email": email, "password": password}
-            )
+            # user_metadata 우선, 없으면 app_metadata 확인 네이버로그인은 커스텀이라서
+            user_metadata_provider = user_data.get("user_metadata", {}).get("provider", "")
+            app_metadata_provider = user_data.get("app_metadata", {}).get("provider", "email")
+
+            # 4. 로그인 수단 확인 (소셜 유저는 비밀번호 검증 스킵)
+            provider = user_metadata_provider or app_metadata_provider
+            is_social = provider in ["google", "kakao", "naver"]
 
             #입력한 비밀번호가 일치하지 않을 경우 401 반환
             if login_check.status_code != 200:
