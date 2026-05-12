@@ -20,61 +20,33 @@ const accountItems = [
 ];
 
 const Account = () => {
-    // navigate('/경로') 처럼 사용하여 원하는 주소로 화면을 전환
-    const navigate = useNavigate();
+  // navigate('/경로') 처럼 사용하여 원하는 주소로 화면을 전환
+  const navigate = useNavigate();
 
-    //  테마 전역 관리
-    const currentTheme = useTheme((state) => state.currentTheme);
+  //  테마 전역 관리
+  const currentTheme = useTheme((state) => state.currentTheme);
 
-    // 다이얼로그 상태 관리 'logout' | 'withdrawal' | null
-    const [dialog, setDialog] = useState(null);
-    // 결과 알림창 다이얼로그 상태 관리 'logout' | 'withdrawal' | null
-    const [resultDialog, setResultDialog] = useState(null);
+  // 다이얼로그 상태 관리 'logout' | 'withdrawal' | null
+  const [dialog, setDialog] = useState(null);
+  // 결과 알림창 다이얼로그 상태 관리 'logout' | 'withdrawal' | null
+  const [resultDialog, setResultDialog] = useState(null);
 
-    // 유저 이메일 상태
-    const [userEmail, setUserEmail] = useState("");
-    // 로그인 수단 상태
-    const [loginProvider, setLoginProvider] = useState("");
+  // 유저 이메일 상태
+  const [userEmail, setUserEmail] = useState("");
+  // 로그인 수단 상태
+  const [loginProvider, setLoginProvider] = useState("");
 
-    // 렌더링 시 Supabase에서 현재 로그인한 유저 이메일 가져오기
-    useEffect(() => {
-        const fetchUser = async () => {
-            const { data: { user } } = await supabase.auth.getUser();
-            if (user) {
-                setUserEmail(user.email);
-                // provider 정보 추출 (google, kakao, naver, email 등)
-                setLoginProvider(user.app_metadata.provider);
-            }
-        };
-        fetchUser();
-    }, []);
-
-    // 로그아웃 확인
-    const handleLogout = async () => {
-        try {
-            // 현재 세션에서 토큰들 가져오기
-            const { data: { session } } = await supabase.auth.getSession();
-
-            if (session) {
-                // 백엔드 로그아웃 API 호출해서 백엔드 세션만 먼저 만료시킴
-                await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/v1/auth/logout/`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${session.access_token}` // 헤더에 억세스 토큰
-                    },
-                    body: JSON.stringify({
-                        refresh_token: session.refresh_token // 바디에 리프레시 토큰
-                    })
-                });
-            }
-            setDialog(null);
-            setResultDialog('logout'); // "로그아웃 되었습니다" 팝업 노출
-
-        } catch (error) {
-            console.error("로그아웃 중 에러 발생:", error);
-            alert("로그아웃에 실패했습니다. 다시 시도해 주세요.");
-        }
+  // 렌더링 시 Supabase에서 현재 로그인한 유저 이메일 가져오기
+  useEffect(() => {
+    const fetchUser = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        // user_metadata.provider를 먼저 확인하고, 없으면 app_metadata 확인
+        const provider = user.user_metadata?.provider || user.app_metadata?.provider || "email";
+        // provider 정보 추출 (google, kakao, naver, email 등)
+        setLoginProvider(provider);
+        setUserEmail(user.email);
+      }
     };
 
     // 회원탈퇴 확인 - 소셜 유저는 password 없이 요청

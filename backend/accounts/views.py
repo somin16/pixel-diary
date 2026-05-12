@@ -468,28 +468,19 @@ class WithdrawalView(APIView):
             if user_info_res.status_code != 200:
                 return Response({"message": "유효하지 않은 토큰입니다."}, status=status.HTTP_401_UNAUTHORIZED)
             
-            user_data = user_info_res.json()
-            user_id = user_data.get("id")
-            email = user_data.get("email")
+            user_id = user_info_res.json().get("id")
+
+            # user_metadata 우선, 없으면 app_metadata 확인 네이버로그인은 커스텀이라서
+            user_metadata_provider = user_data.get("user_metadata", {}).get("provider", "")
+            app_metadata_provider = user_data.get("app_metadata", {}).get("provider", "email")
 
             # 4. 로그인 수단 확인 (소셜 유저는 비밀번호 검증 스킵)
-            provider = user_data.get("app_metadata", {}).get("provider", "email")
+            provider = user_metadata_provider or app_metadata_provider
             is_social = provider in ["google", "kakao", "naver"]
 
-            if not is_social:
-                # 이메일 유저만 비밀번호 검증
-                if not password:
-                    return Response(
-                        {"message": "본인 확인을 위해 비밀번호가 필요합니다."},
-                        status=status.HTTP_400_BAD_REQUEST,
-                    )
-                login_check = requests.post(
-                    f"{supabase_url}/auth/v1/token?grant_type=password",
-                    headers={"apikey": os.getenv("SUPABASE_ANON_KEY"), "Content-Type": "application/json"},
-                    json={"email": email, "password": password}
-                )
-                if login_check.status_code != 200:
-                    return Response({"message": "비밀번호가 일치하지 않습니다."}, status=status.HTTP_401_UNAUTHORIZED)
+            #입력한 비밀번호가 일치하지 않을 경우 401 반환
+            if login_check.status_code != 200:
+                return Response({"message": "비밀번호가 일치하지 않습니다."}, status=status.HTTP_401_UNAUTHORIZED)
 
             # 5. Supabase Admin API를 통한 계정 삭제 (소셜 유저는 비밀번호 검증 없이 바로 실행)
             # 주의: 이 작업은 되돌릴 수 없으며 관련 데이터가 모두 삭제됩니다.
