@@ -434,7 +434,8 @@ class WithdrawalView(APIView):
         """
         POST /api/v1/auth/withdrawal
         - Authorization 헤더의 access_token으로 사용자 식별
-        - Body의 password로 본인 확인 후 계정 삭제
+        - 이메일 유저: Body의 password로 본인 확인 후 계정 삭제
+        - 소셜 유저(google/kakao/naver): password 없이 바로 계정 삭제
         """
         
         # 1. Authorization 헤더에서 access_token 추출
@@ -447,13 +448,6 @@ class WithdrawalView(APIView):
         
         # 2. 요청 Body에서 password 추출
         password = request.data.get("password", "").strip()
-
-        # Body에서 비밀번호 추출 및 검증 (비밀번호 누락 시 400 반환)
-        if not password:
-            return Response(
-                {"message": "본인 확인을 위해 비밀번호가 필요합니다."},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
 
         try:
             supabase_url = os.getenv("SUPABASE_URL")
@@ -474,27 +468,35 @@ class WithdrawalView(APIView):
             if user_info_res.status_code != 200:
                 return Response({"message": "유효하지 않은 토큰입니다."}, status=status.HTTP_401_UNAUTHORIZED)
             
-            user_id = user_info_res.json().get("id")
+            user_data = user_info_res.json()
+            user_id = user_data.get("id")
+            email = user_data.get("email")
 
-            # 4. 비밀번호로 본인 계정 재검증 로직
-            email = user_info_res.json().get("email")
-            login_check = requests.post(
-                f"{supabase_url}/auth/v1/token?grant_type=password",
-                headers={"apikey": os.getenv("SUPABASE_ANON_KEY")},
-                json={"email": email, "password": password}
-            )
+            # 4. 로그인 수단 확인 (소셜 유저는 비밀번호 검증 스킵)
+            provider = user_data.get("app_metadata", {}).get("provider", "email")
+            is_social = provider in ["google", "kakao", "naver"]
 
-            #입력한 비밀번호가 일치하지 않을 경우 401 반환
-            if login_check.status_code != 200:
-                return Response({"message": "비밀번호가 일치하지 않습니다."}, status=status.HTTP_401_UNAUTHORIZED)
+            if not is_social:
+                # 이메일 유저만 비밀번호 검증
+                if not password:
+                    return Response(
+                        {"message": "본인 확인을 위해 비밀번호가 필요합니다."},
+                        status=status.HTTP_400_BAD_REQUEST,
+                    )
+                login_check = requests.post(
+                    f"{supabase_url}/auth/v1/token?grant_type=password",
+                    headers={"apikey": os.getenv("SUPABASE_ANON_KEY"), "Content-Type": "application/json"},
+                    json={"email": email, "password": password}
+                )
+                if login_check.status_code != 200:
+                    return Response({"message": "비밀번호가 일치하지 않습니다."}, status=status.HTTP_401_UNAUTHORIZED)
 
-            # 5. Supabase Admin API를 통한 계정 삭제
+            # 5. Supabase Admin API를 통한 계정 삭제 (소셜 유저는 비밀번호 검증 없이 바로 실행)
             # 주의: 이 작업은 되돌릴 수 없으며 관련 데이터가 모두 삭제됩니다.
             delete_res = requests.delete(
                 f"{supabase_url}/auth/v1/admin/users/{user_id}",
                 headers=headers
             )
-
 
             # 계정 삭제 실패 시 예외 발생
             if delete_res.status_code not in [200, 204]:
