@@ -48,6 +48,8 @@ const Account = () => {
         setUserEmail(user.email);
       }
     };
+    fetchUser();
+  }, []);  
 
     // 회원탈퇴 확인 - 소셜 유저는 password 없이 요청
     const handleWithdrawal = async (password) => {
