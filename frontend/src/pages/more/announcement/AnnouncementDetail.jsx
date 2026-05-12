@@ -88,6 +88,7 @@ export default function AnnouncementDetail() {
         >
             <Header
                 title="공지사항"
+                backPath="/more/announcement/list"
             />
             {loading ? (
                 <div className="flex justify-center h-[10%] mt-[50%] text-3xl text-gray-600 font-bold animate-bounce">

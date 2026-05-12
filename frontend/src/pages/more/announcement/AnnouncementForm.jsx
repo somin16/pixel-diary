@@ -63,7 +63,10 @@ export default function AnnouncementForm() {
 
             if (!response.ok) throw new Error('저장 중 오류가 발생했습니다.');
 
-            navigate('/more/announcement/list');
+            const data = await response.json();
+
+            // 작성/수정 완료 후 상세 페이지로 이동 시 히스토리 스택 교체
+            navigate(`/more/announcement/detail/${data.announcement_id}`, { replace: true });
         } catch (error) {
             console.error('Submit Error:', error);
         }

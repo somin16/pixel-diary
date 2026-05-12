@@ -14,7 +14,7 @@ class AnnouncementListView(APIView):
         GET /api/v1/announcements/
         - 토큰 불필요 (공개 데이터)
         - 전체 공지사항 목록 반환 (최신순)
-        - announcement_id, title, category, view_count, created_at 반환
+        - announcement_id, title, category, view_count, created_at, updated_at 반환
         """
         try:
             supabase_url = os.getenv("SUPABASE_URL")
@@ -25,7 +25,7 @@ class AnnouncementListView(APIView):
                 f"{supabase_url}/rest/v1/announcements",
                 headers=headers,
                 params={
-                    "select": "announcement_id,title,content,category,view_count,created_at",
+                    "select": "announcement_id,title,content,category,view_count,created_at,updated_at",
                     "order": "created_at.desc",
                 },
             )
@@ -65,7 +65,7 @@ class AnnouncementDetailView(APIView):
         - 토큰 불필요 (공개 데이터)
         - 특정 공지사항 상세 내용 반환
         - 조회 시 view_count 1 증가 (조회수)
-        - announcement_id, title, content, category, view_count, created_at 반환
+        - announcement_id, title, content, category, view_count, created_at, updated_at 반환
         """
         try:
             supabase_url = os.getenv("SUPABASE_URL")
@@ -76,7 +76,7 @@ class AnnouncementDetailView(APIView):
                 f"{supabase_url}/rest/v1/announcements",
                 headers=headers,
                 params={
-                    "select": "announcement_id,title,content,category,view_count,created_at",
+                    "select": "announcement_id,title,content,category,view_count,created_at,updated_at",
                     "announcement_id": f"eq.{announcement_id}",
                 },
             )
@@ -112,6 +112,7 @@ class AnnouncementDetailView(APIView):
                     "category": announcement.get("category"),
                     "view_count": announcement.get("view_count") + 1,  # 증가된 값 반환 (조회수)
                     "created_at": announcement.get("created_at"),
+                    "updated_at": announcement.get("updated_at"),
                 },
                 status=status.HTTP_200_OK,
             )
