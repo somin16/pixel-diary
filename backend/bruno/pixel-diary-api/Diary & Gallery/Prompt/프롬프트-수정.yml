@@ -10,7 +10,6 @@ http:
     type: json
     data: |-
       {
-        "llm_model_engine_type": "",
         "prompt": "",
         "request": "",
         "remove": ""
@@ -25,19 +24,18 @@ settings:
 
 docs: |-
   ### Body / Json
-  - llm_model_engine_type: groq/local/cerebras (3개중 하나 필수)
-  - "groq" = Groq (llama-3.3-70b-versatile), "local" = Ollama 로컬 (qwen2.5:7b), "cerebras" = Cerebras (qwen-3-235b-a22b-instruct-2507)
   - prompt: Prompt-Transform에서 받은 positive_prompt 값 (필수)
   - request: 추가하거나 강조하고 싶은 내용 (한국어로 입력해 주세요) (선택)
   - remove: 제거하고 싶은 요소 (한국어로 입력해 주세요) (선택)
   ***
+  ### LLM 모델
+  - Groq Qwen (qwen/qwen3-32b) 고정 사용
+  ***
   ### Response
+  - model: 사용된 LLM 모델명
   - positive_prompt: 수정된 ComfyUI 긍정 프롬프트에 추가해 주세요 (기존 내용 유지 + 요청 반영)
   - negative_prompt: ComfyUI 부정 프롬프트에 추가해 주세요
   ***
   ### Status Code
   - 200 OK: 프롬프트 수정 성공
-  - 400 Bad Request: prompt값 누락 (Prompt-Transform 먼저 실행 필요)
-  - 400 Bad Request: llm_model_engine_type값 누락
-  - 400 Bad Request: llm_model_engine_type값이 유효하지 않음 (groq, local, cerebras 중 하나여야 함)
-  - 429 Too Many Requests: Cerebras 트래픽 과부하 (잠시 후 재시도)
+  - 400 Bad Request: 필수값 누락 (prompt)

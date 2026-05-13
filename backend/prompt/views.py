@@ -7,7 +7,6 @@ from dotenv import load_dotenv
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
-from utils import extract_access_token, get_user_from_token, get_supabase_headers
 
 # backend/.env 파일에서 환경변수 로드
 load_dotenv(os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '.env'))
@@ -91,6 +90,10 @@ class PromptTransformView(APIView):
         "positive_prompt": "FIXED_PREFIX + LLM 생성 장면 + FIXED_SUFFIX",
         "negative_prompt": "NEGATIVE_PROMPT 고정값 (remove 입력 시 키워드 추가)"
     }
+
+    Status Code:
+    - 200 OK: 프롬프트 변환 성공
+    - 400 Bad Request: diary 값 누락
     """
 
     def post(self, request):
@@ -105,62 +108,20 @@ class PromptTransformView(APIView):
                 status=status.HTTP_400_BAD_REQUEST
             )
 
-        # ▼ Authorization 토큰으로 users 테이블에서 gender/age 자동 조회
-        # ▼ 풍경 모드는 추후 구현 예정 (현재 비활성화)
-        # character_rule = "- The scene must be a landscape or an environment description WITHOUT any human characters or figures"
-        access_token = extract_access_token(request)
-        if not access_token:
-            return Response(
-                {"message": "로그인이 필요합니다. Authorization 헤더에 Bearer 토큰을 입력해주세요."},
-                status=status.HTTP_401_UNAUTHORIZED
-            )
-
-        user = get_user_from_token(access_token)
-        if not user:
-            return Response(
-                {"message": "유효하지 않은 토큰입니다."},
-                status=status.HTTP_401_UNAUTHORIZED
-            )
-
-        user_id = user.get("id")
-        supabase_url = os.getenv("SUPABASE_URL")
-        user_response = http_requests.get(
-            f"{supabase_url}/rest/v1/users",
-            headers=get_supabase_headers(),
-            params={"user_id": f"eq.{user_id}", "select": "gender,age"},
-        )
-        if user_response.status_code != 200 or not user_response.json():
-            return Response(
-                {"message": "유저 정보를 찾을 수 없습니다."},
-                status=status.HTTP_404_NOT_FOUND
-            )
-
-        user_data = user_response.json()[0]
-        gender = user_data.get("gender") or ""
-        age = user_data.get("age")
-
-        if not gender or not age:
-            return Response(
-                {"message": "프로필에 성별과 나이를 설정해주세요."},
-                status=status.HTTP_400_BAD_REQUEST
-            )
-
-        character_rule = f"- The main character is a {age}-year-old {gender} (the diary writer) and must be clearly visible and centered"
-
         try:
             scene = call_llm_model_engine_type([{
                 "role": "user",
                 "content": (
                     # ▼ LLM에게 주는 지시문 (영어로 작성해야 영어 프롬프트가 나옵니다)
                     # ▼ Rules 항목을 수정하면 프롬프트 스타일이 달라집니다
-                    f"transform the following diary entry into a natural English image generation prompt for ComfyUI pixel art.\n"
+                    f"You are an image prompt generator. Transform the following Korean diary entry into a natural English image generation prompt for ComfyUI pixel art.\n"
+                    f"IMPORTANT: Your entire response must be in English only. Do NOT output any Korean text.\n"
                     f"Rules:\n"
-                    f"{character_rule}\n"  # ▼ 인물모드/풍경모드에 따라 동적으로 변하는 규칙
                     f"- Write in natural descriptive phrases (not just keywords)\n"   # 자연스러운 문장 (키워드만 나열 금지)
                     f"- Up to 100 words, be vivid and expressive\n"                  # 최대 100단어, 생동감 있게
                     f"- Describe the scene, mood, characters, setting, weather, and atmosphere in detail\n"  # 장면/분위기/날씨 등 묘사
                     f"- Do NOT use style words like 'pixel', 'pixelated', '8-bit', 'retro' in the scene description\n"  # 스타일 단어 금지 (FIXED_PREFIX에서 처리)
-                    f"- Output in English only, no extra explanation\n\n"            # 영어만 출력, 설명 없이
+                    f"- Output the scene description only, no extra explanation\n\n"
                     f"Diary: {diary}"
                 )
             }], llm_model_engine_type=llm_model_engine_type)
@@ -218,7 +179,6 @@ class PromptRestyleView(APIView):
 
     POST /api/v1/prompt/restyle
     Body: {
-        "llm_model_engine_type": "groq",                        (필수 / groq, local, cerebras)
         "prompt": "Prompt-transform 응답의 positive_prompt 값",  (필수)
         "request": "고양이를 추가해줘",                           (선택 / 추가·강조할 요소, 한국어 가능)
         "remove": "비를 없애줘"                                   (선택 / 제거할 요소, 부정 프롬프트에 자동 추가)
@@ -236,20 +196,7 @@ class PromptRestyleView(APIView):
         original_prompt = request.data.get("prompt", "").strip()
         user_request = request.data.get("request", "").strip()  # ▼ 추가/강조할 요소 (한국어 가능)
         remove = request.data.get("remove", "").strip()         # ▼ 제거할 요소 (한국어 가능, 부정 프롬프트에 자동 추가)
-        llm_model_engine_type = request.data.get("llm_model_engine_type", "").strip()  # ▼ groq / local / cerebras
-
-        if not llm_model_engine_type:
-            return Response(
-                {"message": "llm_model_engine_type을 입력해주세요. (groq / local / cerebras)"},
-                status=status.HTTP_400_BAD_REQUEST
-            )
-
-        valid_llm_types = ["groq", "local", "cerebras"]
-        if llm_model_engine_type not in valid_llm_types:
-            return Response(
-                {"message": f"llm_model_engine_type은 {', '.join(valid_llm_types)} 중 하나여야 합니다."},
-                status=status.HTTP_400_BAD_REQUEST
-            )
+        llm_model_engine_type = "groq"                          # ▼ Qwen(Groq)으로 고정
 
         if not original_prompt:
             return Response(
