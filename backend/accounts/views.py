@@ -468,21 +468,37 @@ class WithdrawalView(APIView):
             if user_info_res.status_code != 200:
                 return Response({"message": "유효하지 않은 토큰입니다."}, status=status.HTTP_401_UNAUTHORIZED)
             
-            user_id = user_info_res.json().get("id")
+            user_data = user_info_res.json()          # ① 한 번만 파싱해서 변수에 저장
+            user_id = user_data.get("id")
+            user_email = user_data.get("email")
 
             # user_metadata 우선, 없으면 app_metadata 확인 네이버로그인은 커스텀이라서
+            # 4. 로그인 수단 확인 (소셜 유저는 비밀번호 검증 스킵)
             user_metadata_provider = user_data.get("user_metadata", {}).get("provider", "")
             app_metadata_provider = user_data.get("app_metadata", {}).get("provider", "email")
-
-            # 4. 로그인 수단 확인 (소셜 유저는 비밀번호 검증 스킵)
             provider = user_metadata_provider or app_metadata_provider
             is_social = provider in ["google", "kakao", "naver"]
 
-            #입력한 비밀번호가 일치하지 않을 경우 401 반환
-            if login_check.status_code != 200:
-                return Response({"message": "비밀번호가 일치하지 않습니다."}, status=status.HTTP_401_UNAUTHORIZED)
+            # 5. 일반 유저만 비밀번호 검증 (소셜 유저는 스킵)
+            if not is_social:                        
+                if not password:
+                    return Response(
+                        {"message": "본인 확인을 위해 비밀번호가 필요합니다."},
+                        status=status.HTTP_400_BAD_REQUEST,
+                    )
+                anon_headers = get_supabase_anon_headers()
+                login_check = requests.post(           # ③ 실제 검증 요청 추가
+                    f"{supabase_url}/auth/v1/token?grant_type=password",
+                    headers=anon_headers,
+                    json={"email": user_email, "password": password},
+                )
+                if login_check.status_code != 200:
+                    return Response(
+                        {"message": "비밀번호가 일치하지 않습니다."},
+                        status=status.HTTP_401_UNAUTHORIZED,
+                    )
 
-            # 5. Supabase Admin API를 통한 계정 삭제 (소셜 유저는 비밀번호 검증 없이 바로 실행)
+            # 6. Supabase Admin API를 통한 계정 삭제 (소셜 유저는 비밀번호 검증 없이 바로 실행)
             # 주의: 이 작업은 되돌릴 수 없으며 관련 데이터가 모두 삭제됩니다.
             delete_res = requests.delete(
                 f"{supabase_url}/auth/v1/admin/users/{user_id}",
