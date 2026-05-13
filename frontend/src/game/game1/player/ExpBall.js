@@ -1,3 +1,4 @@
+import { addScore } from "../manage/Score.js";
 import { levelUpMenu } from "../player/LevelUp.js";
 
 // 경험치 구슬 생성
@@ -48,6 +49,9 @@ export function overlapAddExp(scene) {
 function addExp(value, player ,scene) {
 
     player.expCount += value;
+
+    // 경험치 얻으면 점수 +1
+    addScore(1,scene);
 
     // 최대치 넘었을때 최대 경험치 수치만큼 깎고 레벨업 실행
     // if로 하면 addExp가 모종의 이유로 두번연속 작동되었을때 코드가 꼬일수도 있음으로 while로 교체

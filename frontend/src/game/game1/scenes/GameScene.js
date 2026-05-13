@@ -48,6 +48,7 @@ import { addEventSpawnChest } from "../object/Chest.js";
 import { TimerEnd, TimerSetting } from "../manage/Timer.js";
 import { createMenu } from "../ui/Menu.js";
 import { createJoystick } from "../manage/Joystick.js";
+import { createScore, createScoreUI } from "../manage/Score.js";
 
 export default class GameScene extends Phaser.Scene {
   constructor() {
@@ -116,6 +117,15 @@ export default class GameScene extends Phaser.Scene {
 
     // 드랍 아이템 획득(전체)
     overlapObject(this);
+
+
+    // ======================점수======================
+
+    // 점수 초기화
+    createScore(this);
+
+    // 점수 UI생성
+    createScoreUI(this);
 
     // ====================몬스터===================
 

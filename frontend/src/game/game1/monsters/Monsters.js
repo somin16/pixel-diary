@@ -8,6 +8,7 @@ import Phalanx from "./Phalanx.js";
 import { addDropItemMagnet } from "../object/Magnet.js";
 import { addDropItemMeat } from "../object/Meat.js";
 import KingSlime from "./KingSlime.js";
+import { addScore, lockScore } from "../manage/Score.js";
 
 // 몬스터 이동 로직
 export function monsterMove(scene) {
@@ -87,6 +88,9 @@ export function spawnBossMonster(scene) {
 
     // 보스 스폰 확인
     scene.isBossSpawn = true;
+
+    // 점수 잠금(꼼수방지)
+    lockScore(scene);
 
     // 보스 몬스터가 스폰되면 엘리트 몬스터 타이머를 파괴
     scene.eliteMonsterSpawnTimer.destroy();
@@ -300,11 +304,15 @@ export function monsterDead(monster, scene) {
 
       // 엘리트 몬스터가 죽었을때
       if (monster.isElite == true) {
+
+        addScore(100, scene); // 점수 추가
         addBigExpBall(monster.x, monster.y, scene);
       }
 
       // 큐브 골렘이 죽었을때
       else if (monster.monsterID == 2) {
+
+        addScore(30, scene); // 점수 추가
 
         // 10%확률로 고기가 생성
         const meatDropPercent = 10;
@@ -316,6 +324,8 @@ export function monsterDead(monster, scene) {
 
       // 그 외
       else {
+
+        addScore(15, scene); // 점수 추가
 
         // 1%확률로 자석이 생성
         // 대신 보스가 있으면 고기로 변경
