@@ -1,10 +1,14 @@
 import os
+import copy
+import random
+import time
 import requests
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 from datetime import datetime, timezone, timedelta
 from utils import extract_access_token, get_user_from_token, get_supabase_headers
+from prompt.views import call_llm_model_engine_type, FIXED_PREFIX, FIXED_SUFFIX, NEGATIVE_PROMPT
 
 
 def check_inventory_item(supabase_url, headers, user_id, item_id, expected_type, item_label):
@@ -49,30 +53,15 @@ class DiaryView(APIView):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        # 요청 Body에서 필수값 추출 (앞뒤 공백 제거)
-        image_id = request.data.get("image_id", None)  # image_id는 현재 선택사항 입니다. (넣지 않아도 작동에 문제가 없습니다.)
+        # 요청 Body에서 값 추출
         content = request.data.get("content", "").strip()
+        image_id = request.data.get("image_id", None)                          # ▼ 이미지 URL (선택)
+        positive_prompt = request.data.get("positive_prompt", None)            # ▼ 긍정 프롬프트 (선택)
+        negative_prompt = request.data.get("negative_prompt", None)            # ▼ 부정 프롬프트 (선택)
 
         if not content:
             return Response(
                 {"message": "content는 필수입니다."},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
-        
-        # 나중에 이미지 생성 기능이 구현되어 image_id가 생기면 아래 코드로 교체
-        # image_id = request.data.get("image_id", "").strip()
-        # content = request.data.get("content", "").strip()
-
-        # if not all([image_id, content]):
-        #     return Response(
-        #         {"message": "image_id와 content는 필수입니다."},
-        #         status=status.HTTP_400_BAD_REQUEST,
-        #     )
-
-        # 글자수 제한 (테스트: 20자, 실제 서비스 시 변경 예정)
-        if len(content) > 20:
-            return Response(
-                {"message": "일기는 20자 이하로 작성해주세요."},
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
@@ -94,11 +83,13 @@ class DiaryView(APIView):
             # Supabase diaries 테이블에 일기 저장
             response = requests.post(
                 f"{supabase_url}/rest/v1/diaries",
-                headers={**headers, "Prefer": "return=representation"},  # 저장된 데이터 반환
+                headers={**headers, "Prefer": "return=representation"},
                 json={
                     "user_id": user_id,
-                    "image_id": image_id,
                     "content": content,
+                    "image_id": image_id,
+                    "positive_prompt": positive_prompt,
+                    "negative_prompt": negative_prompt,
                 },
             )
 
@@ -169,7 +160,7 @@ class DiaryView(APIView):
                 params={
                     "user_id": f"eq.{user_id}",
                     "order": "created_at.desc",
-                    "select": "id,content,created_at",  # 이미지 기능 구현 후 image_id 추가 예정
+                    "select": "id,content,image_id,created_at",
                 },
             )
 
@@ -187,8 +178,8 @@ class DiaryView(APIView):
                 diaries.append({
                     "diary_id": diary.get("id"),
                     "content": diary.get("content"),
+                    "image_url": diary.get("image_id"),
                     "created_at": created_at_kst,
-                    # "image_url": diary.get("image_id"),  # 이미지 기능 구현 후 URL로 교체 예정
                 })
 
             return Response(
@@ -224,20 +215,15 @@ class DiaryDetailView(APIView):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        # 요청 Body에서 content 추출
+        # 요청 Body에서 값 추출
         content = request.data.get("content", "").strip()
+        image_id = request.data.get("image_id", None)               # ▼ 이미지 URL (선택)
+        positive_prompt = request.data.get("positive_prompt", None) # ▼ 긍정 프롬프트 (선택)
+        negative_prompt = request.data.get("negative_prompt", None) # ▼ 부정 프롬프트 (선택)
 
-        # content 누락 시 400 반환
-        if not content:
+        if not any([content, image_id, positive_prompt, negative_prompt]):
             return Response(
-                {"message": "content는 필수입니다."},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
-
-        # 글자수 제한 (테스트: 20자, 실제 서비스 시 변경 예정)
-        if len(content) > 20:
-            return Response(
-                {"message": "일기는 20자 이하로 작성해주세요."},
+                {"message": "수정할 값이 없습니다."},
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
@@ -259,14 +245,21 @@ class DiaryDetailView(APIView):
             kst = timezone(timedelta(hours=9))
             now_kst = datetime.now(kst).strftime("%Y-%m-%dT%H:%M:%S+09:00")
 
-            # 해당 일기가 본인 것인지 확인
+            # 수정할 필드만 포함
+            update_data = {"updated_at": now_kst}
+            if content:
+                update_data["content"] = content
+            if image_id is not None:
+                update_data["image_id"] = image_id
+            if positive_prompt is not None:
+                update_data["positive_prompt"] = positive_prompt
+            if negative_prompt is not None:
+                update_data["negative_prompt"] = negative_prompt
+
             update_response = requests.patch(
                 f"{supabase_url}/rest/v1/diaries?id=eq.{diary_id}&user_id=eq.{user_id}",
                 headers={**headers, "Prefer": "return=representation"},
-                json={
-                    "content": content,
-                    "updated_at": now_kst,
-                },
+                json=update_data,
             )
 
             if update_response.status_code not in [200, 204]:
@@ -408,8 +401,7 @@ class DiaryDetailView(APIView):
                 params={
                     "id": f"eq.{diary_id}",
                     "user_id": f"eq.{user_id}",
-                    "select": "id,content,created_at",
-                    # "select": "id,content,image_id,created_at",  # 이미지 기능 구현 후 활성화 예정
+                    "select": "id,content,image_id,positive_prompt,negative_prompt,created_at",
                 },
             )
 
@@ -512,7 +504,9 @@ class DiaryDetailView(APIView):
                 {
                     "diary_id": diary.get("id"),
                     "content": diary.get("content"),
-                    # "image_url": diary.get("image_id"),  # 이미지 기능 구현 후 활성화 예정
+                    "image_url": diary.get("image_id"),
+                    "positive_prompt": diary.get("positive_prompt"),
+                    "negative_prompt": diary.get("negative_prompt"),
                     "emotion_item": emotion_item,
                     "theme_item": theme_item,
                     "sticker": sticker_list,
@@ -762,5 +756,397 @@ class DiaryDecoView(APIView):
             print(f"=== DIARY DECO DELETE ERROR ===\n{error}\n==============================")
             return Response(
                 {"message": "일기 꾸미기 초기화 중 오류가 발생했습니다."},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
+
+
+class DiaryImageGenerateView(APIView):
+    """ComfyUI 이미지 생성 및 Supabase Storage 저장 API"""
+
+    COMFYUI_URL = "http://localhost:8188"
+    STORAGE_BUCKET = "diary-images"
+
+    # ▼ ComfyUI 워크플로우 (API format)
+    # ▼ 모델: sd_xl_base_1.0.safetensors / LoRA: pixel-art-xl.safetensors
+    WORKFLOW = {
+        "4": {
+            "class_type": "CheckpointLoaderSimple",
+            "inputs": {"ckpt_name": "sd_xl_base_1.0.safetensors"}
+        },
+        "12": {
+            "class_type": "LoraLoader",
+            "inputs": {
+                "model": ["4", 0],
+                "clip": ["4", 1],
+                "lora_name": "pixel-art-xl.safetensors",
+                "strength_model": 0.8,
+                "strength_clip": 1
+            }
+        },
+        "6": {
+            "class_type": "CLIPTextEncode",
+            "inputs": {"clip": ["12", 1], "text": ""}  # ▼ positive prompt 자리
+        },
+        "7": {
+            "class_type": "CLIPTextEncode",
+            "inputs": {"clip": ["12", 1], "text": ""}  # ▼ negative prompt 자리
+        },
+        "5": {
+            "class_type": "EmptyLatentImage",
+            "inputs": {"width": 1024, "height": 1024, "batch_size": 1}
+        },
+        "3": {
+            "class_type": "KSampler",
+            "inputs": {
+                "model": ["12", 0],
+                "positive": ["6", 0],
+                "negative": ["7", 0],
+                "latent_image": ["5", 0],
+                "seed": 0,          # ▼ 매 요청마다 랜덤 시드 적용
+                "steps": 30,
+                "cfg": 7,
+                "sampler_name": "dpmpp_2m",
+                "scheduler": "karras",
+                "denoise": 1
+            }
+        },
+        "8": {
+            "class_type": "VAEDecode",
+            "inputs": {"samples": ["3", 0], "vae": ["4", 2]}
+        },
+        "15": {
+            "class_type": "ImageScale",
+            "inputs": {
+                "image": ["8", 0],
+                "upscale_method": "nearest-exact",
+                "width": 512, "height": 512, "crop": "disabled"
+            }
+        },
+        "18": {
+            "class_type": "ImageScale",
+            "inputs": {
+                "image": ["15", 0],
+                "upscale_method": "nearest-exact",
+                "width": 1024, "height": 1024, "crop": "disabled"
+            }
+        },
+        "9": {
+            "class_type": "SaveImage",
+            "inputs": {"images": ["18", 0], "filename_prefix": "ComfyUI"}
+        }
+    }
+
+    def post(self, request, diary_id):
+        """
+        POST /api/v1/diaries/{diary_id}/generate/
+        - positive_prompt, negative_prompt를 ComfyUI에 전달해 이미지 생성
+        - 생성된 이미지를 Supabase Storage에 업로드 (기존 이미지 덮어쓰기)
+        - diaries 테이블의 image_id(URL) 업데이트
+
+        Body: {
+            "positive_prompt": "...",  (필수)
+            "negative_prompt": "..."   (선택)
+        }
+        """
+        access_token = extract_access_token(request)
+        if not access_token:
+            return Response(
+                {"message": "Authorization 헤더에 유효한 Bearer 토큰이 필요합니다."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        user = get_user_from_token(access_token)
+        if not user:
+            return Response(
+                {"message": "유효하지 않은 토큰입니다."},
+                status=status.HTTP_401_UNAUTHORIZED,
+            )
+
+        user_id = user.get("id")
+        positive_prompt = request.data.get("positive_prompt", "").strip()
+        negative_prompt = request.data.get("negative_prompt", "").strip()
+
+        if not positive_prompt:
+            return Response(
+                {"message": "positive_prompt는 필수입니다."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        try:
+            # 1. 워크플로우에 프롬프트와 랜덤 시드 삽입
+            workflow = copy.deepcopy(self.WORKFLOW)
+            workflow["6"]["inputs"]["text"] = positive_prompt
+            workflow["7"]["inputs"]["text"] = negative_prompt
+            workflow["3"]["inputs"]["seed"] = random.randint(0, 2 ** 32 - 1)
+
+            # 2. ComfyUI에 워크플로우 전송
+            prompt_response = requests.post(
+                f"{self.COMFYUI_URL}/prompt",
+                json={"prompt": workflow}
+            )
+            if prompt_response.status_code != 200:
+                raise Exception(f"ComfyUI 오류: {prompt_response.text}")
+
+            prompt_id = prompt_response.json().get("prompt_id")
+
+            # 3. 이미지 생성 완료까지 폴링 (5초 간격, 최대 5분)
+            image_data = None
+            for _ in range(60):
+                time.sleep(5)
+                history = requests.get(f"{self.COMFYUI_URL}/history/{prompt_id}").json()
+
+                if prompt_id in history:
+                    outputs = history[prompt_id].get("outputs", {})
+                    for output in outputs.values():
+                        if "images" in output:
+                            img_info = output["images"][0]
+                            image_data = requests.get(
+                                f"{self.COMFYUI_URL}/view",
+                                params={"filename": img_info["filename"], "type": img_info["type"]}
+                            ).content
+                            break
+                    if image_data:
+                        break
+
+            if not image_data:
+                raise Exception("이미지 생성 시간 초과 (5분)")
+
+            # 4. Supabase Storage에 업로드 (같은 경로로 덮어쓰기)
+            supabase_url = os.getenv("SUPABASE_URL")
+            storage_headers = get_supabase_headers()
+            storage_headers["Content-Type"] = "image/png"
+            storage_headers["x-upsert"] = "true"  # ▼ 기존 이미지 덮어쓰기
+
+            storage_path = f"{user_id}/{diary_id}.png"
+            upload_response = requests.post(
+                f"{supabase_url}/storage/v1/object/{self.STORAGE_BUCKET}/{storage_path}",
+                headers=storage_headers,
+                data=image_data,
+            )
+
+            if upload_response.status_code not in [200, 201]:
+                raise Exception(f"Storage 업로드 오류: {upload_response.text}")
+
+            image_url = f"{supabase_url}/storage/v1/object/public/{self.STORAGE_BUCKET}/{storage_path}"
+
+            # 5. diaries 테이블 업데이트
+            update_response = requests.patch(
+                f"{supabase_url}/rest/v1/diaries?id=eq.{diary_id}&user_id=eq.{user_id}",
+                headers={**get_supabase_headers(), "Prefer": "return=representation"},
+                json={
+                    "image_id": image_url,
+                    "positive_prompt": positive_prompt,
+                    "negative_prompt": negative_prompt,
+                },
+            )
+
+            if update_response.status_code not in [200, 204]:
+                raise Exception(f"DB 업데이트 오류: {update_response.text}")
+
+            return Response(
+                {"image_url": image_url, "message": "이미지 생성 완료"},
+                status=status.HTTP_200_OK,
+            )
+
+        except requests.exceptions.ConnectionError:
+            return Response(
+                {"message": "ComfyUI 서버에 연결할 수 없습니다. ComfyUI가 실행 중인지 확인해주세요."},
+                status=status.HTTP_503_SERVICE_UNAVAILABLE,
+            )
+        except Exception as error:
+            print(f"=== IMAGE GENERATE ERROR ===\n{error}\n===========================")
+            return Response(
+                {"message": "이미지 생성 중 오류가 발생했습니다."},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
+
+
+class DiaryGenerateView(APIView):
+    """일기 작성 → 프롬프트 생성 → 이미지 생성 → 저장 통합 API"""
+
+    COMFYUI_URL = "http://localhost:8188"
+    STORAGE_BUCKET = "diary-images"
+
+    WORKFLOW = {
+        "4": {
+            "class_type": "CheckpointLoaderSimple",
+            "inputs": {"ckpt_name": "sd_xl_base_1.0.safetensors"}
+        },
+        "12": {
+            "class_type": "LoraLoader",
+            "inputs": {
+                "model": ["4", 0], "clip": ["4", 1],
+                "lora_name": "pixel-art-xl.safetensors",
+                "strength_model": 0.8, "strength_clip": 1
+            }
+        },
+        "6": {"class_type": "CLIPTextEncode", "inputs": {"clip": ["12", 1], "text": ""}},
+        "7": {"class_type": "CLIPTextEncode", "inputs": {"clip": ["12", 1], "text": ""}},
+        "5": {"class_type": "EmptyLatentImage", "inputs": {"width": 1024, "height": 1024, "batch_size": 1}},
+        "3": {
+            "class_type": "KSampler",
+            "inputs": {
+                "model": ["12", 0], "positive": ["6", 0], "negative": ["7", 0],
+                "latent_image": ["5", 0], "seed": 0, "steps": 30,
+                "cfg": 7, "sampler_name": "dpmpp_2m", "scheduler": "karras", "denoise": 1
+            }
+        },
+        "8": {"class_type": "VAEDecode", "inputs": {"samples": ["3", 0], "vae": ["4", 2]}},
+        "15": {"class_type": "ImageScale", "inputs": {"image": ["8", 0], "upscale_method": "nearest-exact", "width": 512, "height": 512, "crop": "disabled"}},
+        "18": {"class_type": "ImageScale", "inputs": {"image": ["15", 0], "upscale_method": "nearest-exact", "width": 1024, "height": 1024, "crop": "disabled"}},
+        "9": {"class_type": "SaveImage", "inputs": {"images": ["18", 0], "filename_prefix": "ComfyUI"}}
+    }
+
+    def post(self, request):
+        """
+        POST /api/v1/diaries/generate/
+        - 일기 작성 → 프롬프트 생성 → ComfyUI 이미지 생성 → Supabase 저장 한 번에 처리
+
+        Body: {
+            "diary": "오늘 비가 왔다.",  (필수)
+            "request": "고양이 추가",    (선택)
+            "remove": "비를 없애줘"      (선택)
+        }
+        """
+        access_token = extract_access_token(request)
+        if not access_token:
+            return Response(
+                {"message": "Authorization 헤더에 유효한 Bearer 토큰이 필요합니다."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        user = get_user_from_token(access_token)
+        if not user:
+            return Response(
+                {"message": "유효하지 않은 토큰입니다."},
+                status=status.HTTP_401_UNAUTHORIZED,
+            )
+
+        user_id = user.get("id")
+        diary_content = request.data.get("diary", "").strip()
+        user_request = request.data.get("request", "").strip()
+        remove = request.data.get("remove", "").strip()
+
+        if not diary_content:
+            return Response(
+                {"message": "diary를 입력해주세요."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        try:
+            supabase_url = os.getenv("SUPABASE_URL")
+
+            # 1. LLM으로 프롬프트 생성
+            scene = call_llm_model_engine_type([{
+                "role": "user",
+                "content": (
+                    f"You are an image prompt generator. Transform the following Korean diary entry into a natural English image generation prompt for ComfyUI pixel art.\n"
+                    f"IMPORTANT: Your entire response must be in English only. Do NOT output any Korean text.\n"
+                    f"Rules:\n"
+                    f"- Write in natural descriptive phrases (not just keywords)\n"
+                    f"- Up to 100 words, be vivid and expressive\n"
+                    f"- Describe the scene, mood, characters, setting, weather, and atmosphere in detail\n"
+                    f"- Do NOT use style words like 'pixel', 'pixelated', '8-bit', 'retro' in the scene description\n"
+                    f"- Output the scene description only, no extra explanation\n\n"
+                    f"Diary: {diary_content}"
+                )
+            }])
+
+            if user_request:
+                scene = call_llm_model_engine_type([{
+                    "role": "user",
+                    "content": (
+                        f"You are given a scene description from an image generation prompt. Add or emphasize the requested element while keeping ALL original details.\n"
+                        f"Output only the scene description in one line. No explanations, no extra text.\n"
+                        f"Do NOT include any style tokens like '(pixel art:1.2)', '(medium shot:1.4)' or similar tags.\n"
+                        f"Original scene: {scene}\n"
+                        f"Additional request (may be in Korean): {user_request}\n"
+                        f"Rules: natural descriptive English, under 100 words, one line only."
+                    )
+                }])
+
+            positive_prompt = f"{FIXED_PREFIX}, {scene}, {FIXED_SUFFIX}"
+
+            remove_keywords = ""
+            if remove:
+                remove_keywords = call_llm_model_engine_type([{
+                    "role": "user",
+                    "content": (
+                        f"transform the following removal request into short English keywords for a ComfyUI negative prompt.\n"
+                        f"Output only comma-separated English keywords, no explanation.\n"
+                        f"Request (may be in Korean): {remove}"
+                    )
+                }])
+            negative_prompt = f"{NEGATIVE_PROMPT}, {remove_keywords}" if remove_keywords else NEGATIVE_PROMPT
+
+            # 2. ComfyUI 워크플로우에 프롬프트 삽입 후 전송
+            workflow = copy.deepcopy(self.WORKFLOW)
+            workflow["6"]["inputs"]["text"] = positive_prompt
+            workflow["7"]["inputs"]["text"] = negative_prompt
+            workflow["3"]["inputs"]["seed"] = random.randint(0, 2 ** 32 - 1)
+
+            prompt_response = requests.post(
+                f"{self.COMFYUI_URL}/prompt",
+                json={"prompt": workflow}
+            )
+            if prompt_response.status_code != 200:
+                raise Exception(f"ComfyUI 오류: {prompt_response.text}")
+
+            prompt_id = prompt_response.json().get("prompt_id")
+
+            # 4. 이미지 생성 완료까지 폴링 (5초 간격, 최대 5분)
+            image_data = None
+            for _ in range(60):
+                time.sleep(5)
+                history = requests.get(f"{self.COMFYUI_URL}/history/{prompt_id}").json()
+                if prompt_id in history:
+                    for output in history[prompt_id].get("outputs", {}).values():
+                        if "images" in output:
+                            img_info = output["images"][0]
+                            image_data = requests.get(
+                                f"{self.COMFYUI_URL}/view",
+                                params={"filename": img_info["filename"], "type": img_info["type"]}
+                            ).content
+                            break
+                    if image_data:
+                        break
+
+            if not image_data:
+                raise Exception("이미지 생성 시간 초과 (5분)")
+
+            # 3. Supabase Storage에 임시 업로드 (preview.png, upsert로 덮어쓰기)
+            storage_headers = get_supabase_headers()
+            storage_headers["Content-Type"] = "image/png"
+            storage_headers["x-upsert"] = "true"
+
+            storage_path = f"{user_id}/preview.png"
+            upload_response = requests.post(
+                f"{supabase_url}/storage/v1/object/{self.STORAGE_BUCKET}/{storage_path}",
+                headers=storage_headers,
+                data=image_data,
+            )
+            if upload_response.status_code not in [200, 201]:
+                raise Exception(f"Storage 업로드 오류: {upload_response.text}")
+
+            image_url = f"{supabase_url}/storage/v1/object/public/{self.STORAGE_BUCKET}/{storage_path}"
+
+            return Response(
+                {
+                    "image_url": image_url,
+                    "positive_prompt": positive_prompt,
+                    "negative_prompt": negative_prompt,
+                },
+                status=status.HTTP_200_OK,
+            )
+
+        except requests.exceptions.ConnectionError:
+            return Response(
+                {"message": "ComfyUI 서버에 연결할 수 없습니다. ComfyUI가 실행 중인지 확인해주세요."},
+                status=status.HTTP_503_SERVICE_UNAVAILABLE,
+            )
+        except Exception as error:
+            print(f"=== DIARY GENERATE ERROR ===\n{error}\n============================")
+            return Response(
+                {"message": "이미지 생성 중 오류가 발생했습니다."},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )

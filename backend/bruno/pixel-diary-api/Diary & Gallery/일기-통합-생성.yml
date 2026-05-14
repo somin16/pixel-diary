@@ -1,0 +1,61 @@
+info:
+  name: 일기-통합-생성
+  type: http
+  seq: 2
+
+http:
+  method: POST
+  url: http://127.0.0.1:8000/api/v1/diaries/generate/
+  headers:
+    - name: Authorization
+      value: "Bearer "
+  body:
+    type: json
+    data: |-
+      {
+        "diary": "",
+        "request": "",
+        "remove": ""
+      }
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 360000
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |-
+  ### Body / Json
+  - diary: 일기 내용 (필수)
+  - request: 이미지에 추가/강조하고 싶은 요소 (한국어 가능) (선택)
+  - remove: 이미지에서 제거하고 싶은 요소 (한국어 가능) (선택)
+  ***
+  ### Headers
+  - Authorization: Bearer 로그인할 시 받는 access_token
+  ***
+  ### 처리 순서
+  1. 일기 내용 → Groq Qwen LLM으로 영어 프롬프트 생성
+  2. ComfyUI에 워크플로우 전송 (sd_xl_base_1.0 + pixel-art-xl LoRA, 1024x1024)
+  3. 이미지 생성 완료 폴링 (5초 간격, 최대 5분)
+  4. Supabase Storage diary-images/{user_id}/preview.png 임시 업로드 (다시 그리기 시 덮어쓰기)
+  ***
+  ### Response
+  - image_url: Supabase Storage 임시 이미지 URL (preview.png)
+  - positive_prompt: 생성에 사용된 긍정 프롬프트
+  - negative_prompt: 생성에 사용된 부정 프롬프트
+  ***
+  ### Status Code
+  - 200 OK: 이미지 생성 완료
+  - 400 Bad Request: 필수값 누락 (Authorization Bearer 헤더 또는 diary)
+  - 401 Unauthorized: 유효하지 않은 access_token
+  - 503 Service Unavailable: ComfyUI 서버 미실행
+  - 500 Internal Server Error: LLM / Storage 오류
+  ***
+  ### 주의사항
+  - ComfyUI가 로컬에서 실행 중이어야 합니다 (http://localhost:8188)
+  - 이미지 생성에 최대 5분 소요될 수 있으므로 timeout을 충분히 설정하세요
+  - DB 저장 없이 이미지만 생성 → 최종 저장은 POST /api/v1/diaries/ 사용
+  - preview.png로 임시 저장하는 이유: 사용자가 이미지 확인 후 마음에 들지 않으면
+    다시 그리기를 할 수 있어야 하므로 최종 저장 전까지 DB에 저장하지 않음.
+    다시 그리기 시 동일 경로에 덮어써져 최신 1개만 유지됨
