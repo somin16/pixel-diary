@@ -1,4 +1,5 @@
 import os
+import re
 import requests as http_requests
 from groq import Groq
 from cerebras.cloud.sdk import Cerebras
@@ -15,7 +16,7 @@ OLLAMA_URL = "http://localhost:11434/api/chat"
 OLLAMA_MODEL = "qwen2.5:7b"
 
 # ▼ Groq 모델명 (.env의 GROQ_API_KEY 필요)
-GROQ_MODEL = "llama-3.3-70b-versatile"
+GROQ_MODEL = "qwen/qwen3-32b"
 
 # ▼ Cerebras 모델명 (.env의 CEREBRAS_API_KEY 필요)
 CEREBRAS_MODEL = "qwen-3-235b-a22b-instruct-2507"
@@ -67,7 +68,9 @@ def call_llm_model_engine_type(messages, llm_model_engine_type="groq"):
             model=GROQ_MODEL,
             messages=messages
         )
-        return response.choices[0].message.content.strip()
+        content = response.choices[0].message.content.strip()
+        # ▼ Qwen3 thinking 모드의 <think>...</think> 블록 제거
+        return re.sub(r'<think>.*?</think>', '', content, flags=re.DOTALL).strip()
 
 
 class PromptTransformView(APIView):
@@ -76,64 +79,28 @@ class PromptTransformView(APIView):
 
     POST /api/v1/prompt/transform
     Body: {
-        "llm_model_engine_type": "groq",                        (필수 / groq, local, cerebras)
-        "diary": "오늘 비가 와서 집에서 독서를 했다.",              (필수)
-        "gender": "girl",                                        (선택 / 예: man, boy, woman 등)
-        "age": 20                                                (선택 / 자연수, gender와 함께 입력 시 인물모드)
+        "diary": "오늘 비가 와서 집에서 독서를 했다.",  (필수)
+        "request": "고양이를 추가해줘",                 (선택 / 변환과 동시에 추가·강조할 요소, 한국어 가능)
+        "remove": "비를 없애줘"                         (선택 / 변환과 동시에 제거할 요소, 부정 프롬프트에 자동 추가)
     }
-
-    - gender와 age 둘 다 입력 → 인물 중심 프롬프트 (주인공이 화면 중앙에 등장)
-    - gender와 age 둘 다 생략 → 풍경/사물 중심 프롬프트 (인물 없음)
-    - 둘 중 하나만 입력      → 400 에러
 
     Response:
     {
         "model": "사용한 LLM 모델명",
         "positive_prompt": "FIXED_PREFIX + LLM 생성 장면 + FIXED_SUFFIX",
-        "negative_prompt": "NEGATIVE_PROMPT 고정값"
+        "negative_prompt": "NEGATIVE_PROMPT 고정값 (remove 입력 시 키워드 추가)"
     }
+
+    Status Code:
+    - 200 OK: 프롬프트 변환 성공
+    - 400 Bad Request: diary 값 누락
     """
 
     def post(self, request):
         diary = request.data.get("diary", "").strip()
-        gender = request.data.get("gender", "").strip()  # ▼ 주인공 성별 (선택 / girl, man 등)
-        age_raw = request.data.get("age", "").strip()    # ▼ 주인공 나이 (선택 / 자연수, gender와 함께 입력)
-        llm_model_engine_type = request.data.get("llm_model_engine_type", "").strip()  # ▼ groq / local / cerebras
-        # ▼ gender, age 둘 다 있으면 인물모드 / 둘 다 없으면 풍경모드 / 하나만 있으면 400
-        is_character_mode = False
-        if gender and age_raw:
-            try:
-                age = int(age_raw)
-                if age <= 0:
-                    return Response(
-                        {"message": "age는 1 이상의 정수여야 합니다."},
-                        status=status.HTTP_400_BAD_REQUEST
-                    )
-                is_character_mode = True
-            except (ValueError):
-                return Response(
-                    {"message": "age는 1 이상의 정수여야 합니다."},
-                    status=status.HTTP_400_BAD_REQUEST
-                )
-        elif gender or age_raw:
-            # 둘 중 하나만 입력된 경우
-            return Response(
-                {"message": "gender와 age는 둘 다 입력하거나 둘 다 생략해야 합니다. (인물 중심 프롬프트를 원하시면 둘 다 입력해주세요)"},
-                status=status.HTTP_400_BAD_REQUEST
-            )
-
-        if not llm_model_engine_type:
-            return Response(
-                {"message": "llm_model_engine_type을 입력해주세요. (groq / local / cerebras)"},
-                status=status.HTTP_400_BAD_REQUEST
-            )
-
-        valid_llm_types = ["groq", "local", "cerebras"]
-        if llm_model_engine_type not in valid_llm_types:
-            return Response(
-                {"message": f"llm_model_engine_type은 {', '.join(valid_llm_types)} 중 하나여야 합니다."},
-                status=status.HTTP_400_BAD_REQUEST
-            )
+        user_request = request.data.get("request", "").strip()  # ▼ 추가·강조할 요소 (선택 / 한국어 가능)
+        remove = request.data.get("remove", "").strip()         # ▼ 제거할 요소 (선택 / 한국어 가능)
+        llm_model_engine_type = "groq"                          # ▼ Qwen(Groq)으로 고정
 
         if not diary:
             return Response(
@@ -141,39 +108,59 @@ class PromptTransformView(APIView):
                 status=status.HTTP_400_BAD_REQUEST
             )
 
-        # ▼ 인물모드 / 풍경모드에 따라 LLM 지시 규칙과 부정 프롬프트 분기
-        if is_character_mode:
-            character_rule = f"- The main character is a {age}-year-old {gender} (the diary writer) and must be clearly visible and centered"
-            current_negative_prompt = NEGATIVE_PROMPT
-        else:
-            character_rule = "- The scene must be a landscape or an environment description WITHOUT any human characters or figures"
-            # ▼ 풍경모드에서는 landscape focus 제외 (풍경이 잘 나오도록)
-            current_negative_prompt = NEGATIVE_PROMPT.replace("(landscape focus:1.5), ", "")
-
         try:
             scene = call_llm_model_engine_type([{
                 "role": "user",
                 "content": (
                     # ▼ LLM에게 주는 지시문 (영어로 작성해야 영어 프롬프트가 나옵니다)
                     # ▼ Rules 항목을 수정하면 프롬프트 스타일이 달라집니다
-                    f"transform the following diary entry into a natural English image generation prompt for ComfyUI pixel art.\n"
+                    f"You are an image prompt generator. Transform the following Korean diary entry into a natural English image generation prompt for ComfyUI pixel art.\n"
+                    f"IMPORTANT: Your entire response must be in English only. Do NOT output any Korean text.\n"
                     f"Rules:\n"
-                    f"{character_rule}\n"  # ▼ 인물모드/풍경모드에 따라 동적으로 변하는 규칙
                     f"- Write in natural descriptive phrases (not just keywords)\n"   # 자연스러운 문장 (키워드만 나열 금지)
                     f"- Up to 100 words, be vivid and expressive\n"                  # 최대 100단어, 생동감 있게
                     f"- Describe the scene, mood, characters, setting, weather, and atmosphere in detail\n"  # 장면/분위기/날씨 등 묘사
-                    f"- Output in English only, no extra explanation\n\n"            # 영어만 출력, 설명 없이
+                    f"- Do NOT use style words like 'pixel', 'pixelated', '8-bit', 'retro' in the scene description\n"  # 스타일 단어 금지 (FIXED_PREFIX에서 처리)
+                    f"- Output the scene description only, no extra explanation\n\n"
                     f"Diary: {diary}"
                 )
             }], llm_model_engine_type=llm_model_engine_type)
 
+            # ▼ request가 있으면 생성된 장면에 추가/강조 적용
+            if user_request:
+                scene = call_llm_model_engine_type([{
+                    "role": "user",
+                    "content": (
+                        f"You are given a scene description from an image generation prompt. Add or emphasize the requested element while keeping ALL original details.\n"
+                        f"Output only the scene description in one line. No explanations, no extra text.\n"
+                        f"Do NOT include any style tokens like '(pixel art:1.2)', '(medium shot:1.4)', '(Close-up:0.8)' or similar tags in your output.\n"
+                        f"Original scene: {scene}\n"
+                        f"Additional request (may be in Korean): {user_request}\n"
+                        f"Rules: keep main character as described, natural descriptive English, under 100 words, one line only."
+                    )
+                }], llm_model_engine_type=llm_model_engine_type)
+
             positive_prompt = f"{FIXED_PREFIX}, {scene}, {FIXED_SUFFIX}"  # ▼ 앞뒤 고정 토큰과 합치기
+
+            # ▼ remove가 있으면 LLM으로 부정 프롬프트 키워드 변환 후 추가
+            remove_keywords = ""
+            if remove:
+                remove_keywords = call_llm_model_engine_type([{
+                    "role": "user",
+                    "content": (
+                        f"transform the following removal request into short English keywords for a ComfyUI negative prompt.\n"
+                        f"Output only comma-separated English keywords, no explanation.\n"
+                        f"Request (may be in Korean): {remove}"
+                    )
+                }], llm_model_engine_type=llm_model_engine_type)
+
+            negative_prompt = f"{NEGATIVE_PROMPT}, {remove_keywords}" if remove_keywords else NEGATIVE_PROMPT
 
             model_used = OLLAMA_MODEL if llm_model_engine_type == "local" else CEREBRAS_MODEL if llm_model_engine_type == "cerebras" else GROQ_MODEL
             return Response({
                 "model": model_used,
                 "positive_prompt": positive_prompt,
-                "negative_prompt": current_negative_prompt,
+                "negative_prompt": negative_prompt,
             }, status=status.HTTP_200_OK)
 
         except Exception as e:
@@ -192,7 +179,6 @@ class PromptRestyleView(APIView):
 
     POST /api/v1/prompt/restyle
     Body: {
-        "llm_model_engine_type": "groq",                        (필수 / groq, local, cerebras)
         "prompt": "Prompt-transform 응답의 positive_prompt 값",  (필수)
         "request": "고양이를 추가해줘",                           (선택 / 추가·강조할 요소, 한국어 가능)
         "remove": "비를 없애줘"                                   (선택 / 제거할 요소, 부정 프롬프트에 자동 추가)
@@ -210,20 +196,7 @@ class PromptRestyleView(APIView):
         original_prompt = request.data.get("prompt", "").strip()
         user_request = request.data.get("request", "").strip()  # ▼ 추가/강조할 요소 (한국어 가능)
         remove = request.data.get("remove", "").strip()         # ▼ 제거할 요소 (한국어 가능, 부정 프롬프트에 자동 추가)
-        llm_model_engine_type = request.data.get("llm_model_engine_type", "").strip()  # ▼ groq / local / cerebras
-
-        if not llm_model_engine_type:
-            return Response(
-                {"message": "llm_model_engine_type을 입력해주세요. (groq / local / cerebras)"},
-                status=status.HTTP_400_BAD_REQUEST
-            )
-
-        valid_llm_types = ["groq", "local", "cerebras"]
-        if llm_model_engine_type not in valid_llm_types:
-            return Response(
-                {"message": f"llm_model_engine_type은 {', '.join(valid_llm_types)} 중 하나여야 합니다."},
-                status=status.HTTP_400_BAD_REQUEST
-            )
+        llm_model_engine_type = "groq"                          # ▼ Qwen(Groq)으로 고정
 
         if not original_prompt:
             return Response(
