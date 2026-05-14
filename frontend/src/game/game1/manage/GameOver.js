@@ -1,6 +1,9 @@
 // 게임 종료
 export function gameOver(scene) {
 
+    // 게임 종료 true
+    scene.gameEnd = true;
+
     // 연속작동 방지를 위해 isDead를 true로 변경
     scene.player.isDead = true;
 
@@ -8,10 +11,13 @@ export function gameOver(scene) {
     scene.physics.pause();
     scene.time.paused = true;
 
+    // 조이스틱 파괴(단순 가시성을 위한것입니다)
+    scene.joyStick.destroy();
+
     // UI 그룹 및 위치조정
-    scene.gameEndUI = scene.add.container(0, 0);
-    scene.gameEndUI.setScrollFactor(0);
-    scene.gameEndUI.setDepth(500);
+    scene.gameOverUI = scene.add.container(0, 0);
+    scene.gameOverUI.setScrollFactor(0);
+    scene.gameOverUI.setDepth(500);
 
     // 가로세로 중앙
     const centerX = scene.cameras.main.width / 2;
@@ -44,6 +50,7 @@ export function gameOver(scene) {
       .setInteractive()   // 이걸 넣어줘야 클릭이 가능
       .on('pointerdown', () => { // 누를때 작동
 
+        scene.gameEnd = false;
         scene.scene.restart(); // 페이저에는 게임 재시작 기능이 따로 존재
       });
 
@@ -55,6 +62,6 @@ export function gameOver(scene) {
       fill: "#ffffff"
     }).setOrigin(0.5);
 
-    // 만든걸 모두 gameEndUI에 넣기
-    scene.gameEndUI.add([backGround,gameOverText,restartButtonBackground,restartButtonText]);
+    // 만든걸 모두 gameOverUI에 넣기
+    scene.gameOverUI.add([backGround,gameOverText,restartButtonBackground,restartButtonText]);
   }

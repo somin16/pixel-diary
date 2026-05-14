@@ -4,14 +4,14 @@ export function TimerSetting(scene) {
 
     // ====================타이머===================
 
-    scene.gamePlayTime = 120; // 기본모드는 3분에서 시작
+    scene.gamePlayTime = 50; // 기본모드는 3분에서 시작
     scene.timeOver = false;
 
     // 타이머 텍스트 구성
     scene.timerText = scene.add.text(
       scene.cameras.main.width / 2,    // x좌표
       scene.cameras.main.height / 12,  // y좌표
-      "02:00" , {  // 기본 텍스트(3분)
+      "00:50" , {  // 기본 텍스트(3분)
       fontFamily: "Mona",
       fontSize: "32px",
       fill: "#000000",
@@ -53,8 +53,8 @@ export function TimerEnd(scene) {
     // ===========타이머가 끝나면============
     if (scene.gamePlayTime < 0 && scene.timeOver == false) {
 
-      // 원래는 보스가 나와야하지만 아직 구현이 안되어있음으로 타이머 파괴로 대체
-      scene.timerText.destroy();
+      // 보스가 나오면 텍스트를 변경
+      scene.timerText.setText("BOSS");
       scene.timeOver = true; // 시간이 끝났으니 시간 계산을 더 하지 않도록 timeOver를 true로 변경
 
       spawnBossMonster(scene);

@@ -130,6 +130,16 @@ export function createAllAnimations(scene) {
       repeat: 0
     });
 
+    // 보상 획득 화면 이미지의 애니메이션
+    scene.anims.create({ key: "game_end_image_animation", frames: scene.anims.generateFrameNumbers("game_end_image", {
+
+        start: 0,
+        end: 19,
+      }),
+      duration: 1500,
+      repeat: -1
+    });
+
     // 기본 공격(블레이드) 애니메이션
     scene.anims.create({
       key: "blade_animation",

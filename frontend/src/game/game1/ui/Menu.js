@@ -96,6 +96,9 @@ export function createMenu(scene) {
 // 메뉴 버튼 클릭시
 function selectMenu(menuContainer, scene) {
 
+    // 게임이 종료됐을땐, 메뉴 버튼이 눌리지 않도록 return
+    if (scene.gameEnd == true) return;
+
     scene.isMenuOpen = true; // 메뉴켜짐
 
     // 게임시간 멈추기

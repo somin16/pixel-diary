@@ -109,8 +109,15 @@ export function loadAllSprite(scene) {
 
     // 메뉴창 배경
     scene.load.image("menu_window", "/assets/game1/ui/menu_window.png");
+
     // 메뉴버튼
     scene.load.image("menu_window_button", "/assets/game1/ui/menu_button.png");
+
+    // 점수 정산 이미지
+    scene.load.spritesheet("game_end_image", "/assets/game1/ui/game_end_image.png", {
+        frameWidth: 32,
+        frameHeight: 32
+    });
 
     // ====================메뉴 아이콘=====================================
     // 메뉴아이콘
@@ -157,5 +164,6 @@ export function loadAllSprite(scene) {
     // 자석
     scene.load.image("magnet", "/assets/game1/object/drop_item/magnet.png");
 
-
+    // 코인
+    scene.load.image("coin", "/assets/game1/object/drop_item/coin.png");
 }
