@@ -1,59 +1,123 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom"; // 페이지 이동
+import { useNavigate } from "react-router-dom"; // 페이지 이동 훅
 import { getAssetUrl } from "../../utils/AssetHelper"; // 이미지 에셋 경로 유틸 함수
 import { useTheme } from "../../store/useThemeStore"; // 테마 전역상태관리 커스텀 훅
-import FloatingActionButton from "../../components/home/FloatingActionButton"; // FAB버튼 컴포넌트 불러오기
-import Calendar from "../../components/home/Calendar"; // 달력 컴포넌트 불러오기
+import FloatingActionButton from "../../components/home/FloatingActionButton"; // FAB 버튼 컴포넌트
+import Calendar from "../../components/home/Calendar"; // 달력 컴포넌트
+import { supabase } from "../../utils/SupabaseClient"; // Supabase 클라이언트 (인증 토큰 조회용)
 
 export default function Home() {
-    const navigate = useNavigate(); // 페이지 이동
+    const navigate = useNavigate();
+    const currentTheme = useTheme((state) => state.currentTheme);
 
-    // 현재 테마 상태
-    const currentTheme = useTheme((state) => state.currentTheme) 
-    
-    // 동적 날짜 로직
-    const [viewDate, setViewDate] = useState(new Date()); // 달력의 기준이 되는 날짜 상태 (오늘 날짜로 초기화)
+    // 달력의 기준이 되는 날짜 상태 (오늘 날짜로 초기화)
+    // 이 값이 바뀌면 달력이 해당 월로 이동함
+    const [viewDate, setViewDate] = useState(new Date());
 
-    // 월 변경 핸들러: Calendar 컴포넌트에서 호출하면 부모의 상태를 업데이트
+    // ── 월 변경 핸들러 ──────────────────────────────────────────────────────
+    // Calendar 컴포넌트에서 이전/다음 달 버튼 클릭 시 호출됨
+    // offset: -1(이전 달) 또는 +1(다음 달)
     const handleMonthChange = (offset) => {
-        // 현재 viewDatef를 기준으로 새로운 Date 객체 생성
         const newDate = new Date(viewDate.getFullYear(), viewDate.getMonth() + offset, 1);
         setViewDate(newDate);
     };
 
-    // 날짜 클릭 핸들러: 특정 날짜를 눌렀을 때의 동작 (라우팅)
-    const handleDateClick = (dateString) => {
-        navigate(`diary/write/${dateString}`);
+    // ── 날짜 클릭 핸들러 ────────────────────────────────────────────────────
+    // 달력에서 날짜를 클릭했을 때 실행됨
+    // 해당 날짜에 이미 쓴 일기가 있으면 → 상세보기로 이동
+    // 없으면 → 일기 작성 페이지로 이동
+    //
+    // ★ 캐시(sessionStorage) 활용:
+    //   - 처음 클릭 시에만 API를 호출하고 결과를 sessionStorage에 저장
+    //   - 이후 클릭에서는 저장된 데이터를 바로 사용 → API 호출 없이 즉시 이동
+    //   - 새 일기 저장(handleFinalSave) 시 캐시를 삭제하여 최신 데이터 유지
+    const handleDateClick = async (dateString) => {
+        try {
+            let diaries = [];
+
+            // sessionStorage에 캐시된 일기 목록이 있는지 확인
+            const cached = sessionStorage.getItem('diary_list');
+            if (cached) {
+                // 캐시 있음 → API 호출 없이 바로 사용
+                diaries = JSON.parse(cached);
+            } else {
+                // 캐시 없음 → API 호출 후 캐시에 저장
+                const { data: { session } } = await supabase.auth.getSession();
+                const access_token = session?.access_token;
+
+                const response = await fetch(
+                    `${import.meta.env.VITE_BACKEND_URL}api/v1/diaries/`,
+                    {
+                        method: "GET",
+                        headers: {
+                            "Content-Type": "application/json",
+                            Authorization: `Bearer ${access_token}`,
+                        },
+                    }
+                );
+
+                if (!response.ok) throw new Error("목록 조회 실패");
+
+                const data = await response.json();
+                diaries = data.diaries || [];
+
+                // 다음 클릭 시 재사용할 수 있도록 sessionStorage에 저장
+                sessionStorage.setItem('diary_list', JSON.stringify(diaries));
+            }
+
+            // 클릭한 날짜("YYYY-MM-DD")와 일치하는 일기 찾기
+            // created_at은 "2026-05-14T07:07:59+09:00" 형식이므로 "T" 앞까지만 비교
+            const found = diaries.find(
+                (d) => d.created_at?.split("T")[0] === dateString
+            );
+
+            if (found) {
+                // 해당 날짜에 일기 있음 → 상세보기로 이동
+                // state로 diaryId 전달 → DiaryDetail에서 API 호출에 사용
+                navigate(`/diary/${dateString}`, {
+                    state: { diaryId: found.diary_id },
+                });
+            } else {
+                // 해당 날짜에 일기 없음 → 일기 작성 페이지로 이동
+                navigate(`/diary/write/${dateString}`);
+            }
+        } catch (err) {
+            console.error("날짜 클릭 처리 실패:", err);
+            // 에러 발생 시 작성 페이지로 fallback (사용자 경험 유지)
+            navigate(`/diary/write/${dateString}`);
+        }
     };
 
-    // FAB 클릭 핸들러 (오늘 날짜 일기 쓰기로 바로 가기 등)
+    // ── FAB 버튼 핸들러 ─────────────────────────────────────────────────────
+    // 우측 하단 플로팅 버튼 클릭 시 오늘 날짜로 바로 작성 페이지 이동
+    // toLocaleDateString('en-CA'): 로컬 시간 기준 "YYYY-MM-DD" 형식 반환
+    // (toISOString() 대신 쓰는 이유: toISOString()은 UTC 기준이라 한국에서 전날 날짜가 나올 수 있음)
     const handleFabClick = () => {
-        const today = new Date().toISOString().split('T')[0];
-        handleDateClick(today);
+        const today = new Date().toLocaleDateString('en-CA');
+        navigate(`/diary/write/${today}`);
     };
 
-    // 인라인 스타일로 배경 이미지를 동적으로 적용
-    const backgroundStyle = {
-        backgroundImage: `url(${getAssetUrl(currentTheme,'backgrounds', 'background_x3')})`,
-        backgroundSize: '100% 100%',
-    };
     return (
         <div
             className="relative w-full h-full"
-            style={backgroundStyle}
+            style={{
+                backgroundImage: `url(${getAssetUrl(currentTheme, 'backgrounds', 'background_x3')})`,
+                backgroundSize: '100% 100%',
+            }}
         >
+            {/* 달력 영역 */}
             <div className="w-full h-full flex items-center justify-center pb-[38%]">
                 <Calendar
                     viewDate={viewDate}
                     currentTheme={currentTheme}
                     onMonthChange={handleMonthChange}
                     onDateClick={handleDateClick}
-                />    
-            </div>
-            <div className="absolute bottom-[12%] right-[5%]">
-                <FloatingActionButton
-                    onClick={handleFabClick}
                 />
+            </div>
+
+            {/* 우측 하단 플로팅 버튼 (오늘 날짜로 일기 작성) */}
+            <div className="absolute bottom-[12%] right-[5%]">
+                <FloatingActionButton onClick={handleFabClick} />
             </div>
         </div>
     );
