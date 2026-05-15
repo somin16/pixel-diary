@@ -445,7 +445,7 @@ class AdminUserView(APIView):
 
             # Supabase users 테이블에서 유저 목록 조회
             params = {
-                "select": "user_id,user_name, coin, gender, age",
+                "select": "user_id,user_name,coin, gender, age",
                 "order": "user_name.desc",
                 "offset": range_start,
                 "limit": page_size,
