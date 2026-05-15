@@ -75,22 +75,16 @@ const MorePage = () => {
     }
   };
 
-  const handleSendContact = async (content) => {
-  try {
-    // TODO : API 연동
-    
-    // 전송 성공 시 로직
+  // ContactDialog의 결과를 받아 처리
+  const handleContactResult = (isSuccess) => {
     setActiveDialog(null); // 입력 다이얼로그 닫기
-    setResultDialog('contact_success'); // 완료 다이얼로그 띄우기
-  } catch (error) {
-    console.error("문의 전송 실패:", error);
-    // 실패 시에도 에러 다이얼로그를 띄우는 것이 좋습니다.
 
-    // 실패 시 로직
-    setActiveDialog(null); // 입력 다이얼로그 닫기
-    setResultDialog('contact_error'); // 에러 다이얼로그 상태로 변경
-  }
-};
+    if (isSuccess) {
+      setResultDialog('contact_success'); // 성공 시
+    } else {
+      setResultDialog('contact_error'); // 실패 시
+    }
+  };
 
 return (
     // 전체 페이지를 감싸는 컨테이너 (배경 이미지가 깔리는 곳)
@@ -157,7 +151,7 @@ return (
       {activeDialog === 'contact' && (
         <ContactDialog 
           onCancel={() => setActiveDialog(null)} 
-          onSend={handleSendContact}
+          onResult={handleContactResult}
           maxWidth="320px"
         />
       )}
