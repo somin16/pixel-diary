@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useTheme } from '../../store/useThemeStore'; // useTheme 불러오기
 import { getAssetUrl } from "../../utils/AssetHelper"; // 헬퍼 불러오기
+import { supabase } from "../../utils/SupabaseClient";
 
 // 컴포넌트 불러오기
 import ProfileBar from "../../components/more/profile/ProfileBar";
@@ -17,6 +18,7 @@ const menuItems = [
   { id: 'notice', label: '공지사항', iconName: 'info_icon_x3', path: '/more/announcement/list' },
   { id: 'notification', label: '알림 설정', iconName: 'alarm_icon_x3', path: '/more/notification' },
   { id: 'contact', label: '문의 하기', iconName: 'help_center_icon_x3' },
+  { id: 'userlist', label: '유저 관리', iconName: 'setting_icon_x3', path: '/more/user-list'}
 ];
 
 const MorePage = () => {
@@ -36,6 +38,9 @@ const MorePage = () => {
   const [activeDialog, setActiveDialog] = useState(null); 
   const [resultDialog, setResultDialog] = useState(null);
 
+  // 관리자 권한 확인
+  const [isAdmin, setIsAdmin] = useState(false);
+
   // 사용자 정보 상태 관리
   // 나중에 context나 zuStand로 전역 관리 하는 게 좋을 듯
   const [user] = useState({
@@ -45,8 +50,19 @@ const MorePage = () => {
   });
 
   useEffect(() => {
-    // TODO: API 연동 시 api 파일에서 불러오기
-  }, [])
+        // 세션에서 role 확인
+        const checkAdmin = async () => {
+            const { data: { session } } = await supabase.auth.getSession();
+            const role = session?.user?.user_metadata?.role;
+            setIsAdmin(role === 'admin');
+        };
+        checkAdmin();
+    }, []);
+
+    // isAdmin 여부에 따라 메뉴 필터링
+    const visibleMenuItems = menuItems.filter(
+        (item) => item.id !== 'userlist' || isAdmin
+    );
 
   // 메뉴 클릭 핸들러 
   const handleMenuClick = (item) => {
@@ -110,7 +126,7 @@ return (
       {/* 더보기 메뉴 아이콘 그리드 영역 */}
       <nav className="grid grid-cols-3 gap-x-[15px] gap-y-[30px] px-[10px]">
         {/* menuItems 배열을 하나씩 꺼내어(map) 화면에 렌더링 */}
-        {menuItems.map((item) => (
+        {visibleMenuItems.map((item) => (
           <div 
             key={item.id} // 리액트가 각 항목을 구분하기 위한 고유 ID
             className="flex flex-col items-center cursor-pointer transition-transform duration-100 ease-in h-[100px] justify-start" // 개별 메뉴 아이콘과 글자를 감싸는 통
