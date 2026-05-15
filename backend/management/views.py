@@ -391,3 +391,99 @@ class AdminAnnouncementView(APIView):
                 {"message": "공지사항 수정 중 오류가 발생했습니다."},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
+        
+class AdminUserView(APIView):
+    """전체 유저 조회 API (관리자 전용)"""
+
+    def get(self, request):
+        """
+        전체 유저 조회
+        GET /api/v1/admin/users/
+        Query Params:
+            - page_number (int, optional): 페이지 번호 (기본값: 1)
+            - page_size (int, optional): 페이지당 유저 수 (기본값: 20)
+            - search_keyword (str, optional): 유저명(user_name) 검색어
+        Response:
+            - success (bool)
+            - message (str)
+            - data.users (list): 유저 목록
+            - data.total_pages (int): 전체 페이지 수
+        """
+        access_token = extract_access_token(request)
+        if not access_token:
+            return Response(
+                {"message": "Authorization 헤더에 유효한 Bearer 토큰이 필요합니다."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        try:
+            # 관리자 권한 검증
+            user = get_user_from_token(access_token)
+            if not user:
+                return Response(
+                    {"message": "유효하지 않은 토큰입니다."},
+                    status=status.HTTP_401_UNAUTHORIZED,
+                )
+
+            role = user.get("user_metadata", {}).get("role", "")
+            if role != "admin":
+                return Response(
+                    {"message": "관리자 권한이 필요합니다."},
+                    status=status.HTTP_403_FORBIDDEN,
+                )
+
+            # Query Params 파싱
+            page_number = int(request.query_params.get("page_number", 1))
+            page_size = int(request.query_params.get("page_size", 20))
+            search_keyword = request.query_params.get("search_keyword", "").strip()
+
+            # 페이지 범위 계산
+            range_start = (page_number - 1) * page_size
+
+            supabase_url = os.getenv("SUPABASE_URL")
+            headers = get_supabase_headers()
+
+            # Supabase users 테이블에서 유저 목록 조회
+            params = {
+                "select": "user_id,user_name, coin, gender, age",
+                "order": "user_name.desc",
+                "offset": range_start,
+                "limit": page_size,
+            }
+
+            # 검색어가 있으면 이메일 또는 닉네임 필터 추가
+            if search_keyword:
+                params["user_name"] = f"ilike.*{search_keyword}*"
+
+            response = requests.get(
+                f"{supabase_url}/rest/v1/users",
+                headers={**headers, "Prefer": "count=exact"},
+                params=params,
+            )
+
+            if response.status_code != 200:
+                raise Exception(f"Supabase API 오류: {response.text}")
+
+            # Content-Range 헤더에서 전체 유저 수 추출 (e.g. "0-19/100")
+            content_range = response.headers.get("Content-Range", "0/0")
+            total_count = int(content_range.split("/")[-1]) if "/" in content_range else 0
+            total_pages = (total_count + page_size - 1) // page_size  # 올림 나눗셈
+
+            return Response(
+                {
+                    "message": "유저 목록 조회 성공",
+                    "data": {
+                        "users": response.json(),
+                        "total_pages": total_pages,
+                    },
+                },
+                status=status.HTTP_200_OK,
+            )
+
+        except Exception as error:
+            # 오류 발생 시 터미널에 출력 (개발 완료 후 삭제 예정)
+            print(f"=== ADMIN USER LIST ERROR ===\n{error}\n=============================")
+            return Response(
+                {"success": False, "message": "유저 목록 조회 중 오류가 발생했습니다."},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
