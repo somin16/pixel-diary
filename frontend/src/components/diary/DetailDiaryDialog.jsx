@@ -1,7 +1,11 @@
 import { useState, useRef, useCallback } from "react";
-import { getAssetUrl, getDecoAssetUrl } from "../../utils/AssetHelper";
+import { getAssetUrl, getDecoAssetUrl, ITEM_IMG_MAP } from "../../utils/AssetHelper";
 import CloseButton from "../common/CloseButton";
-import { useNavigate } from "react-router-dom";
+import { replace, useNavigate } from "react-router-dom";
+import { formatDisplayDate } from "../../utils/DateFormatter";
+import { authFetch } from "../../utils/AuthHelper";
+import DeleteDialog from "./dialog/DeleteDialog";
+import ResultDialog from "../common/dialog/ResultDialog";
 
 /**
  * @typedef {Object} StickerItem
@@ -21,6 +25,7 @@ import { useNavigate } from "react-router-dom";
  *   - 'decorate' : 꾸미기 (프레임/스티커/이모지 선택, 본문 편집 불가)
  *
  * @property {string}       currentTheme      - 현재 앱 테마 (에셋 경로 결정에 사용)
+ * @property {string}       [diaryId]         - 일기  id
  * @property {string}       [date]            - 일기 날짜 "YYYY-MM-DD" 형식
  * @property {string}       [imageUrl]        - 일기 그림 이미지 URL
  * @property {string}       [content]         - 일기 본문 텍스트
@@ -63,10 +68,12 @@ import { useNavigate } from "react-router-dom";
  *
  * @param {DetailDiaryDialogProps} props
  */
+
 const DetailDiaryDialog = ({
     currentTheme,
     mode = 'view',
     step = 1,
+    diaryId,
     date: diaryDate,
     selectedEmoji,
     imageUrl,
@@ -109,6 +116,10 @@ const DetailDiaryDialog = ({
 
     // ── 메뉴 오픈 상태 (상세보기 모드 전용) ────────────────────────────────
     const [isMenuOpen, setIsMenuOpen] = useState(false);
+
+    // --- 다이얼로그 상태 관리 ---
+    // null: 아무것도 안 띄움, 'confirm': 삭제 확인 창, 'result': 삭제 완료 창
+    const [dialogState, setDialogState] = useState(null);
 
     // ── 모드 판별 플래그 ────────────────────────────────────────────────────
     const isView = mode === 'view';
@@ -190,13 +201,54 @@ const DetailDiaryDialog = ({
     // 수정 페이지로 이동
     function handleEditNavigation() {
         if (!diaryDate) return;
-        navigate(`/diary/edit/${diaryDate}`);
+        navigate(`/diary/edit/${diaryId}`, {
+            state: {
+                mode: 'edit',
+                diaryId: diaryId,
+                diaryDate: diaryDate,
+                diaryContent: content,           // 일기 본문
+                imageUrl: imageUrl,         // AI 그림
+                selectedEmoji: selectedEmoji, // 이모지
+                selectedFrame: selectedFrame, // 프레임
+                stickers: stickers,         // 스티커 배열 전체
+            }
+        });
         setIsMenuOpen(false);
     }
 
-    // 삭제 (TODO: API 연동)
-    function handleDelete() {
+    // 삭제 API 연동 및 커스텀 다이얼로그 
+    // 1. 점 세개 메뉴에서 '삭제' 버튼을 눌렀을 때
+    function handleDeleteMenuClick() {
         setIsMenuOpen(false);
+        setDialogState('confirm'); // 확인 팝업 열기
+    }
+
+    // 2. DeleteDialog에서 '삭제하기'를 눌렀을 때 (실제 API 호출)
+    async function handleActualDelete() {
+        try {
+            // authFetch 사용 (이전에 만든 도우미 함수)
+            // 성공 시 바로 JSON 결과가 반환됨
+            await authFetch(`${import.meta.env.VITE_BACKEND_URL}/api/v1/diaries/${diaryId}/`, {
+                method: 'DELETE',
+            });
+
+            //삭제 성공 시 목록 캐시를 날려버립니다.
+            sessionStorage.removeItem('diary_list');
+
+            // 성공하면 결과 창 띄우기
+            setDialogState('result');
+        } catch (error) {
+            console.error("삭제 실패:", error);
+            alert(error.message || "삭제 중 오류가 발생했습니다.");
+            setDialogState(null);
+        }
+    }
+
+    // 3. ResultDialog에서 '확인'을 눌렀을 때
+    function handleResultConfirm() {
+        setDialogState(null);
+        if (onClose) onClose(); // 상세 다이얼로그 닫기
+        navigate('/diary/list', { replace: true });     // 일기목록으로 이동
     }
 
     // 공유 (TODO: 구현)
@@ -206,13 +258,6 @@ const DetailDiaryDialog = ({
 
 
     // ── 유틸리티 ────────────────────────────────────────────────────────────
-
-    // "2026-05-02" → "2026년 05월 02일"
-    const formatDisplayDate = (dateStr) => {
-        if (!dateStr) return "";
-        const [y, m, d] = dateStr.split("-");
-        return `${y}년 ${m}월 ${d}일`;
-    };
 
     // 날짜 텍스트 클릭 시 숨겨진 date picker 열기 (create/edit 모드 전용)
     const handleDateTextClick = () => {
@@ -288,7 +333,7 @@ const DetailDiaryDialog = ({
 
                 {/* ── 수정/삭제/공유 드롭다운 (view 모드 전용, z-60) ──────────── */}
                 {isView && (
-                    <div className="absolute w-full flex justify-center pl-[80%] pt-[6%] text-sm z-60">
+                    <div className="absolute w-full flex justify-center pl-[80%] pt-[6%] text-sm z-70">
                         <button
                             onClick={() => setIsMenuOpen(!isMenuOpen)}
                             className="outline-none"
@@ -299,14 +344,14 @@ const DetailDiaryDialog = ({
 
                         {isMenuOpen && (
                             <div
-                                className="absolute aspect-[99/102] mt-[5%] w-24 z-70 overflow-hidden"
+                                className="absolute aspect-[99/102] mt-[5%] w-24 z-80 overflow-hidden"
                                 style={{
                                     backgroundImage: `url(${getAssetUrl(currentTheme, 'boxes', 'edit_delete_share_menu_box_x3')})`,
                                     backgroundSize: '100% 100%',
                                 }}
                             >
                                 <button className="mt-[2%] w-full h-[32%] font-semibold outline-none text-xs" onClick={handleEditNavigation}>수정</button>
-                                <button className="w-full h-[32%] text-red-500 text-xs font-semibold outline-none" onClick={handleDelete}>삭제</button>
+                                <button className="w-full h-[32%] text-red-500 text-xs font-semibold outline-none" onClick={handleDeleteMenuClick}>삭제</button>
                                 <button className="w-full h-[32%]  text-xs font-semibold outline-none" onClick={handleShare}>공유</button>
                             </div>
                         )}
@@ -455,6 +500,26 @@ const DetailDiaryDialog = ({
             <div className="w-full h-[20%] flex justify-center z-30">
                 {footer}
             </div>
+
+            {/* --- 최하단에 다이얼로그 레이어 추가 (z-index 70 이상) --- */}
+
+            {/* 삭제 확인 팝업 */}
+            {dialogState === 'confirm' && (
+                <DeleteDialog
+                    onConfirm={handleActualDelete}
+                    onCancel={() => setDialogState(null)}
+                    maxWidth="320px"
+                />
+            )}
+
+            {/* 삭제 완료 알림 팝업 */}
+            {dialogState === 'result' && (
+                <ResultDialog
+                    message="일기가 성공적으로 삭제되었습니다."
+                    onConfirm={handleResultConfirm}
+                    maxWidth="320px"
+                />
+            )}
         </div>
     );
 };

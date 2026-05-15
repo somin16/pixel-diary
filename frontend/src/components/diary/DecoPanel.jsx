@@ -1,6 +1,7 @@
-import {useRef} from 'react';
+import { useState, useEffect, useRef } from 'react';
+import { supabase } from '../../utils/SupabaseClient';
 import { motion } from 'framer-motion';
-import { getAssetUrl, getDecoAssetUrl } from '../../utils/AssetHelper';
+import { getAssetUrl, getDecoAssetUrl, DECO_ITEM_LIST } from '../../utils/AssetHelper';
 import ImageButton from '../common/ImageButton';
 
 const DecoPanel = ({ currentTheme, mode, isOpen, onSelectMode, onSelectItem }) => {
@@ -11,21 +12,36 @@ const DecoPanel = ({ currentTheme, mode, isOpen, onSelectMode, onSelectItem }) =
     // 목표 y값 계산
     const targetY = isHidden ? "100%" : (isOpen ? "0%" : "88%");
 
-    // 더미 데이터
-    const DECO_ITEM_LIST = {
-        frame: [
-            { id: 'frame_01', img: 'winter_light_frame_x3' },
-        ],
-        sticker: [
-            { id: 'sticker_01', img: 'sticker_01' },
-        ],
-        emoji: [
-            { id: 'emoji_01', img: 'emoji_01' },
-        ]
-    };
+    // 상태 관리
+    const [ownedItems, setOwnedItems] = useState([]);
 
-    // [상태] 보유 아이템 조회
-    const ownedItems = ['frame_01', 'sticker_01', 'emoji_01'];
+    useEffect(() => {
+        fetchItems();
+    }, []);
+
+    // API 호출 - 보유 아이템만 판별
+    const fetchItems = async () => {
+        try {
+            const { data: { session } } = await supabase.auth.getSession();
+            const access_token = session?.access_token;
+
+            const res = await fetch(`${import.meta.env.VITE_BACKEND_URL}api/v1/users/deco-item/`, {
+                headers: { Authorization: `Bearer ${access_token}` }
+            });
+            const data = await res.json();
+
+            // response 구조: { emoji: [{item_id, ...}], diary_theme: [...], sticker: [...] }
+            const owned = [
+                ...(data.emojis ?? []),
+                ...(data.diary_themes ?? []),
+                ...(data.stickers ?? []),
+            ].map((i) => i.item_id);
+
+            setOwnedItems(owned);
+        } catch (error) {
+            console.error('보유 아이템 조회 실패:', error);
+        }
+    };
 
     // 모드에 맞는 리스트 가져오기 (프레임, 스티커, 이모지)
     const currentList = DECO_ITEM_LIST[mode] || [];
@@ -137,7 +153,7 @@ const DecoPanel = ({ currentTheme, mode, isOpen, onSelectMode, onSelectItem }) =
                                     <div className="grid grid-cols-4 gap-[3%]">
                                         {/* [수정 포인트] 더미 Array(24) 대신 실제 데이터 매핑 */}
                                         {currentList.map((item) => {
-                                            const isOwned = ownedItems.includes(item.id);
+                                            const isOwned = ownedItems.includes(item.item_id);
 
                                             const folderName = `${mode}s`;
                                             const imgSrc = getDecoAssetUrl(folderName, item.img);
@@ -146,7 +162,7 @@ const DecoPanel = ({ currentTheme, mode, isOpen, onSelectMode, onSelectItem }) =
 
                                             return (
                                                 <div
-                                                    key={item.id}
+                                                    key={item.item_id}
                                                     className={`relative flex items-center justify-center ${isFrameMode ? 'aspect-[311/522]' : 'aspect-square'
                                                         }`}
                                                     onClick={() => {
@@ -163,7 +179,7 @@ const DecoPanel = ({ currentTheme, mode, isOpen, onSelectMode, onSelectItem }) =
                                                                 ? 'opacity-100'
                                                                 : 'opacity-40 grayscale brightness-75'
                                                                 }`}
-                                                            alt={item.id}
+                                                            alt={item.item_id}
                                                         />
                                                     </div>
 
