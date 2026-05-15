@@ -29,14 +29,14 @@ export function levelUpMenu(scene) {
     const skills = [
 
       // 스탯
-      { name: "공격력 증가" , id: "damage_up", icon: "damage_icon"},
-      { name: "이동속도 증가", id: "speed_up", icon: "speed_icon"},
-      { name: "자연회복 증가", id: "autoHeal_up", icon: "auto_heal_icon"},
+      { name: "공격력 증가!" , id: "damage_up", icon: "damage_icon"},
+      { name: "이동속도 증가!", id: "speed_up", icon: "speed_icon"},
+      { name: "자연회복 증가!", id: "autoHeal_up", icon: "auto_heal_icon"},
 
       // 무기
-      { name: "블레이드", id: "blade_up", icon: "blade_icon"}, // 현재 3레벨까지 구현
-      { name: "활", id: "arrow_up", icon: "arrow_icon"}, // 레벨당 속도증가 구현
-      { name: "화염구", id: "fireball_up", icon: "fireball_icon"}
+      { name: "블레이드 강화!", id: "blade_up", icon: "blade_icon"}, // 현재 3레벨까지 구현
+      { name: "활 강화!", id: "arrow_up", icon: "arrow_icon"}, // 레벨당 속도증가 구현
+      { name: "화염구 강화!", id: "fireball_up", icon: "fireball_icon"}
     ];
 
     // 최고레벨에 도달한 스킬들을 걸러내기

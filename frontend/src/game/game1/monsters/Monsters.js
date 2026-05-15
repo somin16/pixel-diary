@@ -8,7 +8,7 @@ import Phalanx from "./Phalanx.js";
 import { addDropItemMagnet } from "../object/Magnet.js";
 import { addDropItemMeat } from "../object/Meat.js";
 import KingSlime from "./KingSlime.js";
-import { addScore, lockScore } from "../manage/Score.js";
+import { addScore, gameClear, lockScore } from "../manage/Score.js";
 
 // 몬스터 이동 로직
 export function monsterMove(scene) {
@@ -320,6 +320,12 @@ export function monsterDead(monster, scene) {
 
         if (meatDropPercent >= randomValue) addDropItemMeat(monster.x, monster.y, scene);
         else addExpBall(monster.x, monster.y, scene);
+      }
+
+      // 보스가 죽엇을 때
+      else if (monster.isBoss == true){
+
+        gameClear(scene);
       }
 
       // 그 외

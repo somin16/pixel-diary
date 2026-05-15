@@ -15,7 +15,7 @@ export default class KingSlime extends Phaser.Physics.Arcade.Sprite {
         // 스탯 
         this.isBoss = true;                   // 보스 확인용
         this.monsterID = 101;                 // 몬스터 번호 (보스몬스터는 101부터 시작하는걸로 구분하겠습니다)
-        this.hp = 200 + monsterStatus;         // 체력
+        this.hp = 1 + monsterStatus;         // 체력
         this.damage = -10;                    // 대미지
         this.resistance = 0;                  // 공격을 받았을때 밀려나는 저항정도
                                               // ※ 1은 저항없음, 0에 가까울수록 안밀린다

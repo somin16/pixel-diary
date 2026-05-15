@@ -34,6 +34,9 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
     // 플레이어 이동
     playerMove(cursors, wasd, scene) {
 
+        // 굳이 없어도 되지만, 게임이 종료됐을때는 이동을 하지 못하도록 return(혹시 몰라서 해놓은겁니다)
+        if (scene.gameEnd) return;
+
         // 기본 설정
         const DEFAULT_SPEED = 150; // 기본 속도
         this.setVelocity(0); // 중력x
