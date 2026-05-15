@@ -393,7 +393,7 @@ class AdminAnnouncementView(APIView):
             )
         
 class AdminUserView(APIView):
-    """전체 유저 조회 API (관리자 전용)"""
+    """전체 유저 조회 및 문제 유저 강제 탈퇴 API (관리자 전용)"""
 
     def get(self, request):
         """
@@ -487,3 +487,88 @@ class AdminUserView(APIView):
                 {"success": False, "message": "유저 목록 조회 중 오류가 발생했습니다."},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
+        
+    def delete(self, request, user_id):
+        """
+        문제 유저 강제 탈퇴
+        DELETE /api/v1/admin/users/{user_id}/
+        - Authorization 헤더의 access_token으로 관리자 권한 확인
+        - users 테이블 데이터 삭제 (cascade로 일기 데이터도 함께 삭제)
+        - Supabase Auth 유저도 삭제 (service_role key 필요)
+        """
+        access_token = extract_access_token(request)
+        if not access_token:
+            return Response(
+                {"message": "Authorization 헤더에 유효한 Bearer 토큰이 필요합니다."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        try:
+            # 관리자 권한 검증
+            user = get_user_from_token(access_token)
+            if not user:
+                return Response(
+                    {"message": "유효하지 않은 토큰입니다."},
+                    status=status.HTTP_401_UNAUTHORIZED,
+                )
+
+            role = user.get("user_metadata", {}).get("role", "")
+            if role != "admin":
+                return Response(
+                    {"message": "관리자 권한이 필요합니다."},
+                    status=status.HTTP_403_FORBIDDEN,
+                )
+
+            supabase_url = os.getenv("SUPABASE_URL")
+            service_role_key = os.getenv("SUPABASE_SERVICE_KEY")
+            headers = get_supabase_headers()
+            admin_headers = {
+                "apikey": service_role_key,
+                "Authorization": f"Bearer {service_role_key}",
+                "Content-Type": "application/json",
+            }
+
+            # Step 1: users 테이블에서 유저 존재 여부 확인
+            check_response = requests.get(
+                f"{supabase_url}/rest/v1/users",  
+                headers=headers,
+                params={"user_id": f"eq.{user_id}", "select": "user_id"},
+            )
+
+            if not check_response.json():
+                return Response(
+                    {"message": "해당 유저를 찾을 수 없습니다."},
+                    status=status.HTTP_404_NOT_FOUND,
+                )
+
+            # Step 2: users 테이블에서 유저 삭제 (cascade로 연관 데이터 함께 삭제)
+            delete_response = requests.delete(
+                f"{supabase_url}/rest/v1/users",  
+                headers={**headers, "Prefer": "return=representation"},
+                params={"user_id": f"eq.{user_id}"},
+            )
+
+            if delete_response.status_code not in [200, 204]:
+                raise Exception(f"users 삭제 실패: {delete_response.text}")
+
+            # Step 3: Supabase Auth 유저 삭제 (service_role key로 Admin API 호출)
+            auth_response = requests.delete(
+                f"{supabase_url}/auth/v1/admin/users/{user_id}",
+                headers=admin_headers,
+            )
+
+            if auth_response.status_code not in [200, 204]:
+                raise Exception(f"Auth 유저 삭제 실패: {auth_response.text}")
+
+            return Response(
+                {"message": "해당 유저가 삭제되었습니다."},
+                status=status.HTTP_200_OK,
+            )
+
+        except Exception as error:
+            print(f"=== ADMIN USER DELETE ERROR ===\n{error}\n==============================")
+            return Response(
+                {"message": "유저 삭제 중 오류가 발생했습니다."},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
+
