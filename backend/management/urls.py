@@ -10,4 +10,5 @@ urlpatterns = [
     path('announcements/', AdminAnnouncementView.as_view(), name="admin-announcements"),    # 공지사항 작성
     path("announcements/<int:announcement_id>/", AdminAnnouncementView.as_view(), name="admin-announcements-detail"),  # 공지사항 삭제, 수정
     path("users/", AdminUserView.as_view(), name="admin-users"),                    # 전체 유저 조회
+    path("users/<str:user_id>/", AdminUserView.as_view(), name="admin-users-detail"),  # 유저 삭제(탈퇴)
 ]
