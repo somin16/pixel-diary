@@ -26,6 +26,12 @@ const Calendar = ({ onDateClick, onMonthChange, viewDate, currentTheme }) => {
 
     const days = [];
 
+    // 오늘 날짜는 강조 표시하기 위한 변수
+    const today = new Date();
+    const todayYear = today.getFullYear();
+    const todayMonth = today.getMonth();
+    const todayDate = today.getDate();
+
     // 지난달 날짜 채우기
     for (let i = firstDay - 1; i >= 0; i--) {
         days.push({ day: lastMonthDate - i, type: 'last' });
@@ -64,7 +70,7 @@ const Calendar = ({ onDateClick, onMonthChange, viewDate, currentTheme }) => {
 
                 {/*왼쪽 버튼 모음 ( 투명 버튼 <> ) */}
                 <div className="absolute w-[15%] pl-[3%] h-full flex items-center justify-between">
-                    <button onClick={() => onMonthChange(-1)} className="w-5 h-7 flex items-center justify-center outline-none" aria-label="이전 달"/>
+                    <button onClick={() => onMonthChange(-1)} className="w-5 h-7 flex items-center justify-center outline-none" aria-label="이전 달" />
                     <span className="text-2xl">{String(month + 1)}</span>
                     <button onClick={() => onMonthChange(1)} className=" w-5 h-7 flex items-center justify-center outline-none" aria-label="다음 달" />
                 </div>
@@ -89,20 +95,28 @@ const Calendar = ({ onDateClick, onMonthChange, viewDate, currentTheme }) => {
                 </div>
 
                 {/* 날짜 그리드 */}
-                <div className="w-full h-[87%] grid grid-cols-7 gap-[1%] ">
+                <div className="w-full h-[89%] grid grid-cols-7 gap-[1%] ">
                     {days.map((item, i) => {
-                        const isSunday = i % 7 === 0;
-                        const isSaturday = i % 7 === 6;
-                        const isNotCurrent = item.type !== 'current'; // 저번 / 다음달 여부 판별
+                        const isSunday = i % 7 === 0;                   // 일요일 여부
+                        const isSaturday = i % 7 === 6;                 // 토요일 여부
+                        const isNotCurrent = item.type !== 'current';   // 저번 / 다음달 여부 판별
+
+                        // 오늘 날짜 여부 판별
+                        const isToday =
+                            item.type === 'current' &&
+                            item.day === todayDate &&
+                            year === todayYear &&
+                            month === todayMonth;
                         return (
                             <div
                                 key={`${item.type}-${item.day}-${i}`}
                                 // 이번 달 날짜만 클릭 가능하도록 핸들러 제안 (조건문)
                                 onClick={() => !isNotCurrent && onDateClick(`${year}-${String(month + 1).padStart(2, '0')}-${String(item.day).padStart(2, '0')}`)}
                                 className={`
-                                    aspect-[14/12] flex items-start pl-[8%] pt-[2%] justify-start text-xs
-                                    ${isNotCurrent ? 'opacity-60 grayscale' : 'cursor-pointer hover:bg-white/10'} // 이번달 아니면 흐리게 처리
+                                    aspect-[14/12] flex items-start pl-[8%] pt-[1%] justify-start text-xs
+                                    ${isNotCurrent ? 'opacity-50 grayscale' : 'cursor-pointer hover:bg-white/10'} // 이번달 아니면 흐리게 처리
                                     ${isSunday ? 'text-red-800' : isSaturday ? 'text-blue-800' : 'text-black'}
+                                    ${isToday ? 'bg-blue-200/50 rounded font-bold' : ''} // 오늘 날짜 강조
                                 `}
                             >
                                 {item.day}
