@@ -36,20 +36,48 @@ const Account = () => {
     // 로그인 수단 상태
     const [loginProvider, setLoginProvider] = useState("");
 
-    // 렌더링 시 Supabase에서 현재 로그인한 유저 이메일 가져오기
-    useEffect(() => {
-        const fetchUser = async () => {
-            const { data: { user } } = await supabase.auth.getUser();
-            if (user) {
-                // user_metadata.provider를 먼저 확인하고, 없으면 app_metadata 확인
-                const provider = user.user_metadata?.provider || user.app_metadata?.provider || "email";
-                // provider 정보 추출 (google, kakao, naver, email 등)
-                setLoginProvider(provider);
-                setUserEmail(user.email);
-            }
-        };
-        fetchUser();
-    }, []);
+  // 렌더링 시 Supabase에서 현재 로그인한 유저 이메일 가져오기
+  useEffect(() => {
+    // 비동기 작업의 '중단 신호'를 관리하는 컨트롤러 생성
+    const controller = new AbortController();
+    const { signal } = controller;
+
+    const fetchUser = async () => {
+      try {
+        // Supabase 서버에서 현재 세션 유저 정보 요청
+        const { data: { user }, error } = await supabase.auth.getUser();
+        
+        if (error) throw error;
+
+        // 데이터가 도착했을 때, 컴포넌트를 나갔는지(aborted) 확인 후 상태 업데이트
+        if (user && !signal.aborted) {
+          // user_metadata.provider를 먼저 확인하고, 없으면 app_metadata 확인
+          const provider = user.user_metadata?.provider || user.app_metadata?.provider || "email";
+          // provider 정보 추출 (google, kakao, naver, email 등)
+          setLoginProvider(provider);
+          setUserEmail(user.email);
+        }
+      } catch (error) {
+        // 이미 컴포넌트를 나간 상황에서의 에러는 무시하고, 실제 에러만 기록
+        if (!signal.aborted) {
+          console.error("사용자 정보를 가져오는 중 에러 발생:", error.message);
+        }
+      }
+    };
+
+    fetchUser();
+
+    // 클린업 함수: 컴포넌트가 사라질 때 중단 신호를 보냄
+    return () => {
+      controller.abort();
+    };
+  }, []);  
+
+    // 로그인 수단에 따른 메뉴 필터링 (소셜 유저는 비밀번호 변경 항목 제외)
+    const visibleAccountItems = accountItems.filter(item => {
+        if (item.id === 'password' && loginProvider !== 'email') return false;
+        return true;
+    });
 
     // 로그아웃 확인
     const handleLogout = async () => {
@@ -70,14 +98,22 @@ const Account = () => {
                     })
                 });
             }
+            // 팝업 띄우기 '전'에 로컬 세션 즉시 삭제
+            try { 
+                await supabase.auth.signOut({ scope: 'local' }); 
+            } catch (e) { 
+                console.error("로컬 세션 삭제 무시:", e); 
+            }
+
             setDialog(null);
-            setResultDialog('logout'); // "로그아웃 되었습니다" 팝업 노출
+            setResultDialog('logout'); 
 
         } catch (error) {
             console.error("로그아웃 중 에러 발생:", error);
             alert("로그아웃에 실패했습니다. 다시 시도해 주세요.");
         }
-    };
+    }
+    
     // 회원탈퇴 확인 - 소셜 유저는 password 없이 요청
     const handleWithdrawal = async (password) => {
         try {
@@ -112,6 +148,12 @@ const Account = () => {
                 alert(errorMessage);
                 return;
             }
+            // 서버 처리 완료 직후, 팝업 띄우기 '전'에 로컬 세션 즉시 삭제 (유령 세션 방지)
+            try { 
+                await supabase.auth.signOut({ scope: 'local' }); 
+            } catch (e) { 
+                console.error("로컬 세션 삭제 무시:", e); 
+            }
 
             setDialog(null);
             setResultDialog('withdrawal');
@@ -124,13 +166,9 @@ const Account = () => {
 
     // 결과 확인 버튼 - 결과 확인 버튼 클릭 시 로그인 화면으로 이동
     const handleResultConfirm = async () => {
-        const currentResult = resultDialog; // 현재 어떤 창인지 확인
+        const targetDialog = resultDialog; // 현재 상태 변수에 백업
         setResultDialog(null); // 팝업 창 닫기
-        if (resultDialog === 'logout' || resultDialog === 'withdrawal') {
-            // 실제 세션 파괴
-            // Supabase 세션 삭제 (이걸 해야 App.jsx가 반응해서 로그인창으로 보냄)
-            await supabase.auth.signOut();
-
+        if (targetDialog === 'logout' || targetDialog === 'withdrawal') {
             // Navigate는 App.jsx가 알아서 해주겠지만, 확실히 하기 위해 유지
             navigate('/auth/login', { replace: true });
         }
@@ -151,7 +189,7 @@ const Account = () => {
 
             {/* 계정 설정 메뉴 리스트 영역 */}
             <ul className="list-none p-0 m-0 flex flex-col">
-                {accountItems.map((item) => (
+                {visibleAccountItems.map((item) => (
                     <li
                         key={item.id}
                         className={`w-full -mt-1 first:mt-0 ${item.id !== 'email' ? 'cursor-pointer' : ''}`}
@@ -180,8 +218,8 @@ const Account = () => {
 
                             {/* 이메일 항목일 경우 우측에 아이콘 + 실제 이메일 표시 */}
                             {item.id === 'email' && (
-                                <div className={`absolute z-10 top-1/2 -translate-y-1/2 right-[1%] flex items-center gap-[4%]
-                ${loginProvider === 'email' || !loginProvider ? 'right-[3%]' : 'right-[1%]'}`}
+                                <div className={`absolute z-10 top-1/2 -translate-y-1/2 flex items-center gap-[4%]
+                                ${loginProvider === 'email' || !loginProvider ? 'right-[3%]' : 'right-[1%]'}`}
                                 >
 
                                     {/* 로그인 수단에 따른 아이콘 표시 */}
