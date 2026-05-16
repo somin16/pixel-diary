@@ -119,6 +119,9 @@ export function loadAllSprite(scene) {
         frameHeight: 32
     });
 
+    // 티켓 이미지(프론트엔드 에셋 폴더에서 가져왔습니다)
+    scene.load.image("ticket", "/assets/theme/winter_light/icons/ticket_icon.png");
+
     // ====================메뉴 아이콘=====================================
     // 메뉴아이콘
     scene.load.image("menu_icon", "/assets/game1/ui/menu_icon/menu_icon.png");

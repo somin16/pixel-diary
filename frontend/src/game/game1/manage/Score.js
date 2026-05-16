@@ -12,7 +12,13 @@ export function createScore(scene) {
 export function addScore(addScoreValue, scene) {
 
     // 보스 전투 도중에는 점수가 오르지 않습니다(보스전에서 버텨서 점수를 버는 꼼수방지)
-    if (scene.isBossSpawn != true) {
+    if (scene.isBossSpawn == false) {
+
+        // 티켓을 썻으면 추가되는 점수가 2배로 증가
+        if(scene.isTicketUse == true) {
+
+            addScoreValue *= 2;
+        }
 
         // 점수를 더하고 텍스트에 세팅한다
         scene.gameScore += addScoreValue
@@ -72,7 +78,10 @@ export function gameClear(scene) {
 
     // 최종점수(1000점은 게임 클리어 보너스)
     // 여기서 scene.gameScore부분은 차후에 API 연동시 따로 저장이 되도록 구현 예정
-    let finalScore = scene.gameScore + 1367;
+    let finalScore = scene.gameScore + 1000;
+
+    // 티켓 썻으면 1000점 추가
+    if (scene.isTicketUse == true) finalScore += 1000;
 
     // 코인으로 환산된 점수
     let addCoin = finalScore / 10;
@@ -155,7 +164,7 @@ export function gameClear(scene) {
       .on('pointerup', () => { // 누를때 작동
 
         scene.gameEnd = false;
-        scene.scene.restart(); // 페이저에는 게임 재시작 기능이 따로 존재
+        scene.scene.start('ModeSelectScene'); // 생각해보니까 모드 선택 화면으로 보내는게 맞을거같아서 모드 선택화면으로 이동하는걸로 변경했습니다
       }).setVisible(false); // 처음엔 안보이게
 
     // 재시작 버튼 텍스트

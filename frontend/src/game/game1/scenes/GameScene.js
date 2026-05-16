@@ -55,6 +55,14 @@ export default class GameScene extends Phaser.Scene {
     super("GameScene");
   }
 
+  // 페이저 내장함수 init
+  // 이 씬으로 이동할때 추가되는 값들을 받는다
+  init(data) { // data는 추가되는 데이터들을 의미하는 매개변수
+
+    // 티켓사용 여부를 여기에 할당
+    this.isTicketUse = data.isTicketUse;
+  }
+
   create() { // create: 말그대로 생성, 오브젝트를 작성하는 곳
 
     // 게임이 재시작할때 버그방지용

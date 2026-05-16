@@ -1,6 +1,12 @@
 // 부모 클래스인 scene을 받아서 작동하는 함수
 export function createAllAnimations(scene) {
 
+    // 재시작시에 애니메이션이 중첩되지 않게 하는용도
+    // 사실 이거 없어도 중첩은 안돼고 에러도 안뜨긴하지만, 콘솔에 애니메이션 에러문구 뜨는게 거슬려서 추가했습니다
+    if (scene.anims.exists('move_animation')) {
+        return; 
+    }
+
     // 플레이어 움직임 애니메이션
     // anims: 이미지를 조합하여 애니메이션을 만들어준다
     // 스프라이트 시트가 아닌 각 이미지 형식일경우 프레임마다 key값을 넣어준다

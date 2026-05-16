@@ -143,7 +143,7 @@ function spawnMonster(scene) {
 
     // 20초가 지나기전까지 슬라임만 생성되며, 시간이 지나면 다른 몬스터의 확률이 증가
     // 하지만 보스 몬스터(킹슬라임)가 스폰됐을 경우에는 슬라임만 등장한다(난이도 조절)
-    if (scene.gamePlayTime < 280 && !scene.isBossSpawn) {
+    if (scene.gamePlayTime < 160 && !scene.isBossSpawn) {
 
       slimeSpawnPercent = 80;
     }
