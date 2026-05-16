@@ -180,9 +180,9 @@ class UserCoinView(APIView):
 
             # ── 5. 코인 업데이트 ───────────────────────────
             # 나중에 game_score 환산 공식 나오면 여기 수정
-            # 임시 환산식: 점수 100점당 1코인 (필요에 따라 교체)
+            # 임시 환산식: 점수 10점당 1코인 (필요에 따라 교체)
             current_coin = user_data[0].get("coin", 0)
-            added_coin = game_score // 100
+            added_coin = game_score // 10
             total_coin = current_coin + added_coin
 
             update_response = requests.patch(

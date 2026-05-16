@@ -69,13 +69,6 @@ class DiaryView(APIView):
         #         status=status.HTTP_400_BAD_REQUEST,
         #     )
 
-        # 글자수 제한 (테스트: 20자, 실제 서비스 시 변경 예정)
-        if len(content) > 20:
-            return Response(
-                {"message": "일기는 20자 이하로 작성해주세요."},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
-
         try:
             # access_token으로 유저 정보 조회
             user = get_user_from_token(access_token)
