@@ -14,7 +14,8 @@ export function autoAttackBlade(scene) {
 
 // 기본무기 공격(blade)
 // 2레벨: 공격범위증가
-// 3레벨: 추가로 뒤를 공격
+// 3레벨: 공격력 증가
+// 4레벨: 추가로 뒤를 공격
 function attackBlade(scene) {
 
     // 몬스터 공격 판정
@@ -29,7 +30,12 @@ function attackBlade(scene) {
 
       // 타격 처리 시작
       monstersHitDamageBase(monster, knockback, scene); // 공통적으로 사용하는 몬스터가 받는 대미지 효과
-      monster.hp -= scene.player.damage * 1.5; // 공격력의 150%만큼의 대미지
+
+      // 3레벨 이상이면 공격력의 200%만큼의 대미지
+      if(scene.player.bladeLevel >= 3) monster.hp -= scene.player.damage * 2;
+      
+      // 아니면 공격력의 150%만큼의 대미지
+      else monster.hp -= scene.player.damage * 1.5;                           
 
       });
 
@@ -59,8 +65,8 @@ function attackBlade(scene) {
 
     bladeHitbox(bladeEff);
 
-    // 블레이드의 레벨이 3이상이라면 뒤도 공격
-    if(scene.player.bladeLevel >= 3) {
+    // 블레이드의 레벨이 4이상이라면 뒤도 공격
+    if(scene.player.bladeLevel >= 4) {
 
       scene.time.delayedCall(200, () => {
       const bladeEffBack = scene.physics.add.sprite(posX - OFFSET_X, posY, "blade_1");

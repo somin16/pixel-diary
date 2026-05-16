@@ -51,7 +51,7 @@ export function gameOver(scene) {
       .on('pointerdown', () => { // 누를때 작동
 
         scene.gameEnd = false;
-        scene.scene.restart(); // 페이저에는 게임 재시작 기능이 따로 존재
+        scene.scene.start('ModeSelectScene'); // 생각해보니까 모드 선택 화면으로 보내는게 맞을거같아서 모드 선택화면으로 이동하는걸로 변경했습니다
       });
 
     // 재시작 버튼 텍스트
