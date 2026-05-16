@@ -35,3 +35,4 @@ docs: |-
   - 400 Bad Request: 필수값 누락 (Authorization Bearer 헤더 access_token)
   - 400 Bad Request: 필수값 누락 (content)
   - 401 Unauthorized: 유효하지 않은 access_token인 경우
+  - 409 Conflict: 일기 중복 (백엔드에서 2차 방어)

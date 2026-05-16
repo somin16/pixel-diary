@@ -72,7 +72,7 @@ export default function DiaryDetail() {
                 date: data.created_at?.split("T")[0] ?? "", // 날짜 형식 정리 (예: 2024-03-21)
                 content: data.content ?? "",
                 imageUrl: data.image_url ?? "",
-                
+
                 // [변환] 서버의 숫자 ID를 위에서 만든 '지도(ITEM_IMG_MAP)'를 보고 파일명으로 바꿉니다.
                 selectedEmoji: data.emotion_item
                     ? ITEM_IMG_MAP[data.emotion_item.item_id] ?? null
@@ -80,7 +80,7 @@ export default function DiaryDetail() {
                 selectedFrame: data.theme_item
                     ? ITEM_IMG_MAP[data.theme_item.item_id] ?? null
                     : null,
-                
+
                 // 스티커들은 여러 개일 수 있으니 목록을 하나씩 돌면서 변환합니다.
                 stickers: (data.sticker ?? []).map((s, i) => ({
                     id: s.item_id,
@@ -100,7 +100,12 @@ export default function DiaryDetail() {
 
     // 닫기 버튼을 누르면 일기 목록 페이지로 이동합니다.
     function handleClose() {
-        navigate('/diary/list', { replace: true });
+        // location.state에 fromEdit 플래그가 있으면 목록(홈)으로 바로 이동
+        if (location.state?.fromEdit) {
+            navigate('/', { replace: true });
+        } else {
+            navigate(-1);
+        }
     }
 
     // ── [화면 1] 데이터를 불러오는 동안 보여주는 화면 (로딩중) ────────────────────
@@ -151,7 +156,7 @@ export default function DiaryDetail() {
         >
             {/* 배경을 어둡게 하고 흐리게 만드는 효과 */}
             <div className="absolute inset-0 bg-black/60 backdrop-blur-xs" />
-            
+
             {/* 실제 일기장 모양의 팝업(컴포넌트)을 띄우고 데이터를 전달합니다. */}
             <DetailDiaryDialog
                 currentTheme={currentTheme}

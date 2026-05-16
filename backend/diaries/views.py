@@ -40,6 +40,7 @@ class DiaryView(APIView):
         - Authorization 헤더의 access_token으로 현재 유저 확인
         - image_id, content를 받아 Supabase diaries 테이블에 저장
         - 저장된 diary_id와 완료 메시지 반환
+        - 같은 날짜에 일기를 중복으로 작성 불가 (중복 체크)
         """
         # Authorization 헤더에서 access_token 추출
         access_token = extract_access_token(request)
@@ -83,6 +84,27 @@ class DiaryView(APIView):
             user_id = user.get("id")
             supabase_url = os.getenv("SUPABASE_URL")
             headers = get_supabase_headers()
+
+            # 날짜 중복 체크
+            # 같은 유저가 오늘 날짜에 이미 일기를 작성했는지 확인
+            kst = timezone(timedelta(hours=9))      # 한국시간으로 변환
+            today_kst = datetime.now(kst).strftime("%Y-%m-%d") # 한국시간 기준 오늘날짜 확인
+
+            duplicate_check = requests.get(
+                f"{supabase_url}/rest/v1/diaries",
+                headers=headers,
+                params={
+                    "user_id": f"eq.{user_id}",
+                    "created_at": f"gte.{today_kst}T00:00:00+09:00",  # 오늘 00:00 이후
+                    "select": "id",
+                },
+            )
+
+            if duplicate_check.json():
+                return Response(
+                    {"message": "이미 오늘 작성한 일기가 있습니다."},
+                    status=status.HTTP_409_CONFLICT,  # 409: 충돌 (중복)
+                )
 
             # Supabase diaries 테이블에 일기 저장
             response = requests.post(
