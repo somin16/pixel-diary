@@ -1,11 +1,13 @@
 import { useState, useRef, useCallback } from "react";
 import { getAssetUrl, getDecoAssetUrl, ITEM_IMG_MAP } from "../../utils/AssetHelper";
 import CloseButton from "../common/CloseButton";
-import { replace, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { formatDisplayDate } from "../../utils/DateFormatter";
 import { authFetch } from "../../utils/AuthHelper";
 import DeleteDialog from "./dialog/DeleteDialog";
 import ResultDialog from "../common/dialog/ResultDialog";
+import DuplicateDateDialog from "./dialog/DuplicateDateDialog";
+import SaveErrorDialog from "./dialog/SaveErrorDialog";
 
 /**
  * @typedef {Object} StickerItem
@@ -86,6 +88,11 @@ const DetailDiaryDialog = ({
     onDateChange,
     footer,
     onClose,
+    duplicateDateInfo,    // 중복 날짜 정보 { date, diaryId } 또는 null
+    onDuplicateConfirm,   // 확인 버튼 핸들러 (DiaryForm에서 navigate 처리)
+    onDuplicateCancel,    // 취소 버튼 핸들러 (다이얼로그 닫기)
+    saveError,            // 일기 작성시 에러 타입
+    setSaveError,         // 저장 오류시 다이얼로그 상태 조절
 }) => {
 
     const navigate = useNavigate();
@@ -518,6 +525,25 @@ const DetailDiaryDialog = ({
                     message="일기가 성공적으로 삭제되었습니다."
                     onConfirm={handleResultConfirm}
                     maxWidth="320px"
+                />
+            )}
+
+            {/* 날짜 중복 확인 팝업 */}
+            {/* DiaryForm에서 날짜 변경 시 해당 날짜에 일기가 이미 있으면 띄워줌 */}
+            {/* duplicateDateInfo가 null이 아닐 때만 렌더링됨 */}
+            {duplicateDateInfo && (
+                <DuplicateDateDialog
+                    onConfirm={onDuplicateConfirm}
+                    onCancel={onDuplicateCancel}
+                    maxWidth="320px"
+                />
+            )}
+
+            {/* 저장 실패 다이얼로그 */}
+            {saveError && (
+                <SaveErrorDialog
+                    type={saveError}
+                    onClose={() => setSaveError(null)}
                 />
             )}
         </div>

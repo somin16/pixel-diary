@@ -31,7 +31,7 @@ import { supabase } from "./SupabaseClient";
 export async function authFetch(url, options = {}) {
     // 1. 현재 로그인한 사용자의 세션 정보를 가져옵니다.
     const { data: { session } } = await supabase.auth.getSession();
-    
+
     // 2. 세션에서 액세스 토큰(입장권)을 추출합니다.
     const access_token = session?.access_token;
 
@@ -53,9 +53,27 @@ export async function authFetch(url, options = {}) {
         // 서버에서 보내준 상세 에러 메시지가 있는지 확인합니다.
         const errorBody = await response.text();
         console.error(`[authFetch 에러] 상태코드: ${response.status}`, errorBody);
-        
-        // 에러를 던져 호출한 쪽에서 catch 할 수 있게 합니다.
-        throw new Error(`서버 통신 오류 (상태코드: ${response.status})`);
+
+        // apiError 객체 생성 코드
+        const apiError = new Error(`서버 통신 오류 (상태코드: ${response.status})`);
+
+        // 호출한 쪽에서 'error.status'로 바로 꺼내 쓸 수 있게 커스텀 필드를 주입
+        apiError.status = response.status;
+
+        // (선택) 서버가 보낸 JSON 메시지까지 파싱해서 첨부하고 싶다면 구조화
+        try {
+            apiError.response = {
+                status: response.status,
+                data: JSON.parse(errorBody)
+            };
+        } catch {
+            apiError.response = {
+                status: response.status,
+                data: { message: errorBody }
+            };
+        }
+        // 완성된 커스텀 에러 객체를 던짐
+        throw apiError;
     }
 
     // 6. 응답이 비어있는 경우(예: 204 No Content) 처리

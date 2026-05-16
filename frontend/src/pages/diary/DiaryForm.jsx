@@ -1,14 +1,14 @@
 import { useEffect, useState } from "react";
-import { useNavigate, useLocation, useParams } from "react-router-dom";
-import DetailDiaryDialog from "../../components/diary/DetailDiaryDialog";
+import { useNavigate, useLocation } from "react-router-dom";
+import { supabase } from "../../utils/SupabaseClient";
+import { authFetch } from "../../utils/AuthHelper";
 import { useTheme } from "../../store/useThemeStore";
 import { getAssetUrl, ITEM_IMG_MAP, THEME_DEFAULT_FRAMES } from "../../utils/AssetHelper";
-import ImageButton from "../../components/common/ImageButton";
 import DiaryOptionSelector from "../../components/diary/DiaryOptionSelector";
 import ImageZoomOverlay from "../../components/diary/ImageZoomOverlay";
 import DecoPanel from "../../components/diary/DecoPanel";
-import { supabase } from "../../utils/SupabaseClient";
-import { authFetch } from "../../utils/AuthHelper";
+import DetailDiaryDialog from "../../components/diary/DetailDiaryDialog";
+import ImageButton from "../../components/common/ImageButton";
 
 /**
  * 일기 작성 / 수정 페이지
@@ -47,6 +47,7 @@ export default function DiaryForm() {
     const [tags, setTags] = useState([]); // AI 그림 옵션(태그)들
     const [savedDiaryId, setSavedDiaryId] = useState(diaryId); // 저장된 일기의 ID
     const [stickers, setStickers] = useState([]); // 화면에 붙인 스티커 목록
+    const [duplicateDateInfo, setDuplicateDateInfo] = useState(null); // 이미 작성된 일기가 있는지 확인하기위한 상태 
 
     // emoji: 서버 저장용 번호(ID)와 화면 표시용 이미지이름(Img)을 따로 관리
     const [selectedEmojiId, setSelectedEmojiId] = useState(null);
@@ -67,6 +68,8 @@ export default function DiaryForm() {
         lastUsedFrameImg ?? defaultFrame.img
     );
 
+    // 저장 실패 다이얼로그용 상태
+    const [saveError, setSaveError] = useState(null); // null | 'duplicate' | 'unknown'
 
     // ── [기능] 수정 모드일 때 기존에 썼던 일기 내용을 서버에서 가져오기 ────────────────
     useEffect(() => {
@@ -181,10 +184,22 @@ export default function DiaryForm() {
             // 완료 후 상세 페이지로 이동!
             navigate(`/diary/${selectedDate}`, {
                 replace: true,
-                state: { diaryId: finalDiaryId },
+                state: {
+                    diaryId: finalDiaryId,
+                    fromEdit: true,  // 수정 후 진입했다는 표시
+                },
             });
         } catch (error) {
-            console.error("저장 실패:", error);
+            // 409 충돌(날짜 중복)인 경우 사용자에게 알림
+            const statusCode = error.status || error.response?.status;
+
+            if (statusCode === 409) {
+                setSaveError('duplicate'); // 중복 알림 다이얼로그 띄우기
+                console.error("일기 중복 감지 완료");
+            } else {
+                setSaveError('unknown');
+                console.error("기타 서버 에러 발생:", error.message);
+            }
         }
     }
 
@@ -192,8 +207,21 @@ export default function DiaryForm() {
     // ── [기능] 기타 조작 함수들 ──────────────────────────────────────────────
 
     // 날짜가 바뀌면 주소를 업데이트합니다.
-    function handleDateChange(newDate) {
+    async function handleDateChange(newDate) {
         const urlDate = newDate.replace(/\.\s?/g, '-').replace(/-$/, '');
+
+        // 캐시에서 해당 날짜 일기 존재 여부 확인
+        const cached = sessionStorage.getItem('diary_list');
+        const diaries = cached ? JSON.parse(cached) : [];
+        const found = diaries.find(d => d.created_at?.split("T")[0] === urlDate);
+
+        if (found) {
+            // 이미 일기 있음 → 다이얼로그 띄우기 (날짜 변경은 하지 않음)
+            setDuplicateDateInfo({ date: urlDate, diaryId: found.diary_id });
+            return;
+        }
+
+        // 없으면 기존 로직대로 날짜 변경
         setSelectedDate(urlDate);
         navigate(isEditMode ? `/diary/edit/${urlDate}` : `/diary/write/${urlDate}`, {
             replace: true,
@@ -205,7 +233,7 @@ export default function DiaryForm() {
     const handleSelectItem = (type, item) => {
         if (type === 'sticker') {
             // 스티커 추가: 기존 목록에 새 스티커를 더함
-            setStickers((prev) => [...prev, { ...item, id: item.item_id || item_id, instanceId: Date.now(), x: null, y: null }]);
+            setStickers((prev) => [...prev, { ...item, id: item.item_id, instanceId: Date.now(), x: null, y: null }]);
         } else if (type === 'emoji') {
             // 이모지 선택
             setSelectedEmojiId(item.item_id);
@@ -269,6 +297,18 @@ export default function DiaryForm() {
                 onStepChange={(s) => setStep(s)}
                 onClose={handleClose}
                 onDateChange={handleDateChange}
+                duplicateDateInfo={duplicateDateInfo}
+                onDuplicateConfirm={() => {
+                    const { date, diaryId } = duplicateDateInfo; // 먼저 꺼내두기
+                    setDuplicateDateInfo(null);
+                    navigate(`/diary/${date}`, {
+                        replace: true,
+                        state: { diaryId }
+                    });
+                }}
+                onDuplicateCancel={() => setDuplicateDateInfo(null)}   // 취소 버튼 → 다이얼로그 닫기
+                saveError={saveError}
+                setSaveError={(s) => setSaveError(s)}
                 footer={
                     <>
                         {/* 1단계 수정모드일때 글 내용만 저장하기 */}
