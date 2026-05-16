@@ -8,6 +8,7 @@ import DeleteDialog from "./dialog/DeleteDialog";
 import ResultDialog from "../common/dialog/ResultDialog";
 import DuplicateDateDialog from "./dialog/DuplicateDateDialog";
 import SaveErrorDialog from "./dialog/SaveErrorDialog";
+import toast from "react-hot-toast";
 
 /**
  * @typedef {Object} StickerItem
@@ -93,6 +94,7 @@ const DetailDiaryDialog = ({
     onDuplicateCancel,    // 취소 버튼 핸들러 (다이얼로그 닫기)
     saveError,            // 일기 작성시 에러 타입
     setSaveError,         // 저장 오류시 다이얼로그 상태 조절
+    onRefresh,            // 일기 수정이나 꾸미기 초기화 후 일기 리프레쉬
 }) => {
 
     const navigate = useNavigate();
@@ -251,11 +253,45 @@ const DetailDiaryDialog = ({
         }
     }
 
-    // 3. ResultDialog에서 '확인'을 눌렀을 때
-    function handleResultConfirm() {
+    // 3. ResultDialog에서 '확인'을 눌렀을 때 처리 분기
+    async function handleResultConfirm() {
+        // 대입하기 전에 현재의 dialogState 상태를 먼저 변수에 저장합니다.
+        const currentStatus = dialogState;
+
         setDialogState(null);
-        if (onClose) onClose(); // 상세 다이얼로그 닫기
-        navigate('/diary/list', { replace: true });     // 일기목록으로 이동
+
+        if (currentStatus === 'result') {
+            if (onClose) onClose(); // 상세 다이얼로그 닫기
+            // 일기 삭제 성공 시에만 목록으로 이동
+            navigate('/diary/list', { replace: true });
+        }
+        // 'deco_reset_success'일 때는 아무 데도 가지 않고 이 자리에 가만히 유지됩니다.
+        // 부모에게 서버에서 최신 일기 데이터를 다시 호출하라고 명령!
+            await onRefresh();
+    }
+
+    // 꾸미기 초기화 
+    async function handleResetDeco() {
+        try {
+            setIsMenuOpen(false);
+
+            // authFetch 이용해 꾸미기 초기화 API 호출
+            await authFetch(`${import.meta.env.VITE_BACKEND_URL}/api/v1/diaries/${diaryId}/deco/`, {
+                method: 'DELETE',
+            });
+
+            //삭제 성공 시 목록 캐시를 날려버립니다.
+            sessionStorage.removeItem('diary_list');
+
+            // 성공하면 결과 창 띄우기
+            setDialogState('deco_reset_success');
+
+
+        } catch (error) {
+            console.error("꾸미기 초기화 실패:", error);
+            toast( "꾸미기 내용이 없습니다");
+            setDialogState(null);
+        }
     }
 
     // 공유 (TODO: 구현)
@@ -359,7 +395,8 @@ const DetailDiaryDialog = ({
                             >
                                 <button className="mt-[2%] w-full h-[32%] font-semibold outline-none text-xs" onClick={handleEditNavigation}>수정</button>
                                 <button className="w-full h-[32%] text-red-500 text-xs font-semibold outline-none" onClick={handleDeleteMenuClick}>삭제</button>
-                                <button className="w-full h-[32%]  text-xs font-semibold outline-none" onClick={handleShare}>공유</button>
+                                <button className="w-full h-[32%] text-red-500 text-2xs font-semibold outline-none" onClick={handleResetDeco}>꾸미기 초기화</button>
+                                {/* <button className="w-full h-[32%]  text-xs font-semibold outline-none" onClick={handleShare}>공유</button> 나중에 공유기능 추가되면 그때 주석 해제 */}
                             </div>
                         )}
                     </div>
@@ -523,6 +560,14 @@ const DetailDiaryDialog = ({
             {dialogState === 'result' && (
                 <ResultDialog
                     message="일기가 성공적으로 삭제되었습니다."
+                    onConfirm={handleResultConfirm}
+                    maxWidth="320px"
+                />
+            )}
+            {/* 꾸미기 초기화 완료 알림 팝업 */}
+            {dialogState === 'deco_reset_success' && (
+                <ResultDialog
+                    message="배치된 프레임과 스티커가 초기화되었습니다."
                     onConfirm={handleResultConfirm}
                     maxWidth="320px"
                 />
