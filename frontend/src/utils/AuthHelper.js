@@ -28,27 +28,84 @@ import { supabase } from "./SupabaseClient";
  *   console.error('삭제 실패:', error.message);
  * }
  */
+
+// ── 토큰 갱신 함수 ────────────────────────────────────────────────────
+// 백엔드 갱신 API를 호출해서 새 access_token을 받아옵니다.
+// 갱신 성공 시 새 토큰 반환, 실패 시 null 반환
+async function refreshAccessToken() {
+    try {
+        const { data: { session } } = await supabase.auth.getSession();
+        const currentRefresh_token = session?.refresh_token;
+
+        if (!currentRefresh_token) return null;
+
+        // 우리가 만든 토큰 갱신 API 호출
+        const response = await fetch(
+            `${import.meta.env.VITE_BACKEND_URL}api/v1/auth/refresh/`,
+            {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ refresh_token: currentRefresh_token }),
+            }
+        );
+
+        if (!response.ok) return null;
+
+        const data = await response.json();
+        const newAccessToken = data.access_token ?? null;
+
+        if (!newAccessToken) return null;
+
+        // ✅ 핵심 추가: Supabase 클라이언트 상태도 함께 업데이트
+        // 이렇게 해야 다음 authFetch 호출 때 갱신된 토큰을 가져올 수 있음
+        await supabase.auth.setSession({
+            access_token: newAccessToken,
+            refresh_token: data.refresh_token ?? currentRefresh_token,
+            // 백엔드가 refresh_token을 새로 안 주면 기존 것 그대로 유지
+        });
+
+        return newAccessToken;
+    } catch {
+        return null;
+    }
+}
+
+
 export async function authFetch(url, options = {}) {
-    // 1. 현재 로그인한 사용자의 세션 정보를 가져옵니다.
+    // 현재 로그인한 사용자의 세션 정보를 가져옵니다.
     const { data: { session } } = await supabase.auth.getSession();
 
-    // 2. 세션에서 액세스 토큰(입장권)을 추출합니다.
-    const access_token = session?.access_token;
+    let access_token = session?.access_token;
 
-    // 3. 기본 헤더 설정 (JSON 형식 지정 및 인증 토큰 주입)
-    const headers = {
-        "Content-Type": "application/json",
-        ...(access_token && { Authorization: `Bearer ${access_token}` }), // 토큰이 있을 때만 추가
-        ...(options.headers ?? {}), // 사용자가 직접 전달한 헤더가 있다면 덮어쓰기
-    };
-
-    // 4. 브라우저 기본 fetch 함수를 호출합니다.
-    const response = await fetch(url, {
+    // 공통 요청 함수 (토큰만 바꿔서 재사용하기 위해 분리)
+    const doFetch = (token) => fetch(url, {
         ...options,
-        headers,
+        headers: {
+            "Content-Type": "application/json",
+            ...(token && { Authorization: `Bearer ${token}` }),
+            ...(options.headers ?? {}),
+        },
     });
 
-    // 5. 응답 상태가 200~299 범위가 아닌 경우 에러 처리를 합니다.
+    // 1차 요청
+    let response = await doFetch(access_token);
+
+    // ── 401 발생 시 토큰 갱신 후 재시도 ────────────────────────────────
+    if (response.status === 401) {
+        const newToken = await refreshAccessToken();
+
+        if (newToken) {
+            // 새 토큰으로 재시도
+            response = await doFetch(newToken);
+        } else {
+            // 갱신 실패 → 로그인 페이지로 이동
+            await supabase.auth.signOut();
+            window.location.href = "/auth/login";
+            throw new Error("세션이 만료되었습니다. 다시 로그인해 주세요.");
+        }
+    }
+
+    // 응답 상태가 200~299 범위가 아닌 경우 에러 처리를 합니다.
     if (!response.ok) {
         // 서버에서 보내준 상세 에러 메시지가 있는지 확인합니다.
         const errorBody = await response.text();
@@ -76,11 +133,11 @@ export async function authFetch(url, options = {}) {
         throw apiError;
     }
 
-    // 6. 응답이 비어있는 경우(예: 204 No Content) 처리
+    // 응답이 비어있는 경우(예: 204 No Content) 처리
     if (response.status === 204) {
         return null;
     }
 
-    // 7. 성공적인 응답을 JSON 형식으로 변환하여 반환합니다.
+    // 성공적인 응답을 JSON 형식으로 변환하여 반환합니다.
     return response.json();
 }

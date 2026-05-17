@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { supabase } from '../../utils/SupabaseClient';
+import { authFetch } from '../../utils/AuthHelper';
 import { motion } from 'framer-motion';
 import { getAssetUrl, getDecoAssetUrl, DECO_ITEM_LIST } from '../../utils/AssetHelper';
 import ImageButton from '../common/ImageButton';
@@ -22,15 +22,10 @@ const DecoPanel = ({ currentTheme, mode, isOpen, onSelectMode, onSelectItem }) =
     // API 호출 - 보유 아이템만 판별
     const fetchItems = async () => {
         try {
-            const { data: { session } } = await supabase.auth.getSession();
-            const access_token = session?.access_token;
+            const data = await authFetch(
+                `${import.meta.env.VITE_BACKEND_URL}api/v1/users/deco-item/`
+            );
 
-            const res = await fetch(`${import.meta.env.VITE_BACKEND_URL}api/v1/users/deco-item/`, {
-                headers: { Authorization: `Bearer ${access_token}` }
-            });
-            const data = await res.json();
-
-            // response 구조: { emoji: [{item_id, ...}], diary_theme: [...], sticker: [...] }
             const owned = [
                 ...(data.emojis ?? []),
                 ...(data.diary_themes ?? []),

@@ -4,13 +4,14 @@ import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTheme } from '../../../store/useThemeStore';
 import { getAssetUrl } from '../../../utils/AssetHelper';
-import { supabase } from '../../../utils/SupabaseClient';
+import { authFetch } from '../../../utils/AuthHelper';
 import Header from '../../../components/common/Header';
+
 
 // ─────────────────────────────────────────────
 // 유저 카드 컴포넌트
 // ─────────────────────────────────────────────
-function UserCard({ user, onDeleteClick, currentTheme }) { // ✅ onBanClick → onDeleteClick
+function UserCard({ user, onDeleteClick, currentTheme }) {
     return (
         <div
             className="flex items-center justify-between w-full px-4 py-3 mb-2 border-4 bg-white"
@@ -37,7 +38,7 @@ function UserCard({ user, onDeleteClick, currentTheme }) { // ✅ onBanClick →
                 <button
                     onClick={(e) => {
                         e.stopPropagation();
-                        onDeleteClick(user); // ✅ prop 이름과 일치
+                        onDeleteClick(user); // prop 이름과 일치
                     }}
                     className="px-3 py-1 text-xs font-bold border-4 active:translate-y-0.5 transition-transform"
                     style={{ borderColor: '#333', backgroundColor: '#ff4444', color: '#fff' }}
@@ -106,15 +107,12 @@ export default function AdminUserList() {
     const [loading, setLoading] = useState(true);
     const [searchKeyword, setSearchKeyword] = useState('');
     const [pageNumber, setPageNumber] = useState(1);
-    const [hasMore, setHasMore] = useState(true); // ✅ totalPages → hasMore로 교체
+    const [hasMore, setHasMore] = useState(true); // 
     const [deleteTarget, setDeleteTarget] = useState(null);
 
     const fetchUsers = useCallback(async (page = 1, keyword = '', reset = false) => {
         try {
             setLoading(true);
-
-            const { data: { session } } = await supabase.auth.getSession();
-            if (!session) { navigate('/login'); return; }
 
             const params = new URLSearchParams({
                 page_number: page,
@@ -122,26 +120,16 @@ export default function AdminUserList() {
                 ...(keyword && { search_keyword: keyword }),
             });
 
-            const response = await fetch(
-                `${import.meta.env.VITE_BACKEND_URL}api/v1/admin/users/?${params}`,
-                {
-                    method: 'GET',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        Authorization: `Bearer ${session.access_token}`,
-                    },
-                }
+            // authFetch로 교체 (세션 체크 불필요 - authFetch가 401 시 자동 로그인 이동)
+            const result = await authFetch(
+                `${import.meta.env.VITE_BACKEND_URL}api/v1/admin/users/?${params}`
             );
-
-            if (!response.ok) throw new Error('유저 목록을 가져오지 못했습니다.');
-
-            const result = await response.json();
             const newUsers = result.data.users || [];
 
-            // ✅ reset이면 목록 교체 (검색 시), 아니면 기존에 추가 (스크롤 시)
+            // reset이면 목록 교체 (검색 시), 아니면 기존에 추가 (스크롤 시)
             setUsers((prev) => reset ? newUsers : [...prev, ...newUsers]);
 
-            // ✅ 받아온 데이터가 page_size(20)보다 적으면 마지막 페이지
+            // 받아온 데이터가 page_size(20)보다 적으면 마지막 페이지
             setHasMore(newUsers.length === 20);
         } catch (error) {
             console.error('Fetch Error:', error);
@@ -155,7 +143,7 @@ export default function AdminUserList() {
         fetchUsers(1, '', true);
     }, []);
 
-    // ✅ 스크롤 감지 - 바닥 근처 도달 시 다음 페이지 로드
+    // 스크롤 감지 - 바닥 근처 도달 시 다음 페이지 로드
     const handleScroll = (e) => {
         const { scrollTop, scrollHeight, clientHeight } = e.currentTarget;
         const isNearBottom = scrollHeight - scrollTop - clientHeight < 100;
@@ -175,22 +163,10 @@ export default function AdminUserList() {
 
     const handleDeleteConfirm = async () => {
         try {
-            const { data: { session } } = await supabase.auth.getSession();
-            if (!session) return;
-
-            const response = await fetch(
+            await authFetch(
                 `${import.meta.env.VITE_BACKEND_URL}api/v1/admin/users/${deleteTarget.user_id}/`,
-                {
-                    method: 'DELETE',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        Authorization: `Bearer ${session.access_token}`,
-                    },
-                }
+                { method: 'DELETE' }
             );
-
-            if (!response.ok) throw new Error('삭제 처리 실패');
-
             setDeleteTarget(null);
             // 삭제 후 목록 처음부터 다시 로드
             setPageNumber(1);
@@ -230,7 +206,7 @@ export default function AdminUserList() {
                 </button>
             </div>
 
-            {/* ✅ onScroll 핸들러 추가 */}
+            {/* onScroll 핸들러 */}
             <div
                 className="flex-1 overflow-y-auto no-scrollbar flex justify-center"
                 onScroll={handleScroll}

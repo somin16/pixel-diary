@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useTheme } from '../../../store/useThemeStore';
 import { getAssetUrl } from '../../../utils/AssetHelper';
-import { supabase } from '../../../utils/SupabaseClient';
+import { authFetch } from '../../../utils/AuthHelper';
 import Header from '../../../components/common/Header';
 import AnnouncementDialog from '../../../components/more/announcement/AnnouncementDialog';
 import toast from 'react-hot-toast';
@@ -45,26 +45,14 @@ export default function AnnouncementForm() {
         }
 
         try {
-            const { data: { session } } = await supabase.auth.getSession();
-            const access_token = session?.access_token;
-
             const url = mode === 'edit'
                 ? `${import.meta.env.VITE_BACKEND_URL}api/v1/admin/announcements/${announcement_id}/`
                 : `${import.meta.env.VITE_BACKEND_URL}api/v1/admin/announcements/`;
 
-            const response = await fetch(url, {
+            const data = await authFetch(url, {
                 method: mode === 'edit' ? 'PATCH' : 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${access_token}`,
-                },
                 body: JSON.stringify({ title, content, category }),
             });
-
-            if (!response.ok) throw new Error('저장 중 오류가 발생했습니다.');
-
-            const data = await response.json();
-
             // 작성/수정 완료 후 상세 페이지로 이동 시 히스토리 스택 교체
             navigate(`/more/announcement/detail/${data.announcement_id}`, { replace: true });
         } catch (error) {
