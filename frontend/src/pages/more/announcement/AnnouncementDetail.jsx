@@ -4,6 +4,7 @@ import { useTheme } from '../../../store/useThemeStore';
 import { getAssetUrl } from '../../../utils/AssetHelper';
 import { formatDisplayDate } from '../../../utils/DateFormatter';
 import { supabase } from '../../../utils/SupabaseClient';
+import { authFetch } from '../../../utils/AuthHelper';
 
 import Header from '../../../components/common/Header';
 import AnnouncementDialog from '../../../components/more/announcement/AnnouncementDialog';
@@ -54,19 +55,10 @@ export default function AnnouncementDetail() {
             // 삭제 전 확인
             if (!window.confirm('공지사항을 삭제하시겠습니까?')) return;
 
-            const { data: { session } } = await supabase.auth.getSession();
-            const access_token = session?.access_token;
-
-            const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}api/v1/admin/announcements/${announcement_id}/`, {
-                method: 'DELETE',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${access_token}`,
-                },
-            });
-
-            if (!response.ok) throw new Error('삭제 중 오류가 발생했습니다.');
-
+            await authFetch(
+                `${import.meta.env.VITE_BACKEND_URL}api/v1/admin/announcements/${announcement_id}/`,
+                { method: 'DELETE' }
+            );
             // 삭제 성공 시 목록으로 이동
             navigate('/more/announcement/list');
         } catch (error) {

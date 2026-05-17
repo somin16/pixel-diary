@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import DetailDiaryDialog from "../../components/diary/DetailDiaryDialog";
 import { useTheme } from "../../store/useThemeStore";
 import { getAssetUrl, ITEM_IMG_MAP } from "../../utils/AssetHelper";
-import { supabase } from "../../utils/SupabaseClient";
+import { authFetch } from "../../utils/AuthHelper";
 
 export default function DiaryDetail() {
     const navigate = useNavigate(); // 페이지 이동을 도와주는 도구
@@ -40,32 +40,9 @@ export default function DiaryDetail() {
     const fetchDiary = async () => {
         try {
             setLoading(true); // "로딩 시작!"
-
-            // 1. 현재 로그인한 사용자인지 확인하기 위해 '입장권(세션)'을 가져옵니다.
-            const { data: { session } } = await supabase.auth.getSession();
-            const access_token = session?.access_token;
-
-            // 2. 서버 주소에 일기 번호를 붙여서 요청을 보냅니다.
-            const response = await fetch(
-                `${import.meta.env.VITE_BACKEND_URL}api/v1/diaries/${diaryId}/`,
-                {
-                    method: "GET",
-                    headers: {
-                        "Content-Type": "application/json",
-                        Authorization: `Bearer ${access_token}`, // 입장권 제출
-                    },
-                }
+            const data = await authFetch(
+                `${import.meta.env.VITE_BACKEND_URL}api/v1/diaries/${diaryId}/`
             );
-
-            // 서버가 응답을 제대로 안 줬을 때(에러 발생 시) 처리
-            if (!response.ok) {
-                const errorBody = await response.text();
-                console.error(`서버 응답 에러 (${response.status}):`, errorBody);
-                throw new Error("일기를 불러오지 못했습니다.");
-            }
-
-            // 3. 서버가 준 데이터를 '붕어빵 틀'에서 꺼내듯 정리합니다.
-            const data = await response.json();
 
             // 4. 받아온 데이터를 우리 화면에 맞게 변환해서 바구니(state)에 담습니다.
             setDiaryData({

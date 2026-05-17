@@ -264,6 +264,7 @@ const DetailDiaryDialog = ({
             if (onClose) onClose(); // 상세 다이얼로그 닫기
             // 일기 삭제 성공 시에만 목록으로 이동
             navigate('/diary/list', { replace: true });
+            return; // 삭제 후엔 onRefresh 불필요하므로 여기서 종료
         }
         // 'deco_reset_success'일 때는 아무 데도 가지 않고 이 자리에 가만히 유지됩니다.
         // 부모에게 서버에서 최신 일기 데이터를 다시 호출하라고 명령!
