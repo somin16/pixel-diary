@@ -169,6 +169,7 @@ export default function DiaryDetail() {
                 selectedFrame={diaryData.selectedFrame}
                 stickers={diaryData.stickers}
                 onClose={handleClose}
+                onRefresh={fetchDiary}
             />
         </div>
     );
