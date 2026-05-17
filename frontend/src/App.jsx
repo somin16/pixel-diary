@@ -25,11 +25,12 @@ import Profile from "./pages/more/profile/Profile"; // 더보기 - 프로필 화
 import Setting from "./pages/more/setting/Setting"; // 더보기 - 설정 메인화면
 import Shop from "./pages/more/shop/Shop"; // 더보기 - 상점 화면
 import Inventory from "./pages/more/inventory/Inventory"; // 더보기 - 보관함 화면
+import Account from "./pages/more/account/Account"; // 더보기 - 계정 설정 화면
+import Notification from "./pages/more/notification/Notification"; // 더보기 - 알림 설정 화면
 // ---------------------- 더보기 (공지사항) -----------------------------
 import AnnouncementList from "./pages/more/announcement/AnnouncementList"; // 더보기 - 공지사항 목록 화면
 import AnnouncementDetail from "./pages/more/announcement/AnnouncementDetail"; // 더보기 - 공지사항 상세 조회 화면
 import AnnouncementForm from "./pages/more/announcement/AnnouncementForm"; // 더보기 - 공지사항 작성/수정 화면
-import Account from "./pages/more/account/Account"; // 더보기 - 계정 설정 화면
 // ----------------------- 더보기 (유저관리(관리자만))---------------------
 import AdminUserList from "./pages/more/user_management/AdminUserList"; // 더보기 - 유저 관리 목록 화면
 
@@ -126,6 +127,9 @@ function AppInner() {
                         <Route path="/more/announcement/write" element={<AnnouncementForm />} />
                         {/* 주소가 /more/announcement/edit/:announcement_id이면 공지사항 수정 화면을 보여줘 */}
                         <Route path="/more/announcement/edit/:announcement_id" element={<AnnouncementForm />} />
+
+                        {/* 주소가 /more/notification 이면 알림 설정 화면을 보여줘 */}
+                        <Route path="/more/notification" element={<Notification />} />
 
                         {/* 주소가 /more/account 이면 계정 설정 화면을 보여줘 */}
                         <Route path="/more/setting/account" element={<Account />} />
