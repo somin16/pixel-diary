@@ -1,0 +1,60 @@
+info:
+  name: AI-그림-생성
+  type: http
+  seq: 7
+
+http:
+  method: POST
+  url: http://127.0.0.1:8000/api/v1/diaries/ai-generate/
+  headers:
+    - name: Authorization
+      value: "Bearer "
+  body:
+    type: json
+    data: |-
+      {
+        "positive_prompt": "",
+        "negative_prompt": ""
+      }
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 360000
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |-
+  ### 사용 순서
+  1. POST /api/v1/prompt/transform 으로 일기 텍스트 → 프롬프트 변환
+  2. (선택) POST /api/v1/prompt/restyle 으로 프롬프트 수정
+  3. 이 API 호출 — 변환된 프롬프트 + 보유한 일기장 틀 아이템으로 AI 그림 생성
+  4. 반환된 image_id를 POST /api/v1/diaries/ 일기 저장 시 함께 전달
+  ***
+  ### Body / Json
+  - positive_prompt: prompt/transform 또는 prompt/restyle 응답의 positive_prompt 값 (필수)
+  - negative_prompt: prompt/transform 또는 prompt/restyle 응답의 negative_prompt 값 (필수)
+  ***
+  ### Headers
+  - Authorization: Bearer 로그인 시 받은 access_token
+  ***
+  ### Response
+  - image_id: al_image 테이블에 저장된 이미지 ID — 일기 저장 시 이 값을 image_id로 전달
+  - image_url: Supabase Storage에 업로드된 이미지 URL ({user_id}/preview.png)
+  ***
+  ### 임시 저장 방식
+  - 생성된 이미지는 Supabase Storage의 {user_id}/preview.png 경로에 임시 저장
+  - 재생성 시 preview.png를 덮어쓰고 al_image 이전 임시 row를 삭제 후 새로 생성
+  - 일기 최종 저장(POST /api/v1/diaries/) 시 image_id를 전달하면 al_image.diary_id가 연결됨
+  ***
+  ### ComfyUI 설정
+  - 로컬에서 ComfyUI가 실행 중이어야 합니다 (http://localhost:8188)
+  - 필요 모델: sd_xl_base_1.0.safetensors, pixel-art-xl.safetensors (LoRA)
+  - 이미지 생성은 최대 5분 소요 — timeout 360000ms 설정 필수
+  ***
+  ### Status Code
+  - 200 OK: AI 그림 생성 및 임시 저장 성공
+  - 400 Bad Request: positive_prompt 누락
+  - 401 Unauthorized: Authorization 헤더 누락 또는 유효하지 않은 access_token
+  - 503 Service Unavailable: ComfyUI 서버 연결 실패 (ComfyUI가 실행 중인지 확인)
+  - 500 Internal Server Error: 이미지 생성 시간 초과 (5분) 또는 서버 오류

@@ -122,6 +122,15 @@ class DiaryView(APIView):
                 raise Exception(f"Supabase API 오류: {response.text}")
 
             diary = response.json()[0]
+            diary_id = diary.get("id")
+
+            # image_id가 있으면 al_image.diary_id 업데이트 (AI 그림과 일기 연결)
+            if image_id:
+                requests.patch(
+                    f"{supabase_url}/rest/v1/al_image?id=eq.{image_id}&user_id=eq.{user_id}",
+                    headers=headers,
+                    json={"diary_id": diary_id},
+                )
 
             # created_at을 한국 시간으로 변환해서 반환
             kst = timezone(timedelta(hours=9))
@@ -131,7 +140,7 @@ class DiaryView(APIView):
 
             return Response(
                 {
-                    "diary_id": diary.get("id"),
+                    "diary_id": diary_id,
                     "created_at": created_at_kst,
                     "message": "일기가 성공적으로 저장되었습니다.",
                 },
