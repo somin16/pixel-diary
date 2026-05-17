@@ -35,9 +35,9 @@ import { supabase } from "./SupabaseClient";
 async function refreshAccessToken() {
     try {
         const { data: { session } } = await supabase.auth.getSession();
-        const refresh_token = session?.refresh_token;
+        const currentRefresh_token = session?.refresh_token;
 
-        if (!refresh_token) return null;
+        if (!currentRefresh_token) return null;
 
         // 우리가 만든 토큰 갱신 API 호출
         const response = await fetch(
@@ -45,14 +45,26 @@ async function refreshAccessToken() {
             {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ refresh_token }),
+                body: JSON.stringify({ refresh_token: currentRefresh_token }),
             }
         );
 
         if (!response.ok) return null;
 
         const data = await response.json();
-        return data.access_token ?? null; // 갱신된 access_token 반환
+        const newAccessToken = data.access_token ?? null;
+
+        if (!newAccessToken) return null;
+
+        // ✅ 핵심 추가: Supabase 클라이언트 상태도 함께 업데이트
+        // 이렇게 해야 다음 authFetch 호출 때 갱신된 토큰을 가져올 수 있음
+        await supabase.auth.setSession({
+            access_token: newAccessToken,
+            refresh_token: data.refresh_token ?? currentRefresh_token,
+            // 백엔드가 refresh_token을 새로 안 주면 기존 것 그대로 유지
+        });
+
+        return newAccessToken;
     } catch {
         return null;
     }
