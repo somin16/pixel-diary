@@ -13,7 +13,8 @@ http:
     type: json
     data: |-
       {
-        "content": ""
+        "content": "",
+        "image_id": null
       }
   auth: inherit
 
@@ -25,7 +26,8 @@ settings:
 
 docs: |-
   ### Body / Json
-  - content: 작성할 일기 내용
+  - content: 작성할 일기 내용 (필수)
+  - image_id: AI 그림 생성 API에서 받은 image_id (선택, 없으면 null)
   ***
   ### Headers
   - Authorization: Bearer 로그인할 시 받는 access_token

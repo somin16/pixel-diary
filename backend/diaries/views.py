@@ -122,6 +122,15 @@ class DiaryView(APIView):
                 raise Exception(f"Supabase API 오류: {response.text}")
 
             diary = response.json()[0]
+            diary_id = diary.get("id")
+
+            # image_id가 있으면 ai_image.diary_id 업데이트 (AI 그림과 일기 연결)
+            if image_id:
+                requests.patch(
+                    f"{supabase_url}/rest/v1/ai_image?id=eq.{image_id}&user_id=eq.{user_id}",
+                    headers=headers,
+                    json={"diary_id": diary_id},
+                )
 
             # created_at을 한국 시간으로 변환해서 반환
             kst = timezone(timedelta(hours=9))
@@ -131,7 +140,7 @@ class DiaryView(APIView):
 
             return Response(
                 {
-                    "diary_id": diary.get("id"),
+                    "diary_id": diary_id,
                     "created_at": created_at_kst,
                     "message": "일기가 성공적으로 저장되었습니다.",
                 },
@@ -184,7 +193,7 @@ class DiaryView(APIView):
                 params={
                     "user_id": f"eq.{user_id}",
                     "order": "created_at.desc",
-                    "select": "id,content,created_at",  # 이미지 기능 구현 후 image_id 추가 예정
+                    "select": "id,content,image_id,created_at",
                 },
             )
 
@@ -193,8 +202,25 @@ class DiaryView(APIView):
 
             # 날짜 포맷 변환 및 응답 데이터 구성
             kst = timezone(timedelta(hours=9))
+            diary_list = response.json()
+
+            # image_id 목록 한 번에 조회
+            image_id_list = [d.get("image_id") for d in diary_list if d.get("image_id")]
+            image_url_map = {}
+            if image_id_list:
+                ai_image_response = requests.get(
+                    f"{supabase_url}/rest/v1/ai_image",
+                    headers=headers,
+                    params={
+                        "id": f"in.({','.join(map(str, image_id_list))})",
+                        "select": "id,image_url",
+                    },
+                )
+                for img in ai_image_response.json():
+                    image_url_map[img.get("id")] = img.get("image_url")
+
             diaries = []
-            for diary in response.json():
+            for diary in diary_list:
                 created_at_str = diary.get("created_at")
                 created_at = datetime.fromisoformat(created_at_str.replace("Z", "+00:00"))
                 created_at_kst = created_at.astimezone(kst).strftime("%Y-%m-%dT%H:%M:%S+09:00")
@@ -203,7 +229,7 @@ class DiaryView(APIView):
                     "diary_id": diary.get("id"),
                     "content": diary.get("content"),
                     "created_at": created_at_kst,
-                    # "image_url": diary.get("image_id"),  # 이미지 기능 구현 후 URL로 교체 예정
+                    "image_url": image_url_map.get(diary.get("image_id")),
                 })
 
             return Response(
@@ -416,8 +442,7 @@ class DiaryDetailView(APIView):
                 params={
                     "id": f"eq.{diary_id}",
                     "user_id": f"eq.{user_id}",
-                    "select": "id,content,created_at",
-                    # "select": "id,content,image_id,created_at",  # 이미지 기능 구현 후 활성화 예정
+                    "select": "id,content,image_id,created_at",
                 },
             )
 
@@ -428,6 +453,18 @@ class DiaryDetailView(APIView):
                 )
 
             diary = diary_response.json()[0]
+
+            # image_id가 있으면 ai_image에서 image_url 조회
+            image_url = None
+            image_id = diary.get("image_id")
+            if image_id:
+                ai_image_response = requests.get(
+                    f"{supabase_url}/rest/v1/ai_image",
+                    headers=headers,
+                    params={"id": f"eq.{image_id}", "select": "image_url"},
+                )
+                if ai_image_response.json():
+                    image_url = ai_image_response.json()[0].get("image_url")
 
             # created_at을 한국 시간으로 변환
             kst = timezone(timedelta(hours=9))
@@ -520,7 +557,7 @@ class DiaryDetailView(APIView):
                 {
                     "diary_id": diary.get("id"),
                     "content": diary.get("content"),
-                    # "image_url": diary.get("image_id"),  # 이미지 기능 구현 후 활성화 예정
+                    "image_url": image_url,
                     "emotion_item": emotion_item,
                     "theme_item": theme_item,
                     "sticker": sticker_list,
