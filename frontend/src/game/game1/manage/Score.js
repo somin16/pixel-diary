@@ -1,4 +1,5 @@
 import Phaser, { Scale } from 'phaser';
+import { authFetch } from '../../../utils/AuthHelper'; // ../ 은 상위 경로를 의미합니다
 
 // 게임 시작시 스코어 초기화
 // 사실 이건 그냥 GameScene.js에 넣어도 되는 부분입니다만, 그래도 한번에 보는게 편하니까 여기에 뒀습니다
@@ -78,10 +79,13 @@ export function gameClear(scene) {
 
     // 최종점수(1000점은 게임 클리어 보너스)
     // 여기서 scene.gameScore부분은 차후에 API 연동시 따로 저장이 되도록 구현 예정
-    let finalScore = scene.gameScore + 1000;
+    let finalScore = scene.gameScore + 3857;
 
     // 티켓 썻으면 1000점 추가
     if (scene.isTicketUse == true) finalScore += 1000;
+
+    // API연동 함수 실행(서버에 연산이 모두 끝난 최종점수를 보내준다)
+    finalScoreSubmit(finalScore);
 
     // 코인으로 환산된 점수
     let addCoin = finalScore / 10;
@@ -243,3 +247,38 @@ export function gameClear(scene) {
         restartGameButtonText
     ]);
 }
+
+// 점수 저장 API 연동
+// async function: 비동기 함수 (게임에 방해되지않도록 백그라운드에서 실행됩니다)
+async function finalScoreSubmit(finalScore)  {
+
+    try {
+
+        // body에 넣어줄 점수값
+        const submitScore = {
+
+            // 브루노 테스트할때 body에 넣어주듯이 넣는다
+            game_score: finalScore
+        };
+
+        // API 호출
+        // await: API통신을 위해 잠시 대기
+        // 이미 만들어진 authFetch를 사용해 유저의 세션 정보를 받아옵니다
+        await authFetch(
+
+            // api/v1/games/1/scores(게임-결과-저장)를 실행
+            `${import.meta.env.VITE_BACKEND_URL}api/v1/games/1/scores/`, {
+
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' }, 
+                body: JSON.stringify(submitScore),                
+            }
+        );
+    } 
+    
+    // 에러가 발생했을 경우(콘솔 확인용)
+    catch (error) {
+            
+        console.error("저장 실패 에러코드: ", error.message);
+    }
+};
