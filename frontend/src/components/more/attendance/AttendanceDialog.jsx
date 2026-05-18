@@ -1,6 +1,7 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useTheme } from "../../../store/useThemeStore";
 import { getAssetUrl } from "../../../utils/AssetHelper";
+import { authFetch } from "../../../utils/AuthHelper";
 import toast from "react-hot-toast";
 
 // 컴포넌트 불러오기
@@ -8,7 +9,7 @@ import DialogBox from "../../common/dialog/DialogBox";
 import CloseButton from "../../common/CloseButton";
 import DayBox from "./DayBox";
 
-// 7일 출석 보상 데이터 구조 (서버 연동 시 초기화 기준이 됨)
+// 7일 출석 보상 데이터 구조
 const ATTENDANCE_DAYS = [
   { day: 1, type: "basic" },
   { day: 2, type: "basic" },
@@ -21,76 +22,71 @@ const ATTENDANCE_DAYS = [
 
 const AttendanceDialog = ({ onClose }) => {
   const currentTheme = useTheme((state) => state.currentTheme);
-  
-  // TODO: 실제 재화 스토어(Zustand) 연결 필요
-  // const addCoins = useCoinStore((state) => state.addCoins);
-  // const addTickets = useTicketStore((state) => state.addTickets);
 
-  // 누적 출석일 (테스트를 위해 3일차로 가정)
-  const [attendedDays, setAttendedDays] = useState(3);
-  // 당일 출석 버튼을 눌렀는지 여부 (상태 관리 필요)
+  const [attendedDays, setAttendedDays] = useState(0);
   const [hasCheckedToday, setHasCheckedToday] = useState(false);
+  const [loading, setLoading] = useState(false);
 
-const handleDayClick = (day) => {
+  const handleDayClick = async (day) => {
     // 과거 출석일 클릭 시 무시
     if (day <= attendedDays) {
-      return; 
+      return;
     }
 
-    // 당일 출석 완료 후 미래 날짜 클릭 시 안내 (중복 알림 방지 적용)
+    // 당일 출석 완료 후 미래 날짜 클릭 시 안내
     if (hasCheckedToday) {
-      // id를 부여하여 중복된 토스트가 연달아 뜨지 않도록 처리
       toast("이미 출석 체크를 완료하였습니다", { id: "already-checked" });
       return;
     }
 
     // 오늘 출석해야 할 차례인 경우
     if (day === attendedDays + 1) {
-      const todayData = ATTENDANCE_DAYS.find(d => d.day === day);
+      setLoading(true);
+      try {
+        const result = await authFetch(
+          `${import.meta.env.VITE_BACKEND_URL}api/v1/profile/attendance/`,
+          { method: "POST" }
+        );
 
-      // TODO : 기본 보상 지급
-      // addCoins(1000); 
+        // API 응답으로 상태 업데이트
+        setAttendedDays(result.current_day);
+        setHasCheckedToday(true);
 
-      // TODO : 특별 보상(티켓)이 있는 날(4일차, 7일차)일 경우 티켓 지급
-      if (todayData && todayData.type === "special") {
-        // addTickets(todayData.ticketCount);
+        // 보상 토스트 메시지
+        const coinReward = result.reward.find((r) => r.reward_type === "coin");
+        const ticketReward = result.reward.find((r) => r.reward_type === "ticket");
+
+        if (ticketReward && ticketReward.amount > 0) {
+          toast(`${coinReward?.amount || 0}코인과 티켓 ${ticketReward.amount}개를 받았습니다!`);
+        } else {
+          toast(`${coinReward?.amount || 0}코인을 받았습니다!`);
+        }
+
+      } catch (error) {
+        // 오늘 이미 출석한 경우
+        if (error.status === 400) {
+          toast("이미 출석 체크를 완료하였습니다", { id: "already-checked" });
+          setHasCheckedToday(true);
+        } else {
+          toast(error.message || "출석 체크에 실패했습니다.");
+        }
+      } finally {
+        setLoading(false);
       }
 
-      // 7일차 최종 보상 및 특별/기본 보상 알림
-      if (day === 7) {
-        toast(`7일 출석 성공!\n1000코인과 특별 티켓 ${todayData.ticketCount}개를 받았습니다`);
-      } else if (todayData && todayData.type === "special") {
-        // 4일차 특별 보상일 경우
-        toast(`1000코인과 특별 티켓 ${todayData.ticketCount}개를 받았습니다`);
-      } else {
-        toast("1000코인을 받았습니다");
-      }
-
-      // 출석 상태 업데이트
-      setAttendedDays(day);
-      setHasCheckedToday(true); // 오늘 출석 완료 상태 저장
-
-      // TODO: 7일차 완료 시 서버 초기화 로직 구현 필요
-      if (day === 7) {
-        // console.log("7일 출석 완료! 다음 날 리셋됩니다.");
-      }
-      
-    } 
-    // 순서에 맞지 않는 미래 날짜 클릭 시 무시
-    else {
-      return; 
+    } else {
+      // 순서에 맞지 않는 미래 날짜 클릭 시 무시
+      return;
     }
   };
-  
+
   return (
-    // 공통 DialogBox 컴포넌트
-    <DialogBox 
-      boxImageName="daily_check_frame_box_x3" 
-      maxWidth="458px" 
+    <DialogBox
+      boxImageName="daily_check_frame_box_x3"
+      maxWidth="458px"
       width="95%"
       onClose={onClose}
     >
-      {/* 공통 CloseButton 컴포넌트 */}
       <div className="absolute -top-[16%] left-2 z-50 w-[9%] aspect-square">
         <CloseButton onClose={onClose} className="w-full h-full" />
       </div>
@@ -101,14 +97,19 @@ const handleDayClick = (day) => {
           출석 체크
         </h1>
 
+        {/* 로딩 중일 때 */}
+        {loading && (
+          <p className="text-sm text-gray-500 mb-2">처리 중...</p>
+        )}
+
         <div className="w-full flex flex-col gap-[9%] z-10">
           {/* 1~4일차 */}
           <div className="grid grid-cols-4 gap-[2%] w-full">
             {ATTENDANCE_DAYS.slice(0, 4).map((item) => (
-              <DayBox 
-                key={item.day} 
-                item={item} 
-                isAttended={item.day <= attendedDays} 
+              <DayBox
+                key={item.day}
+                item={item}
+                isAttended={item.day <= attendedDays}
                 onClick={() => handleDayClick(item.day)}
                 currentTheme={currentTheme}
               />
@@ -118,10 +119,10 @@ const handleDayClick = (day) => {
           {/* 5~7일차 */}
           <div className="grid grid-cols-4 gap-[2%] w-full relative left-[6%]">
             {ATTENDANCE_DAYS.slice(4, 7).map((item) => (
-              <DayBox 
-                key={item.day} 
-                item={item} 
-                isAttended={item.day <= attendedDays} 
+              <DayBox
+                key={item.day}
+                item={item}
+                isAttended={item.day <= attendedDays}
                 onClick={() => handleDayClick(item.day)}
                 currentTheme={currentTheme}
               />
@@ -129,7 +130,7 @@ const handleDayClick = (day) => {
             <div className="w-full h-full"></div>
           </div>
         </div>
-        
+
       </div>
     </DialogBox>
   );
