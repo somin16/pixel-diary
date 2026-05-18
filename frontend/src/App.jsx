@@ -33,6 +33,7 @@ import AnnouncementDetail from "./pages/more/announcement/AnnouncementDetail"; /
 import AnnouncementForm from "./pages/more/announcement/AnnouncementForm"; // 더보기 - 공지사항 작성/수정 화면
 // ----------------------- 더보기 (유저관리(관리자만))---------------------
 import AdminUserList from "./pages/more/user_management/AdminUserList"; // 더보기 - 유저 관리 목록 화면
+import AddItemPage from "./pages/more/add_item/AddItemPage"; // 더보기 - 아이템 추가 화면
 
 // BrowserRouter 안에서 훅을 호출하는 내부 컴포넌트
 function AppInner() {
@@ -136,6 +137,9 @@ function AppInner() {
 
                         {/* 주소가 /more/user-list 이면 유저 관리 화면을 보여줘 */}
                         <Route path="/more/user-list" element={<AdminUserList />} />
+
+                        {/* 주소가 /more/add-item 이면 아이템 추가 화면을 보여줘 (관리자 전용) */}
+                        <Route path="/more/add-item" element={<AddItemPage />} />
 
                         {/* ⚠️ 이미 로그인했는데 로그인창 가려하면 홈으로 보내기 */}
                         <Route path="/auth/*" element={<Navigate to="/" replace />} />

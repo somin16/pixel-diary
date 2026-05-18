@@ -18,7 +18,8 @@ const menuItems = [
   { id: 'notice', label: '공지사항', iconName: 'info_icon_x3', path: '/more/announcement/list' },
   { id: 'notification', label: '알림 설정', iconName: 'alarm_icon_x3', path: '/more/notification' },
   { id: 'contact', label: '문의 하기', iconName: 'help_center_icon_x3' },
-  { id: 'userlist', label: '유저 관리', iconName: 'setting_icon_x3', path: '/more/user-list'}
+  { id: 'userlist', label: '유저 관리', iconName: 'setting_icon_x3', path: '/more/user-list'},
+  { id: 'additem', label: '아이템 추가', iconName: 'setting_icon_x3', path: '/more/add-item' },
 ];
 
 const MorePage = () => {
@@ -61,7 +62,7 @@ const MorePage = () => {
 
     // isAdmin 여부에 따라 메뉴 필터링
     const visibleMenuItems = menuItems.filter(
-        (item) => item.id !== 'userlist' || isAdmin
+        (item) => (item.id !== 'userlist' && item.id !== 'additem') || isAdmin
     );
 
   // 메뉴 클릭 핸들러 
