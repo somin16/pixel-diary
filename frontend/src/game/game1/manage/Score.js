@@ -52,7 +52,8 @@ export function createScoreUI(scene) {
 }
 
 // 게임 종료 시 점수 정산 화면 띄우기
-export function gameClear(scene) {
+// async: 백그라운드에서 재생
+export async function gameClear(scene) {
 
     // 게임 종료 true
     scene.gameEnd = true;
@@ -83,9 +84,6 @@ export function gameClear(scene) {
 
     // 티켓 썻으면 1000점 추가
     if (scene.isTicketUse == true) finalScore += 1000;
-
-    // API연동 함수 실행(서버에 연산이 모두 끝난 최종점수를 보내준다)
-    finalScoreSubmit(finalScore);
 
     // 코인으로 환산된 점수
     let addCoin = finalScore / 10;
@@ -148,7 +146,7 @@ export function gameClear(scene) {
     const returnHomeButton = scene.add.rectangle(centerX, centerY / 0.75, 250, 60, 0x44aa44)
       .setScrollFactor(0) // 이거 안하면 이상한곳에서 스폰돼서 클릭이 안된다
       .setInteractive()   // 이걸 넣어줘야 클릭이 가능
-      .on('pointerdown', () => { // 누를때 작동
+      .on('pointerup', () => { // 누를때 작동
 
         window.location.href = "/";
       }).setVisible(false); // 처음엔 안보이게
@@ -246,11 +244,15 @@ export function gameClear(scene) {
         restartGameButton,
         restartGameButtonText
     ]);
+
+    // API연동 함수 실행(서버에 연산이 모두 끝난 최종점수를 보내준다)
+    // await: API통신을 위해 잠시 대기, 얘가 위에 있으면 실행이 늦기에 아래로 내렷습니다
+    await finalScoreSubmit(finalScore);
 }
 
 // 점수 저장 API 연동
 // async function: 비동기 함수 (게임에 방해되지않도록 백그라운드에서 실행됩니다)
-async function finalScoreSubmit(finalScore)  {
+export async function finalScoreSubmit(finalScore)  {
 
     try {
 
@@ -278,7 +280,7 @@ async function finalScoreSubmit(finalScore)  {
     
     // 에러가 발생했을 경우(콘솔 확인용)
     catch (error) {
-            
+        
         console.error("저장 실패 에러코드: ", error.message);
     }
 };
