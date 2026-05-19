@@ -209,3 +209,66 @@ class AIGenerateView(APIView):
                 {"message": "이미지 생성 중 오류가 발생했습니다."},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
+
+    def delete(self, request):
+        """
+        DELETE /api/v1/ai-generate/
+        - 저장 안 하고 나갈 때 호출
+        - 해당 유저의 is_temp=true 이미지 전체 삭제 (Storage + ai_image 테이블)
+        """
+        access_token = extract_access_token(request)
+        if not access_token:
+            return Response(
+                {"message": "Authorization 헤더에 유효한 Bearer 토큰이 필요합니다."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        user = get_user_from_token(access_token)
+        if not user:
+            return Response(
+                {"message": "유효하지 않은 토큰입니다."},
+                status=status.HTTP_401_UNAUTHORIZED,
+            )
+
+        try:
+            user_id = user.get("id")
+            supabase_url = os.getenv("SUPABASE_URL")
+            headers = get_supabase_headers()
+
+            # is_temp=true인 이미지 목록 조회
+            temp_response = requests.get(
+                f"{supabase_url}/rest/v1/ai_image",
+                headers=headers,
+                params={
+                    "user_id": f"eq.{user_id}",
+                    "is_temp": "eq.true",
+                    "select": "id",
+                },
+            )
+            temp_ids = [row.get("id") for row in temp_response.json()]
+
+            if temp_ids:
+                storage_headers = get_supabase_headers()
+                storage_headers["Content-Type"] = "application/json"
+                prefixes = [f"{user_id}/{temp_id}.png" for temp_id in temp_ids]
+                requests.delete(
+                    f"{supabase_url}/storage/v1/object/{self.STORAGE_BUCKET}",
+                    headers=storage_headers,
+                    json={"prefixes": prefixes},
+                )
+                requests.delete(
+                    f"{supabase_url}/rest/v1/ai_image?user_id=eq.{user_id}&is_temp=eq.true",
+                    headers=headers,
+                )
+
+            return Response(
+                {"message": "임시 이미지가 삭제되었습니다."},
+                status=status.HTTP_200_OK,
+            )
+
+        except Exception as error:
+            print(f"=== AI IMAGE CLEANUP ERROR ===\n{error}\n==============================")
+            return Response(
+                {"message": "임시 이미지 삭제 중 오류가 발생했습니다."},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
