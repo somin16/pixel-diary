@@ -14,7 +14,7 @@ import Game2 from "./game/game2/Game2"; // 게임2 화면
 import Login from "./pages/auth/Login"; // 로그인 화면
 import AuthRedirect from "./pages/auth/AuthRedirect"; // 로그인, 회원가입 진행 시 화면
 import SendResetPasswordLink from "./pages/auth/SendResetPasswordLink"; // 비밀번호 재설정 링크 이메일 발송 화면
-import Signup from "./pages/auth/SignUp"; // 회원가입 화면
+import Signup from "./pages/auth/Signup"; // 회원가입 화면
 // ----------------------- 일기 ---------------------------------------
 import ListDiary from "./pages/diary/ListDiary"; // 일기 목록 화면
 import DiaryDetail from "./pages/diary/DiaryDetail"; // 일기 상세 보기 화면
