@@ -63,8 +63,7 @@ const AttendanceDialog = ({ onClose }) => {
   }, []);
 
   const handleDayClick = async (day) => {
-
-    // handleDayClick 상단에 추가  
+ 
     if (attendedDays >= 7) {
       toast("이번 주 출석을 모두 완료했습니다!", { id: "all-done" });
       return;
