@@ -64,7 +64,13 @@ const AttendanceDialog = ({ onClose }) => {
 
   const handleDayClick = async (day) => {
 
+    // handleDayClick 상단에 추가  
+    if (attendedDays >= 7) {
+      toast("이번 주 출석을 모두 완료했습니다!", { id: "all-done" });
+      return;
+    }
     if (fetchLoading) return; // 출석 기록 불러오는 중엔 클릭 막기
+    if (loading) return;  // 출석 체크 및 보상 받는중이면 클릭 막기 
     
     // 과거 출석일 클릭 시 무시
     if (day <= attendedDays) {
@@ -143,7 +149,7 @@ const AttendanceDialog = ({ onClose }) => {
         <h1 className="text-3xl font-bold tracking-widest text-black mt-[1%] mb-[12%]">
           출석 체크
         </h1>
-        
+
         <div className="w-full flex flex-col gap-[9%] z-10">
           {/* 1~4일차 */}
           <div className="grid grid-cols-4 gap-[2%] w-full">
