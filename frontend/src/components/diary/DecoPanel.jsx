@@ -23,7 +23,7 @@ const DecoPanel = ({ currentTheme, mode, isOpen, onSelectMode, onSelectItem }) =
     const fetchItems = async () => {
         try {
             const data = await authFetch(
-                `${import.meta.env.VITE_BACKEND_URL}api/v1/users/deco-item/`
+                `${import.meta.env.VITE_BACKEND_URL}/api/v1/users/deco-item/`
             );
 
             const owned = [

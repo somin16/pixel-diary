@@ -122,7 +122,7 @@ export default function AdminUserList() {
 
             // authFetch로 교체 (세션 체크 불필요 - authFetch가 401 시 자동 로그인 이동)
             const result = await authFetch(
-                `${import.meta.env.VITE_BACKEND_URL}api/v1/admin/users/?${params}`
+                `${import.meta.env.VITE_BACKEND_URL}/api/v1/admin/users/?${params}`
             );
             const newUsers = result.data.users || [];
 
@@ -164,7 +164,7 @@ export default function AdminUserList() {
     const handleDeleteConfirm = async () => {
         try {
             await authFetch(
-                `${import.meta.env.VITE_BACKEND_URL}api/v1/admin/users/${deleteTarget.user_id}/`,
+                `${import.meta.env.VITE_BACKEND_URL}/api/v1/admin/users/${deleteTarget.user_id}/`,
                 { method: 'DELETE' }
             );
             setDeleteTarget(null);

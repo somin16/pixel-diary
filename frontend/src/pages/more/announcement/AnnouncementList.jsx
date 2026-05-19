@@ -22,7 +22,7 @@ export default function AnnouncementList() {
 
             const [{ data: { session } }, response] = await Promise.all([
                 supabase.auth.getSession(),
-                fetch(`${import.meta.env.VITE_BACKEND_URL}api/v1/announcements/`, {
+                fetch(`${import.meta.env.VITE_BACKEND_URL}/api/v1/announcements/`, {
                     method: 'GET',
                     headers: { 'Content-Type': 'application/json' },
                 })

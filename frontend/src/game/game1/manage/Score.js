@@ -269,7 +269,7 @@ export async function finalScoreSubmit(finalScore)  {
         await authFetch(
 
             // api/v1/games/1/scores(게임-결과-저장)를 실행
-            `${import.meta.env.VITE_BACKEND_URL}api/v1/games/1/scores/`, {
+            `${import.meta.env.VITE_BACKEND_URL}/api/v1/games/1/scores/`, {
 
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' }, 

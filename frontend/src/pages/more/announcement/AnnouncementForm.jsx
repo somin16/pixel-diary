@@ -22,7 +22,7 @@ export default function AnnouncementForm() {
     const fetchAnnouncement = async () => {
         try {
             setLoading(true);
-            const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}api/v1/announcements/${announcement_id}/`, {
+            const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/v1/announcements/${announcement_id}/`, {
                 method: 'GET',
                 headers: { 'Content-Type': 'application/json' },
             });
@@ -46,8 +46,8 @@ export default function AnnouncementForm() {
 
         try {
             const url = mode === 'edit'
-                ? `${import.meta.env.VITE_BACKEND_URL}api/v1/admin/announcements/${announcement_id}/`
-                : `${import.meta.env.VITE_BACKEND_URL}api/v1/admin/announcements/`;
+                ? `${import.meta.env.VITE_BACKEND_URL}/api/v1/admin/announcements/${announcement_id}/`
+                : `${import.meta.env.VITE_BACKEND_URL}/api/v1/admin/announcements/`;
 
             const data = await authFetch(url, {
                 method: mode === 'edit' ? 'PATCH' : 'POST',

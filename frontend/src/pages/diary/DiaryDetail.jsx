@@ -41,7 +41,7 @@ export default function DiaryDetail() {
         try {
             setLoading(true); // "로딩 시작!"
             const data = await authFetch(
-                `${import.meta.env.VITE_BACKEND_URL}api/v1/diaries/${diaryId}/`
+                `${import.meta.env.VITE_BACKEND_URL}/api/v1/diaries/${diaryId}/`
             );
 
             // 4. 받아온 데이터를 우리 화면에 맞게 변환해서 바구니(state)에 담습니다.
