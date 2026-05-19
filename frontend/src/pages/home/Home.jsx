@@ -43,7 +43,7 @@ export default function Home() {
             } else {
                 // 캐시 없음 → API 호출 후 캐시에 저장
                 const data = await authFetch(
-                    `${import.meta.env.VITE_BACKEND_URL}api/v1/diaries/`
+                    `${import.meta.env.VITE_BACKEND_URL}/api/v1/diaries/`
                 );
                 diaries = data.diaries || [];
 

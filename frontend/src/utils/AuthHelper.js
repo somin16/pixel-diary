@@ -41,7 +41,7 @@ async function refreshAccessToken() {
 
         // 우리가 만든 토큰 갱신 API 호출
         const response = await fetch(
-            `${import.meta.env.VITE_BACKEND_URL}api/v1/auth/refresh/`,
+            `${import.meta.env.VITE_BACKEND_URL}/api/v1/auth/refresh/`,
             {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },

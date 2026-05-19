@@ -43,7 +43,7 @@ export default function ListDiary() {
 
             // Promise.all로 최소 1초 대기 유지
             const [data] = await Promise.all([
-                authFetch(`${import.meta.env.VITE_BACKEND_URL}api/v1/diaries/`),
+                authFetch(`${import.meta.env.VITE_BACKEND_URL}/api/v1/diaries/`),
                 new Promise(resolve => setTimeout(resolve, 1000))
             ]);
 
