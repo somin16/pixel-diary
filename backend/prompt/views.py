@@ -73,30 +73,20 @@ def call_llm_model_engine_type(messages, llm_model_engine_type="groq"):
         return re.sub(r'<think>.*?</think>', '', content, flags=re.DOTALL).strip()
 
 
-class PromptTransformView(APIView):
+class PromptView(APIView):
     """
-    일기 → 픽셀아트 프롬프트 변환 API
-
-    POST /api/v1/prompt/transform
-    Body: {
-        "diary": "오늘 비가 와서 집에서 독서를 했다.",  (필수)
-        "request": "고양이를 추가해줘",                 (선택 / 변환과 동시에 추가·강조할 요소, 한국어 가능)
-        "remove": "비를 없애줘"                         (선택 / 변환과 동시에 제거할 요소, 부정 프롬프트에 자동 추가)
-    }
-
-    Response:
-    {
-        "model": "사용한 LLM 모델명",
-        "positive_prompt": "FIXED_PREFIX + LLM 생성 장면 + FIXED_SUFFIX",
-        "negative_prompt": "NEGATIVE_PROMPT 고정값 (remove 입력 시 키워드 추가)"
-    }
-
-    Status Code:
-    - 200 OK: 프롬프트 변환 성공
-    - 400 Bad Request: diary 값 누락
+    프롬프트 변환 및 수정 API
     """
+
 
     def post(self, request):
+        """
+        프롬프트 변환
+        POST  /api/v1/prompt/
+        - Authorization 헤더의 access_token으로 현재 유저 확인 (이후에 추가 예정)
+        - 일기를 받아서 긍정/부정 프롬프트로 변환
+        - model, positive_prompt, negative_prompt 반환
+        """
         diary = request.data.get("diary", "").strip()
         user_request = request.data.get("request", "").strip()  # ▼ 추가·강조할 요소 (선택 / 한국어 가능)
         remove = request.data.get("remove", "").strip()         # ▼ 제거할 요소 (선택 / 한국어 가능)
@@ -170,29 +160,14 @@ class PromptTransformView(APIView):
             )
 
 
-class PromptRestyleView(APIView):
-    """
-    기존 프롬프트 수정 API
-
-    기존 내용을 절대 삭제하거나 줄이지 않고, 요청한 요소만 추가/강조합니다.
-    수정 요청은 한국어로 입력해도 됩니다.
-
-    POST /api/v1/prompt/restyle
-    Body: {
-        "prompt": "Prompt-transform 응답의 positive_prompt 값",  (필수)
-        "request": "고양이를 추가해줘",                           (선택 / 추가·강조할 요소, 한국어 가능)
-        "remove": "비를 없애줘"                                   (선택 / 제거할 요소, 부정 프롬프트에 자동 추가)
-    }
-
-    Response:
-    {
-        "model": "사용한 LLM 모델명",
-        "positive_prompt": "기존 내용 유지 + 요청 반영된 프롬프트",
-        "negative_prompt": "NEGATIVE_PROMPT + remove 키워드"
-    }
-    """
-
-    def post(self, request):
+    def patch(self, request):
+        """
+        프롬프트 수정
+        PATCH /api/v1/prompt/
+        - Authorization 헤더의 access_token으로 현재 유저 확인 (이후에 추가 예정)
+        - 기존 변환된 긍정 프롬프트의 추가/제거 요청을 받아 프롬프트 수정
+        - model, positive_prompt, negative_prompt 반환
+        """
         original_prompt = request.data.get("prompt", "").strip()
         user_request = request.data.get("request", "").strip()  # ▼ 추가/강조할 요소 (한국어 가능)
         remove = request.data.get("remove", "").strip()         # ▼ 제거할 요소 (한국어 가능, 부정 프롬프트에 자동 추가)
