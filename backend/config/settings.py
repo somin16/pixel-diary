@@ -25,7 +25,8 @@ if not SECRET_KEY:
 
 DEBUG = os.getenv("DEBUG", "True") == "True"
 
-ALLOWED_HOSTS = ['localhost', '127.0.0.1','192.168.219.176']
+# 백엔드 URL, 도메인
+ALLOWED_HOSTS = os.getenv("ALLOWED_HOSTS", "localhost,127.0.0.1").split(",")
 
 INSTALLED_APPS = [
     "django.contrib.admin",
@@ -102,13 +103,13 @@ USE_TZ = True
 
 STATIC_URL = "static/"
 
-# 프론트엔드(Vite) 기본 포트 5173 허용
-# CORS_ALLOWED_ORIGINS = [
-#     "http://localhost:5173",
-#     "http://127.0.0.1:5173",
-#     "http://192.168.219.176",
-# ]
-
 CORS_ALLOW_CREDENTIALS = True
 
-CORS_ALLOW_ALL_ORIGINS = True
+# 프론트엔드 url, 도메인
+if DEBUG:                           
+    CORS_ALLOW_ALL_ORIGINS = True
+else:
+    CORS_ALLOWED_ORIGINS = os.getenv(
+        "FRONTEND_URL",
+        "http://localhost:5173,http://127.0.0.1:5173"
+    ).split(",")
