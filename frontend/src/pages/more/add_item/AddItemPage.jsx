@@ -54,7 +54,7 @@ export default function AddItemPage() {
             };
 
             const result = await authFetch(
-                `${import.meta.env.VITE_BACKEND_URL}api/v1/admin/items/`,
+                `${import.meta.env.VITE_BACKEND_URL}/api/v1/admin/items/`,
                 {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },

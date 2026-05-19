@@ -80,7 +80,7 @@ export default function DiaryForm() {
     const fetchDiaryForEdit = async () => {
         try {
             const data = await authFetch(
-                `${import.meta.env.VITE_BACKEND_URL}api/v1/diaries/${diaryId}/`
+                `${import.meta.env.VITE_BACKEND_URL}/api/v1/diaries/${diaryId}/`
             );
 
             // 서버에서 받은 데이터를 각각의 상태 변수에 채워 넣습니다.
@@ -149,21 +149,21 @@ export default function DiaryForm() {
             if (!isEditMode || !finalDiaryId) {
                 // 새 일기 작성
                 const data = await authFetch(
-                    `${import.meta.env.VITE_BACKEND_URL}api/v1/diaries/`,
+                    `${import.meta.env.VITE_BACKEND_URL}/api/v1/diaries/`,
                     { method: "POST", body: JSON.stringify({ content }) }
                 );
                 finalDiaryId = data.diary_id;
             } else {
                 // 기존 일기 수정
                 await authFetch(
-                    `${import.meta.env.VITE_BACKEND_URL}api/v1/diaries/${finalDiaryId}/`,
+                    `${import.meta.env.VITE_BACKEND_URL}/api/v1/diaries/${finalDiaryId}/`,
                     { method: "PATCH", body: JSON.stringify({ content }) }
                 );
             }
 
             // 2. 그 다음 꾸미기 정보(액자, 이모지, 스티커 위치 등)를 저장합니다.
             await authFetch(
-                `${import.meta.env.VITE_BACKEND_URL}api/v1/diaries/${finalDiaryId}/deco/`,
+                `${import.meta.env.VITE_BACKEND_URL}/api/v1/diaries/${finalDiaryId}/deco/`,
                 {
                     method: "POST",
                     body: JSON.stringify({

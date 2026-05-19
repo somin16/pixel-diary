@@ -26,7 +26,7 @@ export default function AnnouncementDetail() {
 
             const [{ data: { session } }, response] = await Promise.all([
                 supabase.auth.getSession(),
-                fetch(`${import.meta.env.VITE_BACKEND_URL}api/v1/announcements/${announcement_id}/`, {
+                fetch(`${import.meta.env.VITE_BACKEND_URL}/api/v1/announcements/${announcement_id}/`, {
                     method: 'GET',
                     headers: { 'Content-Type': 'application/json' },
                 })
@@ -56,7 +56,7 @@ export default function AnnouncementDetail() {
             if (!window.confirm('공지사항을 삭제하시겠습니까?')) return;
 
             await authFetch(
-                `${import.meta.env.VITE_BACKEND_URL}api/v1/admin/announcements/${announcement_id}/`,
+                `${import.meta.env.VITE_BACKEND_URL}/api/v1/admin/announcements/${announcement_id}/`,
                 { method: 'DELETE' }
             );
             // 삭제 성공 시 목록으로 이동
