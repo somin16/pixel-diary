@@ -4,8 +4,8 @@ info:
   seq: 2
 
 http:
-  method: POST
-  url: http://127.0.0.1:8000/api/v1/prompt/restyle
+  method: PATCH
+  url: http://127.0.0.1:8000/api/v1/prompt/
   body:
     type: json
     data: |-
@@ -27,14 +27,6 @@ docs: |-
   - prompt: Prompt-Transform에서 받은 positive_prompt 값 (필수)
   - request: 추가하거나 강조하고 싶은 내용 (한국어로 입력해 주세요) (선택)
   - remove: 제거하고 싶은 요소 (한국어로 입력해 주세요) (선택)
-  ***
-  ### LLM 모델
-  - Groq Qwen (qwen/qwen3-32b) 고정 사용
-  ***
-  ### Response
-  - model: 사용된 LLM 모델명
-  - positive_prompt: 수정된 ComfyUI 긍정 프롬프트에 추가해 주세요 (기존 내용 유지 + 요청 반영)
-  - negative_prompt: ComfyUI 부정 프롬프트에 추가해 주세요
   ***
   ### Status Code
   - 200 OK: 프롬프트 수정 성공
