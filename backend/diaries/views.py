@@ -122,6 +122,15 @@ class DiaryView(APIView):
                 raise Exception(f"Supabase API 오류: {response.text}")
 
             diary = response.json()[0]
+            diary_id = diary.get("id")
+
+            # image_id가 있으면 ai_image.diary_id 업데이트 및 최종 상태로 변경
+            if image_id:
+                requests.patch(
+                    f"{supabase_url}/rest/v1/ai_image?id=eq.{image_id}&user_id=eq.{user_id}",
+                    headers=headers,
+                    json={"diary_id": diary_id, "is_temp": False},
+                )
 
             # created_at을 한국 시간으로 변환해서 반환
             kst = timezone(timedelta(hours=9))
@@ -347,16 +356,29 @@ class DiaryDetailView(APIView):
             supabase_url = os.getenv("SUPABASE_URL")
             headers = get_supabase_headers()
 
+            # 일기 삭제 전 image_id 조회 (Storage 파일 삭제에 필요)
+            diary_response = requests.get(
+                f"{supabase_url}/rest/v1/diaries",
+                headers=headers,
+                params={
+                    "id": f"eq.{diary_id}",
+                    "user_id": f"eq.{user_id}",
+                    "select": "image_id",
+                },
+            )
+            image_id = diary_response.json()[0].get("image_id") if diary_response.json() else None
+
+            # 일기 삭제 (CASCADE로 ai_image row도 자동 삭제)
             # 해당 일기가 본인 것인지 확인
             delete_response = requests.delete(
                 f"{supabase_url}/rest/v1/diaries?id=eq.{diary_id}&user_id=eq.{user_id}",
                 headers={**headers, "Prefer": "return=representation"},
             )
-
             # 삭제 실패 시 예외 발생
+
             if delete_response.status_code not in [200, 204]:
                 raise Exception(f"Supabase API 오류: {delete_response.text}")
-
+            
             # 빈 리스트면 일기가 없거나 본인 일기가 아닌 경우
             # Supabase PostgREST는 조건절(id, user_id)이 둘 다 맞아야 수정되므로
             # GET으로 먼저 확인할 필요 없이 DELETE 결과로 바로 확인 가능
@@ -364,6 +386,16 @@ class DiaryDetailView(APIView):
                 return Response(
                     {"message": "일기를 찾을 수 없거나 삭제 권한이 없습니다."},
                     status=status.HTTP_404_NOT_FOUND,
+                )
+
+            # 연결된 AI 이미지가 있으면 Storage 파일도 삭제
+            if image_id:
+                storage_headers = get_supabase_headers()
+                storage_headers["Content-Type"] = "application/json"
+                requests.delete(
+                    f"{supabase_url}/storage/v1/object/diary-images",
+                    headers=storage_headers,
+                    json={"prefixes": [f"{user_id}/{image_id}.png"]},
                 )
 
             return Response(

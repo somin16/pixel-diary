@@ -45,6 +45,7 @@ INSTALLED_APPS = [
     "games",            # 게임 관련 앱
     "profiles",         # 프로필 및 설정 관련 앱
     "announcements",    # 공지사항 조회 관련 앱
+    "ai_generate",      # AI 그림 생성 관련 앱
 ]
 
 MIDDLEWARE = [
