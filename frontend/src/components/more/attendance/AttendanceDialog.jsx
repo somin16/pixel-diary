@@ -5,10 +5,12 @@ import { getAssetUrl } from "../../../utils/AssetHelper";
 import { authFetch } from "../../../utils/AuthHelper";
 import toast from "react-hot-toast";
 
+// 컴포넌트 불러오기
 import DialogBox from "../../common/dialog/DialogBox";
 import CloseButton from "../../common/CloseButton";
 import DayBox from "./DayBox";
 
+// 7일 출석 보상 데이터 구조 (서버 연동 시 초기화 기준이 됨)
 const ATTENDANCE_DAYS = [
   { day: 1, type: "basic" },
   { day: 2, type: "basic" },
@@ -22,18 +24,23 @@ const ATTENDANCE_DAYS = [
 const AttendanceDialog = ({ onClose }) => {
   const currentTheme = useTheme((state) => state.currentTheme);
 
-  const [attendedDays, setAttendedDays] = useState(0);
-  const [hasCheckedToday, setHasCheckedToday] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const [fetchLoading, setFetchLoading] = useState(true); // 조회 로딩
+  // TODO: 실제 재화 스토어(Zustand) 연결 필요
+  // const addCoins = useCoinStore((state) => state.addCoins);
+  // const addTickets = useTicketStore((state) => state.addTickets);
+
+  const [attendedDays, setAttendedDays] = useState(0); // 누적 출석일
+  const [hasCheckedToday, setHasCheckedToday] = useState(false); // 당일 출석 버튼을 눌렀는지 여부
+  const [loading, setLoading] = useState(false); // 출석 체크 버튼 눌렀을 때 로딩 상태
+  const [fetchLoading, setFetchLoading] = useState(true); // 출석 기록 조회 로딩
 
   // 팝업 열릴 때 출석 기록 조회
   useEffect(() => {
     const fetchAttendance = async () => {
       setFetchLoading(true);
       try {
+        // GET 요청으로 출석 기록 조회
         const result = await authFetch(
-          `${import.meta.env.VITE_BACKEND_URL}api/v1/profile/attendance/`,
+          `${import.meta.env.VITE_BACKEND_URL}/api/v1/profile/attendance/`,
           { method: "GET" }
         );
 
@@ -55,14 +62,18 @@ const AttendanceDialog = ({ onClose }) => {
     fetchAttendance();
   }, []);
 
-  const handleDayClick = (day) => {
+  const handleDayClick = async (day) => {
+
+    if (fetchLoading) return; // 출석 기록 불러오는 중엔 클릭 막기
+    
     // 과거 출석일 클릭 시 무시
     if (day <= attendedDays) {
       return;
     }
 
-    // 당일 출석 완료 후 미래 날짜 클릭 시 안내
+    // 당일 출석 완료 후 미래 날짜 클릭 시 안내 (중복 알림 방지 적용)
     if (hasCheckedToday) {
+      // id를 부여하여 중복된 토스트가 연달아 뜨지 않도록 처리
       toast("이미 출석 체크를 완료하였습니다", { id: "already-checked" });
       return;
     }
@@ -71,15 +82,58 @@ const AttendanceDialog = ({ onClose }) => {
     if (day !== attendedDays + 1) {
       return;
     }
+    // 출석 체크 API 호출 시작
+    setLoading(true);
+    try {
+      // POST 요청으로 출석 체크 및 보상 지급
+      const result = await authFetch(
+        `${import.meta.env.VITE_BACKEND_URL}/api/v1/profile/attendance/`,
+        { method: "POST" }
+      );
+
+      // 서버 응답으로 출석 일수 업데이트
+      setAttendedDays(result.current_day);
+
+      // 오늘 출석 완료 처리
+      setHasCheckedToday(true);
+
+      // 보상 목록에서 코인과 티켓 각각 분리
+      const coinReward = result.reward.find((r) => r.reward_type === "coin");
+      const ticketReward = result.reward.find((r) => r.reward_type === "ticket");
+
+      // 티켓 보상이 있는 날이면 코인 + 티켓 알림
+      if (ticketReward && ticketReward.amount > 0) {
+        toast(`${coinReward?.amount || 0}코인과 티켓 ${ticketReward.amount}개를 받았습니다!`);
+      } else {
+        // 일반 날이면 코인만 알림
+        toast(`${coinReward?.amount || 0}코인을 받았습니다!`);
+      }
+
+    } catch (error) {
+      // 서버에서 400 에러 = 오늘 이미 출석한 경우
+      if (error.status === 400) {
+        toast("이미 출석 체크를 완료하였습니다", { id: "already-checked" });
+        setHasCheckedToday(true);
+      } else {
+        // 그 외 에러 (서버 오류 등)
+        toast(error.message || "출석 체크에 실패했습니다.");
+      }
+    } finally {
+      // 성공이든 실패든 로딩 종료
+      setLoading(false);
+    }
   };
 
+
   return (
+    // 공통 DialogBox 컴포넌트
     <DialogBox
       boxImageName="daily_check_frame_box_x3"
       maxWidth="458px"
       width="95%"
       onClose={onClose}
     >
+      {/* 공통 CloseButton 컴포넌트 */}
       <div className="absolute -top-[16%] left-2 z-50 w-[9%] aspect-square">
         <CloseButton onClose={onClose} className="w-full h-full" />
       </div>
@@ -89,12 +143,7 @@ const AttendanceDialog = ({ onClose }) => {
         <h1 className="text-3xl font-bold tracking-widest text-black mt-[1%] mb-[12%]">
           출석 체크
         </h1>
-
-        {/* 조회 로딩 중일 때 */}
-        {fetchLoading && (
-          <p className="text-sm text-gray-500 mb-2">불러오는 중...</p>
-        )}
-
+        
         <div className="w-full flex flex-col gap-[9%] z-10">
           {/* 1~4일차 */}
           <div className="grid grid-cols-4 gap-[2%] w-full">
@@ -102,7 +151,7 @@ const AttendanceDialog = ({ onClose }) => {
               <DayBox
                 key={item.day}
                 item={item}
-                isAttended={item.day <= attendedDays}
+                isAttended={item.day <= attendedDays} // 출석한 날이면 체크 표시
                 onClick={() => handleDayClick(item.day)}
                 currentTheme={currentTheme}
               />
@@ -115,7 +164,7 @@ const AttendanceDialog = ({ onClose }) => {
               <DayBox
                 key={item.day}
                 item={item}
-                isAttended={item.day <= attendedDays}
+                isAttended={item.day <= attendedDays} // 출석한 날이면 체크 표시
                 onClick={() => handleDayClick(item.day)}
                 currentTheme={currentTheme}
               />
