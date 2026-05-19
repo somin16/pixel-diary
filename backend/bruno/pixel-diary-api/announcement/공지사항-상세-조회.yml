@@ -1,0 +1,23 @@
+info:
+  name: 공지사항-상세-조회
+  type: http
+  seq: 2
+
+http:
+  method: GET
+  url: http://127.0.0.1:8000/api/v1/announcements/{id}/
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |
+  ### 설명
+  - 공지사항-상세-조회 API를 호출 할 때마다 view_count가 1씩 증가합니다(조회수)
+  ***
+  ### Status Code
+  - 200 OK: 공지사항 상세 조회 성공
+  - 404 Not Found: 공지사항을 찾을 수 없는 경우

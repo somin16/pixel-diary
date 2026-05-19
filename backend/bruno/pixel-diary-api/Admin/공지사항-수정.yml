@@ -1,0 +1,43 @@
+info:
+  name: 공지사항-수정
+  type: http
+  seq: 4
+
+http:
+  method: PATCH
+  url: http://127.0.0.1:8000/api/v1/admin/announcements/{id}/
+  headers:
+    - name: Authorization
+      value: "Bearer "
+  body:
+    type: json
+    data: |-
+      {
+        "title": "",
+        "content": "",
+        "category": ""
+      }
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |-
+  ### Body / Json
+  - title: 공지사항 제목
+  - content: 공지사항 내용
+  - category: 카테고리 (선택값 / 업데이트, 점검, 이벤트)
+  ***
+  ### Headers
+  - Authorization: Bearer 로그인할 시 받는 access_token
+  ***
+  ### Status Code
+  - 200 OK: 공지사항 수정 성공
+  - 400 Bad Request: 필수값 누락 (Authorization Bearer 헤더 access_token)
+  - 400 Bad Request: title, content, category 중 하나 이상 필요
+  - 401 Unauthorized: 유효하지 않은 access_token인 경우
+  - 403 Forbidden: 관리자 권한 필요
+  - 404 Not Found: 존재하지 않는 공지사항인 경우

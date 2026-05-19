@@ -1,0 +1,30 @@
+"""
+URL configuration for config project.
+
+The `urlpatterns` list routes URLs to views. For more information please see:
+    https://docs.djangoproject.com/en/6.0/topics/http/urls/
+Examples:
+Function views
+    1. Add an import:  from my_app import views
+    2. Add a URL to urlpatterns:  path('', views.home, name='home')
+Class-based views
+    1. Add an import:  from other_app.views import Home
+    2. Add a URL to urlpatterns:  path('', Home.as_view(), name='home')
+Including another URLconf
+    1. Import the include() function: from django.urls import include, path
+    2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
+"""
+from django.contrib import admin
+from django.urls import path, include
+
+urlpatterns = [
+    path("admin/", admin.site.urls),
+    path("api/v1/auth/", include("accounts.urls")),     # 계정 인증 관련 URL
+    path("api/v1/prompt/", include("prompt.urls")),     # 프롬프트 변환 관련 URL
+    path("api/v1/diaries/", include("diaries.urls")),   # 일기 관련 URL
+    path("api/v1/admin/", include("management.urls")),  # 관리자 전용 관련 URL
+    path("api/v1/", include("games.urls")),             # 게임 관련 URL                            
+    path("api/v1/", include("store.urls")),             # 보관함 및 아이템 관련 URL
+    path("api/v1/profile/", include("profiles.urls")),  # 프로필 및 설정 관련 앱
+    path("api/v1/announcements/", include("announcements.urls")), # 공지사항 조회 관련 URL
+]

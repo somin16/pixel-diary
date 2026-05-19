@@ -1,0 +1,30 @@
+info:
+  name: 출석-체크-및-보상
+  type: http
+  seq: 2
+
+http:
+  method: POST
+  url: http://127.0.0.1:8000/api/v1/profile/attendance/
+  headers:
+    - name: Authorization
+      value: "Bearer "
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |-
+  ### Headers
+  - Authorization: Bearer 로그인할 시 받는 access_token
+  ***
+  ### Status Code
+  - 200 OK: 출석 체크 성공
+  - 400 Bad Request: 필수값 누락 (Authorization Bearer 헤더 access_token)
+  - 400 Bad Request: 오늘 이미 출석 체크를 완료한 경우
+  - 401 Unauthorized: 유효하지 않은 access_token인 경우
+  - 500 Internal Server Error: 보상 지급 중 오류 (코인)
+  - 500 Internal Server Error: 보상 지급 중 오류 (티켓)

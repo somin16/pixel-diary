@@ -1,0 +1,161 @@
+/* Tailwind CSS 불러오기 — 이 한 줄로 Tailwind의 모든 유틸리티 클래스 사용 가능 */
+@import "tailwindcss";
+
+/* ── 폰트 등록 ────────────────────────────────────────────
+   woff2: 최신 브라우저용 (용량 작고 빠름)
+   truetype: 구형 브라우저 대응용
+──────────────────────────────────────────────────────── */
+@font-face {
+  font-family: 'Mona';
+  src: url('/assets/fonts/Mona12.woff2') format('woff2'),
+       url('/assets/fonts/Mona12.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+  /* 폰트 로딩 전에는 글자를 숨겼다가 로딩 완료되면 한 번에 보여줌 */
+  font-display: block;
+}
+
+/* ── CSS 변수 (디자인 토큰) ───────────────────────────────
+──────────────────────────────────────────────────────── */
+:root {
+  /* 폰트 패밀리 */
+  --font-sans: 'Mona', sans-serif;
+  --font-heading: 'Mona', sans-serif;
+}
+
+/* ── 전역 기본 설정 ───────────────────────────────────────
+──────────────────────────────────────────────────────── */
+* {
+  /* 텍스트 렌더링 최적화 — 가독성 향상 */
+  font-family: 'Mona', sans-serif !important;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: none;
+  box-sizing: border-box;
+
+  /* 앱 최적화 — 사용자가 화면을 꾹 눌러서 텍스트 선택하거나 메뉴 뜨는 것 방지 */
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* ── html, body 기본 설정 ────────────────────────────────
+   Tailwind의 h-screen, overflow-hidden 등으로 대체 가능하지만
+   position: fixed → 최상위 레이아웃 고정 및 모바일 스크롤 바운스 방지 (전역 설정)
+──────────────────────────────────────────────────────── */
+html, body {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+
+  /* 레터박스 설정 */
+  background-color: #000000;
+
+  /* 자식인 #root를 브라우저 중앙에 배치 */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+/* ── #root 컨테이너 ──────────────────────────────────────
+   image-rendering → 픽셀아트 전용 렌더링 설정 (도트 깨짐 방지)
+   env(safe-area-inset) → 최신 기기(아이폰 노치 등)의 세이프 에어리어 확보
+──────────────────────────────────────────────────────── */
+#root {
+  /* AppShell에서 비율을 잡으므로 여기서는 꽉 채워주기 */
+  height: 100%;      /* 화면 높이에 꽉 채움 */
+  width: 100%; 
+  
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch; /* 부드러운 스크롤 */
+
+  /* 픽셀아트 선명도 유지 — 확대해도 도트가 흐릿해지지 않음 */
+  image-rendering: pixelated;
+  image-rendering: crisp-edges; /* Firefox 대응 */
+
+  /* 배경화면 가로 고정 및 위아래 컷팅 설정 */
+  background-size: cover; 
+  background-position: center; /* 삐져나간 위아래를 똑같이 배분해서 중앙 유지 */
+  background-repeat: no-repeat; /* 배경 반복 방지 */
+  background-color: #000000; /* 짤리는 부분은 검은색으로 처리 */
+
+  /* 아이폰 노치/홈바 대응 */
+  padding-top: env(safe-area-inset-top, 0px);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+
+}
+
+/* ── 입력창 선택 허용 예외 처리 ──────────────────────────
+   위에서 전체 user-select: none으로 막았지만
+   input, textarea는 텍스트 입력이 필요하므로 예외 처리
+──────────────────────────────────────────────────────── */
+input, textarea, [contenteditable="true"], .selectable {
+  user-select: text;
+  -webkit-user-select: text;
+}
+
+/* 전역 설정 보강 */
+button, input, textarea, select {
+  font-family: 'Mona', sans-serif !important;
+}
+
+@layer utilities {
+  /* 스크롤바 숨기기 (기능은 작동) */
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+}
+
+/* 토스트 메시지의 모든 애니메이션(올라오는 효과 등) 제거 */
+.instant-toast {
+  animation: none !important;
+  font-size: 17px !important;
+  padding: 8px 16px !important;
+}
+
+/* 
+   react-hot-toast가 내부적으로 사용하는 애니메이션 클래스를 
+   강제로 덮어씌워 모션을 없앰
+*/
+div[role='status'] {
+  animation: none !important;
+}
+
+/* ── 반응형 폰트 스케일링 ──────────────────────────────────
+   캔버스(360px) 기준으로 폰트가 비율에 맞게 자동 축소됨
+   --scale: AppShell에서 JS로 계산한 비율 (캔버스너비 / 360)
+   예) 캔버스 270px → --scale: 0.75 → text-base 16px → 12px
+──────────────────────────────────────────────────────── */
+.app-root {
+  /* 기준 폰트 크기: 16px × scale */
+  font-size: calc(16px * var(--scale, 1)) !important;
+}
+
+/* 기존보다 더 작은 폰트 단계 */
+.app-root .text-5xs   { font-size: calc(4px * var(--scale, 1)) !important; }
+.app-root .text-4xs   { font-size: calc(6px * var(--scale, 1)) !important; }
+.app-root .text-3xs   { font-size: calc(8px * var(--scale, 1)) !important; }
+.app-root .text-2xs   { font-size: calc(10px * var(--scale, 1)) !important; }
+
+/* Tailwind 폰트 클래스들을 scale 기반으로 덮어씌우기 */
+.app-root .text-xs     { font-size: calc(12px * var(--scale, 1)) !important; }
+.app-root .text-sm     { font-size: calc(14px * var(--scale, 1)) !important; }
+.app-root .text-base   { font-size: calc(16px * var(--scale, 1)) !important; }
+.app-root .text-lg     { font-size: calc(18px * var(--scale, 1)) !important; }
+.app-root .text-xl     { font-size: calc(20px * var(--scale, 1)) !important; }
+.app-root .text-2xl    { font-size: calc(24px * var(--scale, 1)) !important; }
+.app-root .text-3xl    { font-size: calc(30px * var(--scale, 1)) !important; }
+.app-root .text-4xl    { font-size: calc(36px * var(--scale, 1)) !important; }
+.app-root .text-5xl    { font-size: calc(48px * var(--scale, 1)) !important; }
+.app-root .text-6xl    { font-size: calc(60px * var(--scale, 1)) !important; }
+
+/* text-[px] 인라인 스타일로 직접 쓴 경우는 위 방법으로 못 잡으니
+   style 속성에 직접 쓴 font-size도 scale 적용하려면
+   AppShell에서 주입한 --scale을 직접 calc()로 써야 함
+   예) style={{ fontSize: `calc(54px * var(--scale, 1))` }}       */

@@ -1,0 +1,29 @@
+info:
+  name: 꾸미기-초기화
+  type: http
+  seq: 7
+
+http:
+  method: DELETE
+  url: http://127.0.0.1:8000/api/v1/diaries/{diary_id}/deco/
+  headers:
+    - name: Authorization
+      value: "Bearer "
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |-
+  ### Headers
+  - Authorization: Bearer 로그인할 시 받는 access_token
+  ***
+  ### Status Code
+  - 200 OK: 꾸미기 초기화 성공
+  - 400 Bad Request: 필수값 누락 (Authorization Bearer 헤더 access_token)
+  - 401 Unauthorized: 유효하지 않은 access_token인 경우
+  - 404 Not Found: 일기를 찾을 수 없거나 권한이 없는 경우
+  - 404 Not Found: 꾸미기 정보를 찾을 수 없는 경우

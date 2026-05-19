@@ -139,6 +139,8 @@ venv/
 ENV/
 env.bak/
 venv.bak/
+venv_pr/
+venv_ai/
 
 # Spyder project settings
 .spyderproject
@@ -544,5 +546,19 @@ sketch
 # Ignore all local history of files
 .history
 .ionide
+
+# 소스 코드 자체는 깃에서 관리하지 않음 (각자 설치)
+ComfyUI/
+
+# AI 모델 파일들
+*.ckpt
+*.safetensors
+*.pt
+
+# 개인 메모장 미 추적
+basic_memo.txt
+
+# 팀장 전용 실행 파일( 서버 오픈 용)
+run_comfy_somin.bat
 
 # End of https://www.toptal.com/developers/gitignore/api/node,react,python,django,pycharm,visualstudiocode

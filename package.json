@@ -1,0 +1,37 @@
+{
+  "name": "pixel-diary-root",
+  "version": "1.0.0",
+  "scripts": {
+    "--- [ 1. 통합 서버 실행 ] ---": "",
+    "❤️전체실행": "concurrently \"npm run FE실행\" \"npm run BE실행\"",
+    "❤️전체실행_comfyUI포함": "concurrently \"npm run FE실행\" \"npm run BE실행\" \"npm run AI실행\"",
+    "❤️FE실행": "cd frontend && npm run dev",
+    "❤️BE실행": "cd backend && .\\venv\\Scripts\\activate && python manage.py runserver",
+    "❤️BE실행_외부접속": "cd backend && .\\venv\\Scripts\\activate && python manage.py runserver 0.0.0.0:8000",
+    "❤️comfyUI실행": "cd ai_engine && .\\run_comfy.bat",
+
+    "--- [ 2. BE 가상환경 및 의존성 ] ---": "",
+    "🧡BE가상환경만": "powershell -NoExit -Command \"cd backend; .\\venv\\Scripts\\activate\"",
+    "🧡BE의존성설치": "cd backend && .\\venv\\Scripts\\activate && pip install -r requirements.txt",
+    "🧡BE의존성동기화": "cd backend && .\\venv\\Scripts\\activate && pip-sync requirements.txt",
+    "🧡BE의존성저장": "cd backend && .\\venv\\Scripts\\activate && pip freeze > requirements.txt",
+
+    "--- [ 3. AI 가상환경 및 의존성 ] ---": "",
+    "💛AI가상환경만": "powershell -NoExit -Command \"cd ai_engine; .\\venv_ai\\Scripts\\activate\"",
+    "💛AI의존성설치": "cd ai_engine && .\\venv_ai\\Scripts\\activate && pip install -r requirements_ai.txt",
+    "💛AI의존성동기화": "cd ai_engine && .\\venv_ai\\Scripts\\activate && pip-sync requirements_ai.txt",
+
+    "--- [ 4. 모바일 / 캐퍼시터 ] ---": "",
+    "💚안드로이드동기화": "cd frontend && npm run build && npx cap sync android",
+    "💚안드로이드열기": "cd frontend && npx cap open android",
+    "💚아이폰동기화": "cd frontend && npm run build && npx cap sync ios",
+    "💚엑스코드열기": "cd frontend && npx cap open ios",
+
+    "--- [ 5. 프로젝트 초기 설정 ] ---": "",
+    "💙깃템플릿적용": "git config --local commit.template .gitmessage.txt",
+    "💙프론트설치": "cd frontend && npm install"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  }
+}
