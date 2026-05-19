@@ -35,11 +35,23 @@ const ContactDialog = ({ onCancel, onResult, width = "100%", maxWidth = "320px" 
         return;
       }
 
+      // 'users' 테이블에서 현재 로그인한 유저의 정보 조회 (이름 및 서비스용 ID 가져오기)
+      const { data: userData, error: userError } = await supabase
+        .from('users')           
+        .select('user_id, user_name') 
+        .eq('user_id', user.id)  
+        .single();
+
+      if (userError || !userData) {
+        setError("유저 프로필 정보를 찾을 수 없습니다.");
+        return;
+      }
+
       // Supabase의 'contact' 테이블에 데이터 삽입 (INSERT)
       const { error: insertError } = await supabase
         .from('contact')
         .insert({
-          user_id: user.id,   // 현재 로그인한 유저의 고유 식별자(UID)
+          user_id: userData.user_id,   // users 테이블의 고유 ID를 삽입
           message: content,   // 사용자가 작성한 문의 내용
         });
 
