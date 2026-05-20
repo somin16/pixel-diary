@@ -142,8 +142,67 @@ const Account = () => {
 
         } catch (error) {
             console.error('회원탈퇴 중 에러 발생:', error);
-            const message = error.response?.data?.message || '회원탈퇴에 실패했습니다. 다시 시도해 주세요.';
-            alert(message);
+            let message = '회원탈퇴에 실패했습니다. 다시 시도해 주세요.';
+    
+            if (error.response?.status === 401 || error.response?.data?.message === '비밀번호가 일치하지 않습니다') {
+                message = '비밀번호가 일치하지 않습니다';
+            } else if (error.response?.data?.message) {
+                message = error.response.data.message;
+            }
+            throw message; 
+        }
+    };
+
+    // 비밀번호 변경 API 연동 함수
+    const handlePasswordChange = async ({ currentPw, newPw }) => {
+        try {
+            const { data: { session } } = await supabase.auth.getSession();
+
+            if (!session) {
+                alert('로그인 세션이 만료되었습니다. 다시 로그인해 주세요.');
+                return;
+            }
+
+            // 장고 백엔드 API 호출 (PATCH 메서드 전달)
+            const response = await authFetch(`${import.meta.env.VITE_BACKEND_URL}/api/v1/auth/password/`, {
+                method: 'PATCH', 
+                body: JSON.stringify({
+                    current_password: currentPw,
+                    new_password: newPw,
+                }),
+            });
+
+            // 응답 데이터 추출
+            const data = response.data || response;
+
+            // 새로 발급해 준 토큰으로 슈파베이스 세션 갱신
+            if (data?.access_token && data?.refresh_token) {
+                await supabase.auth.setSession({
+                    access_token: data.access_token,
+                    refresh_token: data.refresh_token
+                });
+            }
+
+            // 성공 시 팝업 전환
+            setDialog(null);
+            setResultDialog('passwordSuccess');
+
+        } catch (error) {
+            console.error('비밀번호 변경 중 에러 발생:', error);
+        
+            // 기본 에러 메시지
+            let message = '비밀번호 변경에 실패했습니다.';
+        
+            // 에러 메세지
+            if (error.response?.data?.message) {
+                message = error.response.data.message;
+            } else if (error.data?.message) {
+                message = error.data.message;
+            } else if (error.message) {
+                message = error.message;
+            }
+        
+            throw message; 
         }
     };
 
@@ -231,11 +290,7 @@ const Account = () => {
             {/* 비밀번호 변경 다이얼로그 */}
             {dialog === 'password' && (
                 <PasswordChangeDialog
-                    onConfirm={({ currentPw, newPw }) => {
-                        // TODO: 서버에 currentPw, newPw를 보내서 비밀번호 변경 API 호출
-                        setDialog(null);
-                        setResultDialog('passwordSuccess');
-                    }}
+                    onConfirm={handlePasswordChange}
                     onCancel={() => setDialog(null)}
                 />
             )}
@@ -252,7 +307,7 @@ const Account = () => {
             {/* 회원탈퇴 다이얼로그 */}
             {dialog === 'withdrawal' && (
                 <WithdrawalDialog
-                    loginProvider={loginProvider}   // 추가
+                    loginProvider={loginProvider}  
                     onConfirm={handleWithdrawal}
                     onCancel={() => setDialog(null)}
                     maxWidth="320px"
