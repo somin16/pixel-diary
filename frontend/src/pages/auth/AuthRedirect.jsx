@@ -15,6 +15,8 @@ export default function AuthRedirect() {
             const hashParams = new URLSearchParams(window.location.hash.substring(1));
             const access_token = hashParams.get('access_token');
             const refresh_token = hashParams.get('refresh_token');
+            // 더 안전한 코드 (해시와 쿼리 스트링 양쪽에서 type을 다 찾아봄)
+            const type = hashParams.get('type') || params.get('type');
 
             // 네이버는 ? 뒤에 code가 옴 (일반 OAuth 방식)
             const params = new URLSearchParams(window.location.search);
@@ -28,6 +30,29 @@ export default function AuthRedirect() {
             // 일반 회원가입
             const from = params.get('from');
             const errorMessage = params.get('message');
+
+            if (!isMounted) return;
+
+            // [ CRITICAL CASE ] 비밀번호 재설정 처리 (가장 먼저 검사해 가로채기 방지)
+            if (type === 'recovery' && access_token) {
+                try {
+                    const { error } = await supabase.auth.setSession({
+                        access_token: access_token,
+                        refresh_token: refresh_token || '',
+                    });
+
+                    if (error) throw error;
+
+                    setStatus('recovery');
+                    // 세션이 주입된 직후 확실하게 리다이렉트
+                    setTimeout(() => navigate('/auth/password/reset'), 1500);
+                } catch (err) {
+                    console.error("비밀번호 재설정 세션 주입 에러:", err);
+                    setStatus('error');
+                    setTimeout(() => navigate('/auth/login'), 2000);
+                }
+                return; // 로직 종료
+            }
 
             // [ case 1 ]회원가입 결과 처리 (from=signup인 경우)
             if (from === 'signup' && isMounted) {
@@ -82,25 +107,6 @@ export default function AuthRedirect() {
                 return;
             }
 
-            // [ case 4 ] 비밀번호 재설정 처리
-            const type = hashParams.get('type');
-
-            if (type === 'recovery' && access_token && isMounted) {
-                try {
-                    await supabase.auth.setSession({
-                        access_token: access_token,
-                        refresh_token: refresh_token,
-                    });
-                    setStatus('recovery');
-                    setTimeout(() => navigate('/auth/password/reset'), 1500);
-                } catch (err) {
-                    console.error("비밀번호 재설정 에러:", err);
-                    setStatus('error');
-                    setTimeout(() => navigate('/auth/login'), 2000);
-                }
-                return;
-            }
-            
             // [ case 3 ] 구글/카카오 로그인 또는 일반 로그인 (토큰이 이미 있는 경우)
             // Supabase가 # 뒤에 토큰을 바로 전달해줘서 백엔드 호출 없이 저장만 하면 됨
             // hash에서 온 거나, query에서 온 거나 둘 중 하나만 있으면 성공
@@ -134,7 +140,7 @@ export default function AuthRedirect() {
                     setStatus('error');
                     setTimeout(() => navigate('/auth/login'), 2000);
                 }
-            }
+            };
 
 
 
