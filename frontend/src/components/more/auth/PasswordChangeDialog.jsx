@@ -167,14 +167,14 @@ const PasswordChangeDialog = ({ onConfirm, onCancel, width = "100%", maxWidth = 
 
           {/* 에러 메시지 표시 영역 */}
           {error && (
-            <div className="flex items-center justify-center mt-[2%] mb-[1%]">
+            <div className="flex items-center justify-center mt-[3%] mb-[0%]">
               <p className="text-[#ef4444] text-[11px] font-bold m-0">{error}</p>
             </div>
           )}
 
           {/* 안전한 비밀번호일 경우 메세지 */}
           {successMsg && !error && (
-            <div className="flex items-center justify-center mt-[2%] mb-[1%]">
+            <div className="flex items-center justify-center mt-[3%] mb-[0%]">
               <p className="text-[#22c55e] text-[11px] font-bold m-0">{successMsg}</p>
             </div>
           )}
