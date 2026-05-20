@@ -106,7 +106,7 @@ STATIC_URL = "static/"
 
 CORS_ALLOW_CREDENTIALS = True
 
-# 프론트엔드 url, 도메인
+# 프론트엔드 URL, 도메인
 if DEBUG:                           
     CORS_ALLOW_ALL_ORIGINS = True
 else:
@@ -114,3 +114,8 @@ else:
         "FRONTEND_URL",
         "http://localhost:5173,http://127.0.0.1:5173"
     ).split(",")
+
+# comfyUI URL, 도메인
+COMFYUI_URLS = os.getenv("COMFYUI_URLS", "http://localhost:8188").split(",")
+if not COMFYUI_URLS:
+    raise EnvironmentError("환경변수 COMFYUI_URLS가 설정되지 않았습니다.")

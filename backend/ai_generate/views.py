@@ -7,81 +7,19 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 from utils import extract_access_token, get_user_from_token, get_supabase_headers
-
+from workflows.pixel_art import PIXEL_ART_WORKFLOW  # comfyUI 워크플로우
+from config.settings import COMFYUI_URLS, SUPABASE_URL
 
 class AIGenerateView(APIView):
     """AI 그림 생성(임시 저장) API"""
 
-    COMFYUI_URL = "http://localhost:8188"
+    # 슈파베이스 스토리지 버켓
     STORAGE_BUCKET = "diary-images"
 
-    WORKFLOW = {
-        "4": {
-            "class_type": "CheckpointLoaderSimple",
-            "inputs": {"ckpt_name": "sd_xl_base_1.0.safetensors"}
-        },
-        "12": {
-            "class_type": "LoraLoader",
-            "inputs": {
-                "model": ["4", 0],
-                "clip": ["4", 1],
-                "lora_name": "pixel-art-xl.safetensors",
-                "strength_model": 0.8,
-                "strength_clip": 1
-            }
-        },
-        "6": {
-            "class_type": "CLIPTextEncode",
-            "inputs": {"clip": ["12", 1], "text": ""}
-        },
-        "7": {
-            "class_type": "CLIPTextEncode",
-            "inputs": {"clip": ["12", 1], "text": ""}
-        },
-        "5": {
-            "class_type": "EmptyLatentImage",
-            "inputs": {"width": 1024, "height": 1024, "batch_size": 1}
-        },
-        "3": {
-            "class_type": "KSampler",
-            "inputs": {
-                "model": ["12", 0],
-                "positive": ["6", 0],
-                "negative": ["7", 0],
-                "latent_image": ["5", 0],
-                "seed": 0,
-                "steps": 30,
-                "cfg": 7,
-                "sampler_name": "dpmpp_2m",
-                "scheduler": "karras",
-                "denoise": 1
-            }
-        },
-        "8": {
-            "class_type": "VAEDecode",
-            "inputs": {"samples": ["3", 0], "vae": ["4", 2]}
-        },
-        "15": {
-            "class_type": "ImageScale",
-            "inputs": {
-                "image": ["8", 0],
-                "upscale_method": "nearest-exact",
-                "width": 512, "height": 512, "crop": "disabled"
-            }
-        },
-        "18": {
-            "class_type": "ImageScale",
-            "inputs": {
-                "image": ["15", 0],
-                "upscale_method": "nearest-exact",
-                "width": 1024, "height": 1024, "crop": "disabled"
-            }
-        },
-        "9": {
-            "class_type": "SaveImage",
-            "inputs": {"images": ["18", 0], "filename_prefix": "ComfyUI"}
-        }
-    }
+    # 폴링 넘버, 폴링 : 이미지 생성이 끝났는지 주기적으로 계속 물어보는 것
+    POLL_INTERVAL_SEC = 5    # 5초 간격으로
+    POLL_MAX_ATTEMPTS = 60   # 최대 60번 물어봄  (5초 × 60 = 최대 5분)
+
 
     def post(self, request):
         """
@@ -114,19 +52,23 @@ class AIGenerateView(APIView):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
+        image_id = None # try 블록 바깥에 선언해야 except에서 접근 가능
+
         try:
             user_id = user.get("id")
-            supabase_url = os.getenv("SUPABASE_URL")
             headers = get_supabase_headers()
 
-            # 1. ComfyUI 워크플로우에 프롬프트 삽입 후 전송
-            workflow = copy.deepcopy(self.WORKFLOW)
+            # -- comfyUI 서버 선택 (여러 대면 랜덤 분산, 1대면 항상 그 서버) -- 
+            comfyui_url = random.choice(COMFYUI_URLS) # env 파일에 서버url, 도메인 있어야 작동
+
+            # ComfyUI 워크플로우에 프롬프트 삽입 후 전송
+            workflow = copy.deepcopy(PIXEL_ART_WORKFLOW)    # 따로 분리된 워크플로우 불러와서 사용
             workflow["6"]["inputs"]["text"] = positive_prompt
             workflow["7"]["inputs"]["text"] = negative_prompt
             workflow["3"]["inputs"]["seed"] = random.randint(0, 2 ** 32 - 1)
 
             prompt_response = requests.post(
-                f"{self.COMFYUI_URL}/prompt",
+                f"{comfyui_url}/prompt",
                 json={"prompt": workflow}
             )
             if prompt_response.status_code != 200:
@@ -134,30 +76,30 @@ class AIGenerateView(APIView):
 
             prompt_id = prompt_response.json().get("prompt_id")
 
-            # 3. 이미지 생성 완료까지 폴링 (5초 간격, 최대 5분)
+            # 이미지 생성 완료까지 폴링: 이미지 생성이 끝났는지 주기적으로 계속 물어봄
             image_data = None
-            for _ in range(60):
-                time.sleep(5)
-                history = requests.get(f"{self.COMFYUI_URL}/history/{prompt_id}").json()
-                if prompt_id in history:
+            for _ in range(self.POLL_MAX_ATTEMPTS): # 최대 몇번 물어볼지
+                time.sleep(self.POLL_INTERVAL_SEC) # 몇 초 기다렸다가 다시 물어봄
+                history = requests.get(f"{comfyui_url}/history/{prompt_id}").json() # 끝났어?
+                if prompt_id in history: # 끝났으면 이미지 가져옴
                     for output in history[prompt_id].get("outputs", {}).values():
                         if "images" in output:
                             img_info = output["images"][0]
                             image_data = requests.get(
-                                f"{self.COMFYUI_URL}/view",
+                                f"{comfyui_url}/view",
                                 params={"filename": img_info["filename"], "type": img_info["type"]}
                             ).content
                             break
                     if image_data:
-                        break
+                        break # 이미지 가져오면 루프 탈출
 
             if not image_data:
                 raise Exception("이미지 생성 시간 초과 (5분)")
 
-            # 4. ai_image 테이블에 row 먼저 생성해서 image_id 확보
+            # ai_image 테이블에 row 먼저 생성해서 image_id 확보
             # image_id를 파일명으로 사용해야 하므로 Storage 업로드 전에 생성
             ai_image_response = requests.post(
-                f"{supabase_url}/rest/v1/ai_image",
+                f"{SUPABASE_URL}/rest/v1/ai_image",
                 headers={**headers, "Prefer": "return=representation"},
                 json={"user_id": user_id},
             )
@@ -166,26 +108,25 @@ class AIGenerateView(APIView):
 
             image_id = ai_image_response.json()[0].get("id")
 
-            # 5. Supabase Storage에 업로드 — {user_id}/{image_id}.png
-            # 재생성 시 preview.png 덮어쓰기 문제 해결: image_id별 고유 파일로 저장
+            # Supabase Storage에 업로드 — {user_id}/{image_id}.png    image_id별 고유 파일로 저장
             storage_headers = get_supabase_headers()
             storage_headers["Content-Type"] = "image/png"
             storage_headers["x-upsert"] = "true"
 
             storage_path = f"{user_id}/{image_id}.png"
             upload_response = requests.post(
-                f"{supabase_url}/storage/v1/object/{self.STORAGE_BUCKET}/{storage_path}",
+                f"{SUPABASE_URL}/storage/v1/object/{self.STORAGE_BUCKET}/{storage_path}",
                 headers=storage_headers,
                 data=image_data,
             )
             if upload_response.status_code not in [200, 201]:
                 raise Exception(f"Storage 업로드 오류: {upload_response.text}")
 
-            image_url = f"{supabase_url}/storage/v1/object/public/{self.STORAGE_BUCKET}/{storage_path}"
+            image_url = f"{SUPABASE_URL}/storage/v1/object/public/{self.STORAGE_BUCKET}/{storage_path}"
 
             # 6. ai_image.image_url 업데이트
             requests.patch(
-                f"{supabase_url}/rest/v1/ai_image?id=eq.{image_id}",
+                f"{SUPABASE_URL}/rest/v1/ai_image?id=eq.{image_id}",
                 headers=headers,
                 json={"image_url": image_url},
             )
@@ -199,12 +140,24 @@ class AIGenerateView(APIView):
             )
 
         except requests.exceptions.ConnectionError:
-            return Response(
-                {"message": "ComfyUI 서버에 연결할 수 없습니다. ComfyUI가 실행 중인지 확인해주세요."},
+            return Response( # 어느 서버에서 실패했는지 로그에 남김
+                {"message": f"ComfyUI 서버({comfyui_url})에 연결할 수 없습니다. ComfyUI가 실행 중인지 확인해주세요."},
                 status=status.HTTP_503_SERVICE_UNAVAILABLE,
             )
         except Exception as error:
+            # 오류 발생 시 터미널에 출력 (개발 완료 후 삭제 예정)
             print(f"=== DIARY AI GENERATE ERROR ===\n{error}\n===============================")
+
+            # Storage 업로드 실패 시 롤백
+            if image_id:
+                try:
+                    requests.delete(
+                        f"{SUPABASE_URL}/rest/v1/ai_image?id=eq.{image_id}",
+                        headers=get_supabase_headers(),
+                    )
+                except Exception as rollback_error:
+                    print(f"=== 롤백 실패 (id={image_id}): {rollback_error} ===")
+                    
             return Response(
                 {"message": "이미지 생성 중 오류가 발생했습니다."},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
