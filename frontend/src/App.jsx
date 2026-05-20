@@ -14,6 +14,7 @@ import Game2 from "./game/game2/Game2"; // 게임2 화면
 import Login from "./pages/auth/Login"; // 로그인 화면
 import AuthRedirect from "./pages/auth/AuthRedirect"; // 로그인, 회원가입 진행 시 화면
 import SendResetPasswordLink from "./pages/auth/SendResetPasswordLink"; // 비밀번호 재설정 링크 이메일 발송 화면
+import ResetPassword from "./pages/auth/ResetPassword"; // 비밀번호 재설정 화면
 import Signup from "./pages/auth/Signup"; // 회원가입 화면
 // ----------------------- 일기 ---------------------------------------
 import ListDiary from "./pages/diary/ListDiary"; // 일기 목록 화면
@@ -76,6 +77,9 @@ function AppInner() {
                     {/* 주소가 /password/send-reset-link 이면 비밀번호 재설정 이메일 발송 화면을 보여줘 */}
                     <Route path="/auth/password/send-reset-link" element={<SendResetPasswordLink />} />
 
+                    {/* 주소가 /password/reset 이면 비밀번호 재설정 화면을 보여줘 */}
+                    <Route path="/auth/password/reset" element={<ResetPassword />} />
+
                     {/* ⚠️ 로그인 안 됐으면 무조건 로그인 페이지로 튕기기 */}
                     <Route path="*" element={<Navigate to="/auth/login" replace />} />
                 </Route>
@@ -89,6 +93,10 @@ function AppInner() {
                     <Route path="/game2run" element={<Game2 />} />
 
                     <Route element={<AppShell />}>
+
+                        {/* 주소가 /password/reset 이면 비밀번호 재설정 화면을 보여줘*/}
+                        <Route path="/auth/password/reset" element={<ResetPassword />} />
+
                         {/* 주소가 / 이면 홈화면을 보여줘 */}
                         <Route path="/" element={<Home />} />
 
@@ -140,9 +148,6 @@ function AppInner() {
 
                         {/* 주소가 /more/add-item 이면 아이템 추가 화면을 보여줘 (관리자 전용) */}
                         <Route path="/more/add-item" element={<AddItemPage />} />
-
-                        {/* ⚠️ 이미 로그인했는데 로그인창 가려하면 홈으로 보내기 */}
-                        <Route path="/auth/*" element={<Navigate to="/" replace />} />
 
                         {/* ⚠️ 이상한 주소로 가도 홈으로 보내기 */}
                         <Route path="*" element={<Navigate to="/" replace />} />
