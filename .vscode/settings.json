@@ -1,0 +1,13 @@
+{
+  "deno.enable": false,
+
+  "deno.enablePaths": [
+    "frontend/supabase/functions"
+  ],
+  "deno.lint": true,
+  "deno.unstable": [
+    "bare-node-builtins",
+    "byonm",
+    "sloppy-imports"
+  ]
+}
