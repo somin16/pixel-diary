@@ -4,6 +4,9 @@ import { useTheme } from '../../store/useThemeStore'; // useTheme 불러오기
 import { getAssetUrl } from "../../utils/AssetHelper"; // 헬퍼 불러오기
 import { supabase } from "../../utils/SupabaseClient";
 
+// zuStand 함수 불러오기
+import { useGetCoinStore } from "../../store/useCoinStore";
+
 // 컴포넌트 불러오기
 import ProfileBar from "../../components/more/profile/ProfileBar";
 import Attendance from "../../components/more/attendance/AttendanceDialog"; // 출석
@@ -50,6 +53,9 @@ const MorePage = () => {
   profileImage: null
   });
 
+  // 더보기에서 조회를 하는편이 더 낫지 않을까? 해서 이쪽으로 옮겨봤습니다
+  const { startGetCoin } = useGetCoinStore();
+
   useEffect(() => {
         // 세션에서 role 확인
         const checkAdmin = async () => {
@@ -58,6 +64,7 @@ const MorePage = () => {
             setIsAdmin(role === 'admin');
         };
         checkAdmin();
+        startGetCoin(); // 코인조회를 더보기 창에서 실행
     }, []);
 
     // isAdmin 여부에 따라 메뉴 필터링
