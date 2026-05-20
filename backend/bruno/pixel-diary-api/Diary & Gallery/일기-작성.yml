@@ -13,7 +13,8 @@ http:
     type: json
     data: |-
       {
-        "content": ""
+        "content": "",
+        "image_id": ""
       }
   auth: inherit
 
@@ -26,6 +27,7 @@ settings:
 docs: |-
   ### Body / Json
   - content: 작성할 일기 내용
+  - image_id: 최종 결정한 이미지 아이디
   ***
   ### Headers
   - Authorization: Bearer 로그인할 시 받는 access_token
@@ -33,6 +35,6 @@ docs: |-
   ### Status Code
   - 201 Created: 일기 작성 및 저장 성공
   - 400 Bad Request: 필수값 누락 (Authorization Bearer 헤더 access_token)
-  - 400 Bad Request: 필수값 누락 (content)
+  - 400 Bad Request: 필수값 누락 (content, image_id)
   - 401 Unauthorized: 유효하지 않은 access_token인 경우
   - 409 Conflict: 일기 중복 (백엔드에서 2차 방어)
