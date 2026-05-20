@@ -25,7 +25,7 @@ class AIGenerateView(APIView):
         """
         POST /api/v1/ai-generate/
         - positive_prompt, negative_prompt 받아서 ComfyUI로 이미지 생성
-        - Supabase Storage에 업로드 ({user_id}/preview.png) // 수정 필요함 임시저장이 아닌 생성한 모든 이미지가 저장되던가 프리뷰로 계속 보여주다가 마지막 저장을 할때 일기와 함깨 이미지를 저장하던가
+        - Supabase Storage에 업로드 ({user_id}/{image_id}
         - ai_image 테이블에 저장 (diary_id=NULL)
         - image_id, image_url 반환
         """
@@ -124,7 +124,7 @@ class AIGenerateView(APIView):
 
             image_url = f"{SUPABASE_URL}/storage/v1/object/public/{self.STORAGE_BUCKET}/{storage_path}"
 
-            # 6. ai_image.image_url 업데이트
+            # ai_image.image_url 업데이트 (Storage 업로드 후 확정된 URL로 갱신)
             requests.patch(
                 f"{SUPABASE_URL}/rest/v1/ai_image?id=eq.{image_id}",
                 headers=headers,
@@ -148,7 +148,7 @@ class AIGenerateView(APIView):
             # 오류 발생 시 터미널에 출력 (개발 완료 후 삭제 예정)
             print(f"=== DIARY AI GENERATE ERROR ===\n{error}\n===============================")
 
-            # Storage 업로드 실패 시 롤백
+            # Storage 업로드 실패 시 롤백 --> image_id가 있다면 DB row는 이미 생성된 상태 / Storage 업로드 전에 실패했으면 고아 레코드가 되므로 삭제
             if image_id:
                 try:
                     requests.delete(
@@ -160,5 +160,79 @@ class AIGenerateView(APIView):
                     
             return Response(
                 {"message": "이미지 생성 중 오류가 발생했습니다."},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
+
+    def delete(self, request):
+        """
+        DELETE /api/v1/ai-generate/
+        - 저장 안 하고 나갈 때 호출
+        - 해당 유저의 is_temp=true 이미지 전체 삭제 (Storage + ai_image 테이블)
+        - 실패, 성공 message와 삭제된 이미지 개수 반환
+        """
+        access_token = extract_access_token(request)
+        if not access_token:
+            return Response(
+                {"message": "Authorization 헤더에 유효한 Bearer 토큰이 필요합니다."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        user = get_user_from_token(access_token)
+        if not user:
+            return Response(
+                {"message": "유효하지 않은 토큰입니다."},
+                status=status.HTTP_401_UNAUTHORIZED,
+            )
+
+        try:
+            user_id = user.get("id")
+            headers = get_supabase_headers()
+
+            # is_temp=true인 이미지 목록 조회
+            temp_response = requests.get(
+                f"{SUPABASE_URL}/rest/v1/ai_image",
+                headers=headers,
+                params={
+                    "user_id": f"eq.{user_id}",
+                    "is_temp": "eq.true",
+                    "select": "id",
+                },
+            )
+            if temp_response.status_code != 200:    # 응답 코드 확인 후 실패 시 파싱 크래시
+                raise Exception(f"임시 이미지 조회 실패: {temp_response.text}")
+            temp_ids = [row["id"] for row in temp_response.json() if row.get("id")] # id가 None인 비정상 데이터 방어적 필터링
+
+            if temp_ids:
+                storage_headers = get_supabase_headers()
+                storage_headers["Content-Type"] = "application/json"
+                prefixes = [f"{user_id}/{temp_id}.png" for temp_id in temp_ids]
+                
+                storage_res = requests.delete(
+                    f"{SUPABASE_URL}/storage/v1/object/{self.STORAGE_BUCKET}",
+                    headers=storage_headers,
+                    json={"prefixes": prefixes},
+                )
+                if storage_res.status_code not in [200, 204]:
+                    raise Exception(f"Storage 삭제 실패: {storage_res.text}")
+
+                db_res = requests.delete(
+                    f"{SUPABASE_URL}/rest/v1/ai_image?user_id=eq.{user_id}&is_temp=eq.true",
+                    headers=headers,
+                )
+                # Storage는 이미 삭제됐지만  DB 삭제 실패 -> 고아 row 발생
+                # 자동 복구 불가능하므로 user_id, temp_ids 상세로그 남김
+                if db_res.status_code not in [200, 204]:
+                    print(f"=== DB 삭제 실패 (Storage는 삭제됨, user_id={user_id}, temp_ids={temp_ids}) ===")
+                    raise Exception(f"DB 삭제 실패: {db_res.text}")
+
+            return Response({
+                "message": "임시 이미지가 삭제되었습니다.",
+                "deleted_count": len(temp_ids),  # 삭제된 이미지 수, 0이면 프론트에서 중복 호출 감지 가능
+            }, status=200)
+
+        except Exception as error:
+            print(f"=== AI IMAGE CLEANUP ERROR ===\n{error}\n==============================")
+            return Response(
+                {"message": "임시 이미지 삭제 중 오류가 발생했습니다."},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
