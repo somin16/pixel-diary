@@ -1,6 +1,7 @@
 // 1. 리액트 불러오기
 import { useNavigate } from 'react-router-dom';
 import { useState, useEffect } from 'react';
+import toast from 'react-hot-toast'; // 토스트메세지 라이브러리
 
 // 2. 유틸 함수 불러오기
 import AuthValidator from '../../utils/AuthValidator';
@@ -14,6 +15,7 @@ import { supabase } from '../../utils/SupabaseClient';
 // 5. 컴포넌트 불러오기
 import InputBox from '../../components/auth/InputBox';
 import SubmitButton from '../../components/auth/SubmitButton';
+
 
 export default function ResetPassword() {
     // 페이지 이동
@@ -53,7 +55,7 @@ export default function ResetPassword() {
             confirmStatus.state === 'success';
 
         if (!isAllValid) {
-            alert("모든 항목을 올바르게 입력해주세요");
+            toast("모든 항목을 올바르게 입력해주세요");
             return;
         }
 
@@ -71,7 +73,7 @@ export default function ResetPassword() {
             setStep(2);
         } catch (err) {
             console.error("비밀번호 재설정 에러:", err);
-            alert("비밀번호 재설정에 실패했습니다. 다시 시도해주세요.");
+            toast("비밀번호 재설정에 실패했습니다.");
         } finally {
             setLoading(false);
         }
