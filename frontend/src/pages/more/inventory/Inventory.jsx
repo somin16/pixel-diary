@@ -9,6 +9,9 @@ import Header from "../../../components/common/Header";
 import CategoryTabs from "../../../components/more/shop/CategoryTabs";  
 import InventoryItemGrid from "../../../components/more/inventory/InventoryItemGrid";
 
+// zuStand 함수 불러오기
+import { useGetCoinStore } from "../../../store/useCoinStore";
+
 // 아이템 카테고리 목록
 const TABS = ["모두", "스티커", "이모티콘", "테마"];
 
@@ -28,7 +31,7 @@ const Inventory = () => {
 
   // 컴포넌트 상태 관리 (State) - 임시
   const [activeTab, setActiveTab] = useState("모두");
-  const [myCoins, setMyCoins] = useState(100);
+  const { coin: myCoins } = useGetCoinStore(); // setMyCoins는여기서는 안쓰는것 같아서 일단 뺏습니다
   const [selectedItemId, setSelectedItemId] = useState(null); // 선택된 아이템 ID 저장
 
   // 아이템 카테고리 필터링 

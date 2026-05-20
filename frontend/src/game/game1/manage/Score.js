@@ -1,6 +1,9 @@
 import Phaser, { Scale } from 'phaser';
 import { authFetch } from '../../../utils/AuthHelper'; // ../ 은 상위 경로를 의미합니다
 
+// zuStand 함수 불러오기
+import { useGetCoinStore } from "../../../store/useCoinStore";
+
 // 게임 시작시 스코어 초기화
 // 사실 이건 그냥 GameScene.js에 넣어도 되는 부분입니다만, 그래도 한번에 보는게 편하니까 여기에 뒀습니다
 export function createScore(scene) {
@@ -74,9 +77,11 @@ export async function gameClear(scene) {
     const centerX = scene.cameras.main.width / 2;
     const centerY = scene.cameras.main.height / 2;
 
-    // 플레이어가 보유중인 재화(우선 테스트로 30할당)
-    // 차후에 API 연동이 진행될 부분입니다
-    let coin = 30;
+    // 코인 불러오기
+    const myCoins = useGetCoinStore.getState().coin;
+
+    // 플레이어가 보유중인 재화
+    let coin = myCoins; // 값을 coin으로 옮겨두고 연산
 
     // 최종점수(1000점은 게임 클리어 보너스)
     // 여기서 scene.gameScore부분은 차후에 API 연동시 따로 저장이 되도록 구현 예정
