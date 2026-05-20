@@ -1,0 +1,40 @@
+info:
+  name: AI-그림-생성
+  type: http
+  seq: 7
+
+http:
+  method: POST
+  url: http://127.0.0.1:8000/api/v1/ai-generate/
+  headers:
+    - name: Authorization
+      value: "Bearer "
+  body:
+    type: json
+    data: |-
+      {
+        "positive_prompt": "",
+        "negative_prompt": ""
+      }
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 360000
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |
+  ### Body / Json
+  - positive_prompt: prompt/transform 또는 prompt/restyle 응답의 positive_prompt 값 (필수)
+  - negative_prompt: prompt/transform 또는 prompt/restyle 응답의 negative_prompt 값 (필수)
+  ***
+  ### Headers
+  - Authorization: Bearer 로그인 시 받은 access_token
+  ***
+  ### Status Code
+  - 200 OK: AI 그림 생성 및 임시 저장 성공
+  - 400 Bad Request: 필수값 누락 (Authorization Bearer 헤더 access_token)
+  - 400 Bad Request: positive_prompt 누락
+  - 401 Unauthorized: 유효하지 않은 access_token인 경우
+  - 503 Service Unavailable: ComfyUI 서버 연결 실패 (ComfyUI가 실행 중인지 확인)

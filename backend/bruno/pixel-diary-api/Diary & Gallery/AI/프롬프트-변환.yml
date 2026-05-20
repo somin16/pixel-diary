@@ -5,7 +5,7 @@ info:
 
 http:
   method: POST
-  url: http://127.0.0.1:8000/api/v1/prompt/transform
+  url: http://127.0.0.1:8000/api/v1/prompt/
   body:
     type: json
     data: |-
@@ -22,24 +22,12 @@ settings:
   followRedirects: true
   maxRedirects: 5
 
-docs: |-
+docs: |
   ### Body / Json
   - diary: 변환할 일기 내용 (한국어로 입력해 주세요)(필수)
   - request: 변환과 동시에 추가하거나 강조하고 싶은 내용 (한국어 가능)(선택)
   - remove: 변환과 동시에 제거하고 싶은 요소 (한국어 가능)(선택)
   ***
-  ### LLM 모델
-  - Groq Qwen (qwen/qwen3-32b) 고정 사용
-  ***
-  ### Response
-  - model: 사용된 LLM 모델명
-  - positive_prompt: ComfyUI 긍정 프롬프트에 추가해 주세요
-  - negative_prompt: ComfyUI 부정 프롬프트에 추가해 주세요
-  ***
   ### Status Code
   - 200 OK: 프롬프트 변환 성공
   - 400 Bad Request: 필수값 누락 (diary)
-  ***
-  ### 프롬프트-수정과의 차이
-  - request / remove를 여기서 함께 보내면 변환과 수정을 한 번에 처리
-  - 변환 후 추가 수정이 필요한 경우 POST /api/v1/prompt/restyle 사용
