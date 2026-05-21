@@ -11,15 +11,13 @@ export default function AuthRedirect() {
         let isMounted = true; // 메모리 누수 및 중복 실행 방지
 
         const processAuth = async () => {
+            // 네이버는 ? 뒤에 code가 옴 (일반 OAuth 방식)
+            const params = new URLSearchParams(window.location.search);
             // 구글/카카오는 # 뒤에 토큰이 바로 옴 (Supabase implicit 방식)
             const hashParams = new URLSearchParams(window.location.hash.substring(1));
             const access_token = hashParams.get('access_token');
             const refresh_token = hashParams.get('refresh_token');
-            // 더 안전한 코드 (해시와 쿼리 스트링 양쪽에서 type을 다 찾아봄)
-            const type = hashParams.get('type') || params.get('type');
-
-            // 네이버는 ? 뒤에 code가 옴 (일반 OAuth 방식)
-            const params = new URLSearchParams(window.location.search);
+            const type = hashParams.get('type') || params.get('type'); //(해시와 쿼리 스트링 양쪽에서 type을 다 찾아봄)
             const provider = params.get('provider');
             const code = params.get('code');
 
