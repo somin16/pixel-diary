@@ -11,6 +11,11 @@ export default function AuthRedirect() {
         let isMounted = true; // 메모리 누수 및 중복 실행 방지
 
         const processAuth = async () => {
+            // ✅ 임시 디버깅 로그 추가
+            console.log('🔍 전체 URL:', window.location.href);
+            console.log('🔍 hash:', window.location.hash);
+            console.log('🔍 search:', window.location.search);
+
             // 네이버는 ? 뒤에 code가 옴 (일반 OAuth 방식)
             const params = new URLSearchParams(window.location.search);
             // 구글/카카오는 # 뒤에 토큰이 바로 옴 (Supabase implicit 방식)
@@ -18,8 +23,16 @@ export default function AuthRedirect() {
             const access_token = hashParams.get('access_token');
             const refresh_token = hashParams.get('refresh_token');
             const type = hashParams.get('type') || params.get('type'); //(해시와 쿼리 스트링 양쪽에서 type을 다 찾아봄)
+
+            // 신형: token_hash 방식 추가
+            const token_hash = params.get('token_hash');
+
             const provider = params.get('provider');
             const code = params.get('code');
+
+            // ✅ 파싱된 값도 확인
+            console.log('🔍 access_token:', access_token);
+            console.log('🔍 type:', type);
 
             // 일반 로그인
             const emailAccess = params.get('access_token');
@@ -32,24 +45,47 @@ export default function AuthRedirect() {
             if (!isMounted) return;
 
             // [ CRITICAL CASE ] 비밀번호 재설정 처리 (가장 먼저 검사해 가로채기 방지)
-            if (type === 'recovery' && access_token) {
-                try {
-                    const { error } = await supabase.auth.setSession({
-                        access_token: access_token,
-                        refresh_token: refresh_token || '',
-                    });
+            if (type === 'recovery') {
 
-                    if (error) throw error;
+                // 신형: token_hash 방식
+                if (token_hash) {
+                    try {
+                        const { error } = await supabase.auth.verifyOtp({
+                            token_hash,
+                            type: 'recovery',
+                        });
 
-                    setStatus('recovery');
-                    // 세션이 주입된 직후 확실하게 리다이렉트
-                    setTimeout(() => navigate('/auth/password/reset'), 1500);
-                } catch (err) {
-                    console.error("비밀번호 재설정 세션 주입 에러:", err);
-                    setStatus('error');
-                    setTimeout(() => navigate('/auth/login'), 2000);
+                        if (error) throw error;
+
+                        setStatus('recovery');
+                        setTimeout(() => navigate('/auth/password/reset'), 1500);
+                    } catch (err) {
+                        console.error("비밀번호 재설정 세션 주입 에러:", err);
+                        setStatus('error');
+                        setTimeout(() => navigate('/auth/login'), 2000);
+                    }
+                    return;
                 }
-                return; // 로직 종료
+
+                // 구형: access_token 방식 (혹시 몰라 fallback으로 남겨둠)
+                if (access_token) {
+                    try {
+                        const { error } = await supabase.auth.setSession({
+                            access_token,
+                            refresh_token: refresh_token || '',
+                        });
+
+                        if (error) throw error;
+
+                        setStatus('recovery');
+                        setTimeout(() => navigate('/auth/password/reset'), 1500);
+                    } catch (err) {
+                        console.error("비밀번호 재설정 세션 주입 에러:", err);
+                        setStatus('error');
+                        setTimeout(() => navigate('/auth/login'), 2000);
+                    }
+                    return;
+                }
             }
 
             // [ case 1 ]회원가입 결과 처리 (from=signup인 경우)

@@ -69,6 +69,8 @@ export default function ResetPassword() {
                 throw error;
             }
 
+            await supabase.auth.signOut(); // 세션 종료
+
             // 성공 시 완료 화면으로 전환
             setStep(2);
         } catch (err) {
@@ -124,10 +126,7 @@ export default function ResetPassword() {
             ) : (
                 /* STEP 2 : 변경 완료 화면 */
                 <div className="w-full flex flex-col items-center gap-[10%] text-center">
-                    <p className="font-bold text-2xl text-gray-800">비밀번호가 변경되었습니다!</p>
-                    <p className="text-xl text-gray-500 leading-relaxed">
-                        새 비밀번호로 로그인해 주세요.
-                    </p>
+                    <p className=" text-base text-blue-400 p-[5%]">📬 비밀번호가 변경되었습니다!</p>
 
                     <SubmitButton
                         currentTheme={currentTheme}
