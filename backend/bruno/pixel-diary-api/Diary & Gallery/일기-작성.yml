@@ -14,7 +14,7 @@ http:
     data: |-
       {
         "content": "",
-        "image_id": ""
+        "image_id": 0
       }
   auth: inherit
 

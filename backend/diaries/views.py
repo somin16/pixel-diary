@@ -52,7 +52,7 @@ class DiaryView(APIView):
             )
 
         # 요청 Body에서 필수값 추출 (앞뒤 공백 제거)
-        image_id = request.data.get("image_id", "").strip()
+        image_id = request.data.get("image_id") or None
         content = request.data.get("content", "").strip()
 
         if not all([image_id, content]):
