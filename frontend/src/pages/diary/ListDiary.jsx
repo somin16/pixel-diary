@@ -88,7 +88,7 @@ export default function ListDiary() {
                         {diaries.map((diary) => (
                             <ListDiaryItem
                                 key={diary.diary_id} // React 리스트 렌더링 시 고유 키 필요
-                                // imageUrl={diary.image_url} ← 현재 목록 API에서 미포함, 추후 활성화
+                                imageUrl={diary.image_url}
                                 currentTheme={currentTheme}
                                 date={formatDisplayDate(diary.created_at)} // "2026-05-14T..." → "26년 05월 14일"
                                 // 클릭 시 상세보기로 이동

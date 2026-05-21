@@ -10,7 +10,10 @@ import PreviewDialog from "../../../components/more/shop/PreviewDialog";
 import ShopItemGrid from "../../../components/more/shop/ShopItemGrid";
 import ItemDetailDialog from "../../../components/more/shop/ItemDetailDialog";
 import PurchaseDialog from "../../../components/more/shop/PurchaseDialog";
-import CategoryTabs from "../../../components/more/shop/CategoryTabs";  
+import CategoryTabs from "../../../components/more/shop/CategoryTabs"; 
+
+// zuStand 함수 불러오기
+import { useGetCoinStore } from "../../../store/useCoinStore";
 
 // 아이템 카테고리 목록
 const TABS = ["모두", "스티커", "이모티콘", "테마"];
@@ -47,7 +50,7 @@ const Shop = () => {
 
   // 컴포넌트 상태 관리 (State)
   const [activeTab, setActiveTab] = useState("모두");
-  const [myCoins, setMyCoins] = useState(100);
+  const { coin: myCoins, setMyCoins} = useGetCoinStore(); // 유저 코인관련 함수들 불러오기(변수명은 유지했습니다)
   const [selectedItem, setSelectedItem] = useState(null);
   const [dialogStep, setDialogStep] = useState(null); 
 
@@ -55,7 +58,7 @@ const Shop = () => {
   const handlePurchase = () => {
     // 보유 코인이 아이템 가격보다 크거나 같은지 검사
     if (myCoins >= selectedItem.price) {
-      setMyCoins(prev => prev - selectedItem.price); // 코인 차감
+      setMyCoins(myCoins - selectedItem.price); // 코인 차감(useCoinStore.js에서 가져옵니다)
       setDialogStep("success"); // 성공 팝업으로 이동
     } else {
       setDialogStep("fail"); // 코인 부족 시 실패 팝업으로 이동
