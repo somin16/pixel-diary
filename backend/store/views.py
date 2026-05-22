@@ -341,3 +341,64 @@ class DecorationItemView(APIView):
                 {"message": "꾸미기 아이템 목록 조회 중 오류가 발생했습니다."},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
+
+
+class ItemListView(APIView):
+    """아이템 목록 조회 API"""
+
+    def get(self, request):
+        """
+        GET /api/v1/items/
+        - Authorization 헤더의 access_token으로 현재 유저 확인
+        - 전체 아이템 목록 반환
+        - 각 아이템의 item_id, item_name, item_type, item_price, item_info, item_image_url 반환
+        """
+        # Authorization 헤더에서 access_token 추출
+        access_token = extract_access_token(request)
+        if not access_token:
+            return Response(
+                {"message": "Authorization 헤더에 유효한 Bearer 토큰이 필요합니다."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        try:
+            # access_token으로 유저 정보 조회
+            user = get_user_from_token(access_token)
+
+            # 유효하지 않은 토큰인 경우 401 반환
+            if not user:
+                return Response(
+                    {"message": "유효하지 않은 토큰입니다."},
+                    status=status.HTTP_401_UNAUTHORIZED,
+                )
+
+            supabase_url = os.getenv("SUPABASE_URL")
+            headers = get_supabase_headers()
+
+            # Supabase items 테이블에서 전체 아이템 목록 조회
+            response = requests.get(
+                f"{supabase_url}/rest/v1/items",
+                headers=headers,
+                params={
+                    "select": "item_id,item_name,item_type,item_price,item_info,item_image_url",
+                    "order": "item_id.asc",
+                },
+            )
+
+            if response.status_code != 200:
+                raise Exception(f"Supabase API 오류: {response.text}")
+
+            return Response(
+                {
+                    "items": response.json(),
+                    "message": "아이템 목록 조회 성공",
+                },
+                status=status.HTTP_200_OK,
+            )
+
+        except Exception as error:
+            print(f"=== ITEM LIST ERROR ===\n{error}\n======================")
+            return Response(
+                {"message": "아이템 목록 조회 중 오류가 발생했습니다."},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
