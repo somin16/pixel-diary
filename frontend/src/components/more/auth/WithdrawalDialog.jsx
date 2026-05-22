@@ -24,6 +24,33 @@ const WithdrawalDialog = ({ onConfirm, onCancel, loginProvider, width = "100%", 
     // 'confirm' (탈퇴 확인) 또는 'password' (비밀번호 입력) 상태 관리
     const [step, setStep] = useState('confirm'); // 'confirm' | 'password'
     const [password, setPassword] = useState("");
+
+    // 에러 메시지 상태 관리
+    const [error, setError] = useState("");
+
+    // 입력값이 바뀔 때 에러를 초기화해주는 함수
+    const handleInputChange = (e) => {
+        setPassword(e.target.value);
+        if (error) setError("");
+    };
+
+    // 2단계 최종 확인 버튼 클릭 시 실행할 함수
+    const handleSubmit = async () => {
+        // 조건 1: 비밀번호 미입력 시
+        if (!password || !password.trim()) {
+            setError("현재 비밀번호를 입력해주세요");
+            return;
+        }
+
+        try {
+            setError(""); // 에러 초기화
+            await onConfirm(password);
+        } catch (errMessage) {
+            // 조건 2: Account.jsx가 throw 해준 서버 에러 메시지를 화면에 표시
+            setError(errMessage);
+        }
+    };
+
     // 소셜 유저 여부
     const isSocialUser = loginProvider !== 'email';
     return (
@@ -74,6 +101,13 @@ const WithdrawalDialog = ({ onConfirm, onCancel, loginProvider, width = "100%", 
                         />
                     </div>
 
+                    {/* 에러 메시지 표시 영역 */}
+                    {error && (
+                        <div className="flex items-center justify-center mt-[1%] mb-[1%]">
+                            <p className="text-[#ef4444] text-[11px] font-bold m-0">{error}</p>
+                        </div>
+                    )}
+
                     {/* 취소하기&확인 버튼 영역 */}
                     <div className="flex gap-[5%] justify-center w-full">
                         <ImageButton
@@ -84,7 +118,7 @@ const WithdrawalDialog = ({ onConfirm, onCancel, loginProvider, width = "100%", 
                         <ImageButton
                             label="확인"
                             imageSrc={getAssetUrl(currentTheme, 'buttons', 'green_button_x3')}
-                            onClick={() => onConfirm(password)}
+                            onClick={handleSubmit}
                         />
                     </div>
                 </DialogBox>

@@ -5,6 +5,7 @@ from rest_framework.response import Response
 from rest_framework import status
 from datetime import datetime, timezone, timedelta
 from utils import extract_access_token, get_user_from_token, get_supabase_headers
+from config.settings import SUPABASE_URL
 
 
 def check_inventory_item(supabase_url, headers, user_id, item_id, expected_type, item_label):
@@ -51,24 +52,14 @@ class DiaryView(APIView):
             )
 
         # 요청 Body에서 필수값 추출 (앞뒤 공백 제거)
-        image_id = request.data.get("image_id", None)  # image_id는 현재 선택사항 입니다. (넣지 않아도 작동에 문제가 없습니다.)
+        image_id = request.data.get("image_id") or None
         content = request.data.get("content", "").strip()
 
-        if not content:
+        if not all([image_id, content]):
             return Response(
-                {"message": "content는 필수입니다."},
+                {"message": "image_id와 content는 필수입니다."},
                 status=status.HTTP_400_BAD_REQUEST,
             )
-        
-        # 나중에 이미지 생성 기능이 구현되어 image_id가 생기면 아래 코드로 교체
-        # image_id = request.data.get("image_id", "").strip()
-        # content = request.data.get("content", "").strip()
-
-        # if not all([image_id, content]):
-        #     return Response(
-        #         {"message": "image_id와 content는 필수입니다."},
-        #         status=status.HTTP_400_BAD_REQUEST,
-        #     )
 
         try:
             # access_token으로 유저 정보 조회
@@ -82,7 +73,6 @@ class DiaryView(APIView):
                 )
 
             user_id = user.get("id")
-            supabase_url = os.getenv("SUPABASE_URL")
             headers = get_supabase_headers()
 
             # 날짜 중복 체크
@@ -91,7 +81,7 @@ class DiaryView(APIView):
             today_kst = datetime.now(kst).strftime("%Y-%m-%d") # 한국시간 기준 오늘날짜 확인
 
             duplicate_check = requests.get(
-                f"{supabase_url}/rest/v1/diaries",
+                f"{SUPABASE_URL}/rest/v1/diaries",
                 headers=headers,
                 params={
                     "user_id": f"eq.{user_id}",
@@ -108,7 +98,7 @@ class DiaryView(APIView):
 
             # Supabase diaries 테이블에 일기 저장
             response = requests.post(
-                f"{supabase_url}/rest/v1/diaries",
+                f"{SUPABASE_URL}/rest/v1/diaries",
                 headers={**headers, "Prefer": "return=representation"},  # 저장된 데이터 반환
                 json={
                     "user_id": user_id,
@@ -122,6 +112,15 @@ class DiaryView(APIView):
                 raise Exception(f"Supabase API 오류: {response.text}")
 
             diary = response.json()[0]
+            diary_id = diary.get("id")
+
+            # image_id가 있으면 ai_image.diary_id 업데이트 및 최종 상태로 변경
+            if image_id:
+                requests.patch(
+                    f"{SUPABASE_URL}/rest/v1/ai_image?id=eq.{image_id}&user_id=eq.{user_id}",
+                    headers=headers,
+                    json={"diary_id": diary_id, "is_temp": False},
+                )
 
             # created_at을 한국 시간으로 변환해서 반환
             kst = timezone(timedelta(hours=9))
@@ -174,17 +173,17 @@ class DiaryView(APIView):
                 )
 
             user_id = user.get("id")
-            supabase_url = os.getenv("SUPABASE_URL")
+    
             headers = get_supabase_headers()
 
             # Supabase diaries 테이블에서 해당 유저의 일기 목록 조회
             response = requests.get(
-                f"{supabase_url}/rest/v1/diaries",
+                f"{SUPABASE_URL}/rest/v1/diaries",
                 headers=headers,
                 params={
                     "user_id": f"eq.{user_id}",
                     "order": "created_at.desc",
-                    "select": "id,content,created_at",  # 이미지 기능 구현 후 image_id 추가 예정
+                    "select": "id,content,created_at,ai_image!diaries_image_id_fkey(image_url)", # 외래키를 사용하라고 supabase에게 명시적으로 알려줌
                 },
             )
 
@@ -203,7 +202,7 @@ class DiaryView(APIView):
                     "diary_id": diary.get("id"),
                     "content": diary.get("content"),
                     "created_at": created_at_kst,
-                    # "image_url": diary.get("image_id"),  # 이미지 기능 구현 후 URL로 교체 예정
+                    "image_url": (diary.get("ai_image") or {}).get("image_url"),
                 })
 
             return Response(
@@ -261,7 +260,7 @@ class DiaryDetailView(APIView):
                 )
 
             user_id = user.get("id")
-            supabase_url = os.getenv("SUPABASE_URL")
+    
             headers = get_supabase_headers()
 
             kst = timezone(timedelta(hours=9))
@@ -269,7 +268,7 @@ class DiaryDetailView(APIView):
 
             # 해당 일기가 본인 것인지 확인
             update_response = requests.patch(
-                f"{supabase_url}/rest/v1/diaries?id=eq.{diary_id}&user_id=eq.{user_id}",
+                f"{SUPABASE_URL}/rest/v1/diaries?id=eq.{diary_id}&user_id=eq.{user_id}",
                 headers={**headers, "Prefer": "return=representation"},
                 json={
                     "content": content,
@@ -344,19 +343,32 @@ class DiaryDetailView(APIView):
                 )
 
             user_id = user.get("id")
-            supabase_url = os.getenv("SUPABASE_URL")
+    
             headers = get_supabase_headers()
 
+            # 일기 삭제 전 image_id 조회 (Storage 파일 삭제에 필요)
+            diary_response = requests.get(
+                f"{SUPABASE_URL}/rest/v1/diaries",
+                headers=headers,
+                params={
+                    "id": f"eq.{diary_id}",
+                    "user_id": f"eq.{user_id}",
+                    "select": "image_id",
+                },
+            )
+            image_id = diary_response.json()[0].get("image_id") if diary_response.json() else None
+
+            # 일기 삭제 (외래키 참조 규칙 CASCADE로 ai_image row도 자동 삭제)
             # 해당 일기가 본인 것인지 확인
             delete_response = requests.delete(
-                f"{supabase_url}/rest/v1/diaries?id=eq.{diary_id}&user_id=eq.{user_id}",
+                f"{SUPABASE_URL}/rest/v1/diaries?id=eq.{diary_id}&user_id=eq.{user_id}",
                 headers={**headers, "Prefer": "return=representation"},
             )
-
             # 삭제 실패 시 예외 발생
+
             if delete_response.status_code not in [200, 204]:
                 raise Exception(f"Supabase API 오류: {delete_response.text}")
-
+            
             # 빈 리스트면 일기가 없거나 본인 일기가 아닌 경우
             # Supabase PostgREST는 조건절(id, user_id)이 둘 다 맞아야 수정되므로
             # GET으로 먼저 확인할 필요 없이 DELETE 결과로 바로 확인 가능
@@ -364,6 +376,16 @@ class DiaryDetailView(APIView):
                 return Response(
                     {"message": "일기를 찾을 수 없거나 삭제 권한이 없습니다."},
                     status=status.HTTP_404_NOT_FOUND,
+                )
+
+            # 연결된 AI 이미지가 있으면 Storage 파일도 삭제
+            if image_id:
+                storage_headers = get_supabase_headers()
+                storage_headers["Content-Type"] = "application/json"
+                requests.delete(
+                    f"{SUPABASE_URL}/storage/v1/object/diary-images",
+                    headers=storage_headers,
+                    json={"prefixes": [f"{user_id}/{image_id}.png"]},
                 )
 
             return Response(
@@ -406,18 +428,17 @@ class DiaryDetailView(APIView):
                 )
 
             user_id = user.get("id")
-            supabase_url = os.getenv("SUPABASE_URL")
+    
             headers = get_supabase_headers()
 
             # 해당 일기 조회 (본인 일기인지 확인)
             diary_response = requests.get(
-                f"{supabase_url}/rest/v1/diaries",
+                f"{SUPABASE_URL}/rest/v1/diaries",
                 headers=headers,
                 params={
                     "id": f"eq.{diary_id}",
                     "user_id": f"eq.{user_id}",
-                    "select": "id,content,created_at",
-                    # "select": "id,content,image_id,created_at",  # 이미지 기능 구현 후 활성화 예정
+                    "select": "id,content,ai_image!diaries_image_id_fkey(image_url),created_at", # 외래키를 사용하라고 supabase에게 명시적으로 알려줌
                 },
             )
 
@@ -428,6 +449,8 @@ class DiaryDetailView(APIView):
                 )
 
             diary = diary_response.json()[0]
+            # 데이터 추출
+            image_url = (diary.get("ai_image") or {}).get("image_url")
 
             # created_at을 한국 시간으로 변환
             kst = timezone(timedelta(hours=9))
@@ -437,7 +460,7 @@ class DiaryDetailView(APIView):
 
             # diary_deco 테이블에서 꾸미기 정보 조회
             deco_response = requests.get(
-                f"{supabase_url}/rest/v1/diary_deco",
+                f"{SUPABASE_URL}/rest/v1/diary_deco",
                 headers=headers,
                 params={
                     "diary_id": f"eq.{diary_id}",
@@ -458,30 +481,28 @@ class DiaryDetailView(APIView):
                 # emoji 아이템 정보 조회
                 if emoji_id:
                     emoji_response = requests.get(
-                        f"{supabase_url}/rest/v1/items",
+                        f"{SUPABASE_URL}/rest/v1/items",
                         headers=headers,
                         params={
                             "item_id": f"eq.{emoji_id}",
-                            "select": "item_id",
-                            # "select": "item_id,item_image_url",  # 이미지 추가 후 활성화 예정
+                            "select": "item_id,item_image_url",
                         },
                     )
                     if emoji_response.json():
                         emoji = emoji_response.json()[0]
                         emotion_item = {
                             "item_id": emoji.get("item_id"),
-                            # "image_url": emoji.get("item_image_url"),  # 이미지 추가 후 활성화 예정
+                            "image_url": emoji.get("item_image_url"),
                         }
 
                 # diary_theme 아이템 정보 조회
                 if diary_theme_id:
                     theme_response = requests.get(
-                        f"{supabase_url}/rest/v1/items",
+                        f"{SUPABASE_URL}/rest/v1/items",
                         headers=headers,
                         params={
                             "item_id": f"eq.{diary_theme_id}",
-                            "select": "item_id,item_type",
-                            # "select": "item_id,item_type,item_image_url",  # 이미지 추가 후 활성화 예정
+                            "select": "item_id,item_type,item_image_url",
                         },
                     )
                     if theme_response.json():
@@ -489,7 +510,7 @@ class DiaryDetailView(APIView):
                         theme_item = {
                             "item_id": theme.get("item_id"),
                             "item_type": theme.get("item_type"),
-                            # "image_url": theme.get("item_image_url"),  # 이미지 추가 후 활성화 예정
+                            "image_url": theme.get("item_image_url"),
                         }
 
                 # sticker 아이템 정보 조회
@@ -497,12 +518,11 @@ class DiaryDetailView(APIView):
                     sticker_item_ids = [s.get("item_id") for s in sticker_id]
                     if sticker_item_ids:
                         sticker_response = requests.get(
-                            f"{supabase_url}/rest/v1/items",
+                            f"{SUPABASE_URL}/rest/v1/items",
                             headers=headers,
                             params={
                                 "item_id": f"in.({','.join(map(str, sticker_item_ids))})",
-                                "select": "item_id",
-                                # "select": "item_id,item_image_url",  # 이미지 기능 구현 후 활성화 예정
+                                "select": "item_id,item_image_url", 
                             },
                         )
                         # item_id별 아이템 정보 매핑
@@ -513,14 +533,14 @@ class DiaryDetailView(APIView):
                                 "item_id": s.get("item_id"),
                                 "pos_x": s.get("pos_x"),
                                 "pos_y": s.get("pos_y"),
-                                # "image_url": item.get("item_image_url"),  # 이미지 기능 구현 후 활성화 예정
+                                "image_url": item.get("item_image_url"),
                             })
 
             return Response(
                 {
                     "diary_id": diary.get("id"),
                     "content": diary.get("content"),
-                    # "image_url": diary.get("image_id"),  # 이미지 기능 구현 후 활성화 예정
+                    "image_url": image_url, 
                     "emotion_item": emotion_item,
                     "theme_item": theme_item,
                     "sticker": sticker_list,
@@ -579,12 +599,12 @@ class DiaryDecoView(APIView):
                 )
 
             user_id = user.get("id")
-            supabase_url = os.getenv("SUPABASE_URL")
+    
             headers = get_supabase_headers()
 
             # 해당 일기가 본인 것인지 확인
             diary_response = requests.get(
-                f"{supabase_url}/rest/v1/diaries",
+                f"{SUPABASE_URL}/rest/v1/diaries",
                 headers=headers,
                 params={
                     "id": f"eq.{diary_id}",
@@ -601,13 +621,13 @@ class DiaryDecoView(APIView):
 
             # emoji_id 확인
             if emoji_id:
-                error = check_inventory_item(supabase_url, headers, user_id, emoji_id, "emoji", "이모티콘")
+                error = check_inventory_item(SUPABASE_URL, headers, user_id, emoji_id, "emoji", "이모티콘")
                 if error:
                     return Response({"message": error}, status=status.HTTP_400_BAD_REQUEST)
 
             # diary_theme_id 확인
             if diary_theme_id:
-                error = check_inventory_item(supabase_url, headers, user_id, diary_theme_id, "diary_theme", "일기장 테마")
+                error = check_inventory_item(SUPABASE_URL, headers, user_id, diary_theme_id, "diary_theme", "일기장 테마")
                 if error:
                     return Response({"message": error}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -623,7 +643,7 @@ class DiaryDecoView(APIView):
 
                 # in 연산자로 한 번에 조회
                 sticker_check = requests.get(
-                    f"{supabase_url}/rest/v1/inventory",
+                    f"{SUPABASE_URL}/rest/v1/inventory",
                     headers=headers,
                     params={
                         "user_id": f"eq.{user_id}",
@@ -651,7 +671,7 @@ class DiaryDecoView(APIView):
 
             # diary_deco 테이블에 저장 (기존 꾸미기가 있으면 수정, 없으면 새로 생성)
             existing_deco = requests.get(
-                f"{supabase_url}/rest/v1/diary_deco",
+                f"{SUPABASE_URL}/rest/v1/diary_deco",
                 headers=headers,
                 params={
                     "diary_id": f"eq.{diary_id}",
@@ -663,7 +683,7 @@ class DiaryDecoView(APIView):
                 # 기존 꾸미기가 있으면 수정
                 deco_id = existing_deco.json()[0].get("deco_id")
                 deco_response = requests.patch(
-                    f"{supabase_url}/rest/v1/diary_deco?deco_id=eq.{deco_id}",
+                    f"{SUPABASE_URL}/rest/v1/diary_deco?deco_id=eq.{deco_id}",
                     headers={**headers, "Prefer": "return=representation"},
                     json={
                         "emoji_id": emoji_id,
@@ -674,7 +694,7 @@ class DiaryDecoView(APIView):
             else:
                 # 없으면 새로 생성
                 deco_response = requests.post(
-                    f"{supabase_url}/rest/v1/diary_deco",
+                    f"{SUPABASE_URL}/rest/v1/diary_deco",
                     headers={**headers, "Prefer": "return=representation"},
                     json={
                         "diary_id": diary_id,
@@ -726,12 +746,12 @@ class DiaryDecoView(APIView):
                 )
 
             user_id = user.get("id")
-            supabase_url = os.getenv("SUPABASE_URL")
+    
             headers = get_supabase_headers()
 
             # 해당 일기가 본인 것인지 확인
             diary_response = requests.get(
-                f"{supabase_url}/rest/v1/diaries",
+                f"{SUPABASE_URL}/rest/v1/diaries",
                 headers=headers,
                 params={
                     "id": f"eq.{diary_id}",
@@ -748,7 +768,7 @@ class DiaryDecoView(APIView):
 
             # diary_deco 테이블에서 해당 일기의 꾸미기 정보 삭제
             delete_response = requests.delete(
-                f"{supabase_url}/rest/v1/diary_deco?diary_id=eq.{diary_id}",
+                f"{SUPABASE_URL}/rest/v1/diary_deco?diary_id=eq.{diary_id}",
                 headers={**headers, "Prefer": "return=representation"},
             )
 

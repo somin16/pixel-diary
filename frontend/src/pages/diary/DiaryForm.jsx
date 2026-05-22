@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { supabase } from "../../utils/SupabaseClient";
 import { authFetch } from "../../utils/AuthHelper";
@@ -44,10 +44,17 @@ export default function DiaryForm() {
     const [isGenerating, setIsGenerating] = useState(false); // AI 그림 생성 중인지 여부
     const [decoMode, setDecoMode] = useState(null); // 꾸미기 모드 (스티커/액자/이모지)
     const [isDecoOpen, setIsDecoOpen] = useState(false); // 꾸미기 창이 열렸는지 여부
-    const [tags, setTags] = useState([]); // AI 그림 옵션(태그)들
+    const [tags, setTags] = useState([]); // AI 그림 옵션 태그들 (추가: 일반, 제거: '-' 접두사)
+    const [convertedPrompt, setConvertedPrompt] = useState({
+        positive_prompt: '',
+        negative_prompt: '',
+    }); // POST/PATCH /api/v1/prompt/ 에서 받은 변환된 프롬프트
+    // ref: 비동기 함수 내에서도 항상 최신 prompt에 접근하기 위해 별도 유지
+    const convertedPromptRef = useRef({ positive_prompt: '', negative_prompt: '' });
     const [savedDiaryId, setSavedDiaryId] = useState(diaryId); // 저장된 일기의 ID
     const [stickers, setStickers] = useState([]); // 화면에 붙인 스티커 목록
     const [duplicateDateInfo, setDuplicateDateInfo] = useState(null); // 이미 작성된 일기가 있는지 확인하기위한 상태 
+    const [savedImageId, setSavedImageId] = useState(null); // 백엔드 DiaryView.post()에서 image_id를 받아 ai_image.diary_id를 업데이트함
 
     // emoji: 서버 저장용 번호(ID)와 화면 표시용 이미지이름(Img)을 따로 관리
     const [selectedEmojiId, setSelectedEmojiId] = useState(null);
@@ -115,30 +122,124 @@ export default function DiaryForm() {
 
 
     // ── [기능] 단계별 화면 이동 처리 ───────────────────────────────────────────
-    function handleSelectOption() { setStep(3); } // 3단계: 그림 옵션 선택으로 이동
-    function handleDrawWithoutOption() { handleGenerateImage(); } // 옵션 없이 바로 그리기
-
-    // AI 그림 생성 함수
-    async function handleGenerateImage() {
-        setIsGenerating(true); // "그리는 중..." 화면 띄우기
-        setStep(4); // 4단계: 생성 대기 화면
+    // 3단계: 옵션 선택 전 일기 내용을 영어 프롬프트로 변환 (POST /api/v1/prompt/)
+    async function handleSelectOption() {
         try {
-            // 실제 서버 연동 시 사용될 코드 (주석 처리됨)
-            // const data = await authFetch(...); 
+            const data = await authFetch(
+                `${import.meta.env.VITE_BACKEND_URL}/api/v1/prompt/`,
+                {
+                    method: 'POST',
+                    body: JSON.stringify({ diary: content }),
+                }
+            );
+            const next = { positive_prompt: data.positive_prompt, negative_prompt: data.negative_prompt };
+            convertedPromptRef.current = next;
+            setConvertedPrompt(next);
+        } catch (error) {
+            console.error('프롬프트 변환 실패:', error);
+            const fallback = { positive_prompt: content, negative_prompt: '' };
+            convertedPromptRef.current = fallback;
+            setConvertedPrompt(fallback);
+        }
+        setStep(3);
+    }
 
-            // 테스트를 위해 2초 기다린 후 가짜 이미지를 보여줍니다.
-            await new Promise((resolve) => setTimeout(resolve, 2000));
-            setImageUrl('https://zrrizmmqdgfjmnejaqkt.supabase.co/storage/v1/object/public/diary-images/diary_5ccb34ef-2fb5-4861-8b5e-fbb1c11e6bfd.png');
-            setStep(5); // 5단계: 완성된 그림 확인 화면으로 이동
+    // 옵션 없이 바로 그리기: 일기 내용 그대로 변환 후 생성
+    async function handleDrawWithoutOption() {
+        setIsGenerating(true);
+        setStep(4);
+        try {
+            const promptData = await authFetch(
+                `${import.meta.env.VITE_BACKEND_URL}/api/v1/prompt/`,
+                {
+                    method: 'POST',
+                    body: JSON.stringify({ diary: content }),
+                }
+            );
+            await _generateImage(promptData.positive_prompt, promptData.negative_prompt);
         } catch (error) {
             console.error('이미지 생성 실패:', error);
-            setStep(3); // 실패하면 옵션 선택창으로 되돌아감
+            setStep(2);
         } finally {
             setIsGenerating(false);
         }
     }
 
-    function handleRegenerateImage() { setStep(3); } // "마음에 안 들어, 다시 그릴래!"
+    // 태그 변경 시 state만 업데이트 (PATCH는 옵션 적용하기 버튼에서 처리)
+    function handleTagsChange(newTags) {
+        setTags(newTags);
+    }
+
+    // AI 그림 생성 함수 (옵션 적용하기 버튼)
+    async function handleGenerateImage() {
+        setIsGenerating(true);
+        setStep(4);
+        try {
+            if (!convertedPromptRef.current.positive_prompt) {
+                // 프롬프트 없으면 POST
+                const data = await authFetch(
+                    `${import.meta.env.VITE_BACKEND_URL}/api/v1/prompt/`,
+                    {
+                        method: 'POST',
+                        body: JSON.stringify({ diary: content }),
+                    }
+                );
+                const next = { positive_prompt: data.positive_prompt, negative_prompt: data.negative_prompt };
+                convertedPromptRef.current = next;
+                setConvertedPrompt(next);
+            }
+
+            if (tags.length > 0) {
+                // 태그 있으면 PATCH
+                const requestTags = tags.filter(t => !t.startsWith('-')).join(', ');
+                const removeTags = tags.filter(t => t.startsWith('-')).map(t => t.substring(1)).join(', ');
+                const data = await authFetch(
+                    `${import.meta.env.VITE_BACKEND_URL}/api/v1/prompt/`,
+                    {
+                        method: 'PATCH',
+                        body: JSON.stringify({
+                            prompt: convertedPromptRef.current.positive_prompt,
+                            request: requestTags,
+                            remove: removeTags,
+                        }),
+                    }
+                );
+                const next = { positive_prompt: data.positive_prompt, negative_prompt: data.negative_prompt };
+                convertedPromptRef.current = next;
+                setConvertedPrompt(next);
+            }
+
+            await _generateImage(convertedPromptRef.current.positive_prompt, convertedPromptRef.current.negative_prompt);
+        } catch (error) {
+            console.error('이미지 생성 실패:', error);
+            setStep(3);
+        } finally {
+            setIsGenerating(false);
+        }
+    }
+
+    // 실제 ai-generate API 호출 (내부 공통 함수)
+    async function _generateImage(positivePrompt, negativePrompt) {
+        const data = await authFetch(
+            `${import.meta.env.VITE_BACKEND_URL}/api/v1/ai-generate/`,
+            {
+                method: 'POST',
+                body: JSON.stringify({
+                    positive_prompt: positivePrompt || content,
+                    negative_prompt: negativePrompt || '',
+                }),
+            }
+        );
+        setImageUrl(data.image_url);
+        setSavedImageId(data.image_id);
+        setStep(5);
+    }
+
+    function handleRegenerateImage() {
+        setTags([]); // 이전 태그 초기화
+        setStep(3);
+    }
+
     function handleDecorate() { setStep(6); } // "좋아, 이제 스티커로 꾸밀래!"
 
     // ── [기능] 최종 저장: 일기 본문 + 꾸미기 정보 ──────────────────────────────
@@ -150,7 +251,8 @@ export default function DiaryForm() {
                 // 새 일기 작성
                 const data = await authFetch(
                     `${import.meta.env.VITE_BACKEND_URL}/api/v1/diaries/`,
-                    { method: "POST", body: JSON.stringify({ content }) }
+                    { method: "POST", body: JSON.stringify({ content, image_id: savedImageId ?? "", }) } // AI 생성 이미지의 image_id 같이 전송
+                    // 백엔드에서 ai_image 테이블의 diary_id를 업데이트하고 is_temp를 false로 변경함
                 );
                 finalDiaryId = data.diary_id;
             } else {
@@ -180,6 +282,18 @@ export default function DiaryForm() {
 
             // 3. 일기 목록 데이터가 바뀌었으니 저장된 캐시를 지웁니다.
             sessionStorage.removeItem('diary_list');
+
+            // 4. 저장 완료 후 임시 이미지 삭제
+            if (savedImageId) {
+                try {
+                    await authFetch(
+                        `${import.meta.env.VITE_BACKEND_URL}/api/v1/ai-generate/`,
+                        { method: 'DELETE' }
+                    );
+                } catch (error) {
+                    console.error('임시 이미지 삭제 실패:', error);
+                }
+            }
 
             // 완료 후 상세 페이지로 이동!
             navigate(`/diary/${selectedDate}`, {
@@ -246,7 +360,24 @@ export default function DiaryForm() {
         }
     };
 
-    function handleClose() { navigate(-1); } // 뒤로 가기
+    // 뒤로 가기 시 임시 이미지 삭제 API 호출
+    // 저장하지 않고 나가면 백엔드에서 is_temp=true인 이미지를 Storage + DB에서 삭제함
+    async function handleClose() {
+        // 생성된 이미지가 있고 아직 저장 안 한 경우에만 삭제 요청
+        if (savedImageId) {
+            try {
+                await authFetch(
+                    `${import.meta.env.VITE_BACKEND_URL}/api/v1/ai-generate/`,
+                    { method: 'DELETE' }
+                );
+            } catch (error) {
+                // 삭제 실패해도 사용자 경험에 영향 없도록 조용히 처리
+                console.error('임시 이미지 삭제 실패:', error);
+            }
+        }
+        navigate(-1);
+    }
+
     function handleCloseOverlay() { setStep(6); }   // 오버레이 닫고 꾸미기 단계로
     function handleCloseOverlay2() { setStep(1); }   // 오버레이 닫고 일기 쓰기 단계로
 
@@ -258,6 +389,7 @@ export default function DiaryForm() {
         setSelectedEmojiImg(null);
         setContent('');
         setSavedDiaryId(null);
+        setSavedImageId(null);
         setStep(1);
 
         // 단순히 defaultFrame으로 돌리지 말고 localStorage 확인
@@ -345,7 +477,7 @@ export default function DiaryForm() {
 
             {/* 3단계: AI 그림 옵션(태그) 선택창 */}
             {step === 3 && (
-                <DiaryOptionSelector onClose={handleCloseOverlay2} currentTheme={currentTheme} tags={tags} onTagsChange={setTags}
+                <DiaryOptionSelector onClose={handleCloseOverlay2} currentTheme={currentTheme} tags={tags} onTagsChange={handleTagsChange}
                     footer={
                         <ImageButton label="옵션 적용하기" onClick={handleGenerateImage} className="w-[60%] aspect-[237/72]" imageSrc={getAssetUrl(currentTheme, 'buttons', 'skyblue_button_x3')} textOption="text-2xl text-[#4C8AE8]" />
                     }

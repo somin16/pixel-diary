@@ -34,7 +34,7 @@ Deno.serve(async (req: Request) => {
     const { data: userData, error: userError } = await supabase
       .from("users") 
       .select("user_name")
-      .eq("id", newContact.user_id)
+      .eq("user_id", newContact.user_id)
       .single();
 
     if (userError) console.error("이름 조회 실패:", userError.message);
@@ -57,9 +57,10 @@ Deno.serve(async (req: Request) => {
         title: "📩 새로운 문의가 접수되었습니다",
         color: 0x5865F2,
         fields: [
-          { name: "👤 작성자", value: userName, inline: true },
+          { name: "🗂️ 문의 번호", value: `\`${newContact.contact_id}\``, inline: true },
           { name: "🆔 유저 ID", value: `\`${newContact.user_id}\``, inline: false },
-          { name: "📧 이메일", value: userEmail, inline: true },
+          { name: "👤 작성자", value: userName, inline: false },
+          { name: "📧 이메일", value: userEmail, inline: false },
           { name: "📝 문의 내용", value: newContact.message, inline: false }
         ],
         footer: { text: "Pixel Diary 관리 시스템" },
