@@ -52,7 +52,7 @@ const MorePage = () => {
   const { startGetCoin } = useGetCoinStore();
 
   useEffect(() => {
-        let isMounted = true; // ← 추가   
+        let isMounted = true; // 
 
         // 세션에서 role 확인
         const checkAdmin = async () => {
@@ -61,7 +61,6 @@ const MorePage = () => {
             setHasNewContact(false);
 
             const { data: { session } } = await supabase.auth.getSession();
-
             if (!isMounted) return; // ← 언마운트됐으면 상태 업데이트 중단
 
             const role = session?.user?.user_metadata?.role;
@@ -99,12 +98,24 @@ const MorePage = () => {
         checkAdmin();
         startGetCoin(); // 코인조회를 더보기 창에서 실행
 
-        // 사용자가 문의하기 페이지에 갔다 돌아왔을 때 알림 갱신
-        window.addEventListener('focus', checkAdmin);
-        return () => {
-          isMounted = false; // ← cleanup에서 false로 변경
-          window.removeEventListener('focus', checkAdmin);
-        };  
+        // 포커스 이벤트 대신 Supabase Realtime 채널 구독
+        const contactChannel = supabase
+         .channel("realtime-contact-changes")
+         .on(
+           "postgres_changes",
+           { event: "*", schema: "public", table: "contact" },
+           () => {
+             if (isMounted) {
+               checkAdmin(); // DB에 새로운 문의(Insert)나 답변(Update)이 생기면 즉시 실행
+             }
+           }
+         )
+         .subscribe();
+
+         return () => {
+            isMounted = false; // cleanup에서 false로 변경
+            supabase.removeChannel(contactChannel);
+         };  
     }, []);
 
     // isAdmin 여부에 따라 메뉴 필터링
