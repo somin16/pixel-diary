@@ -11,10 +11,6 @@ export default function AuthRedirect() {
         let isMounted = true; // 메모리 누수 및 중복 실행 방지
 
         const processAuth = async () => {
-            // ✅ 임시 디버깅 로그 추가
-            console.log('🔍 전체 URL:', window.location.href);
-            console.log('🔍 hash:', window.location.hash);
-            console.log('🔍 search:', window.location.search);
 
             // 네이버는 ? 뒤에 code가 옴 (일반 OAuth 방식)
             const params = new URLSearchParams(window.location.search);
@@ -29,10 +25,6 @@ export default function AuthRedirect() {
 
             const provider = params.get('provider');
             const code = params.get('code');
-
-            // ✅ 파싱된 값도 확인
-            console.log('🔍 access_token:', access_token);
-            console.log('🔍 type:', type);
 
             // 일반 로그인
             const emailAccess = params.get('access_token');
