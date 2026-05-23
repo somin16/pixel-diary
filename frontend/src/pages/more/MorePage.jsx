@@ -51,7 +51,9 @@ const MorePage = () => {
   // 더보기에서 조회를 하는편이 더 낫지 않을까? 해서 이쪽으로 옮겨봤습니다
   const { startGetCoin } = useGetCoinStore();
 
-useEffect(() => {
+  useEffect(() => {
+        let isMounted = true; // ← 추가   
+
         // 세션에서 role 확인
         const checkAdmin = async () => {
             // 기존 코드 시작 전, 초기화 추가
@@ -59,6 +61,9 @@ useEffect(() => {
             setHasNewContact(false);
 
             const { data: { session } } = await supabase.auth.getSession();
+
+            if (!isMounted) return; // ← 언마운트됐으면 상태 업데이트 중단
+
             const role = session?.user?.user_metadata?.role;
             setIsAdmin(role === 'admin');
 
@@ -71,6 +76,7 @@ useEffect(() => {
                 .eq("status", "resolved")
                 .eq("is_read", false);
       
+              if (!isMounted) return; // ← 중간중간 체크
               if (!userError && userData && userData.length > 0) {
                 setHasUnreadReply(true);
               }
@@ -82,6 +88,7 @@ useEffect(() => {
                   .select("contact_id")
                   .eq("status", "pending");
         
+                if (!isMounted) return;  
                 // 하나라도 존재하면(배열의 길이가 0보다 크면) true
                 if (!adminError && adminData && adminData.length > 0) {
                   setHasNewContact(true); 
@@ -94,7 +101,10 @@ useEffect(() => {
 
         // 사용자가 문의하기 페이지에 갔다 돌아왔을 때 알림 갱신
         window.addEventListener('focus', checkAdmin);
-        return () => window.removeEventListener('focus', checkAdmin);
+        return () => {
+          isMounted = false; // ← cleanup에서 false로 변경
+          window.removeEventListener('focus', checkAdmin);
+        };  
     }, []);
 
     // isAdmin 여부에 따라 메뉴 필터링
