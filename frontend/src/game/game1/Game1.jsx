@@ -1,12 +1,21 @@
 import React, { useEffect, useRef } from "react";
+import { useNavigate } from "react-router-dom";
 import Phaser from "phaser";
 import GameScene from "./scenes/GameScene";
 import ModeSelectScene from "./scenes/ModeSelectScene";
 
 const Game1 = () => {
   const gameContainer = useRef(null);
+  const navigate = useNavigate();
 
   useEffect(() => {
+    // Phaser가 보내는 '게임 종료' 신호를 듣고 반응하는 함수
+    const handleExitGame = () => {
+      navigate("/"); // 새로고침(메모리 초기화) 없이 부드럽게 홈으로 이동!
+    };
+
+    // 신호 수신기 부착
+    window.addEventListener("exitMiniGame", handleExitGame);
 
     const config = {
       type: Phaser.AUTO,
@@ -37,8 +46,9 @@ const Game1 = () => {
     // 컴포넌트가 꺼질 때 게임 엔진도 같이 파괴 (메모리 누수 방지)
     return () => {
       game.destroy(true);
+      window.removeEventListener("exitMiniGame", handleExitGame); // 신호 수신기 제거
     };
-  }, []);
+  }, [navigate]);
 
   return (
     <div

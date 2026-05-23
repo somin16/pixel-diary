@@ -123,8 +123,8 @@ function selectRetrun(menuContainer, scene) {
 // 게임종료 버튼 클릭시(현재는 임시로 홈화면으로 보내버립니다)
 function selectGameEnd() {
 
-    // 홈화면으로 보내기
-    window.location.href = "/";
+    // React에게 게임 종료 신호(이벤트) 보내기
+    window.dispatchEvent(new CustomEvent("exitMiniGame"));
 }
 
 // 사운드 버튼 클릭시
