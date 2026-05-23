@@ -17,10 +17,6 @@ class GameBaseScoreSerializer(serializers.Serializer):
 class GameScoreSerializer(GameBaseScoreSerializer):
     pass
 
-# UserCoinSerializer는 보안을 위해 coin 필드 없이 공통 필드만 사용
-class UserCoinSerializer(GameBaseScoreSerializer):
-    pass
-
 # 티켓 사용 시 요청 데이터 검증 (item_id가 올바른 숫자인지 확인)
 class TicketUseSerializer(serializers.Serializer):
     item_id = serializers.IntegerField(
