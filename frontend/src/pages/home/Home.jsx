@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom"; // 페이지 이동 훅
 import { getAssetUrl } from "../../utils/AssetHelper"; // 이미지 에셋 경로 유틸 함수
 import { useTheme } from "../../store/useThemeStore"; // 테마 전역상태관리 커스텀 훅
@@ -6,9 +6,49 @@ import FloatingActionButton from "../../components/home/FloatingActionButton"; /
 import Calendar from "../../components/home/Calendar"; // 달력 컴포넌트
 import { authFetch } from "../../utils/AuthHelper";
 
+// 출석 관련 모듈 및 Zustand 스토어 임포트 
+import Attendance from "../../components/more/attendance/AttendanceDialog";
+import { useAttendanceStore } from "../../store/useAttendanceStore";
+
 export default function Home() {
     const navigate = useNavigate();
     const currentTheme = useTheme((state) => state.currentTheme);
+
+    // 출석 관련 상태 정의
+    const [isAttendanceOpen, setIsAttendanceOpen] = useState(false);
+    const { hasCheckedToday, setHasCheckedToday } = useAttendanceStore();
+
+    // 로그인 직후 자동 출석 체크 및 다이얼로그 제어 로직
+    useEffect(() => {
+        if (hasCheckedToday) return;
+
+        const verifyAttendance = async () => {
+            try {
+                // 1. authFetch를 사용해 백엔드 API로 출석 기록 조회
+                const result = await authFetch(
+                    `${import.meta.env.VITE_BACKEND_URL}/api/v1/profile/attendance/`,
+                    { method: "GET" }
+                );
+
+                // 2. YYYY-MM-DD 형식으로 오늘 날짜 구하기
+                const today = new Date().toLocaleDateString("sv-SE"); 
+
+                // 3. 백엔드에서 준 출석 날짜 목록에 오늘 날짜가 '없다면' 창 띄우기
+                if (!result.attendance_dates.includes(today)) {
+                    setIsAttendanceOpen(true);
+                }
+
+            } catch (error) {
+                // 세션이 없거나 서버 에러일 경우 처리
+                console.error("출석 기록 조회 중 오류 발생:", error);
+            } finally {
+                // 4. 성공하든 에러가 나든 오늘 조회는 끝났으니 도장 찍기
+                setHasCheckedToday(true);
+            }
+        };
+
+        verifyAttendance();
+    }, [hasCheckedToday, setHasCheckedToday]);
 
     // 달력의 기준이 되는 날짜 상태 (오늘 날짜로 초기화)
     // 이 값이 바뀌면 달력이 해당 월로 이동함
@@ -105,6 +145,11 @@ export default function Home() {
             <div className="absolute bottom-[12%] right-[5%]">
                 <FloatingActionButton onClick={handleFabClick} />
             </div>
+
+            {/* 출석 다이얼로그 */}
+            {isAttendanceOpen && (
+                <Attendance onClose={() => setIsAttendanceOpen(false)} />
+            )}
         </div>
     );
 }
