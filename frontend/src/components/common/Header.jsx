@@ -1,5 +1,5 @@
 import React from "react";
-import { useNavigate } from "react-router-dom";
+import { useBackNavigate } from "../../hooks/useBackNavigate";
 import { useTheme } from "../../store/useThemeStore"; // useTheme 불러오기
 import { getAssetUrl } from "../../utils/AssetHelper"; // 헬퍼 불러오기
 
@@ -11,20 +11,14 @@ import { getAssetUrl } from "../../utils/AssetHelper"; // 헬퍼 불러오기
 
 const Header = ({ title, backPath }) => {
   // navigate('/경로') 처럼 사용하여 원하는 주소로 화면을 전환
-  const navigate = useNavigate();
+  const { goBack } = useBackNavigate();
 
   // 테마 전역 관리
   const currentTheme = useTheme((state) => state.currentTheme);
 
   // 뒤로 가기 동작을 처리하는 커스텀 함수
   const handleBack = () => {
-    if (backPath) {
-      // 명시된 경로가 있으면 해당 경로로 이동 (기존 히스토리를 덮어씀)
-      navigate(backPath, { replace: true });
-    } else {
-      // 없으면 기본 뒤로 가기
-      navigate(-1);
-    }
+    goBack(backPath); // ← navigate 대신 goBack으로 교체 (backPath 있으면 그쪽으로, 없으면 -1)
   };
 
   return (

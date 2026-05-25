@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
+import { useBackNavigate } from "../../hooks/useBackNavigate";
 import { authFetch } from "../../utils/AuthHelper";
 import { useTheme } from "../../store/useThemeStore";
 import { getAssetUrl } from "../../utils/AssetHelper";
@@ -26,6 +27,7 @@ import ImageButton from "../../components/common/ImageButton";
 
 export default function DiaryForm() {
   const navigate = useNavigate(); // 페이지 이동을 위한 도구
+  const { goBack, goTo } = useBackNavigate();
   const location = useLocation(); // 현재 페이지의 주소 정보를 가져오는 도구
   const isEditMode = location.pathname.includes('edit'); // 주소에 'edit'이 있으면 수정 모드!
   const currentTheme = useTheme((state) => state.currentTheme); // 현재 앱의 테마(겨울, 여름 등)
@@ -211,6 +213,8 @@ export default function DiaryForm() {
 
   // 실제 ai-generate API 호출 (내부 공통 함수)
   async function _generateImage(positivePrompt, negativePrompt) {
+    console.log("긍정프롬프트:",positivePrompt);
+    console.log("부정프롬프트:",negativePrompt);
     const data = await authFetch(
       `${import.meta.env.VITE_BACKEND_URL}/api/v1/ai-generate/`,
       {
@@ -287,7 +291,7 @@ export default function DiaryForm() {
       }
 
       // 완료 후 상세 페이지로 이동!
-      navigate(`/diary/${selectedDate}`, {
+      await goTo(`/diary/${selectedDate}`, {
         replace: true,
         state: {
           diaryId: finalDiaryId,
@@ -366,7 +370,7 @@ export default function DiaryForm() {
         console.error('임시 이미지 삭제 실패:', error);
       }
     }
-    navigate(-1);
+    await goBack();
   }
 
   function handleCloseOverlay() { setStep(6); }   // 오버레이 닫고 꾸미기 단계로
