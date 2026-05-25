@@ -217,7 +217,7 @@ const DecoPanel = ({ currentTheme, mode, isOpen, onSelectMode, onSelectItem }) =
                           {/* 2. 자물쇠: 미보유 시 중앙에 표시 */}
                           {!isOwned && (
                             <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                              <span className="text-2xl drop-shadow-[0_0_2px_rgba(255,255,255,0.8)]">
+                              <span className="text-3xl drop-shadow-[0_0_2px_rgba(255,255,255,0.8)]">
                                 🔒
                               </span>
                             </div>
