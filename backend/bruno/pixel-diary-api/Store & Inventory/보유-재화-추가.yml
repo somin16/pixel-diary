@@ -13,8 +13,8 @@ http:
     type: json
     data: |-
       {
-        "game_score": 100,
-        "coin" : 100
+        "game_score": 0,
+        "coin" : 0
       }
   auth: inherit
 
@@ -35,5 +35,7 @@ docs: |
   ***
   ### Status Code
   - 200 OK: 재화 추가 성공
-  - 400 Bad Request: 필수값 누락 (Authorization Bearer 헤더 access_token), game_score와 coin 중 아무것도 적히지 않았을 경우 혹은 둘다 적혔을 경우
+  - 400 Bad Request: 필수값 누락 (Authorization Bearer 헤더 access_token)
+  - 400 Bad Requset: game_score, coin 둘다 입력시
+  - 400 Bad Requset: game_score, coin 둘다 미입력시
   - 401 Unauthorized: 유효하지 않은 access_token인 경우
