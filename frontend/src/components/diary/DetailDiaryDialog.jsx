@@ -363,7 +363,7 @@ const DetailDiaryDialog = ({
                         - 없음: 테마 기본 이모지 이미지 사용
                         - onError: 이미지 로드 실패 시 숨김 처리 (레이아웃 깨짐 방지)
                     */}
-          <div className="absolute h-full w-[17%] aspect-square right-[1%] pr-[5%] pointer-events-none">
+          <div className="absolute h-full w-[19%] aspect-square right-[1%] pr-[5%] pointer-events-none">
             <img
               src={emojiImageSrc}
               alt="emoji"
@@ -386,16 +386,16 @@ const DetailDiaryDialog = ({
 
             {isMenuOpen && (
               <div
-                className="absolute aspect-[99/102] mt-[5%] w-24 z-80 overflow-hidden"
+                className="absolute aspect-[99/135] mt-[5%] w-24 z-80 overflow-hidden"
                 style={{
                   backgroundImage: `url(${getAssetUrl(currentTheme, 'boxes', 'edit_delete_share_menu_box_x3')})`,
                   backgroundSize: '100% 100%',
                 }}
               >
-                <button className="mt-[2%] w-full h-[32%] font-semibold outline-none text-xs" onClick={handleEditNavigation}>수정</button>
-                <button className="w-full h-[32%] text-red-500 text-xs font-semibold outline-none" onClick={handleDeleteMenuClick}>삭제</button>
-                <button className="w-full h-[32%] text-red-500 text-2xs font-semibold outline-none" onClick={handleResetDeco}>꾸미기 초기화</button>
-                {/* <button className="w-full h-[32%]  text-xs font-semibold outline-none" onClick={handleShare}>공유</button> 나중에 공유기능 추가되면 그때 주석 해제 */}
+                <button className="mt-[2%] w-full h-[25%] font-semibold outline-none text-xs" onClick={handleEditNavigation}>수정</button>
+                <button className="w-full h-[25%] text-red-500 text-xs font-semibold outline-none" onClick={handleDeleteMenuClick}>삭제</button>
+                <button className="w-full h-[25%] text-red-500 text-2xs font-semibold outline-none" onClick={handleResetDeco}>꾸미기 초기화</button>
+                <button className="w-full h-[25%]  text-xs font-semibold outline-none" onClick={handleShare}>공유</button>
               </div>
             )}
           </div>
