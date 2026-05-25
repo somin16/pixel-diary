@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from 'react-router-dom';
 import { useTheme } from '../../../store/useThemeStore'; // useTheme 불러오기
 import { getAssetUrl } from "../../../utils/AssetHelper"; // 헬퍼 불러오기 
+import { authFetch } from '../../../utils/AuthHelper';
 
 // 컴포넌트 불러오기
 import Header from "../../../components/common/Header";
@@ -18,28 +19,6 @@ import { useGetCoinStore } from "../../../store/useCoinStore";
 // 아이템 카테고리 목록
 const TABS = ["모두", "스티커", "이모티콘", "테마"];
 
-// 아이템 더미 데이터
-const MOCK_ITEMS = [
-  {
-    id: 1,
-    name: "겨울 테마",
-    price: 30,
-    icon: "home_icon_x3",
-    type: "테마",
-    isSoldOut: false,
-    themeKey: "winter_light",
-    previews: [
-      "winter_light_preview_1",
-      "winter_light_preview_2",
-      "winter_light_preview_3",
-      "winter_light_preview_4",
-      "winter_light_preview_5"
-    ]
-  },
-  { id: 2, type: "티켓", name: "티켓", price: 10000, icon: "ticket_icon", isSoldOut: false, owned: 0 },
-  { id: 3, type: "티켓", name: "저렴한 티켓", price: 3, icon: "ticket_icon", isSoldOut: false },
-  { id: 4, type: "티켓", name: "품절 티켓", price: 0, icon: "ticket_icon", isSoldOut: true },
-];
 
 const Shop = () => {
   // navigate('/경로') 처럼 사용하여 원하는 주소로 화면을 전환
@@ -52,7 +31,9 @@ const Shop = () => {
   const [activeTab, setActiveTab] = useState("모두");
   const { coin: myCoins, setMyCoins } = useGetCoinStore(); // 유저 코인관련 함수들 불러오기(변수명은 유지했습니다)
   const [selectedItem, setSelectedItem] = useState(null);
-  const [dialogStep, setDialogStep] = useState(null);
+  const [dialogStep, setDialogStep] = useState(null); 
+  const [items, setItems] = useState([]); // API에서 불러온 아이템 목록
+  const [loading, setLoading] = useState(true); // 아이템 목록 로딩 상태
 
   // 아이템 구매 처리 로직
   const handlePurchase = () => {
@@ -71,11 +52,43 @@ const Shop = () => {
     setDialogStep(null);
   };
 
+  // 아이템 목록 불러오기
+  useEffect(() => {
+      const fetchItems = async () => {
+          try {
+              const result = await authFetch(
+                  `${import.meta.env.VITE_BACKEND_URL}/api/v1/items/`
+              );
+              const mappedItems = (result.items || [])
+                  .filter(item => item.item_type !== 'diary_theme' && item.item_type !== 'ticket')  // diary_theme는 app_theme 구매 시 자동 지급되므로 상점에서 제외, 티켓은 상점에서 구매 불가능
+                  .map(item => ({
+                      id: item.item_id,
+                      name: item.item_name,
+                      type: item.item_type,
+                      price: item.item_price,
+                      icon: item.item_image_url || 'home_icon_x3',  // 이미지 URL이 없으면 기본 아이콘 사용
+                      isSoldOut: false,  // 추후 인벤토리 조회 결과와 비교하여 설정 예정
+                  }));
+              setItems(mappedItems);
+          } catch (error) {
+              console.error('아이템 목록 조회 실패:', error);
+          } finally {
+              setLoading(false);
+          }
+      };
+      fetchItems();
+  }, []);
+
   // 아이템 카테고리 필터링 
   // activeTab이 "모두"일 때는 전체 리스트를, 아니면 타입이 일치하는 것만 걸러내서 나타냄
-  const filteredItems = activeTab === "모두"
-    ? MOCK_ITEMS
-    : MOCK_ITEMS.filter(item => item.type === activeTab);
+  const filteredItems = activeTab === "모두" 
+    ? items
+    : items.filter(item => {
+        if (activeTab === "스티커") return item.type === "sticker";
+        if (activeTab === "이모티콘") return item.type === "emoji";
+        if (activeTab === "테마") return item.type === "app_theme";
+        return true;
+    });
 
   return (
     // 상점 전체 화면 컨테이너 (배경 이미지 적용)
@@ -147,16 +160,28 @@ const Shop = () => {
         marginTop="mt-[100px]" // 필요 시 상단 여백 조절 가능
       />
 
+      {/* 로딩 중에는 로딩 메시지를 표시 */}
       {/* 아이템 그리드 분리 - ShopItem에 filteredItems를 전달*/}
       {/* 탭 조건에 맞게 필터링된 아이템 목록을 화면에 렌더링 */}
-      <ShopItemGrid
-        items={filteredItems}
-        onItemClick={(item) => {
-          setSelectedItem(item); // 클릭한 아이템 정보 저장
-          setDialogStep("detail"); // 상세 정보 팝업 띄우기
-        }}
-      />
-
+      {loading ? (
+          <div 
+                className="w-full flex-1 p-[3%] pb-0 overflow-y-auto bg-[length:100%_100%]"
+                style={{ backgroundImage: `url(${getAssetUrl(currentTheme, 'boxes', 'store_box_x3')})` }}
+              > 
+              <div className="flex justify-center mt-[50%] text-sm text-gray-500 font-bold animate-bounce">
+              불러오는 중...
+              </div>
+          </div>
+      ) : (
+          <ShopItemGrid
+              items={filteredItems}
+              onItemClick={(item) => {
+                  setSelectedItem(item);  // 클릭한 아이템 정보 저장
+                  setDialogStep("detail");  // 상세 정보 팝업 띄우기
+              }}
+          />
+      )}
+    
       {/* 다이얼로그 영역(dialogStep 상태에 따라 다른 팝업을 렌더링) */}
 
       {/* 아이템 상세 정보 팝업 */}
