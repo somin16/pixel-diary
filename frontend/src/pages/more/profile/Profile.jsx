@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from 'react-router-dom';
 import { useTheme } from '../../../store/useThemeStore'; // useTheme 불러오기
 import { getAssetUrl } from "../../../utils/AssetHelper"; // 헬퍼 불러오기
+import { authFetch } from "../../../utils/AuthHelper";
 
 // zustand 함수 불러오기
 import { useProfileStore } from '../../../store/useProfileStore';
@@ -28,14 +29,17 @@ const Profile = () => {
     updateProfileLocally // 나중에 수정 완료 시 쓸 함수
   } = useProfileStore();
 
-  // 사용자 정보 상태 관리 (닉네임, 이메일, 수정 완료 메세지, 프로필 사진)
-  const [nickname, setNickname] = useState(storeNickname); 
-  const [email, setEmail] = useState(storeEmail); 
-  const [showSuccessMessage, setShowSuccessMessage] = useState(false);
-  const [profileImage, setProfileImage] = useState(storeImage);
+  // 사용자 정보 상태 관리
+  const [nickname, setNickname] = useState(storeNickname); // 닉네임
+  const [email, setEmail] = useState(storeEmail); // 이메일
+  const [profileImage, setProfileImage] = useState(storeImage); // 프로필 사진
+  const [showSuccessMessage, setShowSuccessMessage] = useState(false); // 수정 완료 메세지
+  const [errorMessage, setErrorMessage] = useState(""); // 에러 메세지
 
   // 나중에 API로 전송할 실제 파일 
   const [selectedFile, setSelectedFile] = useState(null);
+
+  // TODO : 유저 닉네임 중복 확인 API 연동
 
   // 프로필 데이터 조회
   useEffect(() => {
@@ -53,11 +57,36 @@ const Profile = () => {
 
   // 수정하기 버튼 클릭 시
   const handleUpdate = async () => {
+    // 버튼 클릭 시 기존 메시지 초기화
+    setShowSuccessMessage(false);
+    setErrorMessage("");
 
-    // TODO: API 연동 시 api 파일에서 불러오기
+    try {
+      // 닉네임 변경 API 호출
+      const response = await authFetch(`${import.meta.env.VITE_BACKEND_URL}/api/v1/auth/username/`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ user_name: nickname }),
+      });
 
-    setShowSuccessMessage(true);
-    setTimeout(() => setShowSuccessMessage(false), 5000);
+      if (response && response.error) {
+        throw new Error(response.error);
+      }
+
+      // 전역 스토어 상태 즉시 동기화
+      updateProfileLocally(nickname, profileImage);
+
+      // 성공 메시지 표시
+      setShowSuccessMessage(true);
+      setTimeout(() => setShowSuccessMessage(false), 5000);
+      
+    } catch (error) {
+      console.error("닉네임 변경 오류:", error);
+      setErrorMessage("닉네임 변경에 실패했습니다. 다시 시도해 주세요.");
+      setTimeout(() => setErrorMessage(""), 5000);
+    }
   };
 
   // 컴포넌트 언마운트 시 메모리 누수 방지
@@ -122,13 +151,23 @@ const Profile = () => {
 
       {/* 입력 필드 영역 */}
       <section className="px-[10%] flex flex-col gap-[10%] mb-[10%]">
-        {/* 닉네임 입력 */}
-        <InputField
-          label="닉네임"
-          value={nickname}
-          onChange={(e) => setNickname(e.target.value)}
-          placeholder="닉네임을 입력하세요"
-        />
+        <div className="flex flex-col w-full">
+          {/* 닉네임 입력 */}
+          <InputField
+            label="닉네임"
+            value={nickname}
+            onChange={(e) => setNickname(e.target.value)}
+            placeholder="닉네임을 입력하세요"
+          />
+          {/* 에러 메시지 */}
+          <div className="w-full h-[15px] mt-2 pl-2 flex items-center justify-start">
+            {errorMessage && (
+              <p className="text-xs font-normal text-[#EF4444]">
+                {errorMessage}
+              </p>
+            )}
+          </div>
+        </div>
 
         {/* 이메일 입력 - 수정 불가 */}
         <InputField
