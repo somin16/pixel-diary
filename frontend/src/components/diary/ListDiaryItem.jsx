@@ -21,50 +21,50 @@ import { getAssetUrl } from "../../utils/AssetHelper";
 // diary/ListDiaryItem 컴포넌트 선언
 const ListDiaryItem = ({ currentTheme, imageUrl, date, onClick }) => {
 
-    // 전체 아이템의 비율을 정의하는 스타일 (픽셀 왜곡 방지)
-    const itemContainerStyle = {
-        aspectRatio: '111/117', // 디자인 원본 비율 유지
-        width: '100%', 
-    };
+  // 전체 아이템의 비율을 정의하는 스타일 (픽셀 왜곡 방지)
+  const itemContainerStyle = {
+    aspectRatio: '111/117', // 디자인 원본 비율 유지
+    width: '100%',
+  };
 
-    return (
-        <div
-            className="relative flex flex-col items-center cursor-pointer overflow-hidden"
-            style={itemContainerStyle}
-            onClick={onClick}
-        >
-            {/* 레이어 1: 실제 일기 그림 (가장 아래에 위치) */}
-            {/* 프레임의 흰색 영역 위치에 맞춰 absolute로 배치 */}
-            <div className="absolute aspect-square w-full p-[2%] overflow-hidden rounded-[16%] z-10">
-                {imageUrl ? (
-                    <img 
-                        src={imageUrl} 
-                        alt="일기 그림" 
-                        className="w-full h-full object-cover" 
-                    />
-                ) : (
-                    // 이미지가 없을 때 보여줄 기본 배경
-                    <div className="w-full h-full bg-white" />
-                )}
-            </div>
+  return (
+    <div
+      className="relative flex flex-col items-center cursor-pointer overflow-hidden"
+      style={itemContainerStyle}
+      onClick={onClick}
+    >
+      {/* 레이어 1: 실제 일기 그림 (가장 아래에 위치) */}
+      {/* 프레임의 흰색 영역 위치에 맞춰 absolute로 배치 */}
+      <div className="absolute aspect-square w-full p-[2%] overflow-hidden rounded-[16%] z-10">
+        {imageUrl ? (
+          <img
+            src={imageUrl}
+            alt="일기 그림"
+            className="w-full h-full object-cover"
+          />
+        ) : (
+          // 이미지가 없을 때 보여줄 기본 배경
+          <div className="w-full h-full bg-white" />
+        )}
+      </div>
 
-            {/* 레이어 2: 픽셀 아트 프레임 (그림 위에 덮어씌움) */}
-            <div 
-                className="absolute w-full h-full z-20" 
-                style={{
-                    backgroundImage: `url(${getAssetUrl(currentTheme, 'boxes', 'gallery_box_x3')})`,
-                    backgroundSize: 'contain',
-                    backgroundRepeat: 'no-repeat',
-                    backgroundPosition: 'center'
-                }} 
-            />
-            
-            {/* 레이어 3: 날짜 텍스트 (프레임의 파란 바 위에 위치) */}
-            <span className="w-full absolute bottom-[5.5%] text-center text-xs z-30">
-                {date}
-            </span>    
-        </div>
-    )
+      {/* 레이어 2: 픽셀 아트 프레임 (그림 위에 덮어씌움) */}
+      <div
+        className="absolute w-full h-full z-20"
+        style={{
+          backgroundImage: `url(${getAssetUrl(currentTheme, 'boxes', 'gallery_box_x3')})`,
+          backgroundSize: 'contain',
+          backgroundRepeat: 'no-repeat',
+          backgroundPosition: 'center'
+        }}
+      />
+
+      {/* 레이어 3: 날짜 텍스트 (프레임의 파란 바 위에 위치) */}
+      <span className="w-full absolute bottom-[5.5%] text-center text-xs z-30">
+        {date}
+      </span>
+    </div>
+  )
 }
 
 export default ListDiaryItem;

@@ -1,11 +1,11 @@
 import React, { useState } from "react";
-import { useTheme } from "../../../store/useThemeStore"; 
+import { useTheme } from "../../../store/useThemeStore";
 import { getAssetUrl } from "../../../utils/AssetHelper";
 
 // 컴포넌트 불러오기
-import DialogBox from "../../common/dialog/DialogBox"; 
+import DialogBox from "../../common/dialog/DialogBox";
 import ImageButton from "../../common/ImageButton";
-import ScrollColumn from "./ScrollColumn"; 
+import ScrollColumn from "./ScrollColumn";
 
 /**
  * 시간 설정 다이얼로그
@@ -42,7 +42,7 @@ const TimePickerDialog = ({ currentTime = "00:00", onConfirm, onCancel }) => {
 
     const formattedHour = String(finalHour).padStart(2, "0");
     const formattedMinute = String(minute).padStart(2, "0");
-    
+
     // 최종 가공된 데이터를 부모 컴포넌트로 송신
     onConfirm(`${formattedHour}:${formattedMinute}`);
   };
@@ -55,7 +55,7 @@ const TimePickerDialog = ({ currentTime = "00:00", onConfirm, onCancel }) => {
           display: none;
         }
       `}</style>
-      
+
       <div className="text-[18px] font-bold text-black mt-[4%] tracking-wide">
         오늘 일기 채우기
       </div>
@@ -80,14 +80,14 @@ const TimePickerDialog = ({ currentTime = "00:00", onConfirm, onCancel }) => {
         <ImageButton
           label="취소"
           onClick={onCancel}
-          imageSrc={getAssetUrl(currentTheme, 'buttons', 'red_button_x3')} 
+          imageSrc={getAssetUrl(currentTheme, 'buttons', 'red_button_x3')}
           className="flex-1"
           textOption="text-[16px] font-bold text-white"
         />
         <ImageButton
           label="확인"
           onClick={handleConfirmClick}
-          imageSrc={getAssetUrl(currentTheme, 'buttons', 'blue_button_x3')} 
+          imageSrc={getAssetUrl(currentTheme, 'buttons', 'blue_button_x3')}
           className="flex-1"
           textOption="text-[16px] font-bold text-white"
         />

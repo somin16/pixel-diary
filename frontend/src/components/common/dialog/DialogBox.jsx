@@ -17,17 +17,17 @@ const DialogBox = ({ boxImageName = 'popup_message_box_x3', children, width = "a
   return (
     <>
       {/* 어두운 배경 오버레이 */}
-      <div 
-        className="fixed top-0 left-0 w-full h-full bg-black/60 z-60" 
-        onClick={onClose}  
+      <div
+        className="fixed top-0 left-0 w-full h-full bg-black/60 z-60"
+        onClick={onClose}
       />
 
       {/* 다이얼로그 본체 컨테이너 (화면 중앙 정렬) */}
-      <div 
+      <div
         className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-70"
         style={{ width: width, maxWidth: maxWidth }}
       >
-        
+
         {/* 배경 이미지 (넘겨받은 boxImageName에 따라 동적으로 변경됨) */}
         <img
           src={getAssetUrl(currentTheme, 'boxes', boxImageName)}

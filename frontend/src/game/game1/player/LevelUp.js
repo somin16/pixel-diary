@@ -70,7 +70,7 @@ export function levelUpMenu(scene) {
 
     // 버튼이 들어갈 좌표 설정
     const centerX = scene.cameras.main.width / 2;     // 카메라 가운데
-    const startY = 180;        // 첫 번째 버튼의 Y 좌표
+    const startY = scene.cameras.main.height / 2.75;        // 첫 번째 버튼의 Y 좌표
     const buttonGap = 100;     // 버튼 간격
     const buttonWidth = 250;   // 버튼 넓이
     const buttonHeight = 80;   // 버튼 높이

@@ -6,7 +6,7 @@ import tailwindcss from '@tailwindcss/vite' // tailwindcss 불러오기
 export default defineConfig({
   plugins: [
     react(),
-    tailwindcss(), 
+    tailwindcss(),
   ],
   base: '/',
 })

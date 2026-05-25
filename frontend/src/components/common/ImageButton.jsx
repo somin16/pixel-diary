@@ -10,29 +10,29 @@ import React from "react";
  * @param {string} textOption - 버튼의 글씨 크기 및 색상 조정
  */
 
-const ImageButton = ({ label, onClick, imageSrc, className, textOption}) => {
+const ImageButton = ({ label, onClick, imageSrc, className, textOption }) => {
 
-    return (
-        // 뼈대 스타일과 외부 스타일(className)을 백틱(`)으로 합쳐서 적용
-        <button
-            type="button" // onClick으로 전달한 함수만 실행
-            className={`relative bg-transparent border-none p-0 cursor-pointer flex justify-center items-center overflow-hidden outline-none ${className || ''}`}
-            onClick={onClick}
-        >
-            {/* 바닥에 깔리는 배경 이미지 */}
-            <img
-                src={imageSrc}
-                alt={label}
-                className="w-full h-auto block"
-            />
-            {/* 이미지 위로 정중앙에 위치하는 텍스트 */}
-            <span
-                className={`absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-10 whitespace-nowrap ${textOption || 'text-xs text-white'}`}
-            >
-                {label}
-            </span>
-        </button>
-    );
+  return (
+    // 뼈대 스타일과 외부 스타일(className)을 백틱(`)으로 합쳐서 적용
+    <button
+      type="button" // onClick으로 전달한 함수만 실행
+      className={`relative bg-transparent border-none p-0 cursor-pointer flex justify-center items-center overflow-hidden outline-none ${className || ''}`}
+      onClick={onClick}
+    >
+      {/* 바닥에 깔리는 배경 이미지 */}
+      <img
+        src={imageSrc}
+        alt={label}
+        className="w-full h-auto block"
+      />
+      {/* 이미지 위로 정중앙에 위치하는 텍스트 */}
+      <span
+        className={`absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-10 whitespace-nowrap ${textOption || 'text-xs text-white'}`}
+      >
+        {label}
+      </span>
+    </button>
+  );
 };
 
 export default ImageButton;

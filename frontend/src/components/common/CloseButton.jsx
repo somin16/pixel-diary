@@ -18,38 +18,38 @@ import { Navigate, useNavigate } from "react-router-dom"
  * @returns {JSX.Element}
  */
 
-const CloseButton = ({ onClose, className}) => {
-    // 네비게이트 함수 생성
-    const navigate = useNavigate(); 
-    
-    // 현재 테마
-    const currentTheme = useTheme((state) => state.currentTheme);
+const CloseButton = ({ onClose, className }) => {
+  // 네비게이트 함수 생성
+  const navigate = useNavigate();
 
-    /**
-     * 클릭 이벤트 핸들러
-     * @param {React.MouseEvent} e - 클릭 이벤트 객체
-     */
-    const handleClose = (e) => {
-        // 부모 요소로의 클릭 이벤트 전파를 막아 의도치 않은 동작 방지
-        e.stopPropagation();
+  // 현재 테마
+  const currentTheme = useTheme((state) => state.currentTheme);
 
-        if (onClose) {
-            // 별도의 닫기 로직이 주입된 경우 실행
-            onClose();
-        } else {
-            // 기본 동작: 뒤로 가기
-            navigate(-1);
-        }
-    };
+  /**
+   * 클릭 이벤트 핸들러
+   * @param {React.MouseEvent} e - 클릭 이벤트 객체
+   */
+  const handleClose = (e) => {
+    // 부모 요소로의 클릭 이벤트 전파를 막아 의도치 않은 동작 방지
+    e.stopPropagation();
 
-    return(
-        <ImageButton
-            onClick = {handleClose}
-            imageSrc = {getAssetUrl(currentTheme, 'icons', 'close_icon_x3')}
-            className = {`aspect-[27/24] ${className}`}
-            style={{ width: 'calc(var(--scale, 1) * 35px)' }}
-        />
-    )
+    if (onClose) {
+      // 별도의 닫기 로직이 주입된 경우 실행
+      onClose();
+    } else {
+      // 기본 동작: 뒤로 가기
+      navigate(-1);
+    }
+  };
+
+  return (
+    <ImageButton
+      onClick={handleClose}
+      imageSrc={getAssetUrl(currentTheme, 'icons', 'close_icon_x3')}
+      className={`aspect-[27/24] ${className}`}
+      style={{ width: 'calc(var(--scale, 1) * 35px)' }}
+    />
+  )
 }
 
 export default CloseButton;

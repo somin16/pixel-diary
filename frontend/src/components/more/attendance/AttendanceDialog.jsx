@@ -4,11 +4,15 @@ import { useTheme } from "../../../store/useThemeStore";
 import { getAssetUrl } from "../../../utils/AssetHelper";
 import { authFetch } from "../../../utils/AuthHelper";
 import toast from "react-hot-toast";
+import { useAttendanceStore } from "../../../store/useAttendanceStore";
 
 // 컴포넌트 불러오기
 import DialogBox from "../../common/dialog/DialogBox";
 import CloseButton from "../../common/CloseButton";
 import DayBox from "./DayBox";
+
+// zustand 함수 불러오기
+import { useAddCoinStore } from "../../../store/useCoinStore";
 
 // 7일 출석 보상 데이터 구조 (서버 연동 시 초기화 기준이 됨)
 const ATTENDANCE_DAYS = [
@@ -32,6 +36,7 @@ const AttendanceDialog = ({ onClose }) => {
   const [hasCheckedToday, setHasCheckedToday] = useState(false); // 당일 출석 버튼을 눌렀는지 여부
   const [loading, setLoading] = useState(false); // 출석 체크 버튼 눌렀을 때 로딩 상태
   const [fetchLoading, setFetchLoading] = useState(true); // 출석 기록 조회 로딩
+  const setGlobalHasCheckedToday = useAttendanceStore((state) => state.setHasCheckedToday);
 
   // 팝업 열릴 때 출석 기록 조회
   useEffect(() => {
@@ -51,6 +56,7 @@ const AttendanceDialog = ({ onClose }) => {
         const today = new Date().toLocaleDateString("sv-SE"); // YYYY-MM-DD 형식
         if (result.attendance_dates.includes(today)) {
           setHasCheckedToday(true);
+          setGlobalHasCheckedToday(true); // 출석 완료 확인
         }
 
       } catch (error) {
@@ -60,17 +66,17 @@ const AttendanceDialog = ({ onClose }) => {
       }
     };
     fetchAttendance();
-  }, []);
+  }, [setGlobalHasCheckedToday]);
 
   const handleDayClick = async (day) => {
- 
+
     if (attendedDays >= 7) {
       toast("이번 주 출석을 모두 완료했습니다!", { id: "all-done" });
       return;
     }
     if (fetchLoading) return; // 출석 기록 불러오는 중엔 클릭 막기
     if (loading) return;  // 출석 체크 및 보상 받는중이면 클릭 막기 
-    
+
     // 과거 출석일 클릭 시 무시
     if (day <= attendedDays) {
       return;
@@ -102,9 +108,18 @@ const AttendanceDialog = ({ onClose }) => {
       // 오늘 출석 완료 처리
       setHasCheckedToday(true);
 
+      // 전역 상태에도 출석 완료 기록 남기기 (이후 Home에서 다이얼로그 안 띄움)
+      setGlobalHasCheckedToday(true);
+
       // 보상 목록에서 코인과 티켓 각각 분리
       const coinReward = result.reward.find((r) => r.reward_type === "coin");
       const ticketReward = result.reward.find((r) => r.reward_type === "ticket");
+
+      // 코인 리워드가 있을때만 코인추가를 실행
+      if (coinReward) {
+
+        useAddCoinStore.getState().addDirectCoin(coinReward.amount);
+      }
 
       // 티켓 보상이 있는 날이면 코인 + 티켓 알림
       if (ticketReward && ticketReward.amount > 0) {
@@ -119,6 +134,9 @@ const AttendanceDialog = ({ onClose }) => {
       if (error.status === 400) {
         toast("이미 출석 체크를 완료하였습니다", { id: "already-checked" });
         setHasCheckedToday(true);
+
+        // 예외 처리로 이미 출석된 걸 알았을 때도 전역 상태 업데이트
+        setGlobalHasCheckedToday(true);
       } else {
         // 그 외 에러 (서버 오류 등)
         toast(error.message || "출석 체크에 실패했습니다.");

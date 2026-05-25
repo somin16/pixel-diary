@@ -1,6 +1,17 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 Deno.serve(async (req: Request) => {
+  // 외부의 무단 호출을 막는 암호(x-webhook-secret 헤더) 검증
+  const authHeader = req.headers.get("x-webhook-secret");
+  const functionKey = Deno.env.get("WEBHOOK_SECRET");
+
+  if (!authHeader || authHeader !== functionKey) {
+    return new Response(
+      JSON.stringify({ error: "Unauthorized request" }), 
+      { status: 401, headers: { "Content-Type": "application/json" } }
+    );
+  }
+
   // 웹훅(Webhook) URL
   const DISCORD_WEBHOOK_URL = Deno.env.get("DISCORD_WEBHOOK_URL");
 
@@ -50,6 +61,7 @@ Deno.serve(async (req: Request) => {
     // 데이터가 없을 경우를 대비한 기본값 설정
     const userName = userData?.user_name || "이름 정보 없음";
     const userEmail = authUser?.user?.email || "이메일 정보 없음";
+    const categoryName = newContact.category || "기타";
 
     // 디스코드에 띄울 메시지
     const discordMessage = {
@@ -61,6 +73,7 @@ Deno.serve(async (req: Request) => {
           { name: "🆔 유저 ID", value: `\`${newContact.user_id}\``, inline: false },
           { name: "👤 작성자", value: userName, inline: false },
           { name: "📧 이메일", value: userEmail, inline: false },
+          { name: "📂 카테고리", value: `\`${categoryName}\``, inline: false },
           { name: "📝 문의 내용", value: newContact.message, inline: false }
         ],
         footer: { text: "Pixel Diary 관리 시스템" },
@@ -69,11 +82,17 @@ Deno.serve(async (req: Request) => {
     };
 
     // 디스코드 서버로 메시지를 전송
-    await fetch(DISCORD_WEBHOOK_URL, {
+    const discordRes = await fetch(DISCORD_WEBHOOK_URL, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(discordMessage),
     });
+
+    // 에러 발생 시 상세 내용을 확인하기 위해 res.text()를 사용
+    if (!discordRes.ok) {
+      const errorText = await discordRes.text();
+      throw new Error(`디스코드 전송 실패 (${discordRes.status}): ${errorText}`);
+    }
 
     return new Response(JSON.stringify({ message: "디스코드 알림 전송 성공" }), { 
       status: 200,
@@ -81,7 +100,7 @@ Deno.serve(async (req: Request) => {
     });
 
   } catch (error) {
-    console.error("에러 발생 원인:", error);
+    console.error("에러 발생 원인:", error instanceof Error ? error.message : error);
     return new Response(JSON.stringify({ error: "알림 전송 실패" }), { 
       status: 500,
       headers: { "Content-Type": "application/json" }

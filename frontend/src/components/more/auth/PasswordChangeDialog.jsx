@@ -11,10 +11,10 @@ import InputField from '../auth/InputField';
 
 const PasswordChangeDialog = ({ onConfirm, onCancel, width = "100%", maxWidth = "320px" }) => {
   const currentTheme = useTheme((state) => state.currentTheme);
-  
+
   // 'current' (현재 비번 입력) -> 'new' (새 비번 입력) 상태 관리
-  const [step, setStep] = useState('current'); 
-  
+  const [step, setStep] = useState('current');
+
   // 입력값 상태 관리
   const [currentPw, setCurrentPw] = useState("");
   const [newPw, setNewPw] = useState("");
@@ -22,7 +22,7 @@ const PasswordChangeDialog = ({ onConfirm, onCancel, width = "100%", maxWidth = 
 
   // 에러 및 성공 메시지 상태 관리
   const [error, setError] = useState("");
-  const [successMsg, setSuccessMsg] = useState(""); 
+  const [successMsg, setSuccessMsg] = useState("");
   const [loading, setLoading] = useState(false);
 
   // 입력값이 바뀔 때 에러를 초기화해주는 함수
@@ -40,7 +40,7 @@ const PasswordChangeDialog = ({ onConfirm, onCancel, width = "100%", maxWidth = 
 
     // 유틸 클래스의 메서드로 실시간 검사 진행
     const result = AuthValidator.validatePassword(val);
-    
+
     // 조건 만족 시 "안전한 비밀번호입니다." 문구 띄우기
     if (result.state === 'success') {
       setSuccessMsg(result.message);
@@ -67,7 +67,7 @@ const PasswordChangeDialog = ({ onConfirm, onCancel, width = "100%", maxWidth = 
   const handleSubmit = async () => {
     // 1. 필수 미입력 검사
     if (!newPw || !confirmNewPw) {
-      setError("새로운 비밀번호를 모두 입력해주세요"); 
+      setError("새로운 비밀번호를 모두 입력해주세요");
       return;
     }
 
@@ -84,18 +84,18 @@ const PasswordChangeDialog = ({ onConfirm, onCancel, width = "100%", maxWidth = 
       setError(confirmValidation.message); // "비밀번호가 일치하지 않습니다."
       return;
     }
-    
+
     try {
       setLoading(true);
       setError("");
-      
+
       // 부모 컴포넌트(Account.jsx)의 비밀번호 변경 API 함수 실행
       await onConfirm({ currentPw, newPw });
-      
+
     } catch (errMessage) {
       // 4. 현재 비밀번호와 일치하지 않는다는 장고 서버 에러가 올 때 처리
-      const message = typeof errMessage === 'string' 
-        ? errMessage 
+      const message = typeof errMessage === 'string'
+        ? errMessage
         : "현재 비밀번호와 일치하지 않습니다";
       setError(message);
     } finally {
@@ -109,9 +109,9 @@ const PasswordChangeDialog = ({ onConfirm, onCancel, width = "100%", maxWidth = 
       {step === 'current' && (
         <DialogBox boxImageName="popup_message_box_x3" width={width} maxWidth={maxWidth}>
           <p className="text-[13px] font-bold text-center m-0">현재 비밀번호를 입력하세요</p>
-          
+
           <div className="w-[90%] mt-[2%]">
-            <InputField 
+            <InputField
               type="password"
               value={currentPw}
               onChange={handleInputChange(setCurrentPw)}
@@ -147,19 +147,19 @@ const PasswordChangeDialog = ({ onConfirm, onCancel, width = "100%", maxWidth = 
       {step === 'new' && (
         <DialogBox boxImageName="popup_message_box_long_x3" width={width} maxWidth={maxWidth}>
           <p className="text-[13px] font-bold text-center m-0 mt-[5%]">새로운 비밀번호를 입력하세요</p>
-          
+
           <div className="w-[90%] flex flex-col gap-[9%] mt-[2%]">
-            <InputField 
+            <InputField
               type="password"
               value={newPw}
-              onChange={handleNewPwChange} 
+              onChange={handleNewPwChange}
               placeholder="새로운 비밀번호"
               textAlign="center"
             />
-            <InputField 
+            <InputField
               type="password"
               value={confirmNewPw}
-              onChange={handleConfirmPwChange} 
+              onChange={handleConfirmPwChange}
               placeholder="새로운 비밀번호 재확인"
               textAlign="center"
             />

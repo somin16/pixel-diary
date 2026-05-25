@@ -3,6 +3,9 @@ import { useNavigate } from 'react-router-dom';
 import { useTheme } from '../../../store/useThemeStore'; // useTheme 불러오기
 import { getAssetUrl } from "../../../utils/AssetHelper"; // 헬퍼 불러오기
 
+// zustand 함수 불러오기
+import { useProfileStore } from '../../../store/useProfileStore';
+
 // 컴포넌트 불러오기
 import Header from "../../../components/common/Header";
 import ImageButton from "../../../components/common/ImageButton";
@@ -15,24 +18,42 @@ const Profile = () => {
   //  테마 전역 관리
   const currentTheme = useTheme((state) => state.currentTheme);
 
+  // 전역 스토어에서 프로필 데이터 원본 및 통신 함수 가져오기
+  const { 
+    nickname: storeNickname, 
+    email: storeEmail, 
+    profileImage: storeImage, 
+    isFetched, 
+    fetchProfile,
+    updateProfileLocally // 나중에 수정 완료 시 쓸 함수
+  } = useProfileStore();
+
   // 사용자 정보 상태 관리 (닉네임, 이메일, 수정 완료 메세지, 프로필 사진)
-  // 나중에 context나 zuStand로 전역 관리 하는 게 좋을 듯
-  const [nickname, setNickname] = useState("nickname"); // // TODO: API 연동 시 useState("")로 변경
-  const [email, setEmail] = useState("email@email.com"); // // TODO: API 연동 시 useState("")로 변경
-  const [showSuccessMessage, setShowSuccessMessage] = useState(false); 
-  const [profileImage, setProfileImage] = useState(null); 
+  const [nickname, setNickname] = useState(storeNickname); 
+  const [email, setEmail] = useState(storeEmail); 
+  const [showSuccessMessage, setShowSuccessMessage] = useState(false);
+  const [profileImage, setProfileImage] = useState(storeImage);
 
   // 나중에 API로 전송할 실제 파일 
-  const [selectedFile, setSelectedFile] = useState(null); 
+  const [selectedFile, setSelectedFile] = useState(null);
 
-  // 뒤로 가기 함수
-  const handleBack = () => {
-    navigate(-1);
-  };
+  // 프로필 데이터 조회
+  useEffect(() => {
+    fetchProfile();
+  }, [fetchProfile]);
+
+  // 데이터 로딩 완료 시 로컬 폼 상태 동기화
+  useEffect(() => {
+    if (isFetched) {
+      setNickname(storeNickname);
+      setEmail(storeEmail);
+      setProfileImage(storeImage);
+    }
+  }, [isFetched, storeNickname, storeEmail, storeImage]);
 
   // 수정하기 버튼 클릭 시
   const handleUpdate = async () => {
-    
+
     // TODO: API 연동 시 api 파일에서 불러오기
 
     setShowSuccessMessage(true);
@@ -50,36 +71,36 @@ const Profile = () => {
     };
   }, [profileImage]);
 
-return (
-    <div 
-        className="w-full h-full py-[20%] flex flex-col items-center"
-        style={{
-        backgroundImage: `url(${getAssetUrl(currentTheme,'backgrounds','menu_background_x3')})`,
+  return (
+    <div
+      className="w-full h-full py-[20%] flex flex-col items-center"
+      style={{
+        backgroundImage: `url(${getAssetUrl(currentTheme, 'backgrounds', 'menu_background_x3')})`,
         backgroundSize: "100% 100%",
-        }}
+      }}
     >
-      
+
       {/* 상단 헤더 - 뒤로 가기 버튼 */}
       <Header />
 
       {/* 프로필 사진 영역 */}
       <section className="relative w-auto h-auto my-[10%] flex justify-center items-center">
-        <img 
-          src={getAssetUrl(currentTheme, 'boxes', 'profile_image_box_x3')} 
-          alt="프로필 프레임" 
-          className="scale-[120%] z-10 pointer-events-none relative" 
+        <img
+          src={getAssetUrl(currentTheme, 'boxes', 'profile_image_box_x3')}
+          alt="프로필 프레임"
+          className="scale-[120%] z-10 pointer-events-none relative"
         />
         {/* 클릭하면 파일 선택창 열리도록 */}
         <label htmlFor="profileImageInput" className="absolute w-full aspect-square z-20 block cursor-pointer overflow-hidden">
-          <img 
-            src={profileImage || getAssetUrl(currentTheme, 'icons', 'app_icon_x2')} 
-            alt="프로필 사진" 
+          <img
+            src={profileImage || getAssetUrl(currentTheme, 'icons', 'app_icon_32_x3')}
+            alt="프로필 사진"
             className="w-full h-full object-cover cursor-pointer"
           />
         </label>
 
         {/* 숨겨진 파일 input */}
-        <input 
+        <input
           id="profileImageInput"
           type="file"
           accept="image/*"
@@ -101,21 +122,21 @@ return (
 
       {/* 입력 필드 영역 */}
       <section className="px-[10%] flex flex-col gap-[10%] mb-[10%]">
-      {/* 닉네임 입력 */}
-      <InputField 
-        label="닉네임"
-        value={nickname}
-        onChange={(e) => setNickname(e.target.value)}
-        placeholder="닉네임을 입력하세요"
-      />
+        {/* 닉네임 입력 */}
+        <InputField
+          label="닉네임"
+          value={nickname}
+          onChange={(e) => setNickname(e.target.value)}
+          placeholder="닉네임을 입력하세요"
+        />
 
-      {/* 이메일 입력 - 수정 불가 */}
-      <InputField 
-        label="이메일"
-        type="email"
-        value={email}
-        readOnly={true}
-      />
+        {/* 이메일 입력 - 수정 불가 */}
+        <InputField
+          label="이메일"
+          type="email"
+          value={email}
+          readOnly={true}
+        />
 
       </section>
 
