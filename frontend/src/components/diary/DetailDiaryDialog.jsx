@@ -1,5 +1,5 @@
 import { useState, useRef, useCallback } from "react";
-import { getAssetUrl, getDecoAssetUrl, ITEM_IMG_MAP } from "../../utils/AssetHelper";
+import { getAssetUrl } from "../../utils/AssetHelper";
 import CloseButton from "../common/CloseButton";
 import { useNavigate } from "react-router-dom";
 import { formatDisplayDate } from "../../utils/DateFormatter";
@@ -113,15 +113,13 @@ const DetailDiaryDialog = ({
     // ── 프레임 이미지 경로 ──────────────────────────────────────────────────
     // 우선순위: DecoPanel에서 선택한 프레임 > 테마 기본 프레임
     const frameImageSrc = selectedFrame
-        ? getDecoAssetUrl('frames', selectedFrame)
-        : getAssetUrl(currentTheme, 'boxes', 'diary_frame_x3');
+    ?? getAssetUrl(currentTheme, 'boxes', 'diary_frame_x3');
 
     // ── 이모지 이미지 경로 ──────────────────────────────────────────────────
     // 우선순위: DecoPanel에서 선택한 이모지 > 테마 기본 이모지
     // 기본 이모지 파일명 'app_icon_32_x3' → 별도 기본 이모지 이미지 생기면 교체
     const emojiImageSrc = selectedEmoji
-        ? getDecoAssetUrl('emojis', selectedEmoji)
-        : getAssetUrl(currentTheme, 'icons', 'app_icon_32_x3');
+    ?? getAssetUrl(currentTheme, 'icons', 'app_icon_32_x3');
 
     // ── 메뉴 오픈 상태 (상세보기 모드 전용) ────────────────────────────────
     const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -452,7 +450,7 @@ const DetailDiaryDialog = ({
                 />
 
                 {/*
-                    ── 레이어 3: 스티커 (z-40) ──────────────────────────────────
+                    ── 레이어 3: 스티커 (z-60) ──────────────────────────────────
                     
                     [핵심] 래퍼 div에 pointer-events-none 적용
                     → 래퍼 자체는 클릭을 통과시킴
@@ -495,7 +493,7 @@ const DetailDiaryDialog = ({
                             onPointerCancel={handleStickerPointerUp}
                         >
                             <img
-                                src={getDecoAssetUrl('stickers', sticker.img)}
+                                src={sticker.img}
                                 alt={sticker.id}
                                 draggable="false"       // 브라우저 기본 이미지 드래그 비활성화
                                 className="w-full h-full object-contain pointer-events-none"
