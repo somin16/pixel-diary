@@ -11,6 +11,9 @@ import DialogBox from "../../common/dialog/DialogBox";
 import CloseButton from "../../common/CloseButton";
 import DayBox from "./DayBox";
 
+// zustand 함수 불러오기
+import { useAddCoinStore } from "../../../store/useCoinStore";
+
 // 7일 출석 보상 데이터 구조 (서버 연동 시 초기화 기준이 됨)
 const ATTENDANCE_DAYS = [
   { day: 1, type: "basic" },
@@ -111,6 +114,12 @@ const AttendanceDialog = ({ onClose }) => {
       // 보상 목록에서 코인과 티켓 각각 분리
       const coinReward = result.reward.find((r) => r.reward_type === "coin");
       const ticketReward = result.reward.find((r) => r.reward_type === "ticket");
+
+      // 코인 리워드가 있을때만 코인추가를 실행
+      if (coinReward) {
+
+        useAddCoinStore.getState().addDirectCoin(coinReward.amount);
+      }
 
       // 티켓 보상이 있는 날이면 코인 + 티켓 알림
       if (ticketReward && ticketReward.amount > 0) {
