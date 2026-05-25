@@ -5,6 +5,9 @@ import { getAssetUrl } from "../../../utils/AssetHelper"; // 헬퍼 불러오기
 import { supabase } from "../../../utils/SupabaseClient"; // supabase 불러오기
 import { authFetch } from "../../../utils/AuthHelper";
 
+// zustand 불러오기
+import { useProfileStore } from '../../../store/useProfileStore';
+
 // 컴포넌트 불러오기
 import LogoutDialog from '../../../components/more/auth/LogoutDialog';
 import WithdrawalDialog from '../../../components/more/auth/WithdrawalDialog';
@@ -103,6 +106,9 @@ const Account = () => {
         console.error("로컬 세션 삭제 무시:", e);
       }
 
+      // 로그아웃 시 프로필 정보 메모리에서 지우기
+      useProfileStore.getState().clearProfile();
+
       setDialog(null);
       setResultDialog('logout');
 
@@ -136,6 +142,9 @@ const Account = () => {
       } catch (e) {
         console.error("로컬 세션 삭제 무시:", e);
       }
+
+      // 회원탈퇴 시 프로필 메모리 지우기
+      useProfileStore.getState().clearProfile();
 
       setDialog(null);
       setResultDialog('withdrawal');

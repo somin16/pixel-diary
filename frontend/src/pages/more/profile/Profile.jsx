@@ -3,6 +3,9 @@ import { useNavigate } from 'react-router-dom';
 import { useTheme } from '../../../store/useThemeStore'; // useTheme 불러오기
 import { getAssetUrl } from "../../../utils/AssetHelper"; // 헬퍼 불러오기
 
+// zustand 함수 불러오기
+import { useProfileStore } from '../../../store/useProfileStore';
+
 // 컴포넌트 불러오기
 import Header from "../../../components/common/Header";
 import ImageButton from "../../../components/common/ImageButton";
@@ -15,20 +18,38 @@ const Profile = () => {
   //  테마 전역 관리
   const currentTheme = useTheme((state) => state.currentTheme);
 
+  // 전역 스토어에서 프로필 데이터 원본 및 통신 함수 가져오기
+  const { 
+    nickname: storeNickname, 
+    email: storeEmail, 
+    profileImage: storeImage, 
+    isFetched, 
+    fetchProfile,
+    updateProfileLocally // 나중에 수정 완료 시 쓸 함수
+  } = useProfileStore();
+
   // 사용자 정보 상태 관리 (닉네임, 이메일, 수정 완료 메세지, 프로필 사진)
-  // 나중에 context나 zuStand로 전역 관리 하는 게 좋을 듯
-  const [nickname, setNickname] = useState("nickname"); // // TODO: API 연동 시 useState("")로 변경
-  const [email, setEmail] = useState("email@email.com"); // // TODO: API 연동 시 useState("")로 변경
+  const [nickname, setNickname] = useState(storeNickname); 
+  const [email, setEmail] = useState(storeEmail); 
   const [showSuccessMessage, setShowSuccessMessage] = useState(false);
-  const [profileImage, setProfileImage] = useState(null);
+  const [profileImage, setProfileImage] = useState(storeImage);
 
   // 나중에 API로 전송할 실제 파일 
   const [selectedFile, setSelectedFile] = useState(null);
 
-  // 뒤로 가기 함수
-  const handleBack = () => {
-    navigate(-1);
-  };
+  // 프로필 데이터 조회
+  useEffect(() => {
+    fetchProfile();
+  }, [fetchProfile]);
+
+  // 데이터 로딩 완료 시 로컬 폼 상태 동기화
+  useEffect(() => {
+    if (isFetched) {
+      setNickname(storeNickname);
+      setEmail(storeEmail);
+      setProfileImage(storeImage);
+    }
+  }, [isFetched, storeNickname, storeEmail, storeImage]);
 
   // 수정하기 버튼 클릭 시
   const handleUpdate = async () => {
