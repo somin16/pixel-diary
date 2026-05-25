@@ -92,7 +92,6 @@ export default function AnnouncementList() {
         <div className='absolute right-[5%] bottom-[5%]'>
           <FloatingActionButton
             ariaLabel='공지사항작성버튼'
-            currentTheme={currentTheme}
             onClick={() => navigate("/more/announcement/write")}
           />
         </div>

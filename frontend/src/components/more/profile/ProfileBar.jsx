@@ -35,7 +35,7 @@ const ProfileBar = ({ nickname, email, profileImage }) => {
 
         {/* 배경 이미지에 올라가는 사용자 프로필 사진*/}
         <img
-          src={profileImage || getAssetUrl(currentTheme, 'icons', 'app_icon_32_x3')}
+          src={profileImage || getAssetUrl(currentTheme, 'icons', 'app_icon_x2')}
           alt="프로필 사진"
           className="absolute left-[3.7%] top-[43.5%] -translate-y-1/2 w-[21.5%] aspect-square object-cover pointer-events-none"
         />

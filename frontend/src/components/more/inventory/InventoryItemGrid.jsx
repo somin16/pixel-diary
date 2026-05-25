@@ -38,13 +38,11 @@ const InventoryItemGrid = ({ items, selectedItemId, onItemClick }) => {
               />
 
               {/* 아이템 아이콘 */}
-              <div className="absolute top-[15%] h-auto z-10 pointer-events-none aspect-square w-full px-[10%] pb-[35%] flex justify-center">
-                <img
-                src={item.icon}
+              <img
+                src={getAssetUrl(currentTheme, 'icons', item.icon)}
+                className="absolute top-[15%] left-1/2 -translate-x-1/2 w-[70%] h-auto z-10 pointer-events-none"
                 alt={item.name}
               />
-              </div>
-              
 
               {/* 아이템 이름 */}
               <div className="absolute bottom-[10%] w-full flex justify-center items-center z-30 pointer-events-none">

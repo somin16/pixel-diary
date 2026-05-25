@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { authFetch } from "../../utils/AuthHelper";
 import { useTheme } from "../../store/useThemeStore";
-import { getAssetUrl } from "../../utils/AssetHelper";
+import { getAssetUrl, THEME_DEFAULT_FRAMES } from "../../utils/AssetHelper";
 import DiaryOptionSelector from "../../components/diary/DiaryOptionSelector";
 import ImageZoomOverlay from "../../components/diary/ImageZoomOverlay";
 import DecoPanel from "../../components/diary/DecoPanel";
@@ -61,10 +61,13 @@ export default function DiaryForm() {
 
   // ── [기본 액자 설정 및 최근 사용한 액자 기억하기 로직 ] ────────────────
   const lastUsedFrameImg = localStorage.getItem('lastUsedFrame');
+  const defaultFrame = THEME_DEFAULT_FRAMES[currentTheme] ?? { id: 20, img: 'https://zrrizmmqdgfjmnejaqkt.supabase.co/storage/v1/object/public/items/winter_light_frame_x3.png' };
 
   // 2. 초기값: 저장된 이미지가 있으면 그 ID를 쓰고, 없으면 테마 기본 ID 사용
-  const [selectedFrameId, setSelectedFrameId] = useState(null); // id는 선택 시 세팅됨
-  const [selectedFrameImg, setSelectedFrameImg] = useState(lastUsedFrameImg ?? null); // 마지막 사용 액자 or 기본 프레임
+  const [selectedFrameId, setSelectedFrameId] = useState(defaultFrame.id);
+  const [selectedFrameImg, setSelectedFrameImg] = useState(
+    lastUsedFrameImg ?? defaultFrame.img
+  );
 
   // 저장 실패 다이얼로그용 상태
   const [saveError, setSaveError] = useState(null); // null | 'duplicate' | 'unknown'

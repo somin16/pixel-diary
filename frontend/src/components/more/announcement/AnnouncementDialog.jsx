@@ -1,6 +1,5 @@
 import { getAssetUrl } from "../../../utils/AssetHelper"
 import { useState } from "react";
-import ImageButton from "../../../components/common/ImageButton";
 
 /**
  * @typedef {Object} AnnouncementDialogProps
@@ -162,13 +161,12 @@ const AnnouncementDialog = ({ mode = 'view', title: initialTitle, content: initi
             />
 
             {/* 작성/수정 완료 버튼 */}
-            <ImageButton
-              label={mode === 'edit' ? '수정 완료' : '작성 완료'}
+            <button
               onClick={() => onSubmit({ title, content, category: category || '공지' })}
-              className="w-[100%] bottom-[3%] "
-              imageSrc={getAssetUrl(currentTheme, 'buttons', 'profile_info_patch_button_x3')}
-              textOption="text-2xl text-white"
-            />
+              className="w-full h-[8%] bg-blue-900 text-white rounded-xl text-lg font-bold"
+            >
+              {mode === 'edit' ? '수정 완료' : '작성 완료'}
+            </button>
           </>
         )}
       </div>

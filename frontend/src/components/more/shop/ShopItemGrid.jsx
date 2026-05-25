@@ -39,15 +39,18 @@ const ShopItemGrid = ({ items, onItemClick }) => {
               className="w-full h-auto block pointer-events-none"
               alt="아이템 배경"
             />
-              {/* 실제 아이템 아이콘 */}
-              {/* item.icon이 http로 시작하면 외부 URL(Supabase)로, 아니면 로컬 에셋으로 불러옴 */}
-              {/* 아이템 타입별 이미지 크기 설정 */}
-              <div className="absolute top-[15%] h-auto z-10 pointer-events-none aspect-square w-full px-[10%] pb-[35%] flex justify-center">
-                <img
-                src={item.icon.startsWith('http') ? item.icon : getAssetUrl(currentTheme, 'icons', item.icon)}
-                alt={item.name}
-                />
-              </div>
+            {/* 실제 아이템 아이콘 */}
+            {/* item.icon이 http로 시작하면 외부 URL(Supabase)로, 아니면 로컬 에셋으로 불러옴 */}
+            {/* 아이템 타입별 이미지 크기 설정 */}
+            <img
+              src={item.icon.startsWith('http') ? item.icon : getAssetUrl(currentTheme, 'icons', item.icon)}
+              className={`absolute top-[15%] left-1/2 -translate-x-1/2 h-auto z-10 pointer-events-none
+                ${item.type === 'app_theme' ? 'w-[70%]' : ''}
+                ${item.type === 'sticker' ? 'w-[50%]' : ''}
+                ${item.type === 'emoji' ? 'w-[60%]' : ''}
+              `}
+              alt={item.name}
+            />
 
             {/* 가격 정보 (코인 아이콘 + 가격 텍스트) */}
             <div className="absolute bottom-[12%] w-full flex justify-center items-center gap-[4%] z-10 pointer-events-none">
