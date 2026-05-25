@@ -21,8 +21,3 @@ export const getAssetUrl = (currentThemeName, assetFolderName, fileName) => {
     return `/assets/theme/${DEFAULT_THEME_NAME}/${assetFolderName}/${fileName}.png`;
   }
 };
-
-// ── [설정] 테마별 기본 액자(프레임) 설정 ───────────────────────────────────
-export const THEME_DEFAULT_FRAMES = {
-  winter_light: { id: 20, img: 'https://zrrizmmqdgfjmnejaqkt.supabase.co/storage/v1/object/public/items/winter_light_frame_x3.png' }, // 겨울 테마일 때 기본 액자
-};

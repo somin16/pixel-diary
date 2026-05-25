@@ -143,7 +143,9 @@ export default function Home() {
 
       {/* 우측 하단 플로팅 버튼 (오늘 날짜로 일기 작성) */}
       <div className="absolute bottom-[12%] right-[5%]">
-        <FloatingActionButton onClick={handleFabClick} />
+        <FloatingActionButton 
+          currentTheme={currentTheme}
+          onClick={handleFabClick} />
       </div>
 
       {/* 출석 다이얼로그 */}
