@@ -10,34 +10,34 @@ import { getAssetUrl } from "../../utils/AssetHelper"; // 이미지 url
 // auth/SocialLoginButton 컴포넌트 선언
 const SocialLoginButton = ({ onLogin, currentTheme }) => {
 
-    // SNS 플랫폼 데이터 객체 배열
-    const socialPlatforms = [
-        { id: 'google', name: 'google_icon_x3' },
-        { id: 'kakao', name: 'kakaotalk_icon_x3' },
-        { id: 'naver', name: 'naver_icon_x3' }
-    ];
+  // SNS 플랫폼 데이터 객체 배열
+  const socialPlatforms = [
+    { id: 'google', name: 'google_icon_x3' },
+    { id: 'kakao', name: 'kakaotalk_icon_x3' },
+    { id: 'naver', name: 'naver_icon_x3' }
+  ];
 
-    return (
-        <div className="flex justify-center items-center mb-[10%] gap-[3%]"        >
-            {socialPlatforms.map(social => (
-                <button
-                    key={social.id} // 리스트 렌더링 시 고유 식별자 설정
-                    onClick={() => onLogin(social.id)} // 클릭 시 해당 플랫폼 ID 전달
-                    className="transition-transform outline-none" // 버튼 크기 고정 및 버튼 테두리 제거
-                    style={{
-                        width: 'calc(var(--scale) * 60px)',
-                        height: 'calc(var(--scale) * 60px)'
-                    }}
-                >
-                    <img
-                        src={getAssetUrl(currentTheme, 'icons', social.name)}
-                        alt={`${social.id} 로그인`}
-                        className="w-full h-full object-contain" // 이미지 비율을 유지하며 버튼 영역 안에 맞춤
-                    />
-                </button>
-            ))}
-        </div>
-    );
+  return (
+    <div className="flex justify-center items-center mb-[10%] gap-[3%]"        >
+      {socialPlatforms.map(social => (
+        <button
+          key={social.id} // 리스트 렌더링 시 고유 식별자 설정
+          onClick={() => onLogin(social.id)} // 클릭 시 해당 플랫폼 ID 전달
+          className="transition-transform outline-none" // 버튼 크기 고정 및 버튼 테두리 제거
+          style={{
+            width: 'calc(var(--scale) * 60px)',
+            height: 'calc(var(--scale) * 60px)'
+          }}
+        >
+          <img
+            src={getAssetUrl(currentTheme, 'icons', social.name)}
+            alt={`${social.id} 로그인`}
+            className="w-full h-full object-contain" // 이미지 비율을 유지하며 버튼 영역 안에 맞춤
+          />
+        </button>
+      ))}
+    </div>
+  );
 };
 
 export default SocialLoginButton;

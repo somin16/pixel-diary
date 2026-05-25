@@ -15,12 +15,12 @@ import { getAssetUrl } from "../../../utils/AssetHelper"; // 헬퍼 불러오기
  * @param {string} textAlign - 텍스트 정렬 방식 ('left' 또는 'center')
  */
 
-const InputField = ({ 
-  label, 
-  type = "text", 
-  value, 
-  onChange, 
-  placeholder, 
+const InputField = ({
+  label,
+  type = "text",
+  value,
+  onChange,
+  placeholder,
   boxImageName = "info_box_x3", // 배경 이미지 기본값
   readOnly = false,
   textAlign = "left" // 정렬 옵션(left 또는 center)
@@ -32,7 +32,7 @@ const InputField = ({
     <div className="flex flex-col gap-2 w-full">
       {/* 라벨 영역: 값이 전달되었을 때만 화면에 표시됨 */}
       {label && <label className="text-[13px] text-black">{label}</label>}
-      
+
       {/* 배경 이미지 */}
       <div className="relative w-full h-11 flex items-center">
         <img

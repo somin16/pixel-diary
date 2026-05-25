@@ -30,14 +30,14 @@ const Header = ({ title, backPath }) => {
   return (
     <header className="flex items-center justify-center relative mb-12.5 px-5 w-full h-16 shrink-0">
       {/* 뒤로 가기 버튼 */}
-      <button 
-        className="bg-transparent border-none cursor-pointer p-0 absolute left-5 top-1/2 -translate-y-1/2 outline-none transition-transform" 
+      <button
+        className="bg-transparent border-none cursor-pointer p-0 absolute left-5 top-1/2 -translate-y-1/2 outline-none transition-transform"
         onClick={handleBack}
       >
-        <img 
-          src={getAssetUrl(currentTheme, 'icons', 'back_icon_x3')} 
-          alt="뒤로 가기" 
-          className="w-auto h-10" 
+        <img
+          src={getAssetUrl(currentTheme, 'icons', 'back_icon_x3')}
+          alt="뒤로 가기"
+          className="w-auto h-10"
         />
       </button>
 

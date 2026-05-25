@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { supabase } from "../../../utils/SupabaseClient"; 
+import { supabase } from "../../../utils/SupabaseClient";
 import { useTheme } from '../../../store/useThemeStore';
 import { getAssetUrl } from "../../../utils/AssetHelper";
 
@@ -17,9 +17,9 @@ export default function Contact() {
 
   const [contacts, setContacts] = useState([]);
   const [loading, setLoading] = useState(true);
-  
+
   // 다이얼로그 및 아코디언 제어 상태
-  const [activeDialog, setActiveDialog] = useState(null); 
+  const [activeDialog, setActiveDialog] = useState(null);
   const [resultDialog, setResultDialog] = useState(null);
   const [expandedId, setExpandedId] = useState(null);
 
@@ -96,9 +96,9 @@ export default function Contact() {
   }
 
   return (
-    <div 
+    <div
       className="w-full h-screen pt-[16%] pb-[12%] px-[5%] flex flex-col overflow-hidden bg-[length:100%_100%]"
-      style={{ backgroundImage: `url(${getAssetUrl(currentTheme,'backgrounds','menu_background_x3')})` }}
+      style={{ backgroundImage: `url(${getAssetUrl(currentTheme, 'backgrounds', 'menu_background_x3')})` }}
     >
       {/* Header 컴포넌트 */}
       <div className="-mx-[5%] shrink-0">
@@ -114,10 +114,10 @@ export default function Contact() {
         ) : (
           contacts.map((item) => (
             <ContactCard
-                key={item.contact_id}
-                item={item}
-                isExpanded={expandedId === item.contact_id}
-                onToggle={() => handleCardToggle(item)}
+              key={item.contact_id}
+              item={item}
+              isExpanded={expandedId === item.contact_id}
+              onToggle={() => handleCardToggle(item)}
             />
           ))
         )}
@@ -125,7 +125,7 @@ export default function Contact() {
 
       {/* 플로팅액션버튼 컴포넌트 - 문의작성버튼 */}
       <div className="fixed bottom-[5%] right-[5%] z-40">
-        <FloatingActionButton 
+        <FloatingActionButton
           currentTheme={currentTheme}
           ariaLabel="문의작성버튼"
           onClick={() => setActiveDialog('contact')} // 버튼 클릭 시 작성 다이얼로그 활성화
@@ -134,8 +134,8 @@ export default function Contact() {
 
       {/* 문의 입력 다이얼로그 */}
       {activeDialog === 'contact' && (
-        <ContactDialog 
-          onCancel={() => setActiveDialog(null)} 
+        <ContactDialog
+          onCancel={() => setActiveDialog(null)}
           onResult={handleContactResult}
           maxWidth="320px"
         />
@@ -143,18 +143,18 @@ export default function Contact() {
 
       {/* 문의 완료 다이얼로그 */}
       {resultDialog === 'contact_success' && (
-        <ResultDialog 
-          message={<>문의가 성공적으로<br />접수되었습니다.</>} 
-          onConfirm={() => setResultDialog(null)} 
+        <ResultDialog
+          message={<>문의가 성공적으로<br />접수되었습니다.</>}
+          onConfirm={() => setResultDialog(null)}
           maxWidth="320px"
         />
       )}
 
       {/* 문의 실패 다이얼로그 */}
       {resultDialog === 'contact_error' && (
-        <ResultDialog 
-          message={<>일시적인 오류로<br />전송에 실패했습니다.<br />잠시 후 다시 시도해주세요.</>} 
-          onConfirm={() => setResultDialog(null)} 
+        <ResultDialog
+          message={<>일시적인 오류로<br />전송에 실패했습니다.<br />잠시 후 다시 시도해주세요.</>}
+          onConfirm={() => setResultDialog(null)}
           maxWidth="320px"
         />
       )}

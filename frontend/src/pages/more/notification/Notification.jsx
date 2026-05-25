@@ -16,7 +16,7 @@ const NOTIFICATION_LIST = [
 
 const Notification = () => {
   const currentTheme = useTheme((state) => state.currentTheme);
-  
+
   // 알림 활성화 여부 및 설정 시간 상태 관리
   const [notifications, setNotifications] = useState(() => {
     return NOTIFICATION_LIST.map((item) => ({
@@ -68,69 +68,69 @@ const Notification = () => {
   };
 
   return (
-        <div
-            className="w-full h-screen overflow-hidden pt-[16%] pb-[8%] flex flex-col bg-[length:100%_100%]"
-            style={{
-                backgroundImage: `url(${getAssetUrl(currentTheme, 'backgrounds', 'menu_background_x3')})`
-            }}
-        >
-      
-            {/* 상단 헤더 */}
-            <Header title="알림 설정" />
+    <div
+      className="w-full h-screen overflow-hidden pt-[16%] pb-[8%] flex flex-col bg-[length:100%_100%]"
+      style={{
+        backgroundImage: `url(${getAssetUrl(currentTheme, 'backgrounds', 'menu_background_x3')})`
+      }}
+    >
 
-            {/* 메인 컨텐츠 영역 */}
-            <div className="w-full px-[6%] flex flex-col items-center mt-[5%]">
+      {/* 상단 헤더 */}
+      <Header title="알림 설정" />
 
-                {/* 전체 알림 박스 */}
-                <div className="relative w-full">
-                    <img
-                        src={getAssetUrl(currentTheme, 'boxes', 'alarm_all_list_box_x3')}
-                        alt="전체 알림 배경"
-                        className="relative w-full h-auto block"
-                    />
-                    <span className="absolute z-10 top-1/2 -translate-y-1/2 left-[6%] text-[16px] font-bold text-black whitespace-nowrap">
-                        전체 알림
-                    </span>
+      {/* 메인 컨텐츠 영역 */}
+      <div className="w-full px-[6%] flex flex-col items-center mt-[5%]">
 
-                    {/* 토글 컴포넌트 */}
-                    <ToggleButton 
-                        id="all" 
-                        isOn={isAllOn} 
-                        onClick={handleAllToggle} 
-                    />
-                </div>
+        {/* 전체 알림 박스 */}
+        <div className="relative w-full">
+          <img
+            src={getAssetUrl(currentTheme, 'boxes', 'alarm_all_list_box_x3')}
+            alt="전체 알림 배경"
+            className="relative w-full h-auto block"
+          />
+          <span className="absolute z-10 top-1/2 -translate-y-1/2 left-[6%] text-[16px] font-bold text-black whitespace-nowrap">
+            전체 알림
+          </span>
 
-                {/* 구분선 */}
-                <div className="flex justify-center w-full my-[6%] pointer-events-none">
-                    <img
-                        src={getAssetUrl(currentTheme, 'boxes', 'line_x3')}
-                        alt="구분선"
-                        className="w-[92%] object-contain"
-                    />
-                </div>
-
-                {/* 개별 알림 리스트 */}
-                <ul className="list-none p-0 m-0 w-full flex flex-col gap-[8%]">
-                  {notifications.map((item) => (
-                    <NotificationCard
-                      key={item.id}
-                      {...item}
-                      onToggle={handleItemToggle}
-                      onTimeClick={handleCardTimeClick}
-                    />
-                  ))}
-                </ul>
-            </div>
-
-            {/* 시간 설정 팝업창 */}
-            {isPickerOpen && (
-              <TimePickerDialog 
-                currentTime={pickerCurrentTime}
-                onConfirm={handleTimePickerConfirm}
-                onCancel={() => setIsPickerOpen(false)}
-              />
-            )}
+          {/* 토글 컴포넌트 */}
+          <ToggleButton
+            id="all"
+            isOn={isAllOn}
+            onClick={handleAllToggle}
+          />
         </div>
+
+        {/* 구분선 */}
+        <div className="flex justify-center w-full my-[6%] pointer-events-none">
+          <img
+            src={getAssetUrl(currentTheme, 'boxes', 'line_x3')}
+            alt="구분선"
+            className="w-[92%] object-contain"
+          />
+        </div>
+
+        {/* 개별 알림 리스트 */}
+        <ul className="list-none p-0 m-0 w-full flex flex-col gap-[8%]">
+          {notifications.map((item) => (
+            <NotificationCard
+              key={item.id}
+              {...item}
+              onToggle={handleItemToggle}
+              onTimeClick={handleCardTimeClick}
+            />
+          ))}
+        </ul>
+      </div>
+
+      {/* 시간 설정 팝업창 */}
+      {isPickerOpen && (
+        <TimePickerDialog
+          currentTime={pickerCurrentTime}
+          onConfirm={handleTimePickerConfirm}
+          onCancel={() => setIsPickerOpen(false)}
+        />
+      )}
+    </div>
   );
 };
 

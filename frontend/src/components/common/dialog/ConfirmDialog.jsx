@@ -18,19 +18,19 @@ import ImageButton from '../ImageButton';
  * @param {string} [textMt="mt-[10%]"] - 메시지 텍스트의 상단 여백 클래스 (기본값: "mt-[10%]") 
  * @param {string} [textSize="text-[13px]"] - 메시지 텍스트의 크기 클래스 (기본값: "text-[13px]")
 */
-const ConfirmDialog = ({ 
-  message, 
-  onConfirm, 
-  onCancel, 
-  boxImageName, 
-  width = "100%", 
-  maxWidth = "360px", 
-  textMt = "mt-[10%]", 
+const ConfirmDialog = ({
+  message,
+  onConfirm,
+  onCancel,
+  boxImageName,
+  width = "100%",
+  maxWidth = "360px",
+  textMt = "mt-[10%]",
   textSize = "text-[13px]"
 }) => {
   // 테마 전역 관리
   const currentTheme = useTheme((state) => state.currentTheme);
-  
+
   return (
     <DialogBox boxImageName={boxImageName} width={width} maxWidth={maxWidth}>
       {/* 메세지 텍스트 (\n 대응을 위해 whitespace-pre-wrap 적용) */}

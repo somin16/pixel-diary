@@ -9,7 +9,7 @@ import ImageButton from "../../common/ImageButton";
 
 const ContactDialog = ({ onCancel, onResult, width = "100%", maxWidth = "320px" }) => {
   const currentTheme = useTheme((state) => state.currentTheme);
-  
+
   // 상태 관리
   const [content, setContent] = useState("");
   const [error, setError] = useState(""); // 에러 상태 추가
@@ -19,7 +19,7 @@ const ContactDialog = ({ onCancel, onResult, width = "100%", maxWidth = "320px" 
 
   // 중복 전송 방지를 위한 로딩 상태 추가
   const [isSubmitting, setIsSubmitting] = useState(false);
-  
+
   // 문의하기 보내기 버튼 클릭 시 실행되는 비동기 함수
   const handleSend = async () => {
     // 이미 전송 중이면 실행 방지
@@ -36,11 +36,11 @@ const ContactDialog = ({ onCancel, onResult, width = "100%", maxWidth = "320px" 
       setError("카테고리를 입력해주세요");
       return;
     }
-    
+
     // 전송 시도를 시작할 때, 기존에 떠있던 빨간 에러 메시지 지우기
-    setError(""); 
+    setError("");
     setIsSubmitting(true); // 전송 시작 시 로딩 상태 활성화
-    
+
     try {
       // 현재 요청을 보내는 유저가 누구인지(세션) 확인
       const { data: { user }, error: authError } = await supabase.auth.getUser();
@@ -53,9 +53,9 @@ const ContactDialog = ({ onCancel, onResult, width = "100%", maxWidth = "320px" 
 
       // 'users' 테이블에서 현재 로그인한 유저의 정보 조회 (이름 및 서비스용 ID 가져오기)
       const { data: userData, error: userError } = await supabase
-        .from('users')           
-        .select('user_id, user_name') 
-        .eq('user_id', user.id)  
+        .from('users')
+        .select('user_id, user_name')
+        .eq('user_id', user.id)
         .single();
 
       if (userError || !userData) {
@@ -80,7 +80,7 @@ const ContactDialog = ({ onCancel, onResult, width = "100%", maxWidth = "320px" 
 
       // 성공 처리 및 폼 초기화
       onResult(true);
-      setContent(""); 
+      setContent("");
       setCategory("AI 그림 생성 오류");
       setCustomCategory("");
 
@@ -88,7 +88,7 @@ const ContactDialog = ({ onCancel, onResult, width = "100%", maxWidth = "320px" 
       // 에러 예외 처리
       console.error('문의하기 전송 에러:', error);
       setError("서버 통신 중 오류가 발생했습니다. 다시 시도해 주세요.");
-      } finally {
+    } finally {
       setIsSubmitting(false); // 성공하든 실패하든 로딩 상태 해제
     }
   };
@@ -141,10 +141,10 @@ const ContactDialog = ({ onCancel, onResult, width = "100%", maxWidth = "320px" 
         )}
 
         {/* 입력창 영역 */}
-        <div 
+        <div
           className="w-[90%] mt-[4%] flex-1 p-[4%] flex flex-col relative bg-[length:100%_100%] bg-center bg-no-repeat"
-          style={{ 
-            backgroundImage: `url(${getAssetUrl(currentTheme, 'boxes', 'info_box_x3')})` 
+          style={{
+            backgroundImage: `url(${getAssetUrl(currentTheme, 'boxes', 'info_box_x3')})`
           }}
         >
           <textarea

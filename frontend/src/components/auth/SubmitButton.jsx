@@ -13,24 +13,24 @@ import { getAssetUrl } from "../../utils/AssetHelper"; // 이미지 url
 // auth/SubmitButton 컴포넌트 선언
 const SubmitButton = ({ onClick, loading, disabled, currentTheme, text }) => {
 
-    const SubmitButtonStyle = {// 픽셀 아트 배경 이미지 & 비율 설정
-        backgroundImage: `url(${getAssetUrl(currentTheme, 'buttons', 'auth_submit_button_x3')})`,
-        backgroundSize: '100% 100%',// 이미지를 박스 크기에 꽉 채움
-        aspectRatio: '261/72'// 비율을 유지해 픽셀 왜곡 방지
-    };
+  const SubmitButtonStyle = {// 픽셀 아트 배경 이미지 & 비율 설정
+    backgroundImage: `url(${getAssetUrl(currentTheme, 'buttons', 'auth_submit_button_x3')})`,
+    backgroundSize: '100% 100%',// 이미지를 박스 크기에 꽉 채움
+    aspectRatio: '261/72'// 비율을 유지해 픽셀 왜곡 방지
+  };
 
-    return (
-        <button
-            onClick={onClick}
-            disabled={disabled || loading} // 로딩 중이거나 비활성화 상태일 때 클릭 이벤트 차단
-            type="submit"
-            className={`w-full p-5 text-white font-bold text-lg transition-opacity outline-none
+  return (
+    <button
+      onClick={onClick}
+      disabled={disabled || loading} // 로딩 중이거나 비활성화 상태일 때 클릭 이벤트 차단
+      type="submit"
+      className={`w-full p-5 text-white font-bold text-lg transition-opacity outline-none
                 ${(disabled || loading) ? 'opacity-50' : 'opacity-100'}`} // 로딩 중이거나 비활성화 상태일 때 버튼이 흐려짐
-            style={SubmitButtonStyle}
-        >
-            {/* 로딩 상태에 따라 문구를 동적으로 변경 (예: 로그인 -> 로그인 중) */}
-            {loading ? `${text} 중` : text}
-        </button>
-    )
+      style={SubmitButtonStyle}
+    >
+      {/* 로딩 상태에 따라 문구를 동적으로 변경 (예: 로그인 -> 로그인 중) */}
+      {loading ? `${text} 중` : text}
+    </button>
+  )
 }
 export default SubmitButton;

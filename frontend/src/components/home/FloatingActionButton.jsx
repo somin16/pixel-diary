@@ -10,19 +10,19 @@ import { getAssetUrl } from "../../utils/AssetHelper"
 // home/FloatingActionButton FAB버튼 컴포넌트 선언
 const FloatingActionButton = ({ onClick, currentTheme, ariaLabel = "일기작성버튼" }) => {
 
-    return (
-        <button
-            className="h-auto outline-none"
-            onClick={onClick}
-            aria-label={ariaLabel} // 눈에 보이지 않는 텍스트 이름표 (화면 낭독기가 어떤 버튼인지 음성으로 읽어줌(기본값: 일기작성버튼))
-            style={{
-                backgroundImage: `url(${getAssetUrl(currentTheme, 'icons', 'add_icon_x3')})`,
-                backgroundSize: '100% 100%',// 이미지를 박스 크기에 꽉 채움
-                aspectRatio: '1/1',// 비율을 유지해 픽셀 왜곡 방지
-                width: 'calc(var(--scale, 1) * 70px)'
-            }}
-        />
-    )
+  return (
+    <button
+      className="h-auto outline-none"
+      onClick={onClick}
+      aria-label={ariaLabel} // 눈에 보이지 않는 텍스트 이름표 (화면 낭독기가 어떤 버튼인지 음성으로 읽어줌(기본값: 일기작성버튼))
+      style={{
+        backgroundImage: `url(${getAssetUrl(currentTheme, 'icons', 'add_icon_x3')})`,
+        backgroundSize: '100% 100%',// 이미지를 박스 크기에 꽉 채움
+        aspectRatio: '1/1',// 비율을 유지해 픽셀 왜곡 방지
+        width: 'calc(var(--scale, 1) * 70px)'
+      }}
+    />
+  )
 
 }
 

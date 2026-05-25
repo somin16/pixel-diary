@@ -69,14 +69,14 @@ const AttendanceDialog = ({ onClose }) => {
   }, [setGlobalHasCheckedToday]);
 
   const handleDayClick = async (day) => {
- 
+
     if (attendedDays >= 7) {
       toast("이번 주 출석을 모두 완료했습니다!", { id: "all-done" });
       return;
     }
     if (fetchLoading) return; // 출석 기록 불러오는 중엔 클릭 막기
     if (loading) return;  // 출석 체크 및 보상 받는중이면 클릭 막기 
-    
+
     // 과거 출석일 클릭 시 무시
     if (day <= attendedDays) {
       return;

@@ -14,52 +14,52 @@ import ToggleButton from "./ToggleButton";
  */
 
 const NotificationCard = ({ id, label, isOn, time, onToggle, onTimeClick }) => {
-    const currentTheme = useTheme((state) => state.currentTheme);
+  const currentTheme = useTheme((state) => state.currentTheme);
 
-    // 24시간 형식('21:00')을 화면 표시용 12시간 형식('오후 9:00')으로 변환하는 함수
-    const formatDisplayTime = (timeStr) => {
-        if (!timeStr) return "";
-        const [hours, minutes] = timeStr.split(":").map(Number);
-        const ampm = hours >= 12 ? "오후" : "오전";
-        const displayHour = hours % 12 === 0 ? 12 : hours % 12;
-        const displayMinute = String(minutes).padStart(2, "0");
-        return `${ampm} ${displayHour}:${displayMinute}`;
-    };
+  // 24시간 형식('21:00')을 화면 표시용 12시간 형식('오후 9:00')으로 변환하는 함수
+  const formatDisplayTime = (timeStr) => {
+    if (!timeStr) return "";
+    const [hours, minutes] = timeStr.split(":").map(Number);
+    const ampm = hours >= 12 ? "오후" : "오전";
+    const displayHour = hours % 12 === 0 ? 12 : hours % 12;
+    const displayMinute = String(minutes).padStart(2, "0");
+    return `${ampm} ${displayHour}:${displayMinute}`;
+  };
 
-    return (
-        <li className="relative w-full">
-            {/* 카드 배경 이미지 */}
-            <img
-                src={getAssetUrl(currentTheme, 'boxes', 'announcement_alarm_list_box_x3')}
-                alt={`${label} 배경`}
-                className="relative w-full h-auto block"
-            />
+  return (
+    <li className="relative w-full">
+      {/* 카드 배경 이미지 */}
+      <img
+        src={getAssetUrl(currentTheme, 'boxes', 'announcement_alarm_list_box_x3')}
+        alt={`${label} 배경`}
+        className="relative w-full h-auto block"
+      />
 
-            {/* 라벨 및 시간 설정 */}
-            <div className="absolute z-10 top-1/2 -translate-y-1/2 left-[6%] flex flex-col justify-center w-[65%]">
-                <span className="text-[16px] font-bold text-black whitespace-nowrap leading-tight">
-                    {label}
-                </span>
-                
-                {/* time 프로퍼티가 존재하는 항목만 시간 선택 활성화 */}
-                {time !== null && (
-                    <span
-                        onClick={() => onTimeClick(id, time)}
-                        className="text-[26px] font-extrabold text-gray-700 tracking-wider mt-[8%] leading-none cursor-pointer hover:text-gray-500 transition-colors"
-                    >
-                        {formatDisplayTime(time)}
-                    </span>
-                )}
-            </div>
+      {/* 라벨 및 시간 설정 */}
+      <div className="absolute z-10 top-1/2 -translate-y-1/2 left-[6%] flex flex-col justify-center w-[65%]">
+        <span className="text-[16px] font-bold text-black whitespace-nowrap leading-tight">
+          {label}
+        </span>
 
-            {/* 우측 토글 버튼 컴포넌트 */}
-            <ToggleButton 
-                id={id} 
-                isOn={isOn} 
-                onClick={onToggle} 
-            />
-        </li>
-    );
+        {/* time 프로퍼티가 존재하는 항목만 시간 선택 활성화 */}
+        {time !== null && (
+          <span
+            onClick={() => onTimeClick(id, time)}
+            className="text-[26px] font-extrabold text-gray-700 tracking-wider mt-[8%] leading-none cursor-pointer hover:text-gray-500 transition-colors"
+          >
+            {formatDisplayTime(time)}
+          </span>
+        )}
+      </div>
+
+      {/* 우측 토글 버튼 컴포넌트 */}
+      <ToggleButton
+        id={id}
+        isOn={isOn}
+        onClick={onToggle}
+      />
+    </li>
+  );
 };
 
 export default NotificationCard;

@@ -20,11 +20,11 @@ const ScrollColumn = ({ options, value, onChange }) => {
   useEffect(() => {
     const scrollToIndex = () => {
       if (!listRef.current) return;
-      
+
       const index = options.indexOf(value);
       if (index !== -1) {
         const itemHeight = listRef.current.clientHeight / 3;
-        
+
         // 초기에 높이가 0으로 잡히면 다음 프레임에 재시도
         if (itemHeight === 0) {
           requestAnimationFrame(scrollToIndex);
@@ -34,7 +34,7 @@ const ScrollColumn = ({ options, value, onChange }) => {
         const targetTop = index * itemHeight;
         if (Math.abs(listRef.current.scrollTop - targetTop) > 1) {
           // 코드로 움직이는 것임을 표시하여 유저 스크롤 이벤트와의 충돌을 막습니다.
-          isProgrammaticScroll.current = true; 
+          isProgrammaticScroll.current = true;
           listRef.current.scrollTop = targetTop;
         }
       }
@@ -63,7 +63,7 @@ const ScrollColumn = ({ options, value, onChange }) => {
     // 스크롤이 완전히 멈추고 80ms 후에 정중앙에 위치한 값 선출
     scrollTimeoutRef.current = setTimeout(() => {
       const index = Math.round(top / itemHeight);
-      
+
       if (index >= 0 && index < options.length) {
         const selected = options[index];
 

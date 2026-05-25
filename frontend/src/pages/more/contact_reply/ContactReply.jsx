@@ -74,7 +74,7 @@ export default function ContactReply() {
     setDeleteContext({ contactId, setReplyText, setIsEditing });
   };
 
-  const handleConfirmDelete = async () => {  
+  const handleConfirmDelete = async () => {
     if (!deleteContext) return;
     const { contactId, setReplyText, setIsEditing } = deleteContext;
 
@@ -99,7 +99,7 @@ export default function ContactReply() {
       console.error("답변 삭제 에러:", err.message);
       setResultMessage("답변 삭제 중 오류가 발생했습니다");
     } finally {
-      setDeleteContext(null); 
+      setDeleteContext(null);
     }
   };
 
@@ -119,9 +119,9 @@ export default function ContactReply() {
   }
 
   return (
-    <div 
+    <div
       className="w-full h-screen pt-[16%] pb-[12%] px-[5%] flex flex-col bg-[length:100%_100%]"
-      style={{ backgroundImage: `url(${getAssetUrl(currentTheme,'backgrounds','menu_background_x3')})` }}
+      style={{ backgroundImage: `url(${getAssetUrl(currentTheme, 'backgrounds', 'menu_background_x3')})` }}
     >
       {/* Header 컴포넌트 */}
       <div className="-mx-[5%] shrink-0">
@@ -130,19 +130,19 @@ export default function ContactReply() {
 
       {/* 상단 필터 탭 */}
       <div className="flex gap-[2%] mb-[4%] bg-white/40 p-[1%] rounded-lg backdrop-blur-sm shrink-0">
-        <button 
+        <button
           onClick={() => setFilter("all")}
           className={`flex-1 py-[2%] text-[12px] font-bold rounded-md transition-all border-none cursor-pointer ${filter === "all" ? "bg-blue-600 text-white shadow" : "bg-transparent text-gray-600"}`}
         >
           전체 ({contacts.length})
         </button>
-        <button 
+        <button
           onClick={() => setFilter("pending")}
           className={`flex-1 py-[2%] text-[12px] font-bold rounded-md transition-all border-none cursor-pointer ${filter === "pending" ? "bg-amber-500 text-white shadow" : "bg-transparent text-gray-600"}`}
         >
           대기 ({contacts.filter(i => i.status !== 'resolved').length})
         </button>
-        <button 
+        <button
           onClick={() => setFilter("resolved")}
           className={`flex-1 py-[2%] text-[12px] font-bold rounded-md transition-all border-none cursor-pointer ${filter === "resolved" ? "bg-green-600 text-white shadow" : "bg-transparent text-gray-600"}`}
         >
@@ -170,9 +170,9 @@ export default function ContactReply() {
 
       {/* 결과 안내 공통 다이얼로그 */}
       {resultMessage && (
-        <ResultDialog 
-          message={resultMessage} 
-          onConfirm={() => setResultMessage("")} 
+        <ResultDialog
+          message={resultMessage}
+          onConfirm={() => setResultMessage("")}
           maxWidth="320px"
         />
       )}

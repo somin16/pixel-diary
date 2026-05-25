@@ -19,11 +19,11 @@ const Profile = () => {
   // 나중에 context나 zuStand로 전역 관리 하는 게 좋을 듯
   const [nickname, setNickname] = useState("nickname"); // // TODO: API 연동 시 useState("")로 변경
   const [email, setEmail] = useState("email@email.com"); // // TODO: API 연동 시 useState("")로 변경
-  const [showSuccessMessage, setShowSuccessMessage] = useState(false); 
-  const [profileImage, setProfileImage] = useState(null); 
+  const [showSuccessMessage, setShowSuccessMessage] = useState(false);
+  const [profileImage, setProfileImage] = useState(null);
 
   // 나중에 API로 전송할 실제 파일 
-  const [selectedFile, setSelectedFile] = useState(null); 
+  const [selectedFile, setSelectedFile] = useState(null);
 
   // 뒤로 가기 함수
   const handleBack = () => {
@@ -32,7 +32,7 @@ const Profile = () => {
 
   // 수정하기 버튼 클릭 시
   const handleUpdate = async () => {
-    
+
     // TODO: API 연동 시 api 파일에서 불러오기
 
     setShowSuccessMessage(true);
@@ -50,36 +50,36 @@ const Profile = () => {
     };
   }, [profileImage]);
 
-return (
-    <div 
-        className="w-full h-full py-[20%] flex flex-col items-center"
-        style={{
-        backgroundImage: `url(${getAssetUrl(currentTheme,'backgrounds','menu_background_x3')})`,
+  return (
+    <div
+      className="w-full h-full py-[20%] flex flex-col items-center"
+      style={{
+        backgroundImage: `url(${getAssetUrl(currentTheme, 'backgrounds', 'menu_background_x3')})`,
         backgroundSize: "100% 100%",
-        }}
+      }}
     >
-      
+
       {/* 상단 헤더 - 뒤로 가기 버튼 */}
       <Header />
 
       {/* 프로필 사진 영역 */}
       <section className="relative w-auto h-auto my-[10%] flex justify-center items-center">
-        <img 
-          src={getAssetUrl(currentTheme, 'boxes', 'profile_image_box_x3')} 
-          alt="프로필 프레임" 
-          className="scale-[120%] z-10 pointer-events-none relative" 
+        <img
+          src={getAssetUrl(currentTheme, 'boxes', 'profile_image_box_x3')}
+          alt="프로필 프레임"
+          className="scale-[120%] z-10 pointer-events-none relative"
         />
         {/* 클릭하면 파일 선택창 열리도록 */}
         <label htmlFor="profileImageInput" className="absolute w-full aspect-square z-20 block cursor-pointer overflow-hidden">
-          <img 
-            src={profileImage || getAssetUrl(currentTheme, 'icons', 'app_icon_x2')} 
-            alt="프로필 사진" 
+          <img
+            src={profileImage || getAssetUrl(currentTheme, 'icons', 'app_icon_x2')}
+            alt="프로필 사진"
             className="w-full h-full object-cover cursor-pointer"
           />
         </label>
 
         {/* 숨겨진 파일 input */}
-        <input 
+        <input
           id="profileImageInput"
           type="file"
           accept="image/*"
@@ -101,21 +101,21 @@ return (
 
       {/* 입력 필드 영역 */}
       <section className="px-[10%] flex flex-col gap-[10%] mb-[10%]">
-      {/* 닉네임 입력 */}
-      <InputField 
-        label="닉네임"
-        value={nickname}
-        onChange={(e) => setNickname(e.target.value)}
-        placeholder="닉네임을 입력하세요"
-      />
+        {/* 닉네임 입력 */}
+        <InputField
+          label="닉네임"
+          value={nickname}
+          onChange={(e) => setNickname(e.target.value)}
+          placeholder="닉네임을 입력하세요"
+        />
 
-      {/* 이메일 입력 - 수정 불가 */}
-      <InputField 
-        label="이메일"
-        type="email"
-        value={email}
-        readOnly={true}
-      />
+        {/* 이메일 입력 - 수정 불가 */}
+        <InputField
+          label="이메일"
+          type="email"
+          value={email}
+          readOnly={true}
+        />
 
       </section>
 

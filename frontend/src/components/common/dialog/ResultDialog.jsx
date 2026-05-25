@@ -18,10 +18,10 @@ import ImageButton from '../ImageButton';
  * @param {string} [textSize="text-[13px]"] - 메시지 텍스트의 크기 클래스 (기본값: "text-[13px]")
 */
 
-const ResultDialog = ({ message, onConfirm, boxImageName, width = "100%", maxWidth = "360px", textMt = "mt-[10%]", textSize = "text-[13px]"}) => {
+const ResultDialog = ({ message, onConfirm, boxImageName, width = "100%", maxWidth = "360px", textMt = "mt-[10%]", textSize = "text-[13px]" }) => {
   // 테마 전역 관리
   const currentTheme = useTheme((state) => state.currentTheme);
-  
+
   return (
     <DialogBox boxImageName={boxImageName} width={width} maxWidth={maxWidth}>
       {/* 메세지 텍스트 */}
