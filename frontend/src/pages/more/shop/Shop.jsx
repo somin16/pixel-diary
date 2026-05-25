@@ -31,7 +31,7 @@ const Shop = () => {
   const [activeTab, setActiveTab] = useState("모두");
   const { coin: myCoins, setMyCoins } = useGetCoinStore(); // 유저 코인관련 함수들 불러오기(변수명은 유지했습니다)
   const [selectedItem, setSelectedItem] = useState(null);
-  const [dialogStep, setDialogStep] = useState(null); 
+  const [dialogStep, setDialogStep] = useState(null);
   const [items, setItems] = useState([]); // API에서 불러온 아이템 목록
   const [loading, setLoading] = useState(true); // 아이템 목록 로딩 상태
 
@@ -54,40 +54,40 @@ const Shop = () => {
 
   // 아이템 목록 불러오기
   useEffect(() => {
-      const fetchItems = async () => {
-          try {
-              const result = await authFetch(
-                  `${import.meta.env.VITE_BACKEND_URL}/api/v1/items/`
-              );
-              const mappedItems = (result.items || [])
-                  .filter(item => item.item_type !== 'diary_theme' && item.item_type !== 'ticket')  // diary_theme는 app_theme 구매 시 자동 지급되므로 상점에서 제외, 티켓은 상점에서 구매 불가능
-                  .map(item => ({
-                      id: item.item_id,
-                      name: item.item_name,
-                      type: item.item_type,
-                      price: item.item_price,
-                      icon: item.item_image_url || 'home_icon_x3',  // 이미지 URL이 없으면 기본 아이콘 사용
-                      isSoldOut: false,  // 추후 인벤토리 조회 결과와 비교하여 설정 예정
-                  }));
-              setItems(mappedItems);
-          } catch (error) {
-              console.error('아이템 목록 조회 실패:', error);
-          } finally {
-              setLoading(false);
-          }
-      };
-      fetchItems();
+    const fetchItems = async () => {
+      try {
+        const result = await authFetch(
+          `${import.meta.env.VITE_BACKEND_URL}/api/v1/items/`
+        );
+        const mappedItems = (result.items || [])
+          .filter(item => item.item_type !== 'diary_theme' && item.item_type !== 'ticket')  // diary_theme는 app_theme 구매 시 자동 지급되므로 상점에서 제외, 티켓은 상점에서 구매 불가능
+          .map(item => ({
+            id: item.item_id,
+            name: item.item_name,
+            type: item.item_type,
+            price: item.item_price,
+            icon: item.item_image_url || 'home_icon_x3',  // 이미지 URL이 없으면 기본 아이콘 사용
+            isSoldOut: false,  // 추후 인벤토리 조회 결과와 비교하여 설정 예정
+          }));
+        setItems(mappedItems);
+      } catch (error) {
+        console.error('아이템 목록 조회 실패:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchItems();
   }, []);
 
   // 아이템 카테고리 필터링 
   // activeTab이 "모두"일 때는 전체 리스트를, 아니면 타입이 일치하는 것만 걸러내서 나타냄
-  const filteredItems = activeTab === "모두" 
+  const filteredItems = activeTab === "모두"
     ? items
     : items.filter(item => {
-        if (activeTab === "스티커") return item.type === "sticker";
-        if (activeTab === "이모티콘") return item.type === "emoji";
-        if (activeTab === "테마") return item.type === "app_theme";
-        return true;
+      if (activeTab === "스티커") return item.type === "sticker";
+      if (activeTab === "이모티콘") return item.type === "emoji";
+      if (activeTab === "테마") return item.type === "app_theme";
+      return true;
     });
 
   return (
@@ -164,24 +164,24 @@ const Shop = () => {
       {/* 아이템 그리드 분리 - ShopItem에 filteredItems를 전달*/}
       {/* 탭 조건에 맞게 필터링된 아이템 목록을 화면에 렌더링 */}
       {loading ? (
-          <div 
-                className="w-full flex-1 p-[3%] pb-0 overflow-y-auto bg-[length:100%_100%]"
-                style={{ backgroundImage: `url(${getAssetUrl(currentTheme, 'boxes', 'store_box_x3')})` }}
-              > 
-              <div className="flex justify-center mt-[50%] text-sm text-gray-500 font-bold animate-bounce">
-              불러오는 중...
-              </div>
+        <div
+          className="w-full flex-1 p-[3%] pb-0 overflow-y-auto bg-[length:100%_100%]"
+          style={{ backgroundImage: `url(${getAssetUrl(currentTheme, 'boxes', 'store_box_x3')})` }}
+        >
+          <div className="flex justify-center mt-[50%] text-sm text-gray-500 font-bold animate-bounce">
+            불러오는 중...
           </div>
+        </div>
       ) : (
-          <ShopItemGrid
-              items={filteredItems}
-              onItemClick={(item) => {
-                  setSelectedItem(item);  // 클릭한 아이템 정보 저장
-                  setDialogStep("detail");  // 상세 정보 팝업 띄우기
-              }}
-          />
+        <ShopItemGrid
+          items={filteredItems}
+          onItemClick={(item) => {
+            setSelectedItem(item);  // 클릭한 아이템 정보 저장
+            setDialogStep("detail");  // 상세 정보 팝업 띄우기
+          }}
+        />
       )}
-    
+
       {/* 다이얼로그 영역(dialogStep 상태에 따라 다른 팝업을 렌더링) */}
 
       {/* 아이템 상세 정보 팝업 */}

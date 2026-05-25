@@ -58,8 +58,8 @@ const ItemDetailDialog = ({ selectedItem, setDialogStep, closeDialog, width = "1
             {/* 실제 아이템 아이콘 이미지 */}
             {/* item.icon이 http로 시작하면 외부 URL(Supabase)로, 아니면 로컬 에셋으로 불러옴 */}
             {/* 아이템 타입별 이미지 크기 설정 */}
-            <img 
-              src={selectedItem.icon?.startsWith('http') ? selectedItem.icon : getAssetUrl(currentTheme, 'icons', selectedItem.icon)} 
+            <img
+              src={selectedItem.icon?.startsWith('http') ? selectedItem.icon : getAssetUrl(currentTheme, 'icons', selectedItem.icon)}
               className={`relative z-10 h-auto mb-[5%]
                 ${selectedItem.type === 'app_theme' ? 'w-[70%]' : ''}
                 ${selectedItem.type === 'sticker' ? 'w-[50%]' : ''}
