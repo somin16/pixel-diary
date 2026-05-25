@@ -14,32 +14,32 @@ export const THEME_LIST = [
 // 새로고침이나 앱 재시작 후에도 테마 설정이 유지됨
 // 앱 테마를 관리하는 전역 상태 저장소
 export const useTheme = create(
-    persist(
-        (set) => ({
-            // 현재 적용된 테마
-            // 초기 테마 설정 (기본값: winter_light) 일단 다른 테마가 생기기 전까지는 펭귄테마가 기본입니다 나중에 변경예정
-            currentTheme: 'winter_light',
+  persist(
+    (set) => ({
+      // 현재 적용된 테마
+      // 초기 테마 설정 (기본값: winter_light) 일단 다른 테마가 생기기 전까지는 펭귄테마가 기본입니다 나중에 변경예정
+      currentTheme: 'winter_light',
 
-            // 테마 변경 메서드
-            setTheme: (newTheme) => {
-                // THEME_LIST에 존재하는 테마일 때만 변경을 허용 (방어 로직)
-                if (THEME_LIST.includes(newTheme)) {
-                    console.log(`[Theme Change]: ${newTheme} 테마로 변경되었습니다`);
-                    set({ currentTheme: newTheme });
-                } else {
-                    console.warn(`[Theme Error]: '${newTheme}'는 존재하지 않는 테마입니다.`);
-                } 
-            },
-
-            // 테마 리셋 메서드 (기본값으로 리셋 시 사용)
-            resetTheme: () => set({ currentTheme: 'winter_light' }),
-
-        }),
-        {
-            // persist 설정
-            // 로컬 스토리지에 저장될 키 이름
-            name: 'canvas-theme-storage',
+      // 테마 변경 메서드
+      setTheme: (newTheme) => {
+        // THEME_LIST에 존재하는 테마일 때만 변경을 허용 (방어 로직)
+        if (THEME_LIST.includes(newTheme)) {
+          console.log(`[Theme Change]: ${newTheme} 테마로 변경되었습니다`);
+          set({ currentTheme: newTheme });
+        } else {
+          console.warn(`[Theme Error]: '${newTheme}'는 존재하지 않는 테마입니다.`);
         }
-    )
+      },
+
+      // 테마 리셋 메서드 (기본값으로 리셋 시 사용)
+      resetTheme: () => set({ currentTheme: 'winter_light' }),
+
+    }),
+    {
+      // persist 설정
+      // 로컬 스토리지에 저장될 키 이름
+      name: 'canvas-theme-storage',
+    }
+  )
 );
 

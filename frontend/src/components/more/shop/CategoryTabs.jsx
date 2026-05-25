@@ -24,10 +24,10 @@ const CategoryTabs = ({ tabs, activeTab, setActiveTab, marginTop = "mt-[100px]",
           className="relative flex-1 h-[38px] bg-transparent border-none flex items-center justify-center cursor-pointer"
         >
           {/* 선택 여부와 type에 따라 배경 이미지 동적 변경 (on/off) */}
-          <img 
-            src={getAssetUrl(currentTheme, 'boxes', activeTab === tab ? `${type}_filter_box_on_x2` : `${type}_filter_box_off_x2`)} 
-            className="absolute inset-0 w-full h-full object-fill pointer-events-none" 
-            alt="" 
+          <img
+            src={getAssetUrl(currentTheme, 'boxes', activeTab === tab ? `${type}_filter_box_on_x2` : `${type}_filter_box_off_x2`)}
+            className="absolute inset-0 w-full h-full object-fill pointer-events-none"
+            alt=""
           />
           {/* 선택 여부에 따라 텍스트 색상 변경 */}
           <span className={`relative z-10 text-[13px] font-bold ${activeTab === tab ? 'text-black' : 'text-[#666666]'}`}>

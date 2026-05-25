@@ -20,7 +20,7 @@ const LogoutDialog = ({ onConfirm, onCancel, width = "100%", maxWidth = "320px" 
   const currentTheme = useTheme((state) => state.currentTheme);
   return (
     <DialogBox boxImageName="popup_message_box_x3" width={width} maxWidth={maxWidth}>
-      <p className="text-[13px] font-bold text-center m-0 mt-[11%]"> 
+      <p className="text-[13px] font-bold text-center m-0 mt-[11%]">
         로그아웃 하시겠습니까?
       </p>
 

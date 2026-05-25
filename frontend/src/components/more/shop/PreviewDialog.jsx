@@ -20,11 +20,11 @@ const PreviewDialog = ({ previews, onClose }) => {
 
       {/* 중앙에 뜨는 핑크색 프리뷰 박스 */}
       {/* 상한선 값이기 때문에 px로 유지 */}
-      <div 
+      <div
         className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-50 w-[90%] max-w-[450px] h-[65vh] flex flex-col items-center justify-center bg-[length:100%_100%] bg-no-repeat"
-        style={{ backgroundImage: `url(${getAssetUrl(currentTheme, 'boxes', 'store_box_x3')})` }} 
+        style={{ backgroundImage: `url(${getAssetUrl(currentTheme, 'boxes', 'store_box_x3')})` }}
       >
-        
+
         {/* 닫기 버튼 */}
         <button
           className="absolute -top-15 -right-1 p-2 z-60 cursor-pointer outline-none transition-transform"
@@ -40,14 +40,14 @@ const PreviewDialog = ({ previews, onClose }) => {
         {/* 가로 스크롤 영역 */}
         <div className="w-full flex-1 flex flex-row flex-nowrap overflow-x-auto gap-6 py-6 pl-6 pr-6 no-scrollbar items-center justify-start min-w-0">
           {previews?.map((img, idx) => (
-            <div 
+            <div
               key={idx}
               className="h-full shrink-0"
             >
               <img
                 src={getAssetUrl(currentTheme, 'previews', img)}
                 className="h-full w-auto block"
-                draggable="false" 
+                draggable="false"
                 alt={`미리보기 ${idx + 1}`}
                 onError={(e) => console.error(`이미지 로드 실패: ${img}`)}
               />

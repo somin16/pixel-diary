@@ -26,10 +26,10 @@ export default function ContactAdminCard({ item, isExpanded, onToggle, onSave, o
   // 내부 저장 핸들러 (부모에게 데이터를 넘기기 전 먼저 검증)
   const handleLocalSave = () => {
     if (!replyText.trim()) {
-      setError("답변 내용을 입력해주세요"); 
+      setError("답변 내용을 입력해주세요");
       return;
     }
-    setError(""); 
+    setError("");
     onSave(item.contact_id, replyText, setIsEditing);
   };
 
@@ -50,19 +50,19 @@ export default function ContactAdminCard({ item, isExpanded, onToggle, onSave, o
             {item.status === 'resolved' ? '답변완료' : '답변대기'}
           </span>
         </div>
-        <p className="text-[13px] font-medium text-gray-800 m-[0%] line-clamp-1">{item.message}</p> 
+        <p className="text-[13px] font-medium text-gray-800 m-[0%] line-clamp-1">{item.message}</p>
       </div>
-      
+
       {/* 아코디언 상세 편집 패널 */}
       {isExpanded && (
         <div className="mt-[3%] pt-[3%] border-t border-gray-200/60 text-[12px] space-y-[3%] animate-fadeIn">
           <div className="bg-white/60 p-[3%] rounded-sm text-gray-700 whitespace-pre-wrap break-all leading-relaxed">
             {item.message}
           </div>
-          
+
           <div className="space-y-[2%]">
             <label className="font-bold text-gray-700 block text-[11px]">👑 관리자 답변 입력</label>
-            
+
             {isEditing ? (
               <div className="space-y-[2%]">
                 <textarea
@@ -81,7 +81,7 @@ export default function ContactAdminCard({ item, isExpanded, onToggle, onSave, o
 
                 <div className="flex gap-[2%] justify-end">
                   {item.reply && (
-                    <button 
+                    <button
                       onClick={() => { setIsEditing(false); setReplyText(item.reply); }}
                       className="px-[3%] py-[1.5%] bg-gray-400 text-white rounded-sm font-bold border-none cursor-pointer text-[11px]"
                     >
@@ -89,7 +89,7 @@ export default function ContactAdminCard({ item, isExpanded, onToggle, onSave, o
                     </button>
                   )}
 
-                  <button 
+                  <button
                     onClick={handleLocalSave}
                     className="px-[4%] py-[1.5%] bg-blue-600 text-white rounded-sm font-bold border-none cursor-pointer text-[11px]"
                   >
@@ -101,13 +101,13 @@ export default function ContactAdminCard({ item, isExpanded, onToggle, onSave, o
               <div className="bg-blue-50/60 p-[3%] rounded-sm border-l-4 border-blue-400 space-y-[2%]">
                 <p className="text-gray-700 m-[0%] whitespace-pre-wrap break-all leading-relaxed">{item.reply}</p>
                 <div className="flex gap-[2%] justify-end pt-[1%] border-t border-blue-100/50">
-                  <button 
+                  <button
                     onClick={() => onDelete(item.contact_id, setReplyText, setIsEditing)}
                     className="px-[2.5%] py-[1%] bg-red-500 text-white rounded-sm font-bold border-none cursor-pointer text-[11px]"
                   >
                     삭제
                   </button>
-                  <button 
+                  <button
                     onClick={() => setIsEditing(true)}
                     className="px-[2.5%] py-[1%] bg-amber-500 text-white rounded-sm font-bold border-none cursor-pointer text-[11px]"
                   >

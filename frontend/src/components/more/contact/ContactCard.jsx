@@ -9,7 +9,7 @@ import React from "react";
 
 export default function ContactCard({ item, isExpanded, onToggle }) {
   return (
-    <div 
+    <div
       className="bg-white/80 backdrop-blur-sm rounded-lg p-[4%] shadow-sm border border-white/50 cursor-pointer transition-all active:scale-[0.99]"
       onClick={onToggle}
     >
@@ -28,12 +28,12 @@ export default function ContactCard({ item, isExpanded, onToggle }) {
               <span className="absolute -top-[2px] -right-[8px] w-1.5 h-1.5 bg-red-500 rounded-full" />
             )}
           </span>
-       </div>
+        </div>
       </div>
 
       {/* 문의 본문 미리보기 (한 줄 제한) */}
       <p className="text-[13px] font-medium text-gray-800 m-[0%] line-clamp-1">{item.message}</p>
-      
+
       {/* 클릭 시 활성화되는 아코디언 상세 내용 */}
       {isExpanded && (
         <div className="mt-[3%] pt-[3%] border-t border-gray-200/60 text-[12px] text-gray-600 space-y-[3%] animate-fadeIn">
@@ -41,7 +41,7 @@ export default function ContactCard({ item, isExpanded, onToggle }) {
           <div className="bg-white/60 p-[3%] rounded text-gray-700 whitespace-pre-wrap break-all leading-relaxed">
             {item.message}
           </div>
-          
+
           {/* 관리자 답변 영역 */}
           {item.status === 'resolved' && item.reply ? (
             <div className="bg-blue-50/60 p-[3%] rounded border-l-4 border-blue-400">

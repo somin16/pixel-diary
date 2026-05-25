@@ -67,45 +67,45 @@ export default function NavigationBar() {
        grid grid-cols-4 → 4개의 버튼을 1/4씩 정확하게 공간 배분
     ────────────────────────────────────────────────────────────────────── */
 
-      <div 
-        className="absolute bottom-0 left-0 w-full z-50 grid grid-cols-4 items-center"
-        style={{
-          /* 1. 네비게이션바 배경 이미지 불러오기 */
-          backgroundImage: `url(${getAssetUrl('winter_light', 'boxes', 'nav_bar_box_x3')})`,
-          
-          /* 2. 비율 설정: 이미지 원본 크기(360x78) 비율을 유지하여 높이 자동 계산 
-          고정값 대신 사용하여 이미지 찌그러짐 방지*/
-          aspectRatio: '360 / 78', 
-          
-          /* 3. 배경 이미지 출력 설정: 컨테이너에 딱 맞춰서 꽉 채움 */
-          backgroundSize: '100% 100%',
-          backgroundRepeat: 'no-repeat',
-        }}
-      >
+    <div
+      className="absolute bottom-0 left-0 w-full z-50 grid grid-cols-4 items-center"
+      style={{
+        /* 1. 네비게이션바 배경 이미지 불러오기 */
+        backgroundImage: `url(${getAssetUrl('winter_light', 'boxes', 'nav_bar_box_x3')})`,
 
-        {/* 상수(NAVIGATION_ITEMS) 배열을 순회하며 버튼 생성 */}
-        {NAVIGATION_ITEMS.map((item) => (
-          <button
-            key={item.id}
-            className="flex flex-col items-center justify-center h-full outline-none border-none bg-transparent"
-            onClick={() => handleNavigationClick(item.path)}
-          >
-            {/* 아이콘 이미지 렌더링 
+        /* 2. 비율 설정: 이미지 원본 크기(360x78) 비율을 유지하여 높이 자동 계산 
+        고정값 대신 사용하여 이미지 찌그러짐 방지*/
+        aspectRatio: '360 / 78',
+
+        /* 3. 배경 이미지 출력 설정: 컨테이너에 딱 맞춰서 꽉 채움 */
+        backgroundSize: '100% 100%',
+        backgroundRepeat: 'no-repeat',
+      }}
+    >
+
+      {/* 상수(NAVIGATION_ITEMS) 배열을 순회하며 버튼 생성 */}
+      {NAVIGATION_ITEMS.map((item) => (
+        <button
+          key={item.id}
+          className="flex flex-col items-center justify-center h-full outline-none border-none bg-transparent"
+          onClick={() => handleNavigationClick(item.path)}
+        >
+          {/* 아이콘 이미지 렌더링 
               네비게이션바의 세로를 약 55%를 아이콘이 차지하도록 설정해 모니터 해상도에 따른 차이를 제거
               가로는 세로에 맞춰서 자동으로 비율조절
               이미지 원본의 픽셀 비율(도트)을 유지하기 위함 */}
-            <img
-              src={checkIsActive(item.path) ? item.iconActive : item.iconInactive}
-              className="w-auto"
-              style={{
-                width: 'auto',
-                height: '55%'
-              }}
-              alt={item.label}
-            />
-          </button>
-        ))}
-      </div>
+          <img
+            src={checkIsActive(item.path) ? item.iconActive : item.iconInactive}
+            className="w-auto"
+            style={{
+              width: 'auto',
+              height: '55%'
+            }}
+            alt={item.label}
+          />
+        </button>
+      ))}
+    </div>
 
 
   );

@@ -3,7 +3,7 @@ import { useTheme } from '../../../store/useThemeStore';
 import { getAssetUrl } from "../../../utils/AssetHelper";
 
 // 컴포넌트 불러오기
-import DialogBox from "../../common/dialog/DialogBox"; 
+import DialogBox from "../../common/dialog/DialogBox";
 import ImageButton from "../../common/ImageButton";
 
 /**
@@ -16,12 +16,12 @@ import ImageButton from "../../common/ImageButton";
  * @param {string} [maxWidth="320px"] - 다이얼로그의 최대 가로 너비 (화면이 커져도 이 이상 커지지 않음) -> 상한선 값이기 때문에 px로 유지
  */
 
-const PurchaseDialog = ({ 
-  selectedItem, 
-  setDialogStep, 
-  handlePurchase, 
-  width = "100%", 
-  maxWidth = "320px" 
+const PurchaseDialog = ({
+  selectedItem,
+  setDialogStep,
+  handlePurchase,
+  width = "100%",
+  maxWidth = "320px"
 }) => {
 
   // 테마 전역 관리
@@ -31,9 +31,9 @@ const PurchaseDialog = ({
   if (!selectedItem) return null;
 
   return (
-    <DialogBox boxImageName="store_item_popup_box_x3" width={width} maxWidth={maxWidth}> 
+    <DialogBox boxImageName="store_item_popup_box_x3" width={width} maxWidth={maxWidth}>
       <div className="relative flex flex-col items-center w-full px-2 py-4 top-[-17%]" >
-        
+
         {/* 중앙 아이템 박스 */}
         <div className="relative w-[31%] h-25 mt-[3%] flex items-center justify-center">
           <img src={getAssetUrl(currentTheme, 'boxes', 'store_popup_item_box_x2')} className="absolute inset-0 w-full h-full object-fill pointer-events-none" alt="아이템 배경" />
@@ -47,15 +47,15 @@ const PurchaseDialog = ({
 
         {/* 하단 버튼 영역 */}
         <div className="flex justify-center gap-[13%] mt-[4%] w-full">
-          <ImageButton 
-            label="취소하기" 
-            imageSrc={getAssetUrl(currentTheme, 'buttons', 'blue_button_x3')} 
-            onClick={() => setDialogStep("detail")} 
+          <ImageButton
+            label="취소하기"
+            imageSrc={getAssetUrl(currentTheme, 'buttons', 'blue_button_x3')}
+            onClick={() => setDialogStep("detail")}
           />
-          <ImageButton 
-            label="구매하기" 
-            imageSrc={getAssetUrl(currentTheme, 'buttons', 'green_button_x3')} 
-            onClick={handlePurchase} 
+          <ImageButton
+            label="구매하기"
+            imageSrc={getAssetUrl(currentTheme, 'buttons', 'green_button_x3')}
+            onClick={handlePurchase}
           />
         </div>
       </div>

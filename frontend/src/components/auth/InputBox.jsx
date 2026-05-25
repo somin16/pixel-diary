@@ -36,45 +36,45 @@ import AuthValidator from "../../utils/AuthValidator"; // 유효성검사
  */
 
 // auth/InputBox 컴포넌트 선언
-const InputBox = ({ label, type, placeholder, value, onChange, status, currentTheme, autoComplete}) => {
+const InputBox = ({ label, type, placeholder, value, onChange, status, currentTheme, autoComplete }) => {
 
-    const inputBoxStyle = {// 픽셀 아트 배경 이미지 & 비율 설정
-        backgroundImage: `url(${getAssetUrl(currentTheme, 'boxes', 'auth_info_input_box_x3')})`,
-        backgroundSize: '100% 100%', // 이미지를 박스 크기에 꽉 채움
-        aspectRatio: '261/72' // 비율을 유지해 픽셀 왜곡 방지
-    };
+  const inputBoxStyle = {// 픽셀 아트 배경 이미지 & 비율 설정
+    backgroundImage: `url(${getAssetUrl(currentTheme, 'boxes', 'auth_info_input_box_x3')})`,
+    backgroundSize: '100% 100%', // 이미지를 박스 크기에 꽉 채움
+    aspectRatio: '261/72' // 비율을 유지해 픽셀 왜곡 방지
+  };
 
-    return (
-        <div className="w-full flex flex-col">
-            {/* 입력 창 본체 영역 */}
-            <div 
-                className="w-full relative flex items-center"
-                style={inputBoxStyle}>
+  return (
+    <div className="w-full flex flex-col">
+      {/* 입력 창 본체 영역 */}
+      <div
+        className="w-full relative flex items-center"
+        style={inputBoxStyle}>
 
-                {/* 입력창 라벨: 배경 이미지 위쪽에 배치 */}
-                <span className="absolute -mt-[15%] ml-[5%] font-bold text-3xs">
-                    {label}
-                </span>
+        {/* 입력창 라벨: 배경 이미지 위쪽에 배치 */}
+        <span className="absolute -mt-[15%] ml-[5%] font-bold text-3xs">
+          {label}
+        </span>
 
-                <input 
-                    type={type}
-                    placeholder={placeholder}
-                    className="w-full h-full outline-none placeholder:text-gray-400 text-2xs font-bold text-center mt-[1%] -mb-[1%]"
-                    value={value}
-                    onChange={onChange}
-                    autoComplete={autoComplete}/>
-            </div>
+        <input
+          type={type}
+          placeholder={placeholder}
+          className="w-full h-full outline-none placeholder:text-gray-400 text-2xs font-bold text-center mt-[1%] -mb-[1%]"
+          value={value}
+          onChange={onChange}
+          autoComplete={autoComplete} />
+      </div>
 
-            <div className="min-h-[1.5rem] flex items-center pl-[3%]">
-                {status.message && (
-                    // AuthValidator에 정의된 컬러 규격에 따라 텍스트 색상 변경 (Red/Green 등)
-                    <span className={`text-3xs font-bold ${AuthValidator.STATUS_COLORS[status.state]}`}>
-                        {status.message}    
-                    </span>
-                )}
-            </div>
-        </div>
-    )
+      <div className="min-h-[1.5rem] flex items-center pl-[3%]">
+        {status.message && (
+          // AuthValidator에 정의된 컬러 규격에 따라 텍스트 색상 변경 (Red/Green 등)
+          <span className={`text-3xs font-bold ${AuthValidator.STATUS_COLORS[status.state]}`}>
+            {status.message}
+          </span>
+        )}
+      </div>
+    </div>
+  )
 }
 
 export default InputBox;

@@ -10,21 +10,21 @@ const DayBox = ({ item, isAttended, onClick, currentTheme }) => {
 
   return (
     <div className="relative flex flex-col items-center cursor-pointer w-full" onClick={onClick}>
-      
+
       {/* 4일차, 7일차 항상 고정되는 빨간 테두리 티켓 뱃지 */}
       {/* 특별 보상(special) 타입일 경우에만 상단에 티켓 뱃지 컴포넌트를 렌더링 */}
       {item.type === "special" && (
-        <TicketBadge 
-          ticketCount={item.ticketCount} 
-          isAttended={isAttended} 
-          currentTheme={currentTheme} 
+        <TicketBadge
+          ticketCount={item.ticketCount}
+          isAttended={isAttended}
+          currentTheme={currentTheme}
         />
       )}
 
       {/* 메인 출석 보상 상자 */}
-      <div 
+      <div
         className="relative w-full aspect-[7/8] flex flex-col items-center justify-between p-[4%] overflow-hidden"
-        style={{ 
+        style={{
           backgroundImage: `url(${getAssetUrl(currentTheme, 'boxes', 'daily_check_coin_box_x3')})`,
           backgroundSize: '100% 100%',
           backgroundRepeat: 'no-repeat',
@@ -33,9 +33,9 @@ const DayBox = ({ item, isAttended, onClick, currentTheme }) => {
       >
         {/* 기본 보상(코인) 아이콘 */}
         <div className="flex-1 flex flex-col items-center justify-center w-full mt-[2%]">
-          <img 
-            src={getAssetUrl(currentTheme, 'icons', 'coin_icon_x3')} 
-            alt="코인" 
+          <img
+            src={getAssetUrl(currentTheme, 'icons', 'coin_icon_x3')}
+            alt="코인"
             className="w-[60%] h-auto object-contain"
             style={pixelStyle}
           />
@@ -44,9 +44,9 @@ const DayBox = ({ item, isAttended, onClick, currentTheme }) => {
 
         {/* 출석 완료 상태 오버레이 처리 */}
         {isAttended && (
-          <img 
-            src={getAssetUrl(currentTheme, 'boxes', 'daily_check_frame_overlay')} 
-            alt="출석_오버레이" 
+          <img
+            src={getAssetUrl(currentTheme, 'boxes', 'daily_check_frame_overlay')}
+            alt="출석_오버레이"
             className="absolute inset-0 w-full h-full z-20"
             style={pixelStyle}
           />
@@ -55,9 +55,9 @@ const DayBox = ({ item, isAttended, onClick, currentTheme }) => {
         {/* 출석 완료 스탬프 */}
         {isAttended && (
           <div className="absolute top-[10%] left-0 w-full flex justify-center z-40 pointer-events-none animate-in fade-in zoom-in duration-300">
-            <img 
-              src={getAssetUrl(currentTheme, 'icons', 'daily_check_stamp_icon_x3')} 
-              alt="출석완료" 
+            <img
+              src={getAssetUrl(currentTheme, 'icons', 'daily_check_stamp_icon_x3')}
+              alt="출석완료"
               className="w-[55%] h-auto drop-shadow-md"
               style={pixelStyle}
             />
