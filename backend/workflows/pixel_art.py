@@ -37,11 +37,11 @@ PIXEL_ART_WORKFLOW = {
                 "negative": ["7", 0],
                 "latent_image": ["5", 0],
                 "seed": 0,                              # 호출 시점에 랜덤값으로 교체됨
-                "steps": 30,
+                "steps": 25,
                 "cfg": 7,
                 "sampler_name": "dpmpp_2m",
                 "scheduler": "karras",
-                "denoise": 1
+                "denoise": 0.8
             }
         },
         "8": {
