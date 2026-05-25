@@ -2,7 +2,7 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { useEffect, useState } from "react";
 import DetailDiaryDialog from "../../components/diary/DetailDiaryDialog";
 import { useTheme } from "../../store/useThemeStore";
-import { getAssetUrl, ITEM_IMG_MAP } from "../../utils/AssetHelper";
+import { getAssetUrl } from "../../utils/AssetHelper";
 import { authFetch } from "../../utils/AuthHelper";
 
 export default function DiaryDetail() {
@@ -50,18 +50,13 @@ export default function DiaryDetail() {
                 content: data.content ?? "",
                 imageUrl: data.image_url ?? "",
 
-                // [변환] 서버의 숫자 ID를 위에서 만든 '지도(ITEM_IMG_MAP)'를 보고 파일명으로 바꿉니다.
-                selectedEmoji: data.emotion_item
-                    ? ITEM_IMG_MAP[data.emotion_item.item_id] ?? null
-                    : null,
-                selectedFrame: data.theme_item
-                    ? ITEM_IMG_MAP[data.theme_item.item_id] ?? null
-                    : null,
+                selectedEmoji: data.emotion_item?.image_url ?? null,
+                selectedFrame: data.theme_item?.image_url ?? null,
 
                 // 스티커들은 여러 개일 수 있으니 목록을 하나씩 돌면서 변환합니다.
                 stickers: (data.sticker ?? []).map((s, i) => ({
                     id: s.item_id,
-                    img: ITEM_IMG_MAP[s.item_id] ?? '', // 숫자 ID를 이미지 이름으로!
+                    img: s.image_url ?? '',             
                     instanceId: Date.now() + i,         // 화면에서 구분하기 위한 임시 번호
                     x: s.pos_x ?? null,                 // 저장된 가로 위치
                     y: s.pos_y ?? null,                 // 저장된 세로 위치

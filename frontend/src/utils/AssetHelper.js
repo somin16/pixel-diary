@@ -22,40 +22,7 @@ export const getAssetUrl = (currentThemeName, assetFolderName, fileName) => {
     }
 };
 
-// 데코 아이템 에셋 불러오기
-export const getDecoAssetUrl = (category, fileName) => {
-    // category: 'frames', 'stickers', 'emojis'
-    // fileName: 'sticker_cat' (확장자 제외)
-    return `/assets/decorations/${category}/${fileName}.png`;
-};
-
-// ── [통합 데이터] 아이템 ID와 파일명 매핑 및 카테고리 분류 ──────────────────
-export const DECO_ITEM_LIST = {
-    frame: [
-        { item_id: 20, img: 'winter_light_frame_x3' },
-        { item_id: 21, img: 'yellow_light_frame_x3' },
-    ],
-    emoji: [
-        { item_id: 22, img: 'bear_emoji_01_x3' },
-        { item_id: 23, img: 'bear_emoji_02_x3' },
-    ],
-    sticker: [
-        { item_id: 24, img: 'bear_sticker_01_x3' },
-        { item_id: 25, img: 'bear_sticker_02_x3' },
-    ],
-    
-};
-
-// 역방향 조회를 위한 맵 (ID로 이미지명을 찾을 때 사용)
-// reduce를 사용하여 DECO_ITEM_LIST 기반으로 자동 생성하면 관리가 더 편합니다.
-export const ITEM_IMG_MAP = Object.values(DECO_ITEM_LIST)
-    .flat()
-    .reduce((acc, item) => {
-        acc[item.item_id] = item.img;
-        return acc;
-    }, {});
-
 // ── [설정] 테마별 기본 액자(프레임) 설정 ───────────────────────────────────
 export const THEME_DEFAULT_FRAMES = {
-    winter_light: { id: 20, img: 'winter_light_frame_x3' }, // 겨울 테마일 때 기본 액자
+    winter_light: { id: 20, img: 'https://zrrizmmqdgfjmnejaqkt.supabase.co/storage/v1/object/public/items/winter_light_frame_x3.png' }, // 겨울 테마일 때 기본 액자
 };

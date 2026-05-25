@@ -1,9 +1,8 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { supabase } from "../../utils/SupabaseClient";
 import { authFetch } from "../../utils/AuthHelper";
 import { useTheme } from "../../store/useThemeStore";
-import { getAssetUrl, ITEM_IMG_MAP, THEME_DEFAULT_FRAMES } from "../../utils/AssetHelper";
+import { getAssetUrl, THEME_DEFAULT_FRAMES } from "../../utils/AssetHelper";
 import DiaryOptionSelector from "../../components/diary/DiaryOptionSelector";
 import ImageZoomOverlay from "../../components/diary/ImageZoomOverlay";
 import DecoPanel from "../../components/diary/DecoPanel";
@@ -62,15 +61,10 @@ export default function DiaryForm() {
 
     // ── [기본 액자 설정 및 최근 사용한 액자 기억하기 로직 ] ────────────────
     const lastUsedFrameImg = localStorage.getItem('lastUsedFrame');
-    const defaultFrame = THEME_DEFAULT_FRAMES[currentTheme] ?? { id: 20, img: 'winter_light_frame_x3' };
-
-    // 1. 이미지명을 가지고 ID(숫자)를 찾아주는 도우미 변수
-    const frameIdByImg = Object.keys(ITEM_IMG_MAP).find(key => ITEM_IMG_MAP[key] === lastUsedFrameImg);
+    const defaultFrame = THEME_DEFAULT_FRAMES[currentTheme] ?? { id: 20, img: 'https://zrrizmmqdgfjmnejaqkt.supabase.co/storage/v1/object/public/items/winter_light_frame_x3.png' };
 
     // 2. 초기값: 저장된 이미지가 있으면 그 ID를 쓰고, 없으면 테마 기본 ID 사용
-    const [selectedFrameId, setSelectedFrameId] = useState(
-        lastUsedFrameImg ? Number(frameIdByImg) : defaultFrame.id
-    );
+    const [selectedFrameId, setSelectedFrameId] = useState(defaultFrame.id);
     const [selectedFrameImg, setSelectedFrameImg] = useState(
         lastUsedFrameImg ?? defaultFrame.img
     );
@@ -98,18 +92,18 @@ export default function DiaryForm() {
             // 감정 이모지 복원
             if (data.emotion_item?.item_id) {
                 setSelectedEmojiId(data.emotion_item.item_id);
-                setSelectedEmojiImg(ITEM_IMG_MAP[data.emotion_item.item_id] ?? null);
+                setSelectedEmojiImg(data.emotion_item?.image_url ?? null);
             }
             // 액자 복원
             if (data.theme_item?.item_id) {
                 setSelectedFrameId(data.theme_item.item_id);
-                setSelectedFrameImg(ITEM_IMG_MAP[data.theme_item.item_id] ?? defaultFrame.img);
+                setSelectedFrameImg(data.theme_item?.image_url ?? defaultFrame.img);
             }
             // 스티커 목록 복원
             if (data.sticker?.length) {
                 setStickers(data.sticker.map((s, i) => ({
                     id: s.item_id,
-                    img: ITEM_IMG_MAP[s.item_id] ?? '',
+                    img: s.image_url ?? '',
                     instanceId: Date.now() + i, // 화면에서 구분하기 위한 고유 키
                     x: s.pos_x ?? null,
                     y: s.pos_y ?? null,
@@ -394,10 +388,8 @@ export default function DiaryForm() {
 
         // 단순히 defaultFrame으로 돌리지 말고 localStorage 확인
         const lastImg = localStorage.getItem('lastUsedFrame') ?? defaultFrame.img;
-        const lastId = Object.keys(ITEM_IMG_MAP).find(key => ITEM_IMG_MAP[key] === lastImg);
-
         setSelectedFrameImg(lastImg);
-        setSelectedFrameId(Number(lastId) || defaultFrame.id);
+        setSelectedFrameId(defaultFrame.id);
     }
 
 

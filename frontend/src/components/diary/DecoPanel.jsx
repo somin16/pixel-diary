@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { authFetch } from '../../utils/AuthHelper';
 import { motion } from 'framer-motion';
-import { getAssetUrl, getDecoAssetUrl, DECO_ITEM_LIST } from '../../utils/AssetHelper';
+import { getAssetUrl } from '../../utils/AssetHelper';
 import ImageButton from '../common/ImageButton';
 
 const DecoPanel = ({ currentTheme, mode, isOpen, onSelectMode, onSelectItem }) => {
@@ -13,33 +13,70 @@ const DecoPanel = ({ currentTheme, mode, isOpen, onSelectMode, onSelectItem }) =
     const targetY = isHidden ? "100%" : (isOpen ? "0%" : "88%");
 
     // 상태 관리
-    const [ownedItems, setOwnedItems] = useState([]);
+    // 전체 아이템 목록 (표시용) - item_type별로 분류해서 저장
+    const [allItems, setAllItems] = useState({
+        frame: [],   // diary_theme 타입
+        emoji: [],   // emoji 타입
+        sticker: [], // sticker 타입
+    });
+    // 보유한 아이템 ID Set (잠금 판별용, O(1) 조회)
+    const [ownedItemIds, setOwnedItemIds] = useState(new Set());
 
     useEffect(() => {
-        fetchItems();
+        fetchAllData();
     }, []);
 
-    // API 호출 - 보유 아이템만 판별
-    const fetchItems = async () => {
+    // API 호출 - 전체 아이템 목록 + 보유 아이템 판별
+    // sessionStorage 캐시 전략:
+    //   - deco_all_items: 전체 아이템 목록 (앱 배포 때만 바뀌므로 무효화 불필요)
+    //   - deco_owned_ids: 보유 아이템 ID 목록 (아이템 구매 시 무효화)
+    const fetchAllData = async () => {
         try {
-            const data = await authFetch(
-                `${import.meta.env.VITE_BACKEND_URL}/api/v1/users/deco-item/`
-            );
+            // ✅ 캐시 확인 먼저 - 있으면 API 호출 없이 바로 사용
+            const cachedAll = sessionStorage.getItem('deco_all_items');
+            const cachedOwned = sessionStorage.getItem('deco_owned_ids');
 
-            const owned = [
-                ...(data.emojis ?? []),
-                ...(data.diary_themes ?? []),
-                ...(data.stickers ?? []),
-            ].map((i) => i.item_id);
+            if (cachedAll && cachedOwned) {
+                setAllItems(JSON.parse(cachedAll));
+                setOwnedItemIds(new Set(JSON.parse(cachedOwned)));
+                return;
+            }
 
-            setOwnedItems(owned);
+            // 캐시 없을 때만 두 API를 병렬 호출해서 속도 최적화
+            const [allItemsData, ownedData] = await Promise.all([
+                authFetch(`${import.meta.env.VITE_BACKEND_URL}/api/v1/items/`),
+                authFetch(`${import.meta.env.VITE_BACKEND_URL}/api/v1/users/deco-item/`),
+            ]);
+
+            // 전체 아이템을 item_type별로 분류
+            const items = allItemsData.items ?? [];
+            const categorized = {
+                frame:   items.filter(i => i.item_type === 'diary_theme'),
+                emoji:   items.filter(i => i.item_type === 'emoji'),
+                sticker: items.filter(i => i.item_type === 'sticker'),
+            };
+
+            // 보유 아이템 ID를 배열로 추출 후 Set으로 변환
+            const ownedIds = [
+                ...(ownedData.emojis ?? []),
+                ...(ownedData.diary_themes ?? []),
+                ...(ownedData.stickers ?? []),
+            ].map(i => i.item_id);
+
+            // sessionStorage에 캐시 저장
+            sessionStorage.setItem('deco_all_items', JSON.stringify(categorized));
+            sessionStorage.setItem('deco_owned_ids', JSON.stringify(ownedIds));
+
+            setAllItems(categorized);
+            setOwnedItemIds(new Set(ownedIds));
+
         } catch (error) {
-            console.error('보유 아이템 조회 실패:', error);
+            console.error('아이템 데이터 로드 실패:', error);
         }
     };
 
     // 모드에 맞는 리스트 가져오기 (프레임, 스티커, 이모지)
-    const currentList = DECO_ITEM_LIST[mode] || [];
+    const currentList = allItems[mode] ?? [];
 
     // 버튼 클릭 핸들러: 같은 모드면 끄고(null), 다른 모드면 교체
     const handleModeClick = (selectedMode) => {
@@ -51,6 +88,7 @@ const DecoPanel = ({ currentTheme, mode, isOpen, onSelectMode, onSelectItem }) =
             onSelectMode(selectedMode, true);
         }
     };
+
     return (
         <>
             {/* 1. 우측 사이드 버튼들 */}
@@ -63,7 +101,6 @@ const DecoPanel = ({ currentTheme, mode, isOpen, onSelectMode, onSelectItem }) =
                         // 꿀렁임 방지: 크기(w, h)는 고정하고 위치(translate)만 이동
                         className={`w-full h-full transition-transform duration-200 ease-out ${mode === 'frame' ? 'translate-x-0' : 'translate-x-[25%]'
                             }`}
-                        // 이미지는 하나로 고정 (on/off 구분이 필요 없다면 하나만 쓰셔도 됩니다)
                         imageSrc={getAssetUrl(currentTheme, 'buttons', 'diary_frame_button_x3')}
                         textOption="text-[0px]"
                     />
@@ -146,13 +183,9 @@ const DecoPanel = ({ currentTheme, mode, isOpen, onSelectMode, onSelectItem }) =
                                     onPointerDown={(e) => e.stopPropagation()}
                                 >
                                     <div className="grid grid-cols-4 gap-[3%]">
-                                        {/* [수정 포인트] 더미 Array(24) 대신 실제 데이터 매핑 */}
                                         {currentList.map((item) => {
-                                            const isOwned = ownedItems.includes(item.item_id);
-
-                                            const folderName = `${mode}s`;
-                                            const imgSrc = getDecoAssetUrl(folderName, item.img);
-
+                                            // Set.has()로 O(1) 보유 여부 조회
+                                            const isOwned = ownedItemIds.has(item.item_id);
                                             const isFrameMode = mode === 'frame';
 
                                             return (
@@ -162,14 +195,17 @@ const DecoPanel = ({ currentTheme, mode, isOpen, onSelectMode, onSelectItem }) =
                                                         }`}
                                                     onClick={() => {
                                                         if (isOwned) {
-                                                            onSelectItem(mode, item);
+                                                            onSelectItem(mode, {
+                                                                item_id: item.item_id,
+                                                                img: item.item_image_url,
+                                                            });
                                                         }
                                                     }}
                                                 >
                                                     {/* 1. 아이템 이미지: 슬롯 배경 없이 이미지만 강조 */}
                                                     <div className="w-full h-full flex items-center justify-center">
                                                         <img
-                                                            src={getDecoAssetUrl(`${mode}s`, item.img)}
+                                                            src={item.item_image_url}
                                                             className={`object-contain h-full ${isOwned
                                                                 ? 'opacity-100'
                                                                 : 'opacity-40 grayscale brightness-75'
@@ -181,7 +217,7 @@ const DecoPanel = ({ currentTheme, mode, isOpen, onSelectMode, onSelectItem }) =
                                                     {/* 2. 자물쇠: 미보유 시 중앙에 표시 */}
                                                     {!isOwned && (
                                                         <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                                                            <span className="text-[14px] drop-shadow-[0_0_2px_rgba(255,255,255,0.8)]">
+                                                            <span className="text-2xl drop-shadow-[0_0_2px_rgba(255,255,255,0.8)]">
                                                                 🔒
                                                             </span>
                                                         </div>
