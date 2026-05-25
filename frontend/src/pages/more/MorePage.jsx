@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from "react";
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { useTheme } from '../../store/useThemeStore'; // useTheme 불러오기
 import { getAssetUrl } from "../../utils/AssetHelper"; // 헬퍼 불러오기
 import { supabase } from "../../utils/SupabaseClient";
 
 // zuStand 함수 불러오기
 import { useGetCoinStore } from "../../store/useCoinStore";
+import { useProfileStore } from '../../store/useProfileStore';
 
 // 컴포넌트 불러오기
 import ProfileBar from "../../components/more/profile/ProfileBar";
@@ -31,6 +32,9 @@ const MorePage = () => {
   //  테마 전역 관리
   const currentTheme = useTheme((state) => state.currentTheme);
 
+  // 더보기에서 조회를 하는편이 더 낫지 않을까? 해서 이쪽으로 옮겨봤습니다
+  const { startGetCoin } = useGetCoinStore();
+
   // 출석 다이얼로그 열림 상태를 관리하는 상태
   const [isAttendanceOpen, setIsAttendanceOpen] = useState(false);
 
@@ -41,15 +45,8 @@ const MorePage = () => {
   const [hasUnreadReply, setHasUnreadReply] = useState(false); // 일반 유저용 (답변 완료되었으나 안 읽음)
   const [hasNewContact, setHasNewContact] = useState(false);   // 관리자용 (새로운 답변 대기 문의 존재)
 
-  // 사용자 정보 상태 관리
-  const [user] = useState({
-    nickname: "nickname", // TODO: API 연동 시 useState("")로 변경
-    email: "email@email.com", // TODO: API 연동 시 useState("")로 변경
-    profileImage: null
-  });
-
-  // 더보기에서 조회를 하는편이 더 낫지 않을까? 해서 이쪽으로 옮겨봤습니다
-  const { startGetCoin } = useGetCoinStore();
+  // 유저 프로필 전역 상태 (Zustand)
+  const { nickname, email, profileImage, fetchProfile } = useProfileStore();
 
   useEffect(() => {
     let isMounted = true; // 
@@ -97,6 +94,7 @@ const MorePage = () => {
     };
     checkAdmin();
     startGetCoin(); // 코인조회를 더보기 창에서 실행
+    fetchProfile(); // 초기화 시점에 전역 스토어 프로필 데이터 조회 함수 호출
 
     // 포커스 이벤트 대신 Supabase Realtime 채널 구독
     const contactChannel = supabase
@@ -116,7 +114,7 @@ const MorePage = () => {
       isMounted = false; // cleanup에서 false로 변경
       supabase.removeChannel(contactChannel);
     };
-  }, []);
+  }, [startGetCoin, fetchProfile]);
 
   // isAdmin 여부에 따라 메뉴 필터링
   const visibleMenuItems = menuItems.filter(
@@ -158,9 +156,9 @@ const MorePage = () => {
 
       {/* 프로필 영역 */}
       <ProfileBar
-        nickname={user.nickname}
-        email={user.email}
-        profileImage={user.profileImage}
+        nickname={nickname}
+        email={email}
+        profileImage={profileImage}
       />
 
       {/* 더보기 메뉴 아이콘 그리드 영역 */}
