@@ -9,6 +9,7 @@ import ResultDialog from "../common/dialog/ResultDialog";
 import DuplicateDateDialog from "./dialog/DuplicateDateDialog";
 import SaveErrorDialog from "./dialog/SaveErrorDialog";
 import toast from "react-hot-toast";
+import { useBackNavigate } from "../../hooks/useBackNavigate";
 
 /**
  * @typedef {Object} StickerItem
@@ -98,6 +99,7 @@ const DetailDiaryDialog = ({
 }) => {
 
   const navigate = useNavigate();
+  const { goTo, goBack } = useBackNavigate();
 
   const MAX_LENGTH = 160;
   const length = (content || '').length
@@ -261,7 +263,7 @@ const DetailDiaryDialog = ({
     if (currentStatus === 'result') {
       if (onClose) onClose(); // 상세 다이얼로그 닫기
       // 일기 삭제 성공 시에만 목록으로 이동
-      navigate('/diary/list', { replace: true });
+      await goTo('/diary/list', { replace: true });
       return; // 삭제 후엔 onRefresh 불필요하므로 여기서 종료
     }
     // 'deco_reset_success'일 때는 아무 데도 가지 않고 이 자리에 가만히 유지됩니다.

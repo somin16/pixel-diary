@@ -2,7 +2,7 @@ import { getAssetUrl } from "../../utils/AssetHelper"
 import ImageButton from "./ImageButton"
 import { useTheme } from "../../store/useThemeStore"
 import { useState } from "react"
-import { Navigate, useNavigate } from "react-router-dom"
+import { useBackNavigate } from "../../hooks/useBackNavigate"
 
 /**
  * @typedef {Object} CloseButtonProps
@@ -20,7 +20,7 @@ import { Navigate, useNavigate } from "react-router-dom"
 
 const CloseButton = ({ onClose, className }) => {
   // 네비게이트 함수 생성
-  const navigate = useNavigate();
+  const { goBack } = useBackNavigate();
 
   // 현재 테마
   const currentTheme = useTheme((state) => state.currentTheme);
@@ -37,8 +37,8 @@ const CloseButton = ({ onClose, className }) => {
       // 별도의 닫기 로직이 주입된 경우 실행
       onClose();
     } else {
-      // 기본 동작: 뒤로 가기
-      navigate(-1);
+      // 기본 동작:키보드 내리고 뒤로 가기
+      goBack();
     }
   };
 
