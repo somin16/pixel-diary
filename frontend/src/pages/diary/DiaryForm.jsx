@@ -8,6 +8,8 @@ import ImageZoomOverlay from "../../components/diary/ImageZoomOverlay";
 import DecoPanel from "../../components/diary/DecoPanel";
 import DetailDiaryDialog from "../../components/diary/DetailDiaryDialog";
 import ImageButton from "../../components/common/ImageButton";
+import { App } from '@capacitor/app';
+import { Capacitor } from "@capacitor/core";
 
 /**
  * 일기 작성 / 수정 페이지
@@ -74,6 +76,19 @@ export default function DiaryForm() {
     if (!isEditMode || !diaryId) return;
     fetchDiaryForEdit();
   }, [isEditMode, diaryId]);
+
+  // ── [기능] 하드웨어 뒤로가기 시 임시 이미지 삭제 ──────────────────────────
+  useEffect(() => {
+    if (!Capacitor.isNativePlatform()) return;
+
+    const listener = App.addListener('backButton', async () => {
+      await handleClose(); // X 버튼이랑 동일한 로직
+    });
+
+    return () => {
+      listener.then(l => l.remove());
+    };
+  }, [savedImageId]); // savedImageId 바뀔 때마다 최신 handleClose 반영
 
   const fetchDiaryForEdit = async () => {
     try {
