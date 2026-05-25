@@ -20,7 +20,6 @@ import { useGetCoinStore } from "../../../store/useCoinStore";
 const TABS = ["모두", "스티커", "이모티콘", "테마"];
 
 
-
 const Shop = () => {
   // navigate('/경로') 처럼 사용하여 원하는 주소로 화면을 전환
   const navigate = useNavigate();
@@ -58,7 +57,7 @@ const Shop = () => {
       const fetchItems = async () => {
           try {
               const result = await authFetch(
-                  `${import.meta.env.VITE_BACKEND_URL}api/v1/items/`
+                  `${import.meta.env.VITE_BACKEND_URL}/api/v1/items/`
               );
               const mappedItems = (result.items || [])
                   .filter(item => item.item_type !== 'diary_theme' && item.item_type !== 'ticket')  // diary_theme는 app_theme 구매 시 자동 지급되므로 상점에서 제외, 티켓은 상점에서 구매 불가능
@@ -165,8 +164,13 @@ const Shop = () => {
       {/* 아이템 그리드 분리 - ShopItem에 filteredItems를 전달*/}
       {/* 탭 조건에 맞게 필터링된 아이템 목록을 화면에 렌더링 */}
       {loading ? (
-          <div className="flex justify-center mt-[50%] text-sm text-gray-500 font-bold animate-bounce">
+          <div 
+                className="w-full flex-1 p-[3%] pb-0 overflow-y-auto bg-[length:100%_100%]"
+                style={{ backgroundImage: `url(${getAssetUrl(currentTheme, 'boxes', 'store_box_x3')})` }}
+              > 
+              <div className="flex justify-center mt-[50%] text-sm text-gray-500 font-bold animate-bounce">
               불러오는 중...
+              </div>
           </div>
       ) : (
           <ShopItemGrid
