@@ -93,7 +93,7 @@ const Profile = () => {
         {/* 클릭하면 파일 선택창 열리도록 */}
         <label htmlFor="profileImageInput" className="absolute w-full aspect-square z-20 block cursor-pointer overflow-hidden">
           <img
-            src={profileImage || getAssetUrl(currentTheme, 'icons', 'app_icon_x2')}
+            src={profileImage || getAssetUrl(currentTheme, 'icons', 'app_icon_32_x3')}
             alt="프로필 사진"
             className="w-full h-full object-cover cursor-pointer"
           />

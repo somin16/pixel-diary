@@ -77,7 +77,7 @@ const Calendar = ({ onDateClick, onMonthChange, viewDate, currentTheme }) => {
       </div>
 
       {/*내부 데이터 레이어(배경 위에 띄우기) */}
-      <div className="absolute inset-0 flex flex-col mt-[26%] pl-[3%] pr-[9.5%]">
+      <div className="absolute inset-0 flex flex-col mt-[26%] pl-[2.5%] pr-[9.5%]">
 
         {/* 요일 헤더 1. 일요일 시작 (일 월 화 수 목 금 토) */}
         <div className="grid grid-cols-7 w-full h-[8%] text-xs text-center items-center justify-center gap-[1.5%]">
@@ -95,7 +95,7 @@ const Calendar = ({ onDateClick, onMonthChange, viewDate, currentTheme }) => {
         </div>
 
         {/* 날짜 그리드 */}
-        <div className="w-full h-[89%] grid grid-cols-7 gap-[1%] ">
+        <div className="w-full h-[88%] grid grid-cols-7 gap-[1%] ">
           {days.map((item, i) => {
             const isSunday = i % 7 === 0;                   // 일요일 여부
             const isSaturday = i % 7 === 6;                 // 토요일 여부
@@ -113,7 +113,7 @@ const Calendar = ({ onDateClick, onMonthChange, viewDate, currentTheme }) => {
                 // 이번 달 날짜만 클릭 가능하도록 핸들러 제안 (조건문)
                 onClick={() => !isNotCurrent && onDateClick(`${year}-${String(month + 1).padStart(2, '0')}-${String(item.day).padStart(2, '0')}`)}
                 className={`
-                                    aspect-[14/12] flex items-start pl-[8%] pt-[1%] justify-start text-xs
+                                    aspect-[14/12] flex items-start pl-[5%] pt-[1%] justify-start text-xs
                                     ${isNotCurrent ? 'opacity-50 grayscale' : 'cursor-pointer hover:bg-white/10'} // 이번달 아니면 흐리게 처리
                                     ${isSunday ? 'text-red-800' : isSaturday ? 'text-blue-800' : 'text-black'}
                                     ${isToday ? 'bg-blue-200/50 rounded font-bold' : ''} // 오늘 날짜 강조

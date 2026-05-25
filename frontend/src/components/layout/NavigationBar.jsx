@@ -2,43 +2,44 @@ import { useNavigate, useLocation } from 'react-router-dom';
 // useNavigate: 버튼 클릭 시 페이지 이동할 때 사용하는 훅
 // useLocation: 현재 어떤 경로에 있는지 확인할 때 사용하는 훅
 // 훅 (Hook): React에서 use로 시작하는 특별한 함수, 컴포넌트 안에서만 사용 가능
-
 import { getAssetUrl } from '../../utils/AssetHelper';
+import { useTheme } from "../../store/useThemeStore"; // 테마 전역상태관리 커스텀 훅
 // 에셋 이미지 경로 헬퍼 함수
 
-// 네비게이션 탭 목록 상수 — 탭이 추가되거나 변경될 때 여기서만 수정하면 됨
-const NAVIGATION_ITEMS = [
-  {
-    id: 'home',       // 탭 고유 식별자 — key prop에 사용
-    label: '홈',      // 접근성(alt)용 텍스트
-    path: '/',        // 이동할 경로 — App.jsx의 Route path와 반드시 일치해야 함
-    iconActive: getAssetUrl('winter_light', 'icons', 'home_icon_x3'),     // 현재 선택된 탭 아이콘
-    iconInactive: getAssetUrl('winter_light', 'icons', 'home_icon_x3'), // 선택되지 않은 탭 아이콘
-  },
-  {
-    id: 'diary',
-    label: '일기',
-    path: '/diary/list',
-    iconActive: getAssetUrl('winter_light', 'icons', 'gallery_icon_x3'),
-    iconInactive: getAssetUrl('winter_light', 'icons', 'gallery_icon_x3'),
-  },
-  {
-    id: 'game',
-    label: '게임',
-    path: '/game1run',
-    iconActive: getAssetUrl('winter_light', 'icons', 'game_icon_x3'),
-    iconInactive: getAssetUrl('winter_light', 'icons', 'game_icon_x3'),
-  },
-  {
-    id: 'more',
-    label: '더보기',
-    path: '/more',
-    iconActive: getAssetUrl('winter_light', 'icons', 'menu_icon_x3'),
-    iconInactive: getAssetUrl('winter_light', 'icons', 'menu_icon_x3'),
-  },
-];
-
 export default function NavigationBar() {
+  const currentTheme = useTheme((state) => state.currentTheme);
+
+  // 네비게이션 탭 목록 상수 — 탭이 추가되거나 변경될 때 여기서만 수정하면 됨
+  const NAVIGATION_ITEMS = [
+    {
+      id: 'home',       // 탭 고유 식별자 — key prop에 사용
+      label: '홈',      // 접근성(alt)용 텍스트
+      path: '/',        // 이동할 경로 — App.jsx의 Route path와 반드시 일치해야 함
+      iconActive: getAssetUrl(currentTheme, 'icons', 'home_icon_x3'),     // 현재 선택된 탭 아이콘
+      iconInactive: getAssetUrl(currentTheme, 'icons', 'home_icon_x3'), // 선택되지 않은 탭 아이콘
+    },
+    {
+      id: 'diary',
+      label: '일기',
+      path: '/diary/list',
+      iconActive: getAssetUrl(currentTheme, 'icons', 'gallery_icon_x3'),
+      iconInactive: getAssetUrl(currentTheme, 'icons', 'gallery_icon_x3'),
+    },
+    {
+      id: 'game',
+      label: '게임',
+      path: '/game1run',
+      iconActive: getAssetUrl(currentTheme, 'icons', 'game_icon_x3'),
+      iconInactive: getAssetUrl(currentTheme, 'icons', 'game_icon_x3'),
+    },
+    {
+      id: 'more',
+      label: '더보기',
+      path: '/more',
+      iconActive: getAssetUrl(currentTheme, 'icons', 'menu_icon_x3'),
+      iconInactive: getAssetUrl(currentTheme, 'icons', 'menu_icon_x3'),
+    },
+  ];
 
   const navigate = useNavigate();
   // navigate(경로): 해당 경로로 페이지 이동
@@ -71,7 +72,7 @@ export default function NavigationBar() {
       className="absolute bottom-0 left-0 w-full z-50 grid grid-cols-4 items-center"
       style={{
         /* 1. 네비게이션바 배경 이미지 불러오기 */
-        backgroundImage: `url(${getAssetUrl('winter_light', 'boxes', 'nav_bar_box_x3')})`,
+        backgroundImage: `url(${getAssetUrl(currentTheme, 'boxes', 'nav_bar_box_x3')})`,
 
         /* 2. 비율 설정: 이미지 원본 크기(360x78) 비율을 유지하여 높이 자동 계산 
         고정값 대신 사용하여 이미지 찌그러짐 방지*/
