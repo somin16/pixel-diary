@@ -174,7 +174,7 @@ const Shop = () => {
             alt="코인 배경"
           />
           {/* 현재 보유 코인 텍스트 */}
-          <span className="absolute right-[25%] top-1/2 -translate-y-1/2 text-[15px] font-bold text-black tracking-wider pointer-events-none">
+          <span className="absolute right-[25%] top-1/2 -translate-y-1/2 text-base font-bold text-black tracking-wider pointer-events-none">
             {myCoins}
           </span>
 
@@ -278,18 +278,7 @@ const Shop = () => {
           />
       )}
 
-      {/* 이미 보유한 아이템 알림 팝업 */}
-      {dialogStep === 'soldout' && (
-          <ResultDialog 
-              message="이미 보유한 아이템입니다"
-              onConfirm={closeDialog} 
-              boxImageName="store_item_popup_box_x3"
-              width="100%" 
-              maxWidth="380px"
-              textMt="mt-[18%]"
-              textSize="text-[14px]"
-          />
-      )}
+      {/* 이미 보유한 아이템은 클릭 X */}
 
       {/* 테마 미리보기 팝업 */}
       {dialogStep === "preview" && (
