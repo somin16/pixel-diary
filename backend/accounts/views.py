@@ -654,8 +654,7 @@ class UserImageView(APIView):
  
             # 현재 유저 id 추출 후 저장 경로 설정 (유저별 고유 경로)
             user_id = user_response.json().get("id")
-            file_extension = profile_image.name.split(".")[-1]
-            file_path = f"{user_id}/profile.{file_extension}"
+            file_path = f"{user_id}/profile.jpg"
  
             # Supabase Storage에 이미지 업로드
             storage_headers = {
@@ -752,8 +751,7 @@ class UserImageView(APIView):
             # Supabase Storage에서 프로필 사진 삭제
             # Storage 삭제 API는 파일 경로 배열을 JSON으로 전달해야 함
             storage_headers = get_supabase_headers()
-            file_extension = profile_image_url.split(".")[-1]
-            file_path = f"{user_id}/profile.{file_extension}"
+            file_path = f"{user_id}/profile.jpg"
  
             delete_response = requests.delete(
                 f"{supabase_url}/storage/v1/object/profiles",

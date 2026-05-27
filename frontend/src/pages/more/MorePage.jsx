@@ -46,7 +46,7 @@ const MorePage = () => {
   const [hasNewContact, setHasNewContact] = useState(false);   // 관리자용 (새로운 답변 대기 문의 존재)
 
   // 유저 프로필 전역 상태 (Zustand)
-  const { nickname, email, profileImage, fetchProfile } = useProfileStore();
+  const { nickname, email, profileImage, fetchProfile, isFetched } = useProfileStore();
 
   useEffect(() => {
     let isMounted = true; // 
@@ -94,7 +94,9 @@ const MorePage = () => {
     };
     checkAdmin();
     startGetCoin(); // 코인조회를 더보기 창에서 실행
-    fetchProfile(); // 초기화 시점에 전역 스토어 프로필 데이터 조회 함수 호출
+    if (!isFetched) {
+      fetchProfile(); // 프로필 데이터 중복 조회 방지 (데이터가 없을 때만 API 호출)
+    }
 
     // 포커스 이벤트 대신 Supabase Realtime 채널 구독
     const contactChannel = supabase
@@ -114,7 +116,7 @@ const MorePage = () => {
       isMounted = false; // cleanup에서 false로 변경
       supabase.removeChannel(contactChannel);
     };
-  }, [startGetCoin, fetchProfile]);
+  }, [startGetCoin, fetchProfile, isFetched]);
 
   // isAdmin 여부에 따라 메뉴 필터링
   const visibleMenuItems = menuItems.filter(
