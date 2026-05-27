@@ -62,6 +62,9 @@ class ProfileView(APIView):
                 )
 
             user_data = user_response.json()[0]
+            
+            # DB에서 profile_image_url 추출
+            profile_image = user.get("user_metadata", {}).get("profile_image_url")
 
             return Response(
                 {
@@ -69,6 +72,7 @@ class ProfileView(APIView):
                     "name": user_name,
                     "coin": user_data.get("coin"),
                     "game_top_score": user_data.get("game_top_score"),
+                    "profile_image": profile_image,
                     "message": "프로필 조회 성공",
                 },
                 status=status.HTTP_200_OK,
