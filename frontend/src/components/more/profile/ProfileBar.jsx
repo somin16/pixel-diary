@@ -38,6 +38,11 @@ const ProfileBar = ({ nickname, email, profileImage }) => {
           src={profileImage || getAssetUrl(currentTheme, 'icons', 'app_icon_32_x3')}
           alt="프로필 사진"
           className="absolute left-[3.7%] top-[43.5%] -translate-y-1/2 w-[21.5%] aspect-square object-cover pointer-events-none"
+          // 이미지 로드 실패 시 (URL은 있지만 실제 이미지가 없을 때) 기본 아이콘으로 교체
+          onError={(e) => {
+            e.target.onerror = null; // 무한 루프 방지 (기본 아이콘도 실패할 경우 대비)
+            e.target.src = getAssetUrl(currentTheme, 'icons', 'app_icon_32_x3');
+          }}
         />
 
         {/* 사용자 정보 (닉네임 & 이메일) */}

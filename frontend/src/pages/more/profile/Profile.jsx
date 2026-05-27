@@ -20,11 +20,11 @@ const Profile = () => {
   const currentTheme = useTheme((state) => state.currentTheme);
 
   // 전역 스토어에서 프로필 데이터 원본 및 통신 함수 가져오기
-  const { 
-    nickname: storeNickname, 
-    email: storeEmail, 
-    profileImage: storeImage, 
-    isFetched, 
+  const {
+    nickname: storeNickname,
+    email: storeEmail,
+    profileImage: storeImage,
+    isFetched,
     fetchProfile,
     updateProfileLocally // 수정 완료 시 쓸 함수
   } = useProfileStore();
@@ -86,7 +86,7 @@ const Profile = () => {
   // '기본 이미지로 변경' 버튼 클릭 시
   const handleDeleteClick = async () => {
     setIsMenuOpen(false); // 메뉴 먼저 닫기
-    await handleDeleteImage(); 
+    await handleDeleteImage();
   };
 
   // 프로필 사진 삭제 API
@@ -137,7 +137,7 @@ const Profile = () => {
       if (imageResponse && imageResponse.image_url) {
         // 브라우저 캐시를 무효화하여 항상 최신 이미지를 불러오도록 타임스탬프 추가
         const cacheBustedUrl = `${imageResponse.image_url}?t=${new Date().getTime()}`;
-        
+
         updateProfileLocally(nickname, cacheBustedUrl); // 스토어 데이터만 업데이트
         showMessage("success", "프로필 사진이 변경되었습니다");
       }
@@ -166,7 +166,7 @@ const Profile = () => {
 
       updateProfileLocally(nickname, storeImage); // 스토어 닉네임 동기화
       showMessage("success", "정보가 수정되었습니다");
-      
+
     } catch (error) {
       console.error("닉네임 변경 오류:", error);
       showMessage("error", "닉네임 변경에 실패했습니다. 다시 시도해 주세요.");
@@ -195,7 +195,7 @@ const Profile = () => {
       // 현재 화면에 방금 고른 사진(blob)이 떠있다면 서버 사진으로 덮어쓰지 않음
       setProfileImage((prev) => {
         if (prev && typeof prev === 'string' && prev.startsWith('blob:')) {
-          return prev; 
+          return prev;
         }
         return storeImage;
       });
@@ -230,7 +230,7 @@ const Profile = () => {
 
       {/* 프로필 사진 영역 */}
       <section className="relative w-auto h-auto my-[10%] flex justify-center items-center">
-        <div 
+        <div
           className="relative flex justify-center items-center cursor-pointer"
           onClick={handleImageClick}
         >
@@ -244,20 +244,25 @@ const Profile = () => {
               src={profileImage || getAssetUrl(currentTheme, 'icons', 'app_icon_32_x3')}
               alt="프로필 사진"
               className="w-full h-full object-cover"
+              // 이미지 로드 실패 시 (URL은 있지만 실제 이미지가 없을 때) 기본 아이콘으로 교체
+              onError={(e) => {
+                e.target.onerror = null; // 무한 루프 방지 (기본 아이콘도 실패할 경우 대비)
+                e.target.src = getAssetUrl(currentTheme, 'icons', 'app_icon_32_x3');
+              }}
             />
           </div>
         </div>
 
         {/* 프로필 이미지 변경 다이얼로그 */}
         {isMenuOpen && (
-          <div 
-            className="fixed inset-0 z-50 bg-black/50 flex justify-center items-center" 
+          <div
+            className="fixed inset-0 z-50 bg-black/50 flex justify-center items-center"
             onClick={() => setIsMenuOpen(false)} // 어두운 배경 클릭 시 닫힘
           >
             {/* 선택 다이얼로그 */}
-            <div 
+            <div
               className="flex flex-col bg-white rounded-2xl shadow-xl overflow-hidden w-[80%] max-w-[300px]"
-              onClick={(e) => e.stopPropagation()} 
+              onClick={(e) => e.stopPropagation()}
             >
               <button
                 onClick={() => {
@@ -268,9 +273,9 @@ const Profile = () => {
               >
                 프로필 이미지 변경
               </button>
-              
+
               <div className="w-full h-[1px] bg-gray-200"></div>
-              
+
               <button
                 onClick={handleDeleteClick}
                 className="px-4 py-4 text-[15px] text-[#EF4444] hover:bg-gray-100 font-bold"
@@ -280,7 +285,7 @@ const Profile = () => {
 
               <div className="w-full h-[1px] bg-gray-200"></div>
               <button
-                onClick={() => setIsMenuOpen(false)} 
+                onClick={() => setIsMenuOpen(false)}
                 className="px-4 py-4 text-[15px] text-gray-500 hover:bg-gray-100 font-bold"
               >
                 취소
