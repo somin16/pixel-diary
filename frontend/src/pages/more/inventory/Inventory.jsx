@@ -17,8 +17,8 @@ const TABS = ["모두", "스티커", "이모티콘", "테마"];
 
 // 보관함 더미 데이터
 const MOCK_INVENTORY = [
-  { id: 1, name: "겨울테마", icon: "https://zrrizmmqdgfjmnejaqkt.supabase.co/storage/v1/object/public/items/winter_theme_icon_x3.png", type: "테마", themeKey: "winter_light" },
-  { id: 2, name: "노랑테마", icon: "https://zrrizmmqdgfjmnejaqkt.supabase.co/storage/v1/object/public/items/yellow_theme_icon_x3.png", type: "테마", themeKey: "yellow_light" },
+  { id: 1, name: "펭귄테마", icon: "https://zrrizmmqdgfjmnejaqkt.supabase.co/storage/v1/object/public/items/winter_theme_icon_x3.png", type: "테마", themeKey: "winter_light" },
+  { id: 2, name: "병아리테마", icon: "https://zrrizmmqdgfjmnejaqkt.supabase.co/storage/v1/object/public/items/yellow_theme_icon_x3.png", type: "테마", themeKey: "yellow_light" },
 ];
 
 const Inventory = () => {
