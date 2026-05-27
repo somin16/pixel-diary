@@ -31,6 +31,7 @@ class AdminItemView(APIView):
         item_price = request.data.get("item_price", None)
         item_info = request.data.get("item_info", "").strip()
         item_image_url = request.data.get("item_image_url", "").strip()
+        linked_item_id = request.data.get("linked_item_id", None)
 
         # 필수값 누락 시 400 반환
         if not all(
@@ -69,7 +70,7 @@ class AdminItemView(APIView):
         # item_stackable을 item_type에 따라 자동 설정
         # app_theme, diary_theme는 중복 보유 불가 (false)
         # sticker, emoji, ticket은 중복 보유 가능 (true)
-        non_stackable_types = ["app_theme", "diary_theme"]
+        non_stackable_types = ["app_theme", "diary_theme", "sticker", "emoji"]
         item_stackable = item_type not in non_stackable_types
 
         try:
@@ -104,8 +105,8 @@ class AdminItemView(APIView):
                     "item_price": item_price,
                     "item_stackable": item_stackable,
                     "item_info": item_info,
-                    "item_image_url": item_image_url
-                    or None,  # 값이 없으면 None으로 저장
+                    "item_image_url": item_image_url or None,  # 값이 없으면 None으로 저장
+                    "linked_item_id": linked_item_id,
                 },
             )
 

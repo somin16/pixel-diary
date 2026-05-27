@@ -20,6 +20,7 @@ export default function AddItemPage() {
     item_price: '',
     item_info: '',
     item_image_url: '',
+    linked_item_id: '',
   });
 
   // 로딩 및 결과 메시지 상태 관리
@@ -51,6 +52,7 @@ export default function AddItemPage() {
       const submitData = {
         ...formData,
         item_price: formData.item_price === '' ? 0 : Number(formData.item_price),
+        linked_item_id: formData.linked_item_id === '' ? null : Number(formData.linked_item_id),
       };
 
       const result = await authFetch(
@@ -71,6 +73,7 @@ export default function AddItemPage() {
         item_price: '',
         item_info: '',
         item_image_url: '',
+        linked_item_id: '',
       });
     } catch (error) {
       setMessage({ text: error.message || '아이템 추가에 실패했습니다.', isError: true });
@@ -165,6 +168,22 @@ export default function AddItemPage() {
             style={{ borderColor: '#333' }}
           />
         </div>
+
+        {/* 연결할 diary_theme ID - app_theme 타입일 때만 표시 */}
+        {formData.item_type === 'app_theme' && (
+            <div className="flex flex-col gap-1">
+                <label className="text-sm font-bold" style={{ color: '#333' }}>연결할 diary_theme ID (선택)</label>
+                <input
+                    type="number"
+                    name="linked_item_id"
+                    value={formData.linked_item_id}
+                    onChange={handleChange}
+                    placeholder="연결할 diary_theme의 item_id 입력"
+                    className="px-3 py-2 border-4 text-sm outline-none bg-white"
+                    style={{ borderColor: '#333' }}
+                />
+            </div>
+        )}
 
         {/* 결과 메시지 */}
         {message.text && (
