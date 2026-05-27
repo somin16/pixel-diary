@@ -57,7 +57,7 @@ class ItemPurchaseView(APIView):
                 headers=headers,
                 params={
                     "item_id": f"eq.{item_id}",
-                    "select": "item_id,item_price,item_stackable",
+                    "select": "item_id,item_price,item_stackable,item_type,linked_item_id",
                 },
             )
 
@@ -70,6 +70,8 @@ class ItemPurchaseView(APIView):
             item = item_response.json()[0]
             item_stackable = item.get("item_stackable")
             item_price = item.get("item_price")
+            item_type = item.get("item_type")
+            linked_item_id = item.get("linked_item_id")
 
             # item_stackable이 False인 경우 중복 구매 제한
             if not item_stackable:
@@ -164,6 +166,31 @@ class ItemPurchaseView(APIView):
                 raise Exception(f"Supabase API 오류: {inventory_response.text}")
 
             inventory = inventory_response.json()[0]
+
+            # app_theme 구매 시 linked_item_id(diary_theme)도 자동 구매
+            if item_type == "app_theme" and linked_item_id:
+                # diary_theme 중복 확인
+                linked_existing = requests.get(
+                    f"{supabase_url}/rest/v1/inventory",
+                    headers=headers,
+                    params={
+                        "user_id": f"eq.{user_id}",
+                        "item_id": f"eq.{linked_item_id}",
+                        "select": "inventory_id",
+                    },
+                )
+
+                if not linked_existing.json():
+                    # 없으면 diary_theme 인벤토리에 추가
+                    requests.post(
+                        f"{supabase_url}/rest/v1/inventory",
+                        headers={**headers, "Prefer": "return=representation"},
+                        json={
+                            "user_id": user_id,
+                            "item_id": linked_item_id,
+                            "item_count": 1,
+                        },
+                    )
 
             # 관리자가 아닌 경우에만 코인 차감
             if not is_admin:

@@ -102,6 +102,9 @@ const Account = () => {
       // 팝업 띄우기 '전'에 로컬 세션 즉시 삭제
       try {
         await supabase.auth.signOut({ scope: 'local' });
+        sessionStorage.clear(); // deco_all_items, deco_owned_ids, diary_list 등 삭제
+        localStorage.removeItem('access_token');
+        localStorage.removeItem('refresh_token');
       } catch (e) {
         console.error("로컬 세션 삭제 무시:", e);
       }

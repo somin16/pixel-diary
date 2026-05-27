@@ -36,8 +36,16 @@ const PurchaseDialog = ({
 
         {/* 중앙 아이템 박스 */}
         <div className="relative w-[31%] h-25 mt-[3%] flex items-center justify-center">
-          <img src={getAssetUrl(currentTheme, 'boxes', 'store_popup_item_box_x2')} className="absolute inset-0 w-full h-full object-fill pointer-events-none" alt="아이템 배경" />
-          <img src={getAssetUrl(currentTheme, 'icons', selectedItem.icon)} className="relative z-10 w-[70%] h-auto mb-[5%]" alt="" />
+            <img src={getAssetUrl(currentTheme, 'boxes', 'store_popup_item_box_x2')} className="absolute inset-0 w-full h-full object-fill pointer-events-none" alt="아이템 배경" />
+            <img 
+                src={selectedItem.icon?.startsWith('http') ? selectedItem.icon : getAssetUrl(currentTheme, 'icons', selectedItem.icon)} 
+                className={`relative z-10 h-auto mb-[5%]
+                    ${selectedItem.type === 'app_theme' ? 'w-[70%]' : ''}
+                    ${selectedItem.type === 'sticker' ? 'w-[50%]' : ''}
+                    ${selectedItem.type === 'emoji' ? 'w-[60%]' : ''}
+                `}
+                alt="" 
+            />
         </div>
 
         {/* 질문 텍스트 */}

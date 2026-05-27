@@ -36,14 +36,37 @@ const Shop = () => {
   const [loading, setLoading] = useState(true); // 아이템 목록 로딩 상태
 
   // 아이템 구매 처리 로직
-  const handlePurchase = () => {
-    // 보유 코인이 아이템 가격보다 크거나 같은지 검사
-    if (myCoins >= selectedItem.price) {
-      setMyCoins(myCoins - selectedItem.price); // 코인 차감(useCoinStore.js에서 가져옵니다)
-      setDialogStep("success"); // 성공 팝업으로 이동
-    } else {
-      setDialogStep("fail"); // 코인 부족 시 실패 팝업으로 이동
-    }
+  const handlePurchase = async () => {
+      try {
+          const result = await authFetch(
+              `${import.meta.env.VITE_BACKEND_URL}/api/v1/items/${selectedItem.id}/purchase/`,
+              {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ item_count: 1 }),
+              }
+          );
+
+          // 구매 성공 시 코인 업데이트
+          if (result.current_coin !== null) {
+              setMyCoins(result.current_coin);  // 남은 코인으로 업데이트
+          }
+
+          // ticket 타입만 중복 구매 허용
+          if (selectedItem.type !== 'ticket') {
+              setItems(prev => prev.map(item =>
+                  item.id === selectedItem.id ? { ...item, isSoldOut: true } : item
+              ));
+          }
+
+          setDialogStep("success");
+      } catch (error) {
+          if (error.message === "이미 보유한 아이템입니다.") {
+              setDialogStep("soldout");  // 새로운 다이얼로그 스텝 추가
+          } else {
+              setDialogStep("fail");  // 코인 부족
+          }
+      }
   };
 
   // 모든 다이얼로그 창을 닫고 선택된 아이템 상태를 초기화하는 함수
@@ -54,29 +77,45 @@ const Shop = () => {
 
   // 아이템 목록 불러오기
   useEffect(() => {
-    const fetchItems = async () => {
-      try {
-        const result = await authFetch(
-          `${import.meta.env.VITE_BACKEND_URL}/api/v1/items/`
-        );
-        const mappedItems = (result.items || [])
-          .filter(item => item.item_type !== 'diary_theme' && item.item_type !== 'ticket')  // diary_theme는 app_theme 구매 시 자동 지급되므로 상점에서 제외, 티켓은 상점에서 구매 불가능
-          .map(item => ({
-            id: item.item_id,
-            name: item.item_name,
-            type: item.item_type,
-            price: item.item_price,
-            icon: item.item_image_url || 'home_icon_x3',  // 이미지 URL이 없으면 기본 아이콘 사용
-            isSoldOut: false,  // 추후 인벤토리 조회 결과와 비교하여 설정 예정
-          }));
-        setItems(mappedItems);
-      } catch (error) {
-        console.error('아이템 목록 조회 실패:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchItems();
+      const fetchItems = async () => {
+          try {
+              // 아이템 목록과 인벤토리 동시 조회
+              const [itemResult, inventoryResult, profileResult] = await Promise.all([
+                  authFetch(`${import.meta.env.VITE_BACKEND_URL}/api/v1/items/`),
+                  authFetch(`${import.meta.env.VITE_BACKEND_URL}/api/v1/users/inventory/`),
+                  authFetch(`${import.meta.env.VITE_BACKEND_URL}/api/v1/profile/`),
+              ]);
+
+              // 보유한 아이템 ID 목록
+              const ownedItemIds = new Set(
+                  (inventoryResult.items || []).map(item => item.item_id)
+              );
+
+              // 코인 업데이트
+              if (profileResult.coin !== undefined) {
+                  setMyCoins(profileResult.coin);
+              }
+
+              const mappedItems = (itemResult.items || [])
+                  .filter(item => item.item_type !== 'diary_theme' && item.item_type !== 'ticket')
+                  .map(item => ({
+                      id: item.item_id,
+                      name: item.item_name,
+                      type: item.item_type,
+                      price: item.item_price,
+                      info: item.item_info,
+                      icon: item.item_image_url || 'home_icon_x3',
+                      // item_stackable이 false인 아이템이 인벤토리에 있으면 isSoldOut: true
+                      isSoldOut: !item.item_stackable && ownedItemIds.has(item.item_id),
+                  }));
+              setItems(mappedItems);
+          } catch (error) {
+              console.error('데이터 조회 실패:', error);
+          } finally {
+              setLoading(false);
+          }
+      };
+      fetchItems();
   }, []);
 
   // 아이템 카테고리 필터링 
@@ -135,7 +174,7 @@ const Shop = () => {
             alt="코인 배경"
           />
           {/* 현재 보유 코인 텍스트 */}
-          <span className="absolute right-[25%] top-1/2 -translate-y-1/2 text-[15px] font-bold text-black tracking-wider pointer-events-none">
+          <span className="absolute right-[25%] top-1/2 -translate-y-1/2 text-base font-bold text-black tracking-wider pointer-events-none">
             {myCoins}
           </span>
 
@@ -219,32 +258,32 @@ const Shop = () => {
         />
       )}
 
-      {/* 구매 실패 (재화 부족) 알림 팝업 */}
+      {/* 구매 실패 알림 팝업 */}
       {dialogStep === 'fail' && (
-        <ResultDialog
-          message={
-            <>
-              재화가 부족합니다<br />
-              {/* 부족한 재화 표시 */}
-              <span className="text-[14px] font-medium block mt-1">
-                부족한 재화 : {selectedItem.price - myCoins} 코인
-              </span>
-            </>
-
-          }
-          onConfirm={closeDialog}
-          boxImageName="store_item_popup_box_x3"
-          width="100%"
-          maxWidth="380px"
-          textMt="mt-[15%]"
-          textSize="text-[15px]"
-        />
+          <ResultDialog 
+              message={
+                  <>
+                      재화가 부족합니다<br />
+                      <span className="text-[14px] font-medium block mt-1">
+                          부족한 재화 : {selectedItem && (selectedItem.price - myCoins) > 0 ? selectedItem.price - myCoins : 0} 코인
+                      </span>
+                  </>
+              }
+              onConfirm={closeDialog} 
+              boxImageName="store_item_popup_box_x3"
+              width="100%" 
+              maxWidth="380px"
+              textMt="mt-[15%]"
+              textSize="text-[15px]"
+          />
       )}
+
+      {/* 이미 보유한 아이템은 클릭 X */}
 
       {/* 테마 미리보기 팝업 */}
       {dialogStep === "preview" && (
         <PreviewDialog
-          previews={selectedItem?.previews}
+          currentTheme={selectedItem.name}
           onClose={() => setDialogStep("detail")}
           width="100%"
           maxWidth="480px"
