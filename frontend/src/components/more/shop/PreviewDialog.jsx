@@ -5,13 +5,11 @@ import { getAssetUrl } from "../../../utils/AssetHelper";
 /**
  * PreviewDialog 
  * 아이템의 미리보기를 보여주는 전용 다이얼로그
- * @param {array} previews - 미리보기 이미지 파일명 배열 (예: ['preview_1', 'preview_2'])
  * @param {function} onClose - 닫기 버튼 클릭 또는 배경 오버레이 클릭 시 실행할 닫기 함수
+ * @param {string} currentTheme - 앱 테마
  */
 
-const PreviewDialog = ({ previews, onClose }) => {
-  //  테마 전역 관리
-  const currentTheme = useTheme((state) => state.currentTheme);
+const PreviewDialog = ({ onClose, currentTheme }) => {
 
   return (
     <>
@@ -39,17 +37,17 @@ const PreviewDialog = ({ previews, onClose }) => {
 
         {/* 가로 스크롤 영역 */}
         <div className="w-full flex-1 flex flex-row flex-nowrap overflow-x-auto gap-6 py-6 pl-6 pr-6 no-scrollbar items-center justify-start min-w-0">
-          {previews?.map((img, idx) => (
+          {Array.from({ length: 5 }).map((img, idx) => (
             <div
               key={idx}
               className="h-full shrink-0"
             >
               <img
-                src={getAssetUrl(currentTheme, 'previews', img)}
+                src={getAssetUrl(currentTheme, 'previews', `${currentTheme}_preview_${idx + 1}`)}
                 className="h-full w-auto block"
                 draggable="false"
                 alt={`미리보기 ${idx + 1}`}
-                onError={(e) => console.error(`이미지 로드 실패: ${img}`)}
+                onError={(e) => console.error(`이미지 로드 실패: ${currentTheme}_preview_${idx + 1}`)}
               />
             </div>
           ))}
