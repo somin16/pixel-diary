@@ -20,7 +20,8 @@ class GameScoreSerializer(GameBaseScoreSerializer):
 # 티켓 사용 시 요청 데이터 검증 (item_id가 올바른 숫자인지 확인)
 class TicketUseSerializer(serializers.Serializer):
     item_id = serializers.IntegerField(
-        required=True,
+        required=False,
+        default=40,
         min_value=1,
         error_messages={
             "invalid": "item_id는 숫자여야 합니다.",
