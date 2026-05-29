@@ -1,5 +1,7 @@
 import { authFetch } from '../utils/AuthHelper';
 
+const TICKET_ITEM_ID = 40;
+
 // 티켓 조회 API 연동
 // async function: 비동기 함수 (게임에 방해되지않도록 백그라운드에서 실행됩니다)
 export async function getGameTicket() {
@@ -11,7 +13,7 @@ export async function getGameTicket() {
         const result = await authFetch(
 
             // 티켓 조회
-            `${import.meta.env.VITE_BACKEND_URL}/api/v1/users/inventory/tickets/`, {
+            `${import.meta.env.VITE_BACKEND_URL}/api/v1/users/inventory/tickets/?item_id=${TICKET_ITEM_ID}`, {
 
                 method: 'GET',
                 headers: { 'Content-Type': 'application/json' }
@@ -49,7 +51,8 @@ export async function useGameTicket() {
             `${import.meta.env.VITE_BACKEND_URL}/api/v1/users/inventory/tickets/`, {
 
                 method: 'PATCH',
-                headers: { 'Content-Type': 'application/json' }
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ item_id: TICKET_ITEM_ID })
             }
         );
 

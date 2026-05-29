@@ -244,7 +244,7 @@ class TicketView(APIView):
         user_id = user.get("id")
 
         # ── 3. 시리얼라이저로 데이터 검증 ─────────────────
-        serializer = TicketUseSerializer(data=request.data)
+        serializer = TicketUseSerializer(data=request.query_params)
         serializer.is_valid(raise_exception=True)
         item_id = serializer.validated_data["item_id"]
 
