@@ -16,21 +16,17 @@ import { useAddCoinStore } from "../../../store/useCoinStore";
 
 // 7일 출석 보상 데이터 구조 (서버 연동 시 초기화 기준이 됨)
 const ATTENDANCE_DAYS = [
-  { day: 1, type: "basic" },
-  { day: 2, type: "basic" },
-  { day: 3, type: "basic" },
-  { day: 4, type: "special", ticketCount: 1 },
-  { day: 5, type: "basic" },
-  { day: 6, type: "basic" },
-  { day: 7, type: "special", ticketCount: 2 },
+  { day: 1, coin:100, type: "basic"},
+  { day: 2, coin:100, type: "basic" },
+  { day: 3, coin:100, type: "basic" },
+  { day: 4, coin:150, type: "special", ticketCount: 1 },
+  { day: 5, coin:200, type: "basic" },
+  { day: 6, coin:250, type: "basic" },
+  { day: 7, coin:300, type: "special", ticketCount: 3 },
 ];
 
 const AttendanceDialog = ({ onClose }) => {
   const currentTheme = useTheme((state) => state.currentTheme);
-
-  // TODO: 실제 재화 스토어(Zustand) 연결 필요
-  // const addCoins = useCoinStore((state) => state.addCoins);
-  // const addTickets = useTicketStore((state) => state.addTickets);
 
   const [attendedDays, setAttendedDays] = useState(0); // 누적 출석일
   const [hasCheckedToday, setHasCheckedToday] = useState(false); // 당일 출석 버튼을 눌렀는지 여부
@@ -177,6 +173,7 @@ const AttendanceDialog = ({ onClose }) => {
                 isAttended={item.day <= attendedDays} // 출석한 날이면 체크 표시
                 onClick={() => handleDayClick(item.day)}
                 currentTheme={currentTheme}
+                coinReward={item.coin}
               />
             ))}
           </div>
@@ -190,6 +187,7 @@ const AttendanceDialog = ({ onClose }) => {
                 isAttended={item.day <= attendedDays} // 출석한 날이면 체크 표시
                 onClick={() => handleDayClick(item.day)}
                 currentTheme={currentTheme}
+                coinReward={item.coin}
               />
             ))}
             <div className="w-full h-full"></div>
