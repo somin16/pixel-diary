@@ -118,12 +118,12 @@ ATTENDANCE_REWARDS = {      # 보상 수량은 현재 임시로 정해둔 것 �
     1: {"coin": 100, "ticket": 0},
     2: {"coin": 100, "ticket": 0},
     3: {"coin": 100, "ticket": 0},
-    4: {"coin": 150, "ticket": 0},
-    5: {"coin": 200, "ticket": 1},
-    6: {"coin": 250, "ticket": 2},
+    4: {"coin": 150, "ticket": 1},
+    5: {"coin": 200, "ticket": 0},
+    6: {"coin": 250, "ticket": 0},
     7: {"coin": 300, "ticket": 3},
 }
-TICKET_ITEM_ID = 17     # items 테이블의 ticket 타입 아이템 ID
+TICKET_ITEM_ID = 40     # items 테이블의 ticket 타입 아이템 ID
 
 class AttendanceView(APIView):
     """출석 체크 및 보상, 출석 체크 기록 조회 API"""
