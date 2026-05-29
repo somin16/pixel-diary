@@ -40,9 +40,10 @@ const InventoryItemGrid = ({ items, selectedItemId, onItemClick }) => {
               {/* 아이템 아이콘 */}
               <div className="absolute top-[15%] h-auto z-10 pointer-events-none aspect-square w-full px-[10%] pb-[35%] flex justify-center">
                 <img
-                src={item.icon}
-                alt={item.name}
-              />
+                  src={item.icon}
+                  alt={item.name}
+                  className="object-contain"
+                />
               </div>
               
 
