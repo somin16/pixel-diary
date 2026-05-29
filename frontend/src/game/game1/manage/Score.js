@@ -86,7 +86,7 @@ export async function gameClear(scene) {
 
     // 최종점수(1000점은 게임 클리어 보너스)
     // 여기서 scene.gameScore부분은 차후에 API 연동시 따로 저장이 되도록 구현 예정
-    let finalScore = scene.gameScore + 3857;
+    let finalScore = scene.gameScore + 1000;
 
     // 티켓 썻으면 1000점 추가
     if (scene.isTicketUse == true) finalScore += 1000;

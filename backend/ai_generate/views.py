@@ -65,7 +65,7 @@ class AIGenerateView(APIView):
             workflow = copy.deepcopy(PIXEL_ART_WORKFLOW)    # 따로 분리된 워크플로우 불러와서 사용
             workflow["6"]["inputs"]["text"] = positive_prompt
             workflow["7"]["inputs"]["text"] = negative_prompt
-            workflow["3"]["inputs"]["seed"] = random.randint(0, 2 ** 32 - 1)
+            workflow["3"]["inputs"]["seed"] = 20260529              # 테스트용 고정 시드 (나중에 random.randint(0, 2 ** 32 - 1) 로 복구)
 
             prompt_response = requests.post(
                 f"{comfyui_url}/prompt",
