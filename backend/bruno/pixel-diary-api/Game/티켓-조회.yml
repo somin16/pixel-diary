@@ -5,16 +5,17 @@ info:
 
 http:
   method: GET
-  url: http://127.0.0.1:8000/api/v1/users/inventory/tickets/
+  url: http://127.0.0.1:8000/api/v1/users/inventory/tickets/?item_id=
   headers:
     - name: Authorization
       value: "Bearer "
+  params:
+    - name: item_id
+      value: ""
+      type: query
   body:
     type: json
-    data: |-
-      {
-          "item_id": 
-      }
+    data: ""
   auth: inherit
 
 settings:

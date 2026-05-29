@@ -1,9 +1,13 @@
+import { getGameTicket } from "../../TicketApiManage";
 import { ticketUseUI } from "./Ticket";
 
-export function createModeSelectUI(scene) {
+export async function createModeSelectUI(scene) {
 
-    // 보유중인 티켓 갯수(임시값, API 연동시 변경 예정)
-    scene.ticketCount = 2;
+    // API로 티켓 갯수를 받아온다
+    const myTicketCount = await getGameTicket();
+
+    // 연동받은 값을 할당
+    scene.ticketCount = myTicketCount;
 
     // 현재 화면의 가로 세로 크기 받기
     const { width, height } = scene.cameras.main;
