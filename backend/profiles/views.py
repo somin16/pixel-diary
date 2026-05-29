@@ -39,7 +39,13 @@ class ProfileView(APIView):
 
             user_id = user.get("id")
             email = user.get("email")
-            user_name = user.get("user_metadata", {}).get("user_name")
+            user_name =  (
+                user.get("user_metadata", {}).get("user_name") or  # 네이버/카카오/일반
+                user.get("user_metadata", {}).get("full_name") or  # 구글
+                user.get("user_metadata", {}).get("name")          # 구글 fallback
+            )
+            # DB에서 profile_image_url 추출
+            profile_image = user.get("user_metadata", {}).get("profile_image_url")
 
             supabase_url = os.getenv("SUPABASE_URL")
             headers = get_supabase_headers()
@@ -53,18 +59,39 @@ class ProfileView(APIView):
                     "select": "coin,game_top_score",
                 },
             )
-
+            
+            user_data_list = user_response.json() if user_response.status_code == 200 else []
+                
             # 오류 방지 방어 코드
-            if user_response.status_code != 200 or not user_response.json():
+            if user_response.status_code != 200:
                 return Response(
                     {"message": "유저 정보를 찾을 수 없습니다."},
                     status=status.HTTP_404_NOT_FOUND,
                 )
-
-            user_data = user_response.json()[0]
             
-            # DB에서 profile_image_url 추출
-            profile_image = user.get("user_metadata", {}).get("profile_image_url")
+            # users 테이블에 없으면 자동 생성 (구글 최초 로그인)
+            if not user_data_list:
+                create_response = requests.post(
+                    f"{supabase_url}/rest/v1/users",
+                    headers={**headers, "Prefer": "return=representation"},
+                    json={
+                        "user_id": user_id,
+                        "user_name": user_name,
+                        "coin": 0,
+                        "game_top_score": 0,
+                    },
+                )
+                user_data = create_response.json()[0]
+            else:
+                user_data = user_data_list[0]
+                
+                # user_name이 null이면 업데이트 (기존 구글/카카오 유저 대응)
+                if not user_data.get("user_name"):
+                    requests.patch(
+                        f"{supabase_url}/rest/v1/users?user_id=eq.{user_id}",
+                        headers=headers,
+                        json={"user_name": user_name},
+                    )
 
             return Response(
                 {

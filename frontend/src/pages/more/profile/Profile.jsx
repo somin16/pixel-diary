@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useTheme } from '../../../store/useThemeStore'; // useTheme 불러오기
 import { getAssetUrl } from "../../../utils/AssetHelper"; // 헬퍼 불러오기
 import { authFetch } from "../../../utils/AuthHelper";
+// import { AuthValidator } from "../../../utils/AuthValidator"; // TODO : 유저이름 중복&길이 검사
 
 // zustand 함수 불러오기
 import { useProfileStore } from '../../../store/useProfileStore';
@@ -178,8 +179,6 @@ const Profile = () => {
   // ──────────────────────────────────────────────────
   // useEffect
   // ──────────────────────────────────────────────────
-
-  // TODO : 유저 닉네임 중복 확인 API 연동
 
   // 프로필 데이터 조회
   useEffect(() => {
