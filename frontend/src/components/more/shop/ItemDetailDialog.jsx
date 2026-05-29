@@ -72,7 +72,7 @@ const ItemDetailDialog = ({ selectedItem, setDialogStep, closeDialog, width = "1
           {/* flex-1을 주어 남은 공간 전체를 차지하게 하고 text-center로 중앙 정렬 */}
           <div className="flex-1 w-full text-center ml-[11%]">
             <span className="text-xs font-bold text-black text-center break-keep">
-              {selectedItem.info}
+              {selectedItem.name}
             </span>
           </div>
         </div>
