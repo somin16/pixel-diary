@@ -58,7 +58,7 @@ const Inventory = () => {
                       const item = itemMap[inv.item_id];
                       return {
                           id: item.item_id,
-                          name: item.item_name,
+                          name: item.item_info,
                           type: item.item_type,
                           icon: item.item_image_url || 'home_icon_x3',
                           item_count: inv.item_count,

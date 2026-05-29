@@ -100,7 +100,7 @@ const Shop = () => {
                   .filter(item => item.item_type !== 'diary_theme' && item.item_type !== 'ticket')
                   .map(item => ({
                       id: item.item_id,
-                      name: item.item_name,
+                      name: item.item_info,
                       type: item.item_type,
                       price: item.item_price,
                       info: item.item_info,
