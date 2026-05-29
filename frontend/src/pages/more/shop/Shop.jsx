@@ -103,8 +103,8 @@ const Shop = () => {
                       name: item.item_info,
                       type: item.item_type,
                       price: item.item_price,
-                      info: item.item_info,
                       icon: item.item_image_url || 'home_icon_x3',
+                      preview: item.item_name,
                       // item_stackable이 false인 아이템이 인벤토리에 있으면 isSoldOut: true
                       isSoldOut: !item.item_stackable && ownedItemIds.has(item.item_id),
                   }));
@@ -283,7 +283,7 @@ const Shop = () => {
       {/* 테마 미리보기 팝업 */}
       {dialogStep === "preview" && (
         <PreviewDialog
-          currentTheme={selectedItem.name}
+          currentTheme={selectedItem.preview}
           onClose={() => setDialogStep("detail")}
           width="100%"
           maxWidth="480px"
