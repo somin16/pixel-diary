@@ -5,7 +5,7 @@ import { getAssetUrl } from "../../../utils/AssetHelper";
 import TicketBadge from "./TicketBadge";
 
 // 개별 출석 박스 컴포넌트
-const DayBox = ({ item, isAttended, onClick, currentTheme }) => {
+const DayBox = ({ item, isAttended, onClick, currentTheme, coinReward }) => {
   const pixelStyle = { imageRendering: 'pixelated' };
 
   return (
@@ -39,7 +39,7 @@ const DayBox = ({ item, isAttended, onClick, currentTheme }) => {
             className="w-[60%] h-auto object-contain"
             style={pixelStyle}
           />
-          <span className="text-[13px] text-black mt-[2%]">1000</span>
+          <span className="text-[13px] text-black mt-[2%]">{coinReward}</span>
         </div>
 
         {/* 출석 완료 상태 오버레이 처리 */}
