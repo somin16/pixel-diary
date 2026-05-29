@@ -32,6 +32,14 @@ const Inventory = () => {
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
 
+  // 아이템 타입별 정렬 순서 설정
+  const TYPE_ORDER = {
+      'app_theme': 0,
+      'emoji': 1,
+      'sticker': 2,
+      'ticket': 3,
+  };
+
   // 인벤토리 아이템 목록 불러오기
   // 인벤토리 API와 아이템 API를 동시에 호출하여 아이템 상세 정보를 매핑
   useEffect(() => {
@@ -70,7 +78,9 @@ const Inventory = () => {
                           // 주의: item_name이 반드시 {themeKey}_theme 형식이어야 합니다
                           themeKey: item.item_type === 'app_theme' ? item.item_name.replace('_theme', '') : null,
                       };
-                  });
+                  })
+                  // 타입별 정렬 (app_theme → emoji → sticker → ticket)
+                  .sort((a, b) => (TYPE_ORDER[a.type] ?? 99) - (TYPE_ORDER[b.type] ?? 99));
               setItems(mappedItems);
           } catch (error) {
               console.error('인벤토리 조회 실패:', error);
