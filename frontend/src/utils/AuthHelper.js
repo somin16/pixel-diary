@@ -78,14 +78,24 @@ export async function authFetch(url, options = {}) {
   let access_token = session?.access_token;
 
   // 공통 요청 함수 (토큰만 바꿔서 재사용하기 위해 분리)
-  const doFetch = (token) => fetch(url, {
-    ...options,
-    headers: {
-      "Content-Type": "application/json",
+  const doFetch = (token) => {
+    // 1. 기본 헤더 조립 (토큰 및 옵션으로 넘어온 헤더)
+    const headers = {
       ...(token && { Authorization: `Bearer ${token}` }),
       ...(options.headers ?? {}),
-    },
-  });
+    };
+
+    // 2. 넘겨받은 데이터(body)가 FormData(파일)가 아닐 경우에만 JSON 타입 추가
+    if (!(options.body instanceof FormData) && !headers["Content-Type"]) {
+      headers["Content-Type"] = "application/json";
+    }
+
+    // 3. 완성된 헤더를 fetch에 담아서 요청
+    return fetch(url, {
+      ...options,
+      headers,
+    });
+  };
 
   // 1차 요청
   let response = await doFetch(access_token);

@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast'; // 토스트메세지 라이브러리
 import { useTheme } from '../../../store/useThemeStore'; // useTheme 불러오기
 import { getAssetUrl } from "../../../utils/AssetHelper"; // 헬퍼 불러오기 
+import { authFetch } from '../../../utils/AuthHelper';
 
 // 컴포넌트 불러오기
 import Header from "../../../components/common/Header";
@@ -14,12 +15,6 @@ import { useGetCoinStore } from "../../../store/useCoinStore";
 
 // 아이템 카테고리 목록
 const TABS = ["모두", "스티커", "이모티콘", "테마"];
-
-// 보관함 더미 데이터
-const MOCK_INVENTORY = [
-  { id: 1, name: "겨울테마", icon: "https://zrrizmmqdgfjmnejaqkt.supabase.co/storage/v1/object/public/items/winter_theme_icon_x3.png", type: "테마", themeKey: "winter_light" },
-  { id: 2, name: "노랑테마", icon: "https://zrrizmmqdgfjmnejaqkt.supabase.co/storage/v1/object/public/items/yellow_theme_icon_x3.png", type: "테마", themeKey: "yellow_light" },
-];
 
 const Inventory = () => {
   // navigate('/경로') 처럼 사용하여 원하는 주소로 화면을 전환
@@ -34,42 +29,103 @@ const Inventory = () => {
   const [activeTab, setActiveTab] = useState("모두");
   const { coin: myCoins } = useGetCoinStore(); // setMyCoins는여기서는 안쓰는것 같아서 일단 뺏습니다
   const [selectedItemId, setSelectedItemId] = useState(null); // 선택된 아이템 ID 저장
+  const [items, setItems] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  // 아이템 타입별 정렬 순서 설정
+  const TYPE_ORDER = {
+      'app_theme': 0,
+      'emoji': 1,
+      'sticker': 2,
+      'ticket': 3,
+  };
+
+  // 인벤토리 아이템 목록 불러오기
+  // 인벤토리 API와 아이템 API를 동시에 호출하여 아이템 상세 정보를 매핑
+  useEffect(() => {
+      const fetchInventory = async () => {
+          try {
+              const [inventoryResult, itemsResult] = await Promise.all([
+                  authFetch(`${import.meta.env.VITE_BACKEND_URL}/api/v1/users/inventory/`),
+                  authFetch(`${import.meta.env.VITE_BACKEND_URL}/api/v1/items/`),
+              ]);
+
+              // items 테이블 데이터를 item_id로 빠르게 찾기 위한 맵 생성
+              const itemMap = {};
+              (itemsResult.items || []).forEach(item => {
+                  itemMap[item.item_id] = item;
+              });
+
+              const mappedItems = (inventoryResult.items || [])
+                  .filter(inv => {
+                      const item = itemMap[inv.item_id];
+                      // diary_theme는 app_theme 구매 시 자동 지급되므로 보관함에서 제외
+                      return item && item.item_type !== 'diary_theme';
+                  })
+                  .map(inv => {
+                      const item = itemMap[inv.item_id];
+                      return {
+                          id: item.item_id,
+                          name: item.item_type === 'ticket'
+                              ? `${item.item_info} - ${inv.item_count}` // 티켓은 수량 표시
+                              : item.item_info,
+                          type: item.item_type,
+                          icon: item.item_image_url || 'home_icon_x3',
+                          item_count: inv.item_count,
+
+                          // app_theme 타입인 경우 item_name에서 _theme를 제거하여 themeKey 자동 생성
+                          // 예시: winter_light_theme → winter_light
+                          // 주의: item_name이 반드시 {themeKey}_theme 형식이어야 합니다
+                          themeKey: item.item_type === 'app_theme' ? item.item_name.replace('_theme', '') : null,
+                      };
+                  })
+                  // 타입별 정렬 (app_theme → emoji → sticker → ticket)
+                  .sort((a, b) => (TYPE_ORDER[a.type] ?? 99) - (TYPE_ORDER[b.type] ?? 99));
+              setItems(mappedItems);
+          } catch (error) {
+              console.error('인벤토리 조회 실패:', error);
+          } finally {
+              setLoading(false);
+          }
+      };
+      fetchInventory();
+  }, []);
 
   // 아이템 카테고리 필터링 
   // activeTab이 "모두"일 때는 전체 리스트를, 아니면 타입이 일치하는 것만 걸러내서 나타냄
   const filteredItems = activeTab === "모두"
-    ? MOCK_INVENTORY
-    : MOCK_INVENTORY.filter(item => item.type === activeTab);
+    ? items
+    : items.filter(item => {
+        if (activeTab === "스티커") return item.type === "sticker";
+        if (activeTab === "이모티콘") return item.type === "emoji";
+        if (activeTab === "테마") return item.type === "app_theme";
+        return true;
+    });
 
   // 보관함을 열었을 시 현재 적용된 테마 아이템에 초록색 테두리 씌우기(보관함의 초록색 선택 테두리 위치를 현재 테마에 맞게 업데이트)
   useEffect(() => {
-    // MOCK_INVENTORY는 서버에서 받아온 내 아이템 목록이라고 가정
-    const appliedThemeItem = MOCK_INVENTORY.find(
-      // 아이템의 themeKey가 '현재 Zustand 스토어에 저장된 테마 값(currentTheme)'과 일치해야 함
-      (item) => item.type === "테마" && item.themeKey === currentTheme
-    );
-    if (appliedThemeItem) {
-      setSelectedItemId(appliedThemeItem.id);
-    }
-  }, [currentTheme]);
+      const appliedThemeItem = items.find(
+          // 아이템의 themeKey가 '현재 Zustand 스토어에 저장된 테마 값(currentTheme)'과 일치해야 함
+          (item) => item.type === "app_theme" && item.themeKey === currentTheme
+      );
+      if (appliedThemeItem) {
+          setSelectedItemId(appliedThemeItem.id);
+      }
+  }, [currentTheme, items]);
 
   // 아이템 클릭 핸들러 로직
+  // app_theme 타입만 클릭 시 테마 변경 및 선택 테두리 표시
+  // 그 외 타입(sticker, emoji 등)은 클릭해도 선택 상태 변경 없음
   const handleItemClick = (item) => {
-    if (item.type === "테마") {
-      // 이미 적용된 테마인지 확인
-      if (item.themeKey === currentTheme) {
-        // 토스트 호출
-        toast("이미 적용 중인 테마입니다", {
-        });
-        return;
+      if (item.type === "app_theme") {
+          // 이미 적용된 테마인 경우 토스트 메시지 표시
+          if (item.themeKey === currentTheme) {
+              toast("이미 적용 중인 테마입니다");
+              return;
+          }
+          setTheme(item.themeKey);      // 전역 테마 변경
+          setSelectedItemId(item.id);   // 선택된 아이템에 초록색 테두리 표시
       }
-
-      setTheme(item.themeKey); // 클릭 즉시 전역 테마 변경
-      setSelectedItemId(item.id); // 방금 클릭한 테마에 초록색 테두리 (null로 풀리지 않음)
-    } else {
-      // 이미 선택된 아이템을 다시 누르면 선택 해제, 아니면 새 아이템 선택
-      setSelectedItemId(prev => prev === item.id ? null : item.id);
-    }
   };
 
   return (
@@ -143,13 +199,20 @@ const Inventory = () => {
         type="inventory"
       />
 
+      {/* 로딩 중에는 로딩 메시지를 표시 */}
       {/* 보관함 아이템 그리드 분리 */}
       {/* 탭 조건에 맞게 필터링된 아이템 목록을 화면에 렌더링 */}
-      <InventoryItemGrid
-        items={filteredItems}
-        selectedItemId={selectedItemId} // 선택된 ID 전달
-        onItemClick={handleItemClick}   // 클릭 핸들러 전달
-      />
+      {loading ? (
+          <div className="flex justify-center mt-[50%] text-sm text-gray-500 font-bold animate-bounce">
+              불러오는 중...
+          </div>
+      ) : (
+          <InventoryItemGrid
+              items={filteredItems}
+              selectedItemId={selectedItemId}
+              onItemClick={handleItemClick}
+          />
+      )}
 
     </div>
   );

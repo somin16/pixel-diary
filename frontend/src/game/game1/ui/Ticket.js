@@ -1,3 +1,5 @@
+import { useGameTicket } from "../../TicketApiManage";
+
 // 티켓 사용여부 UI 생성
 export function ticketUseUI(scene) {
 
@@ -55,10 +57,13 @@ export function ticketUseUI(scene) {
             
         .setScrollFactor(0) // 이거 안하면 이상한곳에서 스폰돼서 클릭이 안된다
         .setInteractive()   // 이걸 넣어줘야 클릭이 가능
-        .on('pointerdown', () => { // 누를때 작동
+        .on('pointerdown', async () => { // 누를때 작동
 
             // 티켓선택 끝
             scene.isTicketSelect = false;
+
+            // 티켓 사용 API
+            await useGameTicket();
 
             // 클릭 이벤트
             scene.scene.start('GameScene', {

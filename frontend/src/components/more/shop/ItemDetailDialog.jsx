@@ -44,7 +44,7 @@ const ItemDetailDialog = ({ selectedItem, setDialogStep, closeDialog, width = "1
         </div>
 
         {/* 아이템 박스와 제목을 위한 가로 배열 컨테이너 */}
-        <div className="flex flex-row items-center w-full mt-4 px-4">
+        <div className="flex flex-row items-center w-full mt-[5%] px-[3%]">
 
           {/* 아이템 박스: 왼쪽에 배치 */}
           <div className="relative w-[44%] aspect-square flex-shrink-0 flex items-center justify-center -ml-6">
@@ -70,8 +70,8 @@ const ItemDetailDialog = ({ selectedItem, setDialogStep, closeDialog, width = "1
 
           {/* 아이템 제목 */}
           {/* flex-1을 주어 남은 공간 전체를 차지하게 하고 text-center로 중앙 정렬 */}
-          <div className="flex-1 text-center pl-2">
-            <span className="text-[16px] font-bold text-black text-center break-keep">
+          <div className="flex-1 w-full text-center ml-[11%]">
+            <span className="text-xs font-bold text-black text-center break-keep">
               {selectedItem.name}
             </span>
           </div>
@@ -79,11 +79,13 @@ const ItemDetailDialog = ({ selectedItem, setDialogStep, closeDialog, width = "1
 
         {/* 하단 버튼 */}
         <div className="flex justify-center gap-[14%] mt-[5%] w-full">
-          <ImageButton
-            label="미리 보기"
-            imageSrc={getAssetUrl(currentTheme, 'buttons', 'blue_button_x3')}
-            onClick={() => setDialogStep("preview")}
-          />
+          {selectedItem.type === 'app_theme' && (
+            <ImageButton
+              label="미리 보기"
+              imageSrc={getAssetUrl(currentTheme, 'buttons', 'blue_button_x3')}
+              onClick={() => setDialogStep("preview")}
+            />
+          )}
           <ImageButton
             label="구매하기"
             imageSrc={getAssetUrl(currentTheme, 'buttons', 'green_button_x3')}

@@ -21,6 +21,7 @@ export const useProfileStore = create((set, get) => ({
       set({
         nickname: data.name || "이름 없음",
         email: data.email || "이메일 없음",
+        profileImage: data.profile_image || null,
         isFetched: true, 
       });
     } catch (error) {

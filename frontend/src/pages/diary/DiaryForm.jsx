@@ -201,6 +201,9 @@ export default function DiaryForm() {
         // 태그 있으면 PATCH
         const requestTags = tags.filter(t => !t.startsWith('-')).join(', ');
         const removeTags = tags.filter(t => t.startsWith('-')).map(t => t.substring(1)).join(', ');
+        console.log("--------그림 새로 그리는 중-----------------------------")
+        console.log("추가:",requestTags);
+        console.log("제거:",removeTags);
         const data = await authFetch(
           `${import.meta.env.VITE_BACKEND_URL}/api/v1/prompt/`,
           {
@@ -228,8 +231,10 @@ export default function DiaryForm() {
 
   // 실제 ai-generate API 호출 (내부 공통 함수)
   async function _generateImage(positivePrompt, negativePrompt) {
+    console.log("---------------------------------------------------------") // 나중에 배포전에 지울거에요
     console.log("긍정프롬프트:",positivePrompt);
     console.log("부정프롬프트:",negativePrompt);
+    console.log("----------------------------------------------------------")
     const data = await authFetch(
       `${import.meta.env.VITE_BACKEND_URL}/api/v1/ai-generate/`,
       {
