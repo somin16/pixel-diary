@@ -41,7 +41,7 @@ PIXEL_ART_WORKFLOW = {
                 "cfg": 7,
                 "sampler_name": "dpmpp_2m",
                 "scheduler": "karras",
-                "denoise": 0.8
+                "denoise": 1.0
             }
         },
         "8": {
