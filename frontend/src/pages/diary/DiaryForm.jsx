@@ -393,8 +393,7 @@ export default function DiaryForm() {
     await goBack();
   }
 
-  function handleCloseOverlay() { setStep(6); }   // 오버레이 닫고 꾸미기 단계로
-  function handleCloseOverlay2() { setStep(1); }   // 오버레이 닫고 일기 쓰기 단계로
+  function handleCloseOverlay() { setStep(1); }   // 오버레이 닫기
 
   // 모든 데이터를 초기화하고 처음부터 다시 시작
   function handleRestartFromBeginning() {
@@ -478,7 +477,7 @@ export default function DiaryForm() {
 
       {/* 2단계: 그림 그리기 전 선택 팝업 */}
       {step === 2 && (
-        <ImageZoomOverlay onClose={handleCloseOverlay2} imageUrl={imageUrl}
+        <ImageZoomOverlay onClose={handleCloseOverlay} imageUrl={imageUrl}
           footer={
             <div className="w-full h-full flex flex-col justify-end items-center gap-[8%]">
               <ImageButton label="그냥 그리기" onClick={handleDrawWithoutOption} className="w-[60%] aspect-[237/72]" imageSrc={getAssetUrl(currentTheme, 'buttons', 'babypink_button_x3')} textOption="text-2xl text-[#FF7396]" />
@@ -490,7 +489,7 @@ export default function DiaryForm() {
 
       {/* 3단계: AI 그림 옵션(태그) 선택창 */}
       {step === 3 && (
-        <DiaryOptionSelector onClose={handleCloseOverlay2} currentTheme={currentTheme} tags={tags} onTagsChange={handleTagsChange}
+        <DiaryOptionSelector onClose={handleCloseOverlay} currentTheme={currentTheme} tags={tags} onTagsChange={handleTagsChange}
           footer={
             <ImageButton label="옵션 적용하기" onClick={handleGenerateImage} className="w-[60%] aspect-[237/72]" imageSrc={getAssetUrl(currentTheme, 'buttons', 'skyblue_button_x3')} textOption="text-2xl text-[#4C8AE8]" />
           }
