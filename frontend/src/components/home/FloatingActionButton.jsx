@@ -19,8 +19,7 @@ const FloatingActionButton = ({ onClick, currentTheme, ariaLabel = "일기작성
         backgroundImage: `url(${getAssetUrl(currentTheme, 'icons', 'add_icon_x3')})`,
         backgroundSize: '100% 100%',// 이미지를 박스 크기에 꽉 채움
         aspectRatio: '1/1',// 비율을 유지해 픽셀 왜곡 방지
-        width: 'calc(var(--scale, 1) * 65px)',
-        minWidth: '90px'
+        width: 'calc(var(--scale, 1) * 70px)',
       }}
     />
   )

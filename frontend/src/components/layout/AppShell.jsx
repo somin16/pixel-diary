@@ -30,7 +30,7 @@ export default function AppShell({ children }) {
         className="w-full h-full app-root relative overflow-hidden bg-white flex flex-col max-w-[430px]"
         style={{
           // 예) 캔버스가 180px(절반)으로 줄면 --scale도 0.5가 돼서 폰트도 절반
-          '--scale': Math.min(window.innerWidth, 500) / 360,
+          '--scale': Math.min(window.innerWidth, 500) / 390,
         }}
       >
         {/* 페이지별 내용 — 배경/콘텐츠 전부 여기로 들어옴 */}
