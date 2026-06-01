@@ -54,15 +54,18 @@ const Game1 = () => {
     <div
       style={{
 
-        position: "fixed", // 독자적인 화면 구축
+        position: "absolute", // 독자적인 화면 구축
         top: 0,
-        left: 0,
+        // pc 화면에서 정중앙 정렬 유지
+        left: "50%",
+        transform: "translateX(-50%)",
         zIndex: 9999,
 
-        width: "100vw",
-        height: "100vh",
-        backgroundColor: "#111", // 화면 밖 검은색으로
+        width: "100%",
+        height: "100%",
+        maxWidth: "430px",
         overflow: "hidden",
+
 
         textAlign: "left",
       }}
