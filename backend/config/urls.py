@@ -16,6 +16,10 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path, include
+from django.http import JsonResponse
+
+def health_check(request):
+    return JsonResponse({"status": "ok"})
 
 urlpatterns = [
     path("admin/", admin.site.urls),
@@ -28,4 +32,5 @@ urlpatterns = [
     path("api/v1/profile/", include("profiles.urls")),  # 프로필 및 설정 관련 앱
     path("api/v1/announcements/", include("announcements.urls")), # 공지사항 조회 관련 URL
     path("api/v1/ai-generate/", include("ai_generate.urls")), # AI 그림 생성 관련 URL
+    path("health/", health_check),                      # 백엔드서버(render) 슬립 방지 URL
 ]
