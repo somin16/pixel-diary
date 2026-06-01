@@ -13,7 +13,7 @@ const DeleteDialog = ({ onConfirm, onCancel, width = "100%", maxWidth = "320px" 
 
   return (
     <DialogBox boxImageName="popup_message_box_x3" width={width} maxWidth={maxWidth}>
-      <p className="text-[13px] font-bold text-center m-0 mt-[11%] whitespace-pre-wrap">
+      <p className="text-xs font-bold text-center m-0 mt-[11%] whitespace-pre-wrap">
         정말 이 일기를 삭제할까요? {"\n"} 삭제된 데이터는 복구할 수 없습니다.
       </p>
 

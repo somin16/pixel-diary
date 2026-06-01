@@ -141,7 +141,7 @@ const Shop = () => {
       {/* 상점 타이틀 영역 */}
       <div className="absolute top-[17%] left-[12%] z-20 pointer-events-none">
         <h1
-          className="text-[54px] font-extrabold m-0 text-left"
+          className="text-5xl font-extrabold m-0 text-left"
           style={{
             color: '#926653',
             WebkitTextStroke: '10px white', // 글자 외곽선
@@ -254,7 +254,7 @@ const Shop = () => {
           width="100%"
           maxWidth="380px"
           textMt="mt-[18%]"
-          textSize="text-[14px]"
+          textSize="text-xs"
         />
       )}
 
@@ -264,7 +264,7 @@ const Shop = () => {
               message={
                   <>
                       재화가 부족합니다<br />
-                      <span className="text-[14px] font-medium block mt-1">
+                      <span className="text-xs font-medium block mt-1">
                           부족한 재화 : {selectedItem && (selectedItem.price - myCoins) > 0 ? selectedItem.price - myCoins : 0} 코인
                       </span>
                   </>
@@ -274,7 +274,7 @@ const Shop = () => {
               width="100%" 
               maxWidth="380px"
               textMt="mt-[15%]"
-              textSize="text-[15px]"
+              textSize="text-xs"
           />
       )}
 

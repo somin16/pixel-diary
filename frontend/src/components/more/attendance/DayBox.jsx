@@ -39,7 +39,7 @@ const DayBox = ({ item, isAttended, onClick, currentTheme, coinReward }) => {
             className="w-[60%] h-auto object-contain"
             style={pixelStyle}
           />
-          <span className="text-[13px] text-black mt-[2%]">{coinReward}</span>
+          <span className="text-xs text-black mt-[2%]">{coinReward}</span>
         </div>
 
         {/* 출석 완료 상태 오버레이 처리 */}
@@ -65,7 +65,7 @@ const DayBox = ({ item, isAttended, onClick, currentTheme, coinReward }) => {
         )}
 
         {/* 일차 표시 */}
-        <span className="text-[14px] text-black mb-[1%] tracking-tighter relative z-20">
+        <span className="text-sm text-black mb-[1%] tracking-tighter relative z-20">
           day 0{item.day}
         </span>
       </div>

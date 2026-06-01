@@ -88,7 +88,7 @@ const Notification = () => {
             alt="전체 알림 배경"
             className="relative w-full h-auto block"
           />
-          <span className="absolute z-10 top-1/2 -translate-y-1/2 left-[6%] text-[16px] font-bold text-black whitespace-nowrap">
+          <span className="absolute z-10 top-1/2 -translate-y-1/2 left-[6%] text-sm font-bold text-black whitespace-nowrap">
             전체 알림
           </span>
 

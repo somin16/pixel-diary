@@ -48,8 +48,8 @@ const ProfileBar = ({ nickname, email, profileImage }) => {
         {/* 사용자 정보 (닉네임 & 이메일) */}
         {/* flex-col 정렬에서 gap을 %로 조절 불가하여 px로 유지 */}
         <div className="absolute left-[29%] top-1/2 -translate-y-1/2 flex flex-col gap-[5px]">
-          <span className="text-[16px] font-bold text-black">{nickname}</span>
-          <span className="text-[12px] font-bold text-gray-500">{email}</span>
+          <span className="text-sm font-bold text-black">{nickname}</span>
+          <span className="text-2xs font-bold text-gray-500">{email}</span>
         </div>
 
       </div>

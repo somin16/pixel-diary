@@ -49,7 +49,7 @@ const PurchaseDialog = ({
         </div>
 
         {/* 질문 텍스트 */}
-        <div className="mt-[4%] text-[14px] font-bold text-black text-center whitespace-pre-wrap">
+        <div className="mt-[4%] text-xs font-bold text-black text-center whitespace-pre-wrap">
           <span className="text-[#00B050]">"{selectedItem.name}"</span>을/를 구매하시겠습니까?
         </div>
 

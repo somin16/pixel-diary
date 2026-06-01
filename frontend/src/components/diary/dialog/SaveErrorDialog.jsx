@@ -12,7 +12,7 @@ const SaveErrorDialog = ({ type, onClose, width = "100%", maxWidth = "320px" }) 
 
   return (
     <DialogBox boxImageName="popup_message_box_x3" width={width} maxWidth={maxWidth}>
-      <p className="text-[13px] font-bold text-center m-0 mt-[11%] whitespace-pre-wrap">
+      <p className="text-xs font-bold text-center m-0 mt-[11%] whitespace-pre-wrap">
         {message}
       </p>
       <div className="flex justify-center w-full">

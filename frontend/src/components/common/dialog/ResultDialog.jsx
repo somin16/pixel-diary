@@ -15,17 +15,17 @@ import ImageButton from '../ImageButton';
  * @param {string} [width="auto"] - 다이얼로그의 가로 길이 (기본값: "auto")
  * @param {string} [maxWidth="360px"] - 다이얼로그의 최대 가로 길이 (기본값: "360px") -> 상한선 값이기 때문에 px로 유지
  * @param {string} [textMt="mt-[10%]"] - 메시지 텍스트의 상단 여백 클래스 (기본값: "mt-[10%]") 
- * @param {string} [textSize="text-[13px]"] - 메시지 텍스트의 크기 클래스 (기본값: "text-[13px]")
+ * @param {string} [textSize="text-xs"] - 메시지 텍스트의 크기 클래스 (기본값: "text-xs")
 */
 
-const ResultDialog = ({ message, onConfirm, boxImageName, width = "100%", maxWidth = "360px", textMt = "mt-[10%]", textSize = "text-[13px]" }) => {
+const ResultDialog = ({ message, onConfirm, boxImageName, width = "100%", maxWidth = "360px", textMt = "mt-[10%]", textSize = "text-xs" }) => {
   // 테마 전역 관리
   const currentTheme = useTheme((state) => state.currentTheme);
 
   return (
     <DialogBox boxImageName={boxImageName} width={width} maxWidth={maxWidth}>
       {/* 메세지 텍스트 */}
-      <p className={`text-[13px] font-bold text-center m-0 ${textMt} ${textSize}`}>
+      <p className={`text-xs font-bold text-center m-0 ${textMt} ${textSize}`}>
         {message}
       </p>
 

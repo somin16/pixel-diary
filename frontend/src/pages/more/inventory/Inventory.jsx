@@ -140,7 +140,7 @@ const Inventory = () => {
       {/* 보관함 타이틀 영역 */}
       <div className="absolute top-[17%] left-[12%] z-20 pointer-events-none">
         <h1
-          className="text-[54px] font-extrabold m-0 text-left"
+          className="text-5xl font-extrabold m-0 text-left"
           style={{
             color: '#926653',
             WebkitTextStroke: '10px white', // 글자 외곽선
@@ -173,7 +173,7 @@ const Inventory = () => {
             alt="코인 배경"
           />
           {/* 현재 보유 코인 텍스트 */}
-          <span className="absolute right-[25%] top-1/2 -translate-y-1/2 text-[15px] font-bold text-black tracking-wider pointer-events-none">
+          <span className="absolute right-[25%] top-1/2 -translate-y-1/2 text-base font-bold text-black tracking-wider pointer-events-none">
             {myCoins}
           </span>
 

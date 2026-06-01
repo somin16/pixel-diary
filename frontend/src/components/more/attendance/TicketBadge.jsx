@@ -24,7 +24,7 @@ const TicketBadge = ({ ticketCount, isAttended, currentTheme }) => {
         style={pixelStyle} // 픽셀 아트 선명도 유지
       />
       {/* 획득할 티켓 수량 */}
-      <span className="text-[12px] text-black leading-none mt-[10%]">
+      <span className="text-2xs text-black leading-none mt-[10%]">
         {ticketCount}
       </span>
 
