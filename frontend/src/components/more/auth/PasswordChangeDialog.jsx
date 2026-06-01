@@ -100,11 +100,11 @@ const PasswordChangeDialog = ({ onConfirm, onCancel, width = "100%", maxWidth = 
       setError(message);
 
       // [안전장치] 비밀번호가 틀렸으므로 사용자를 다시 1단계 입력 화면으로 빽(Back) 시킵니다.
-    // 사용자가 잘못 입력한 현재 비밀번호는 비워줍니다.
-    setStep('current');
-    setCurrentPw(""); 
-    setNewPw("");
-    setConfirmNewPw("");
+      // 사용자가 잘못 입력한 현재 비밀번호는 비워줍니다.
+      setStep('current');
+      setCurrentPw("");
+      setNewPw("");
+      setConfirmNewPw("");
     } finally {
       setLoading(false);
     }
@@ -127,15 +127,17 @@ const PasswordChangeDialog = ({ onConfirm, onCancel, width = "100%", maxWidth = 
             />
           </div>
 
-          {/* 에러 메시지 표시 영역 */}
-          {error && (
-            <div className="flex items-center justify-center mt-[2%] mb-[1%]">
-              <p className="text-[#ef4444] text-3xs font-bold m-0">{error}</p>
-            </div>
-          )}
+          <div className="w-full h-[10%]">
+            {/* 에러 메시지 표시 영역 */}
+            {error && (
+              <div className="flex items-center justify-center">
+                <p className="text-[#ef4444] text-3xs font-bold m-0">{error}</p>
+              </div>
+            )}
+          </div>
 
           {/* 에러가 없을 때를 대비해 버튼 영역에 약간의 상단 여백 추가 */}
-          <div className={`flex gap-[5%] justify-center w-full ${!error ? 'mt-[3%]' : 'mt-[1%]'}`}>
+          <div className="flex gap-[5%] justify-center w-full">
             <ImageButton
               label="취소하기"
               imageSrc={getAssetUrl(currentTheme, 'buttons', 'blue_button_x3')}
@@ -172,17 +174,17 @@ const PasswordChangeDialog = ({ onConfirm, onCancel, width = "100%", maxWidth = 
             />
           </div>
 
-          <div className="w-full h-[10%]">
+          <div className="w-full h-[6%]">
             {/* 에러 메시지 표시 영역 */}
             {error && (
-              <div className="flex items-center justify-center mt-[3%] mb-[0%]">
+              <div className="flex items-center justify-center mt-[2%]">
                 <p className="text-[#ef4444] text-3xs font-bold m-0">{error}</p>
               </div>
             )}
 
             {/* 안전한 비밀번호일 경우 메세지 */}
             {successMsg && !error && (
-              <div className="flex items-center justify-center mt-[3%] mb-[0%]">
+              <div className="flex items-center justify-center mt-[2%]">
                 <p className="text-[#22c55e] text-3xs font-bold m-0">{successMsg}</p>
               </div>
             )}
