@@ -35,7 +35,7 @@ const ShopItemGrid = ({ items, onItemClick }) => {
           >
             {/* 아이템 슬롯의 배경 박스 이미지 */}
             <img
-              src={getAssetUrl(currentTheme, 'boxes', 'store_item_box_x2')}
+              src={getAssetUrl(currentTheme, 'boxes', `store_item_box${item.type === 'app_theme' ? '_theme' : item.type === 'sticker' ? '_sticker' : item.type === 'emoji' ? '_emoji' : ''}_x2`)}
               className="w-full h-auto block pointer-events-none"
               alt="아이템 배경"
             />
@@ -52,7 +52,7 @@ const ShopItemGrid = ({ items, onItemClick }) => {
             {/* 가격 정보 (코인 아이콘 + 가격 텍스트) */}
             <div className="absolute bottom-[12%] w-full flex justify-center items-center gap-[4%] z-10 pointer-events-none">
               <img src={getAssetUrl(currentTheme, 'icons', 'coin_icon_x3')} className="w-[19%] h-auto" alt="코인" />
-              <span className={`text-[14px] leading-none ${item.isSoldOut ? 'text-[#FF4D4D]' : 'text-black'}`}>
+              <span className={`text-sm leading-none ${ item.isSoldOut ? 'text-[#FF4D4D]' : 'text-black' }`}>
                 {item.isSoldOut ? "품절" : item.price}
               </span>
             </div>
@@ -70,7 +70,7 @@ const ShopItemGrid = ({ items, onItemClick }) => {
 
         {/* 아이템 칸 16개로 고정 */}
         {Array.from({ length: Math.max(0, 16 - items.length) }).map((_, idx) => (
-          <div key={`empty-${idx}`} className="relative w-full">
+          <div key={`empty - ${ idx }`} className="relative w-full">
             <img
               src={getAssetUrl(currentTheme, 'boxes', 'store_item_box_x2')}
               className="w-full h-auto block pointer-events-none"
