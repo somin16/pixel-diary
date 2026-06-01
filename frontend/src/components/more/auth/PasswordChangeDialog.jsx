@@ -98,6 +98,13 @@ const PasswordChangeDialog = ({ onConfirm, onCancel, width = "100%", maxWidth = 
         ? errMessage
         : "현재 비밀번호와 일치하지 않습니다";
       setError(message);
+
+      // [안전장치] 비밀번호가 틀렸으므로 사용자를 다시 1단계 입력 화면으로 빽(Back) 시킵니다.
+      // 사용자가 잘못 입력한 현재 비밀번호는 비워줍니다.
+      setStep('current');
+      setCurrentPw("");
+      setNewPw("");
+      setConfirmNewPw("");
     } finally {
       setLoading(false);
     }
@@ -108,7 +115,7 @@ const PasswordChangeDialog = ({ onConfirm, onCancel, width = "100%", maxWidth = 
       {/* 1단계 - 현재 비밀번호 입력 */}
       {step === 'current' && (
         <DialogBox boxImageName="popup_message_box_x3" width={width} maxWidth={maxWidth}>
-          <p className="text-[13px] font-bold text-center m-0">현재 비밀번호를 입력하세요</p>
+          <p className="text-xs font-bold text-center m-0">현재 비밀번호를 입력하세요</p>
 
           <div className="w-[90%] mt-[2%]">
             <InputField
@@ -120,15 +127,17 @@ const PasswordChangeDialog = ({ onConfirm, onCancel, width = "100%", maxWidth = 
             />
           </div>
 
-          {/* 에러 메시지 표시 영역 */}
-          {error && (
-            <div className="flex items-center justify-center mt-[2%] mb-[1%]">
-              <p className="text-[#ef4444] text-[11px] font-bold m-0">{error}</p>
-            </div>
-          )}
+          <div className="w-full h-[10%]">
+            {/* 에러 메시지 표시 영역 */}
+            {error && (
+              <div className="flex items-center justify-center">
+                <p className="text-[#ef4444] text-3xs font-bold m-0">{error}</p>
+              </div>
+            )}
+          </div>
 
           {/* 에러가 없을 때를 대비해 버튼 영역에 약간의 상단 여백 추가 */}
-          <div className={`flex gap-[5%] justify-center w-full ${!error ? 'mt-[3%]' : 'mt-[1%]'}`}>
+          <div className="flex gap-[5%] justify-center w-full">
             <ImageButton
               label="취소하기"
               imageSrc={getAssetUrl(currentTheme, 'buttons', 'blue_button_x3')}
@@ -146,7 +155,7 @@ const PasswordChangeDialog = ({ onConfirm, onCancel, width = "100%", maxWidth = 
       {/* 2단계 - 새로운 비밀번호 입력 */}
       {step === 'new' && (
         <DialogBox boxImageName="popup_message_box_long_x3" width={width} maxWidth={maxWidth}>
-          <p className="text-[13px] font-bold text-center m-0 mt-[5%]">새로운 비밀번호를 입력하세요</p>
+          <p className="text-xs font-bold text-center m-0 mt-[5%]">새로운 비밀번호를 입력하세요</p>
 
           <div className="w-[90%] flex flex-col gap-[9%] mt-[2%]">
             <InputField
@@ -165,21 +174,24 @@ const PasswordChangeDialog = ({ onConfirm, onCancel, width = "100%", maxWidth = 
             />
           </div>
 
-          {/* 에러 메시지 표시 영역 */}
-          {error && (
-            <div className="flex items-center justify-center mt-[3%] mb-[0%]">
-              <p className="text-[#ef4444] text-[11px] font-bold m-0">{error}</p>
-            </div>
-          )}
+          <div className="w-full h-[6%]">
+            {/* 에러 메시지 표시 영역 */}
+            {error && (
+              <div className="flex items-center justify-center mt-[2%]">
+                <p className="text-[#ef4444] text-3xs font-bold m-0">{error}</p>
+              </div>
+            )}
 
-          {/* 안전한 비밀번호일 경우 메세지 */}
-          {successMsg && !error && (
-            <div className="flex items-center justify-center mt-[3%] mb-[0%]">
-              <p className="text-[#22c55e] text-[11px] font-bold m-0">{successMsg}</p>
-            </div>
-          )}
+            {/* 안전한 비밀번호일 경우 메세지 */}
+            {successMsg && !error && (
+              <div className="flex items-center justify-center mt-[2%]">
+                <p className="text-[#22c55e] text-3xs font-bold m-0">{successMsg}</p>
+              </div>
+            )}
+          </div>
 
-          <div className={`flex gap-[3%] justify-center w-full ${(!error && !successMsg) ? 'mt-[3%]' : 'mt-[1%]'}`}>
+
+          <div className="flex gap-[3%] justify-center w-full">
             <ImageButton
               label="취소하기"
               imageSrc={getAssetUrl(currentTheme, 'buttons', 'blue_button_x3')}

@@ -37,7 +37,7 @@ const NotificationCard = ({ id, label, isOn, time, onToggle, onTimeClick }) => {
 
       {/* 라벨 및 시간 설정 */}
       <div className="absolute z-10 top-1/2 -translate-y-1/2 left-[6%] flex flex-col justify-center w-[65%]">
-        <span className="text-[16px] font-bold text-black whitespace-nowrap leading-tight">
+        <span className="text-sm font-bold text-black whitespace-nowrap leading-tight">
           {label}
         </span>
 
@@ -45,7 +45,7 @@ const NotificationCard = ({ id, label, isOn, time, onToggle, onTimeClick }) => {
         {time !== null && (
           <span
             onClick={() => onTimeClick(id, time)}
-            className="text-[26px] font-extrabold text-gray-700 tracking-wider mt-[8%] leading-none cursor-pointer hover:text-gray-500 transition-colors"
+            className="text-2xl font-extrabold text-gray-700 tracking-wider mt-[8%] leading-none cursor-pointer hover:text-gray-500 transition-colors"
           >
             {formatDisplayTime(time)}
           </span>

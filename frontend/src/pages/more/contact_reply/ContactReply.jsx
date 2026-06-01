@@ -132,19 +132,19 @@ export default function ContactReply() {
       <div className="flex gap-[2%] mb-[4%] bg-white/40 p-[1%] rounded-lg backdrop-blur-sm shrink-0">
         <button
           onClick={() => setFilter("all")}
-          className={`flex-1 py-[2%] text-[12px] font-bold rounded-md transition-all border-none cursor-pointer ${filter === "all" ? "bg-blue-600 text-white shadow" : "bg-transparent text-gray-600"}`}
+          className={`flex-1 py-[2%] text-2xs font-bold rounded-md transition-all border-none cursor-pointer ${filter === "all" ? "bg-blue-600 text-white shadow" : "bg-transparent text-gray-600"}`}
         >
           전체 ({contacts.length})
         </button>
         <button
           onClick={() => setFilter("pending")}
-          className={`flex-1 py-[2%] text-[12px] font-bold rounded-md transition-all border-none cursor-pointer ${filter === "pending" ? "bg-amber-500 text-white shadow" : "bg-transparent text-gray-600"}`}
+          className={`flex-1 py-[2%] text-2xs font-bold rounded-md transition-all border-none cursor-pointer ${filter === "pending" ? "bg-amber-500 text-white shadow" : "bg-transparent text-gray-600"}`}
         >
           대기 ({contacts.filter(i => i.status !== 'resolved').length})
         </button>
         <button
           onClick={() => setFilter("resolved")}
-          className={`flex-1 py-[2%] text-[12px] font-bold rounded-md transition-all border-none cursor-pointer ${filter === "resolved" ? "bg-green-600 text-white shadow" : "bg-transparent text-gray-600"}`}
+          className={`flex-1 py-[2%] text-2xs font-bold rounded-md transition-all border-none cursor-pointer ${filter === "resolved" ? "bg-green-600 text-white shadow" : "bg-transparent text-gray-600"}`}
         >
           완료 ({contacts.filter(i => i.status === 'resolved').length})
         </button>

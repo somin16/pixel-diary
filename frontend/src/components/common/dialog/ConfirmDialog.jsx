@@ -16,7 +16,7 @@ import ImageButton from '../ImageButton';
  * @param {string} [width="100%"] - 다이얼로그의 가로 길이 (기본값: "100%")
  * @param {string} [maxWidth="360px"] - 다이얼로그의 최대 가로 길이 (기본값: "360px")
  * @param {string} [textMt="mt-[10%]"] - 메시지 텍스트의 상단 여백 클래스 (기본값: "mt-[10%]") 
- * @param {string} [textSize="text-[13px]"] - 메시지 텍스트의 크기 클래스 (기본값: "text-[13px]")
+ * @param {string} [textSize="text-xs"] - 메시지 텍스트의 크기 클래스 (기본값: "text-xs")
 */
 const ConfirmDialog = ({
   message,
@@ -26,7 +26,7 @@ const ConfirmDialog = ({
   width = "100%",
   maxWidth = "360px",
   textMt = "mt-[10%]",
-  textSize = "text-[13px]"
+  textSize = "text-xs"
 }) => {
   // 테마 전역 관리
   const currentTheme = useTheme((state) => state.currentTheme);
@@ -34,7 +34,7 @@ const ConfirmDialog = ({
   return (
     <DialogBox boxImageName={boxImageName} width={width} maxWidth={maxWidth}>
       {/* 메세지 텍스트 (\n 대응을 위해 whitespace-pre-wrap 적용) */}
-      <p className={`text-[13px] font-bold text-center m-0 whitespace-pre-wrap ${textMt} ${textSize}`}>
+      <p className={`text-xs font-bold text-center m-0 whitespace-pre-wrap ${textMt} ${textSize}`}>
         {message}
       </p>
 

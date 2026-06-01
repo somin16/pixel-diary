@@ -56,7 +56,7 @@ const TimePickerDialog = ({ currentTime = "00:00", onConfirm, onCancel }) => {
         }
       `}</style>
 
-      <div className="text-[18px] font-bold text-black mt-[4%] tracking-wide">
+      <div className="text-sm font-bold text-black mt-[4%] tracking-wide">
         오늘 일기 채우기
       </div>
 
@@ -82,14 +82,14 @@ const TimePickerDialog = ({ currentTime = "00:00", onConfirm, onCancel }) => {
           onClick={onCancel}
           imageSrc={getAssetUrl(currentTheme, 'buttons', 'red_button_x3')}
           className="flex-1"
-          textOption="text-[16px] font-bold text-white"
+          textOption="text-sm font-bold text-white"
         />
         <ImageButton
           label="확인"
           onClick={handleConfirmClick}
           imageSrc={getAssetUrl(currentTheme, 'buttons', 'blue_button_x3')}
           className="flex-1"
-          textOption="text-[16px] font-bold text-white"
+          textOption="text-sm font-bold text-white"
         />
       </div>
     </DialogBox>

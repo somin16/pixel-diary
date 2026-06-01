@@ -265,7 +265,7 @@ const Account = () => {
                 className="relative w-full h-auto block"
               />
               <span
-                className={`absolute z-10 top-1/2 -translate-y-1/2 left-[6%] text-[16px] ${item.isDanger ? 'text-[#ef4444]' : 'text-black'}`}
+                className={`absolute z-10 top-1/2 -translate-y-1/2 left-[6%] text-sm ${item.isDanger ? 'text-[#ef4444]' : 'text-black'}`}
               >
                 {item.label}
               </span>
@@ -288,7 +288,7 @@ const Account = () => {
                   )}
 
                   {/* 이메일 텍스트 */}
-                  <span className="text-[16px] text-gray-500">
+                  <span className="text-sm text-gray-500">
                     {userEmail}
                   </span>
                 </div>

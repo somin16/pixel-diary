@@ -30,7 +30,7 @@ const CategoryTabs = ({ tabs, activeTab, setActiveTab, marginTop = "mt-[100px]",
             alt=""
           />
           {/* 선택 여부에 따라 텍스트 색상 변경 */}
-          <span className={`relative z-10 text-[13px] font-bold ${activeTab === tab ? 'text-black' : 'text-[#666666]'}`}>
+          <span className={`relative z-10 text-xs font-bold ${activeTab === tab ? 'text-black' : 'text-[#666666]'}`}>
             {tab}
           </span>
         </button>

@@ -52,7 +52,7 @@ const ShopItemGrid = ({ items, onItemClick }) => {
             {/* 가격 정보 (코인 아이콘 + 가격 텍스트) */}
             <div className="absolute bottom-[12%] w-full flex justify-center items-center gap-[4%] z-10 pointer-events-none">
               <img src={getAssetUrl(currentTheme, 'icons', 'coin_icon_x3')} className="w-[19%] h-auto" alt="코인" />
-              <span className={`text-[14px] leading-none ${item.isSoldOut ? 'text-[#FF4D4D]' : 'text-black'}`}>
+              <span className={`text-sm leading-none ${item.isSoldOut ? 'text-[#FF4D4D]' : 'text-black'}`}>
                 {item.isSoldOut ? "품절" : item.price}
               </span>
             </div>

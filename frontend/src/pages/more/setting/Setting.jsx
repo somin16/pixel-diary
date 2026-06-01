@@ -54,7 +54,7 @@ const Setting = () => {
                 className="relative w-full h-auto block"
               />
               <span
-                className={`absolute z-10 top-1/2 -translate-y-1/2 left-[6%] text-[16px] text-black`}
+                className={`absolute z-10 top-1/2 -translate-y-1/2 left-[6%] text-sm text-black`}
               >
                 {item.label}
               </span>
