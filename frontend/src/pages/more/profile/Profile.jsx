@@ -217,7 +217,7 @@ const Profile = () => {
 
   return (
     <div
-      className="w-full h-full py-[20%] flex flex-col items-center"
+      className="w-full h-full py-[10%] flex flex-col items-center"
       style={{
         backgroundImage: `url(${getAssetUrl(currentTheme, 'backgrounds', 'menu_background_x3')})`,
         backgroundSize: "100% 100%",
@@ -309,7 +309,7 @@ const Profile = () => {
       </section>
 
       {/* 입력 필드 영역 */}
-      <section className="px-[10%] flex flex-col gap-[10%] mb-[10%]">
+      <section className="flex flex-col w-full px-[20%] gap-[10%] mb-[10%]">
         <div className="flex flex-col w-full">
           {/* 닉네임 입력 */}
           <InputField
