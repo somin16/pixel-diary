@@ -56,7 +56,7 @@ async function refreshAccessToken() {
 
     if (!newAccessToken) return null;
 
-    // ✅ 핵심 추가: Supabase 클라이언트 상태도 함께 업데이트
+    // 핵심 추가: Supabase 클라이언트 상태도 함께 업데이트
     // 이렇게 해야 다음 authFetch 호출 때 갱신된 토큰을 가져올 수 있음
     await supabase.auth.setSession({
       access_token: newAccessToken,
