@@ -30,8 +30,15 @@ const CategoryTabs = ({ tabs, activeTab, setActiveTab, marginTop = "mt-[100px]",
             alt=""
           />
           {/* 선택 여부에 따라 텍스트 색상 변경 */}
-          <span className={`relative z-10 text-xs font-bold ${activeTab === tab ? 'text-black' : 'text-[#666666]'}`}>
+          <span className={`relative z-10 text-xs font-bold flex items-center h-full gap-1 ${activeTab === tab ? 'text-black' : 'text-[#666666]'}`}>
             {tab}
+            
+            {/* 탭 종류에 따른 조건부 색상 점 추가 */}
+            <span className={`mb-[4%] w-2 h-2 border border-white ${
+              tab === "스티커" ? 'bg-[#ff9b33]':
+              tab === "이모티콘" ? 'bg-[#ffca4d]' :
+              tab === "테마" ? 'bg-[#ff776e]' : 'hidden'
+              }`} />
           </span>
         </button>
       ))}

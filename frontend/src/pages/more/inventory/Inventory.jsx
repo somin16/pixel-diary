@@ -34,61 +34,61 @@ const Inventory = () => {
 
   // 아이템 타입별 정렬 순서 설정
   const TYPE_ORDER = {
-      'app_theme': 0,
-      'emoji': 1,
-      'sticker': 2,
-      'ticket': 3,
+    'app_theme': 0,
+    'emoji': 1,
+    'sticker': 2,
+    'ticket': 3,
   };
 
   // 인벤토리 아이템 목록 불러오기
   // 인벤토리 API와 아이템 API를 동시에 호출하여 아이템 상세 정보를 매핑
   useEffect(() => {
-      const fetchInventory = async () => {
-          try {
-              const [inventoryResult, itemsResult] = await Promise.all([
-                  authFetch(`${import.meta.env.VITE_BACKEND_URL}/api/v1/users/inventory/`),
-                  authFetch(`${import.meta.env.VITE_BACKEND_URL}/api/v1/items/`),
-              ]);
+    const fetchInventory = async () => {
+      try {
+        const [inventoryResult, itemsResult] = await Promise.all([
+          authFetch(`${import.meta.env.VITE_BACKEND_URL}/api/v1/users/inventory/`),
+          authFetch(`${import.meta.env.VITE_BACKEND_URL}/api/v1/items/`),
+        ]);
 
-              // items 테이블 데이터를 item_id로 빠르게 찾기 위한 맵 생성
-              const itemMap = {};
-              (itemsResult.items || []).forEach(item => {
-                  itemMap[item.item_id] = item;
-              });
+        // items 테이블 데이터를 item_id로 빠르게 찾기 위한 맵 생성
+        const itemMap = {};
+        (itemsResult.items || []).forEach(item => {
+          itemMap[item.item_id] = item;
+        });
 
-              const mappedItems = (inventoryResult.items || [])
-                  .filter(inv => {
-                      const item = itemMap[inv.item_id];
-                      // diary_theme는 app_theme 구매 시 자동 지급되므로 보관함에서 제외
-                      return item && item.item_type !== 'diary_theme';
-                  })
-                  .map(inv => {
-                      const item = itemMap[inv.item_id];
-                      return {
-                          id: item.item_id,
-                          name: item.item_type === 'ticket'
-                              ? `${item.item_info} - ${inv.item_count}` // 티켓은 수량 표시
-                              : item.item_info,
-                          type: item.item_type,
-                          icon: item.item_image_url || 'home_icon_x3',
-                          item_count: inv.item_count,
+        const mappedItems = (inventoryResult.items || [])
+          .filter(inv => {
+            const item = itemMap[inv.item_id];
+            // diary_theme는 app_theme 구매 시 자동 지급되므로 보관함에서 제외
+            return item && item.item_type !== 'diary_theme';
+          })
+          .map(inv => {
+            const item = itemMap[inv.item_id];
+            return {
+              id: item.item_id,
+              name: item.item_type === 'ticket'
+                ? `${item.item_info} - ${inv.item_count}` // 티켓은 수량 표시
+                : item.item_info,
+              type: item.item_type,
+              icon: item.item_image_url || 'home_icon_x3',
+              item_count: inv.item_count,
 
-                          // app_theme 타입인 경우 item_name에서 _theme를 제거하여 themeKey 자동 생성
-                          // 예시: winter_light_theme → winter_light
-                          // 주의: item_name이 반드시 {themeKey}_theme 형식이어야 합니다
-                          themeKey: item.item_type === 'app_theme' ? item.item_name.replace('_theme', '') : null,
-                      };
-                  })
-                  // 타입별 정렬 (app_theme → emoji → sticker → ticket)
-                  .sort((a, b) => (TYPE_ORDER[a.type] ?? 99) - (TYPE_ORDER[b.type] ?? 99));
-              setItems(mappedItems);
-          } catch (error) {
-              console.error('인벤토리 조회 실패:', error);
-          } finally {
-              setLoading(false);
-          }
-      };
-      fetchInventory();
+              // app_theme 타입인 경우 item_name에서 _theme를 제거하여 themeKey 자동 생성
+              // 예시: winter_light_theme → winter_light
+              // 주의: item_name이 반드시 {themeKey}_theme 형식이어야 합니다
+              themeKey: item.item_type === 'app_theme' ? item.item_name.replace('_theme', '') : null,
+            };
+          })
+          // 타입별 정렬 (app_theme → emoji → sticker → ticket)
+          .sort((a, b) => (TYPE_ORDER[a.type] ?? 99) - (TYPE_ORDER[b.type] ?? 99));
+        setItems(mappedItems);
+      } catch (error) {
+        console.error('인벤토리 조회 실패:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchInventory();
   }, []);
 
   // 아이템 카테고리 필터링 
@@ -96,36 +96,36 @@ const Inventory = () => {
   const filteredItems = activeTab === "모두"
     ? items
     : items.filter(item => {
-        if (activeTab === "스티커") return item.type === "sticker";
-        if (activeTab === "이모티콘") return item.type === "emoji";
-        if (activeTab === "테마") return item.type === "app_theme";
-        return true;
+      if (activeTab === "스티커") return item.type === "sticker";
+      if (activeTab === "이모티콘") return item.type === "emoji";
+      if (activeTab === "테마") return item.type === "app_theme";
+      return true;
     });
 
   // 보관함을 열었을 시 현재 적용된 테마 아이템에 초록색 테두리 씌우기(보관함의 초록색 선택 테두리 위치를 현재 테마에 맞게 업데이트)
   useEffect(() => {
-      const appliedThemeItem = items.find(
-          // 아이템의 themeKey가 '현재 Zustand 스토어에 저장된 테마 값(currentTheme)'과 일치해야 함
-          (item) => item.type === "app_theme" && item.themeKey === currentTheme
-      );
-      if (appliedThemeItem) {
-          setSelectedItemId(appliedThemeItem.id);
-      }
+    const appliedThemeItem = items.find(
+      // 아이템의 themeKey가 '현재 Zustand 스토어에 저장된 테마 값(currentTheme)'과 일치해야 함
+      (item) => item.type === "app_theme" && item.themeKey === currentTheme
+    );
+    if (appliedThemeItem) {
+      setSelectedItemId(appliedThemeItem.id);
+    }
   }, [currentTheme, items]);
 
   // 아이템 클릭 핸들러 로직
   // app_theme 타입만 클릭 시 테마 변경 및 선택 테두리 표시
   // 그 외 타입(sticker, emoji 등)은 클릭해도 선택 상태 변경 없음
   const handleItemClick = (item) => {
-      if (item.type === "app_theme") {
-          // 이미 적용된 테마인 경우 토스트 메시지 표시
-          if (item.themeKey === currentTheme) {
-              toast("이미 적용 중인 테마입니다");
-              return;
-          }
-          setTheme(item.themeKey);      // 전역 테마 변경
-          setSelectedItemId(item.id);   // 선택된 아이템에 초록색 테두리 표시
+    if (item.type === "app_theme") {
+      // 이미 적용된 테마인 경우 토스트 메시지 표시
+      if (item.themeKey === currentTheme) {
+        toast("이미 적용 중인 테마입니다");
+        return;
       }
+      setTheme(item.themeKey);      // 전역 테마 변경
+      setSelectedItemId(item.id);   // 선택된 아이템에 초록색 테두리 표시
+    }
   };
 
   return (
@@ -203,15 +203,20 @@ const Inventory = () => {
       {/* 보관함 아이템 그리드 분리 */}
       {/* 탭 조건에 맞게 필터링된 아이템 목록을 화면에 렌더링 */}
       {loading ? (
+        <div
+          className="w-full flex-1 p-[3%] pb-0 overflow-y-auto bg-[length:100%_100%]"
+          style={{ backgroundImage: `url(${getAssetUrl(currentTheme, 'boxes', 'inventory_box_x3')})` }}
+        >
           <div className="flex justify-center mt-[50%] text-sm text-gray-500 font-bold animate-bounce">
-              불러오는 중...
+            불러오는 중...
           </div>
+        </div>
       ) : (
-          <InventoryItemGrid
-              items={filteredItems}
-              selectedItemId={selectedItemId}
-              onItemClick={handleItemClick}
-          />
+        <InventoryItemGrid
+          items={filteredItems}
+          selectedItemId={selectedItemId}
+          onItemClick={handleItemClick}
+        />
       )}
 
     </div>
