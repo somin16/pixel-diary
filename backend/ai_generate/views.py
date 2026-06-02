@@ -65,7 +65,13 @@ class AIGenerateView(APIView):
             workflow = copy.deepcopy(PIXEL_ART_WORKFLOW)    # 따로 분리된 워크플로우 불러와서 사용
             workflow["6"]["inputs"]["text"] = positive_prompt
             workflow["7"]["inputs"]["text"] = negative_prompt
-            workflow["3"]["inputs"]["seed"] = 20260529              # 테스트용 고정 시드 (나중에 random.randint(0, 2 ** 32 - 1) 로 복구)
+            # workflow["3"]["inputs"]["seed"] = 20260529              
+            # 테스트용 고정 시드 (나중에 random.randint(0, 2 ** 32 - 1) 로 복구)
+
+            # seed 값을 변수로 분리하여 로깅 가능하게 함 백엔드 서버 터미널에 나옴
+            seed = random.randint(0, 2 ** 32 - 1)
+            print(f"[ComfyUI] 생성 seed 값: {seed}")  # 콘솔 출력
+            workflow["3"]["inputs"]["seed"] = seed
 
             prompt_response = requests.post(
                 f"{comfyui_url}/prompt",

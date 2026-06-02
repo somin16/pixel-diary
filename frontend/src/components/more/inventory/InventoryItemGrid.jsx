@@ -32,7 +32,7 @@ const InventoryItemGrid = ({ items, selectedItemId, onItemClick }) => {
             >
               {/* 기본 아이템 배경 박스 */}
               <img
-                src={getAssetUrl(currentTheme, 'boxes', 'inventory_item_box_x2')}
+                src={getAssetUrl(currentTheme, 'boxes', `inventory_item_box${item.type === 'app_theme' ? '_theme' : item.type === 'sticker' ? '_sticker' : item.type === 'emoji' ? '_emoji' : ''}_x2`)}
                 className="w-full h-auto block pointer-events-none"
                 alt="아이템 배경"
               />
@@ -49,7 +49,7 @@ const InventoryItemGrid = ({ items, selectedItemId, onItemClick }) => {
 
               {/* 아이템 이름 */}
               <div className="absolute bottom-[10%] w-full flex justify-center items-center z-30 pointer-events-none">
-                <span className="text-[11px] text-black font-bold tracking-tighter">
+                <span className="text-3xs text-black font-bold tracking-tighter">
                   {item.name}
                 </span>
               </div>

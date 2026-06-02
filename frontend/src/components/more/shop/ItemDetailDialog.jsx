@@ -40,7 +40,7 @@ const ItemDetailDialog = ({ selectedItem, setDialogStep, closeDialog, width = "1
         {/* 컨테이너 기준 우측 상단에 고정되도록 top과 right 위치값 지정 */}
         <div className="absolute top-8 right-0 flex items-center gap-1">
           <img src={getAssetUrl(currentTheme, 'icons', 'coin_icon_x3')} className="w-8 h-auto" alt="코인" />
-          <span className="text-[24px] text-black tracking-wider">{selectedItem.price}</span>
+          <span className="text-base text-black tracking-wider">{selectedItem.price}</span>
         </div>
 
         {/* 아이템 박스와 제목을 위한 가로 배열 컨테이너 */}
