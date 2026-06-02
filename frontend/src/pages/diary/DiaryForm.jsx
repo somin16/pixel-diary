@@ -245,6 +245,14 @@ export default function DiaryForm() {
         }),
       }
     );
+    // 이미지 URL을 받은 후 실제 로드 완료까지 기다림
+  await new Promise((resolve, reject) => {
+    const img = new Image();
+    img.onload = resolve;  // 로드 성공 시 다음으로
+    img.onerror = resolve; // 실패해도 일단 넘어감 (무한 대기 방지)
+    img.src = data.image_url;
+  });
+
     setImageUrl(data.image_url);
     setSavedImageId(data.image_id);
     setStep(5);
