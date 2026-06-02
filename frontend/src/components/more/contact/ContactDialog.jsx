@@ -97,7 +97,7 @@ const ContactDialog = ({ onCancel, onResult, width = "100%", maxWidth = "320px" 
     <DialogBox boxImageName="popup_message_box_long_x3" width={width} maxWidth={maxWidth}>
       <div className="w-full h-full flex flex-col items-center pb-[4%]">
         {/* 타이틀 */}
-        <p className={`text-[13px] font-bold text-center m-0 ${!error ? 'mt-[1%]' : 'mt-[2%]'}`}>
+        <p className={`text-xs font-bold text-center m-0 ${!error ? 'mt-[1%]' : 'mt-[2%]'}`}>
           문의하고 싶은 내용을 입력하세요
         </p>
 
@@ -110,7 +110,7 @@ const ContactDialog = ({ onCancel, onResult, width = "100%", maxWidth = "320px" 
               setError(""); // 선택 변경 시 에러 초기화
             }}
             disabled={isSubmitting} // 전송 중에는 조작 불가
-            className="w-full p-2 text-[12px] font-medium border border-gray-300 rounded bg-white text-gray-800 outline-none focus:border-blue-400"
+            className="w-full p-2 text-2xs font-medium border border-gray-300 rounded bg-white text-gray-800 outline-none focus:border-blue-400"
           >
             <option value="AI 그림 생성 오류">AI 그림 생성 오류</option>
             <option value="일기 작성 및 저장 오류">일기 작성 및 저장 오류</option>
@@ -135,7 +135,7 @@ const ContactDialog = ({ onCancel, onResult, width = "100%", maxWidth = "320px" 
                 if (e.target.value.trim()) setError("");
               }}
               disabled={isSubmitting}
-              className="w-full p-2 text-[11px] border border-gray-300 rounded bg-white text-gray-800 outline-none focus:border-blue-400"
+              className="w-full p-2 text-xs border border-gray-300 rounded bg-white text-gray-800 outline-none focus:border-blue-400"
             />
           </div>
         )}
@@ -148,7 +148,7 @@ const ContactDialog = ({ onCancel, onResult, width = "100%", maxWidth = "320px" 
           }}
         >
           <textarea
-            className="w-full h-full pb-[4%] bg-transparent outline-none resize-none text-[12px] placeholder-[#9EA5C3]"
+            className="w-full h-full pb-[4%] bg-transparent outline-none resize-none text-2xs placeholder-[#9EA5C3]"
             placeholder="내용을 입력하세요 (최대 500자)"
             value={content}
             maxLength={500}
@@ -163,7 +163,7 @@ const ContactDialog = ({ onCancel, onResult, width = "100%", maxWidth = "320px" 
         {/* 에러 메시지 출력 (에러 있을 때만 렌더링) */}
         <div className="h-[8%] flex items-center justify-center mt-[2%] mb-[1%]">
           {error && (
-            <p className="text-[#ef4444] text-[11px] font-bold m-0">{error}</p>
+            <p className="text-[#ef4444] text-xs font-bold m-0">{error}</p>
           )}
         </div>
 

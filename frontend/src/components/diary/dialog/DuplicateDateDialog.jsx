@@ -16,7 +16,7 @@ const DuplicateDateDialog = ({ onConfirm, onCancel, width = "100%", maxWidth = "
   return (
     // DeleteDialog와 동일한 구조 사용 → 크기/비율 일치
     <DialogBox boxImageName="popup_message_box_x3" width={width} maxWidth={maxWidth}>
-      <p className="text-[13px] font-bold text-center m-0 mt-[11%] whitespace-pre-wrap">
+      <p className="text-xs font-bold text-center m-0 mt-[11%] whitespace-pre-wrap">
         이 날짜에 이미 일기가 있어요. {"\n"} 확인하러 갈까요?
       </p>
 

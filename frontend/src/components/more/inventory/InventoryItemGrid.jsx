@@ -49,7 +49,7 @@ const InventoryItemGrid = ({ items, selectedItemId, onItemClick }) => {
 
               {/* 아이템 이름 */}
               <div className="absolute bottom-[10%] w-full flex justify-center items-center z-30 pointer-events-none">
-                <span className="text-[11px] text-black font-bold tracking-tighter">
+                <span className="text-3xs text-black font-bold tracking-tighter">
                   {item.name}
                 </span>
               </div>

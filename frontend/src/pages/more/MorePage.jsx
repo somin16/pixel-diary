@@ -182,7 +182,7 @@ const MorePage = () => {
             </div>
 
             {/* 텍스트 영역 */}
-            <span className="relative inline-block mt-auto h-[20px] leading-[20px] text-[14px] font-bold text-center text-black whitespace-nowrap">
+            <span className="relative inline-block mt-auto h-[20px] leading-[20px] text-xs font-bold text-center text-black whitespace-nowrap">
               {item.label}
 
               {/* [일반 유저용] '문의 하기' 글자 우상단 빨간 점 */}

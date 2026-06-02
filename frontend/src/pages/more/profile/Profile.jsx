@@ -217,7 +217,7 @@ const Profile = () => {
 
   return (
     <div
-      className="w-full h-full py-[20%] flex flex-col items-center"
+      className="w-full h-full py-[10%] flex flex-col items-center"
       style={{
         backgroundImage: `url(${getAssetUrl(currentTheme, 'backgrounds', 'menu_background_x3')})`,
         backgroundSize: "100% 100%",
@@ -268,7 +268,7 @@ const Profile = () => {
                   setIsMenuOpen(false);
                   fileInputRef.current.click(); // 파일 선택창 열기
                 }}
-                className="px-4 py-4 text-[15px] text-gray-800 hover:bg-gray-100 font-bold"
+                className="px-4 py-4 text-base text-gray-800 hover:bg-gray-100 font-bold"
               >
                 프로필 이미지 변경
               </button>
@@ -277,7 +277,7 @@ const Profile = () => {
 
               <button
                 onClick={handleDeleteClick}
-                className="px-4 py-4 text-[15px] text-[#EF4444] hover:bg-gray-100 font-bold"
+                className="px-4 py-4 text-base text-[#EF4444] hover:bg-gray-100 font-bold"
               >
                 기본 이미지로 변경
               </button>
@@ -285,7 +285,7 @@ const Profile = () => {
               <div className="w-full h-[1px] bg-gray-200"></div>
               <button
                 onClick={() => setIsMenuOpen(false)}
-                className="px-4 py-4 text-[15px] text-gray-500 hover:bg-gray-100 font-bold"
+                className="px-4 py-4 text-base text-gray-500 hover:bg-gray-100 font-bold"
               >
                 취소
               </button>
@@ -309,7 +309,7 @@ const Profile = () => {
       </section>
 
       {/* 입력 필드 영역 */}
-      <section className="px-[10%] flex flex-col gap-[10%] mb-[10%]">
+      <section className="flex flex-col w-full px-[20%] gap-[10%] mb-[10%]">
         <div className="flex flex-col w-full">
           {/* 닉네임 입력 */}
           <InputField
