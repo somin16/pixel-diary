@@ -124,6 +124,7 @@ const Inventory = () => {
         return;
       }
       setTheme(item.themeKey);      // 전역 테마 변경
+      toast("테마를 변경했습니다")
       setSelectedItemId(item.id);   // 선택된 아이템에 초록색 테두리 표시
     }
   };
