@@ -123,6 +123,7 @@ class AIGenerateView(APIView):
             upload_response = requests.post(
                 f"{SUPABASE_URL}/storage/v1/object/{self.STORAGE_BUCKET}/{storage_path}",
                 headers=storage_headers,
+                params={"x-upsert": "true"},
                 data=image_data,
             )
             if upload_response.status_code not in [200, 201]:
