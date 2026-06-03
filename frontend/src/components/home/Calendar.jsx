@@ -114,7 +114,7 @@ const Calendar = ({ onDateClick, onMonthChange, viewDate, currentTheme }) => {
                 onClick={() => !isNotCurrent && onDateClick(`${year}-${String(month + 1).padStart(2, '0')}-${String(item.day).padStart(2, '0')}`)}
                 className={`
                                     aspect-[14/12] flex items-start pl-[5%] pt-[1%] justify-start text-xs
-                                    ${isNotCurrent ? 'opacity-50 grayscale' : 'cursor-pointer hover:bg-white/10'} // 이번달 아니면 흐리게 처리
+                                    ${isNotCurrent ? 'opacity-50 grayscale' : 'cursor-pointer'} // 이번달 아니면 흐리게 처리
                                     ${isSunday ? 'text-red-800' : isSaturday ? 'text-blue-800' : 'text-black'}
                                     ${isToday ? 'bg-blue-200/50 rounded font-bold' : ''} // 오늘 날짜 강조
                                 `}
