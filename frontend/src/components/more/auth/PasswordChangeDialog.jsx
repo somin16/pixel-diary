@@ -195,12 +195,14 @@ const PasswordChangeDialog = ({ onConfirm, onCancel, width = "100%", maxWidth = 
             <ImageButton
               label="취소하기"
               imageSrc={getAssetUrl(currentTheme, 'buttons', 'blue_button_x3')}
-              onClick={loading ? null : onCancel}
+              onClick={onCancel}
+              disabled={loading}
             />
             <ImageButton
               label={loading ? "변경 중..." : "변경하기"}
               imageSrc={getAssetUrl(currentTheme, 'buttons', loading ? 'blue_button_x3' : 'green_button_x3')}
-              onClick={loading ? null : handleSubmit}
+              onClick={handleSubmit}
+              disabled={loading}
             />
           </div>
         </DialogBox>

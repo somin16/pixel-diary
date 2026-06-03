@@ -8,6 +8,8 @@ const SaveErrorDialog = ({ type, onClose, width = "100%", maxWidth = "320px" }) 
 
   const message = type === 'duplicate'
     ? `이 날짜에 이미 일기가 있어요.\n다른 날짜를 선택해 주세요.`
+    :type === 'generate_fail'
+    ? `그림 생성에 실패했어요. \n잠시 후 다시 시도해 주세요.`
     : `저장 중 오류가 발생했어요.\n잠시 후 다시 시도해 주세요.`;
 
   return (

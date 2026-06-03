@@ -73,6 +73,9 @@ export default function DiaryForm() {
   // 저장 실패 다이얼로그용 상태
   const [saveError, setSaveError] = useState(null); // null | 'duplicate' | 'unknown'
 
+  // 저장 진행 중 여부 (중복 클릭 방지)
+  const [isSaving, setIsSaving] = useState(false);
+
   // ── [기능] 수정 모드일 때 기존에 썼던 일기 내용을 서버에서 가져오기 ────────────────
   useEffect(() => {
     if (!isEditMode || !diaryId) return;
@@ -167,7 +170,8 @@ export default function DiaryForm() {
       await _generateImage(promptData.positive_prompt, promptData.negative_prompt);
     } catch (error) {
       console.error('이미지 생성 실패:', error);
-      setStep(2);
+      setSaveError('generate_fail'); // 에러 다이얼로그 띄우기
+      setStep(2); // 이전 단계로
     } finally {
       setIsGenerating(false);
     }
@@ -223,6 +227,7 @@ export default function DiaryForm() {
       await _generateImage(convertedPromptRef.current.positive_prompt, convertedPromptRef.current.negative_prompt);
     } catch (error) {
       console.error('이미지 생성 실패:', error);
+      setSaveError('generate_fail'); //에러 다이얼로그 띄우기
       setStep(3);
     } finally {
       setIsGenerating(false);
@@ -245,6 +250,14 @@ export default function DiaryForm() {
         }),
       }
     );
+    // 이미지 URL을 받은 후 실제 로드 완료까지 기다림
+  await new Promise((resolve, reject) => {
+    const img = new Image();
+    img.onload = resolve;  // 로드 성공 시 다음으로
+    img.onerror = resolve; // 실패해도 일단 넘어감 (무한 대기 방지)
+    img.src = data.image_url;
+  });
+
     setImageUrl(data.image_url);
     setSavedImageId(data.image_id);
     setStep(5);
@@ -259,6 +272,11 @@ export default function DiaryForm() {
 
   // ── [기능] 최종 저장: 일기 본문 + 꾸미기 정보 ──────────────────────────────
   async function handleFinalSave() {
+
+    // 이미 저장 중이면 아무것도 하지 않음
+    if (isSaving) return;
+    setIsSaving(true); // 저장 시작
+
     try {
       // 1. 먼저 일기 본문(글)을 저장하거나 수정합니다.
       let finalDiaryId = savedDiaryId;
@@ -329,6 +347,8 @@ export default function DiaryForm() {
         setSaveError('unknown');
         console.error("기타 서버 에러 발생:", error.message);
       }
+    } finally {
+      setIsSaving(false); // 저장 완료 (성공 / 실패 모두) 후 플래그 해제
     }
   }
 
@@ -459,7 +479,7 @@ export default function DiaryForm() {
             {step === 1 && isEditMode && (
               <div className="w-full h-full flex justify-center gap-[2%]">
                 <ImageButton label="꾸미기" onClick={handleDecorate} className="w-[30%] aspect-[120/48]" imageSrc={getAssetUrl(currentTheme, 'buttons', 'blue_button_x3')} textOption="text-sm text-white" />
-                <ImageButton label="저장하기" onClick={handleFinalSave} className="w-[30%] aspect-[120/48]" imageSrc={getAssetUrl(currentTheme, 'buttons', 'green_button_x3')} textOption="text-sm text-white" />
+                <ImageButton label={isSaving ? "저장 중..." : "저장하기"} onClick={handleFinalSave} className="w-[30%] aspect-[120/48]" imageSrc={getAssetUrl(currentTheme, 'buttons', 'green_button_x3')} textOption="text-sm text-white" disabled={isSaving} />
               </div>
             )}
 
@@ -468,7 +488,7 @@ export default function DiaryForm() {
               <div className="w-full h-full flex justify-center gap-[2%]">
                 <ImageButton label="처음부터" onClick={handleRestartFromBeginning} className="w-[30%] aspect-[120/48]" imageSrc={getAssetUrl(currentTheme, 'buttons', 'red_button_x3')} textOption="text-sm text-white" />
                 <ImageButton label="다시 그리기" onClick={handleRegenerateImage} className="w-[30%] aspect-[120/48]" imageSrc={getAssetUrl(currentTheme, 'buttons', 'blue_button_x3')} textOption="text-sm text-white" />
-                <ImageButton label="저장하기" onClick={handleFinalSave} className="w-[30%] aspect-[120/48]" imageSrc={getAssetUrl(currentTheme, 'buttons', 'green_button_x3')} textOption="text-sm text-white" />
+                <ImageButton label={isSaving ? "저장 중..." : "저장하기"} onClick={handleFinalSave} className="w-[30%] aspect-[120/48]" imageSrc={getAssetUrl(currentTheme, 'buttons', 'green_button_x3')} textOption="text-sm text-white" disabled={isSaving} />
               </div>
             )}
           </>

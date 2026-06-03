@@ -1,4 +1,5 @@
 @echo off
+@chcp 65001 >nul
 :: 1. 가상환경 내의 파이썬 실행 파일 경로를 정확히 변수에 담습니다.
 set VENV_PYTHON="%~dp0venv_ai\Scripts\python.exe"
 

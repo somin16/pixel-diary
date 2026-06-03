@@ -112,7 +112,7 @@ if DEBUG:
 else:
     CORS_ALLOWED_ORIGINS = os.getenv(
         "FRONTEND_URL",
-        "http://localhost:5173,http://127.0.0.1:5173"
+        "http://localhost:5173,http://127.0.0.1:5173,http://localhost"
     ).split(",")
 
 # comfyUI URL, 도메인
