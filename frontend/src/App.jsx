@@ -39,6 +39,17 @@ import AnnouncementForm from "./pages/more/announcement/AnnouncementForm"; // �
 import AdminUserList from "./pages/more/user_management/AdminUserList"; // 더보기 - 유저 관리 목록 화면
 import AddItemPage from "./pages/more/add_item/AddItemPage"; // 더보기 - 아이템 추가 화면
 import ContactReply from "./pages/more/contact_reply/ContactReply"; // 더보기 - 문의사항 답변 화면
+// ------------------------ 리액트 쿼리 ----------------------------
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 1000 * 60 * 5,
+      retry: 1,
+    },
+  },
+});
 
 // BrowserRouter 안에서 훅을 호출하는 내부 컴포넌트
 function AppInner() {
@@ -191,8 +202,10 @@ function AppInner() {
 
 export default function App() {
   return (
+    <QueryClientProvider client={queryClient}>
     <BrowserRouter>
       <AppInner />
     </BrowserRouter>
+    </QueryClientProvider>
   );
 }
