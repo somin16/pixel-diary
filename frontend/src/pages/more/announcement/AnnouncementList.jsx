@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useTheme } from '../../../store/useThemeStore';
+import { useTheme } from '../../../stores/useThemeStore';
 import { getAssetUrl } from '../../../utils/AssetHelper';
 import { formatDisplayDate } from '../../../utils/DateFormatter';
 import { supabase } from '../../../utils/SupabaseClient';

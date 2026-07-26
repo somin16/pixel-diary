@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { useTheme } from '../../../store/useThemeStore';
+import { useTheme } from '../../../stores/useThemeStore';
 import { getAssetUrl } from '../../../utils/AssetHelper';
 import { authFetch } from '../../../utils/AuthHelper';
 import Header from '../../../components/common/Header';

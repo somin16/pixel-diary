@@ -1,7 +1,7 @@
 // 관리자 전용 아이템 추가 페이지
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useTheme } from '../../../store/useThemeStore';
+import { useTheme } from '../../../stores/useThemeStore';
 import { getAssetUrl } from '../../../utils/AssetHelper';
 import { authFetch } from '../../../utils/AuthHelper';
 import Header from '../../../components/common/Header';

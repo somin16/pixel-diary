@@ -1,5 +1,6 @@
 import { create } from 'zustand'; // 전역 상태 관리 라이브러리 zustand 불러오기
 import { persist } from 'zustand/middleware'; // 사용자의 테마 정보를 자동 저장하는 persist 미들웨어 불러오기
+import useMusicStore from './useMusicStore'; // 배경음악 스토어 불러오기
 
 /**테마 목록
  *
@@ -27,6 +28,7 @@ export const useTheme = create(
         if (THEME_LIST.includes(newTheme)) {
           console.log(`[Theme Change]: ${newTheme} 테마로 변경되었습니다`);
           set({ currentTheme: newTheme });
+          useMusicStore.getState().playForTheme(newTheme) // 테마 바뀌면 음악도 전환
         } else {
           console.warn(`[Theme Error]: '${newTheme}'는 존재하지 않는 테마입니다.`);
         }

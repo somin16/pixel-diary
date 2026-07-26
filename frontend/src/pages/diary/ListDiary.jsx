@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useTheme } from '../../store/useThemeStore'; // 테마 전역상태관리 커스텀 훅
+import { useTheme } from '../../stores/useThemeStore'; // 테마 전역상태관리 커스텀 훅
 import { getAssetUrl } from "../../utils/AssetHelper"; // 이미지 에셋 경로 유틸 함수
 import { formatDisplayDate } from '../../utils/DateFormatter'; // 날짜 포맷 변환 유틸 함수
 import { useNavigate } from 'react-router-dom'; // 페이지 이동 훅

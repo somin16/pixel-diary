@@ -2,8 +2,8 @@ import Phaser, { Scale } from 'phaser';
 import { authFetch } from '../../../utils/AuthHelper'; // ../ 은 상위 경로를 의미합니다
 
 // zuStand 함수 불러오기
-import { useGetCoinStore } from "../../../store/useCoinStore";
-import { useAddCoinStore } from "../../../store/useCoinStore";
+import { useGetCoinStore } from "../../../stores/useCoinStore";
+import { useAddCoinStore } from "../../../stores/useCoinStore";
 
 // 게임 시작시 스코어 초기화
 // 사실 이건 그냥 GameScene.js에 넣어도 되는 부분입니다만, 그래도 한번에 보는게 편하니까 여기에 뒀습니다

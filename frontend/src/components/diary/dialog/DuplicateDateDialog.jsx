@@ -1,4 +1,4 @@
-import { useTheme } from "../../../store/useThemeStore";
+import { useTheme } from "../../../stores/useThemeStore";
 import { getAssetUrl } from "../../../utils/AssetHelper";
 import DialogBox from "../../common/dialog/DialogBox";
 import ImageButton from "../../common/ImageButton";
