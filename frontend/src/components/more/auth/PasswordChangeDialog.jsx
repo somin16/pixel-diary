@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { useTheme } from '../../../store/useThemeStore'; // useTheme 불러오기
+import { useTheme } from '../../../stores/useThemeStore'; // useTheme 불러오기
 import { getAssetUrl } from "../../../utils/AssetHelper"; // 헬퍼 불러오기
 import AuthValidator from '../../../utils/AuthValidator';
 import { supabase } from "../../../utils/SupabaseClient"; // supabase 불러오기

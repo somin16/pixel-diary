@@ -2,7 +2,7 @@
 // 관리자 전용 유저 관리 페이지
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useTheme } from '../../../store/useThemeStore';
+import { useTheme } from '../../../stores/useThemeStore';
 import { getAssetUrl } from '../../../utils/AssetHelper';
 import { authFetch } from '../../../utils/AuthHelper';
 import Header from '../../../components/common/Header';

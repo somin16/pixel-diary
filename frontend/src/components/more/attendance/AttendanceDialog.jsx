@@ -1,10 +1,10 @@
 // src/components/more/attendance/AttendanceDialog.jsx
 import React, { useState, useEffect } from "react";
-import { useTheme } from "../../../store/useThemeStore";
+import { useTheme } from "../../../stores/useThemeStore";
 import { getAssetUrl } from "../../../utils/AssetHelper";
 import { authFetch } from "../../../utils/AuthHelper";
 import toast from "react-hot-toast";
-import { useAttendanceStore } from "../../../store/useAttendanceStore";
+import { useAttendanceStore } from "../../../stores/useAttendanceStore";
 
 // 컴포넌트 불러오기
 import DialogBox from "../../common/dialog/DialogBox";
@@ -12,7 +12,7 @@ import CloseButton from "../../common/CloseButton";
 import DayBox from "./DayBox";
 
 // zustand 함수 불러오기
-import { useAddCoinStore } from "../../../store/useCoinStore";
+import { useAddCoinStore } from "../../../stores/useCoinStore";
 
 // 7일 출석 보상 데이터 구조 (서버 연동 시 초기화 기준이 됨)
 const ATTENDANCE_DAYS = [

@@ -1,6 +1,6 @@
 import React from "react";
 import { useBackNavigate } from "../../hooks/useBackNavigate";
-import { useTheme } from "../../store/useThemeStore"; // useTheme 불러오기
+import { useTheme } from "../../stores/useThemeStore"; // useTheme 불러오기
 import { getAssetUrl } from "../../utils/AssetHelper"; // 헬퍼 불러오기
 
 /**
