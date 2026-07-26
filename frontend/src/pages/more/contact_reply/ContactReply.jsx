@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { supabase } from "../../../utils/SupabaseClient";
-import { useTheme } from "../../../store/useThemeStore";
+import { useTheme } from "../../../stores/useThemeStore";
 import { getAssetUrl } from "../../../utils/AssetHelper";
 
 // 컴포넌트 불러오기

@@ -4,7 +4,7 @@ import { createAllAnimations } from '../animations/Animations';
 import { createModeSelectUI } from '../ui/ModeSelect';
 
 // zuStand 함수 불러오기
-import { useGetCoinStore } from "../../../store/useCoinStore";
+import { useGetCoinStore } from "../../../stores/useCoinStore";
 
 export default class ModeSelectScene extends Phaser.Scene {
     constructor() {

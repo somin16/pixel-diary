@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { useTheme } from "../../../store/useThemeStore";
+import { useTheme } from "../../../stores/useThemeStore";
 import { getAssetUrl } from "../../../utils/AssetHelper";
 import { supabase } from "../../../utils/SupabaseClient";
 

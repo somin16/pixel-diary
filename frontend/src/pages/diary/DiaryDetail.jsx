@@ -1,7 +1,7 @@
 import { useNavigate, useLocation } from "react-router-dom";
 import { useEffect, useState } from "react";
 import DetailDiaryDialog from "../../components/diary/DetailDiaryDialog";
-import { useTheme } from "../../store/useThemeStore";
+import { useTheme } from "../../stores/useThemeStore";
 import { getAssetUrl } from "../../utils/AssetHelper";
 import { authFetch } from "../../utils/AuthHelper";
 

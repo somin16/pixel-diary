@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useBackNavigate } from "../../hooks/useBackNavigate";
 import { authFetch } from "../../utils/AuthHelper";
-import { useTheme } from "../../store/useThemeStore";
+import { useTheme } from "../../stores/useThemeStore";
 import { getAssetUrl } from "../../utils/AssetHelper";
 import DiaryOptionSelector from "../../components/diary/DiaryOptionSelector";
 import ImageZoomOverlay from "../../components/diary/ImageZoomOverlay";

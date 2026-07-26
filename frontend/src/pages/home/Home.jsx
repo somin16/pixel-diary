@@ -1,14 +1,14 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom"; // 페이지 이동 훅
 import { getAssetUrl } from "../../utils/AssetHelper"; // 이미지 에셋 경로 유틸 함수
-import { useTheme } from "../../store/useThemeStore"; // 테마 전역상태관리 커스텀 훅
+import { useTheme } from "../../stores/useThemeStore"; // 테마 전역상태관리 커스텀 훅
 import FloatingActionButton from "../../components/home/FloatingActionButton"; // FAB 버튼 컴포넌트
 import Calendar from "../../components/home/Calendar"; // 달력 컴포넌트
 import { authFetch } from "../../utils/AuthHelper";
 
 // 출석 관련 모듈 및 Zustand 스토어 임포트 
 import Attendance from "../../components/more/attendance/AttendanceDialog";
-import { useAttendanceStore } from "../../store/useAttendanceStore";
+import { useAttendanceStore } from "../../stores/useAttendanceStore";
 
 export default function Home() {
   const navigate = useNavigate();

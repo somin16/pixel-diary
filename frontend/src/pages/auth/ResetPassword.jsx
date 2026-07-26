@@ -7,7 +7,7 @@ import toast from 'react-hot-toast'; // 토스트메세지 라이브러리
 import AuthValidator from '../../utils/AuthValidator';
 
 // 3. 커스텀 훅 불러오기
-import { useTheme } from '../../store/useThemeStore';
+import { useTheme } from '../../stores/useThemeStore';
 
 // 4. 슈파베이스 불러오기
 import { supabase } from '../../utils/SupabaseClient';

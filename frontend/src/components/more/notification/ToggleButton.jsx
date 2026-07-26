@@ -1,5 +1,5 @@
 import React from "react";
-import { useTheme } from "../../../store/useThemeStore";
+import { useTheme } from "../../../stores/useThemeStore";
 import { getAssetUrl } from "../../../utils/AssetHelper";
 
 /**

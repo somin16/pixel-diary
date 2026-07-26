@@ -3,13 +3,15 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { supabase } from "./utils/SupabaseClient";
 import { useAndroidBackButton } from "./hooks/useAndroidBackButtons"; // 모바일에서 뒤로가기 훅
+import { useTheme } from './stores/useThemeStore';
+import useMusicStore from './stores/useMusicStore';
 
 // ----------------- 컴포넌트 불러오기 ----------------------------------
 import AppShell from "./components/layout/AppShell"; // AppShell 불러오기
 import Home from "./pages/home/Home"; // 홈 화면
 // ----------------------- 게임 ---------------------------------------
-import Game1 from "./game/game1/Game1"; // 게임1 화면
-import Game2 from "./game/game2/Game2"; // 게임2 화면
+import Game1 from "./games/game1/Game1"; // 게임1 화면
+import Game2 from "./games/game2/Game2"; // 게임2 화면
 // ----------------------- 계정 ---------------------------------------
 import Login from "./pages/auth/Login"; // 로그인 화면
 import AuthRedirect from "./pages/auth/AuthRedirect"; // 로그인, 회원가입 진행 시 화면
@@ -45,6 +47,8 @@ function AppInner() {
   const [session, setSession] = useState(null);
   const [loading, setLoading] = useState(true);
 
+  const { currentTheme } = useTheme();
+
   useEffect(() => {
     // 현재 세션 가져오기
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -59,6 +63,25 @@ function AppInner() {
 
     return () => subscription.unsubscribe();
   }, []);
+
+  // 첫 터치/클릭 시 배경음악 시작 (자동재생 정책 대응)
+  useEffect(() => {
+    if (!session) return; // 로그인 전에는 음악 재생 안 함
+
+    const handleFirstInteraction = () => {
+      useMusicStore.getState().playForTheme(currentTheme);
+      window.removeEventListener('click', handleFirstInteraction);
+      window.removeEventListener('touchstart', handleFirstInteraction);
+    };
+
+    window.addEventListener('click', handleFirstInteraction);
+    window.addEventListener('touchstart', handleFirstInteraction); // Capacitor 대응
+
+    return () => {
+      window.removeEventListener('click', handleFirstInteraction);
+      window.removeEventListener('touchstart', handleFirstInteraction);
+    };
+  }, [session]); // 세션 생기는 순간 이벤트 등록
 
   if (loading) return null; // 로딩 중에는 아무것도 안 보여주거나 로딩바 노출
 

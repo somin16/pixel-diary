@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from 'react-router-dom';
-import { useTheme } from '../../store/useThemeStore'; // useTheme 불러오기
+import { useTheme } from '../../stores/useThemeStore'; // useTheme 불러오기
 import { getAssetUrl } from "../../utils/AssetHelper"; // 헬퍼 불러오기
 import { supabase } from "../../utils/SupabaseClient";
 
 // zuStand 함수 불러오기
-import { useGetCoinStore } from "../../store/useCoinStore";
-import { useProfileStore } from '../../store/useProfileStore';
+import { useGetCoinStore } from "../../stores/useCoinStore";
+import { useProfileStore } from '../../stores/useProfileStore';
 
 // 컴포넌트 불러오기
 import ProfileBar from "../../components/more/profile/ProfileBar";
