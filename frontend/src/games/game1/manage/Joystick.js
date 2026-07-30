@@ -10,7 +10,7 @@ export function createJoystick(scene) {
     scene.joyStick = new VirtualJoystick(scene, {
 
         // 위치
-        x: width / 2,                
+        x: width / 1.3,                
         y: height / 1.33,              
         radius: 60, // 조이스틱 이동 반경               
             

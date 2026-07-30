@@ -17,7 +17,7 @@ export async function createModeSelectUI(scene) {
     const centerY = height / 2;
 
     // 상단 타이틀(게임 모드 선택)
-    scene.add.text(centerX, centerY - 250, '게임 모드 선택', {
+    scene.add.text(centerX, centerY / 4, '게임 모드 선택', {
         fontFamily: 'Mona',
         fontSize: '40px',
         fontStyle: 'bold',
@@ -25,7 +25,7 @@ export async function createModeSelectUI(scene) {
     }).setOrigin(0.5);
 
     // 일반모드 버튼
-    createModeButton("basic", centerX - 85, centerY, () => {
+    createModeButton("basic", centerX - 85, centerY + centerY / 5, () => {
 
         // 티켓 사용 UI일 경우엔 클릭 x
         if (scene.isTicketSelect == true) return;
@@ -52,7 +52,7 @@ export async function createModeSelectUI(scene) {
 
         
     // 무한모드 버튼
-    createModeButton("infinity", centerX + 85, centerY, () => {
+    createModeButton("infinity", centerX + 85, centerY + centerY / 5, () => {
 
         // 티켓 사용 UI일 경우엔 클릭 x
         if (scene.isTicketSelect == true) return;
@@ -64,7 +64,7 @@ export async function createModeSelectUI(scene) {
 }
 
 // 버튼 생성 함수 (모드타입, xy좌표, 클릭 이벤트 자동연결)
-export function createModeButton(modType, x, y, onClick, scene) {
+export function createModeButton(mapType, x, y, onClick, scene) {
 
     // 선택지 버튼 크기
     const btnWidth = 150;
@@ -78,14 +78,14 @@ export function createModeButton(modType, x, y, onClick, scene) {
     const background = scene.add.rectangle(0, 0, btnWidth, btnHeight, 0x222222, 0.8)
         .setStrokeStyle(3, 0xffffff);
 
-    // 모드 이름
+    // 맵 이름
     let modName = scene.add.text(0, -btnHeight / 2 + 40, "", {
         fontFamily: 'Mona',
         fontSize: '24px', 
         color: '#ffd700'
     }).setOrigin(0.5);
 
-    // 모드 설명
+    // 맵 설명
     let modInfo = scene.add.text(0, btnHeight / 2 - 50, "", {
         fontFamily: 'Mona',
         fontSize: '16px', 
@@ -94,34 +94,34 @@ export function createModeButton(modType, x, y, onClick, scene) {
         wordWrap: { width: btnWidth - 40 } 
     }).setOrigin(0.5);
 
-    // 모드 이미지
+    // 맵 이미지
     let modImageView = scene.add.sprite(0, 0, "");
     modImageView.setScale(3);
 
     // 기본이면..
-    if (modType == "basic") {
+    if (mapType == "basic") {
 
-        // 모드 이름
-        modName.setText("일반 모드");
+        // 맵 이름
+        modName.setText("기본 맵");
 
-        // 모드 설명
-        modInfo.setText("기본적인 모드입니다!");
+        // 맵 설명
+        modInfo.setText("기본적인 맵입니다!");
 
-        // 모드 설명 이미지
+        // 맵 설명 이미지
         modImageView.setTexture("slime_move1");
         modImageView.play("slime_animation", true);
     }
 
-    // 아니면..(무한모드)
+    // 아니면..(추가맵)
     else {
 
-        // 모드 이름
-        modName.setText("무한 모드");
+        // 맵 이름
+        modName.setText("추가 맵");
 
-        // 모드 설명
-        modInfo.setText("구현중..");
+        // 맵 설명
+        modInfo.setText("어려운 난이도의 맵 구현중..");
 
-        // 모드 설명 이미지
+        // 맵 설명 이미지
         modImageView.setTexture("phalanx_move1");
         modImageView.play("phalanx_animation", true);
     }

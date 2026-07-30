@@ -96,7 +96,7 @@ export function spawnBossMonster(scene) {
     scene.eliteMonsterSpawnTimer.destroy();
 
     // 생성범위
-    const SPAWN_RADIUS = 450;
+    const SPAWN_RADIUS = 500;
     // Between을 통해 랜덤한 각도를 뽑아낸다
     const randomAngle = Phaser.Math.FloatBetween(0, Math.PI * 2);
 
@@ -111,7 +111,7 @@ export function spawnBossMonster(scene) {
 function spawnEliteMonster(scene) {
 
     // 생성범위
-    const SPAWN_RADIUS = 450;
+    const SPAWN_RADIUS = 500;
     // Between을 통해 랜덤한 각도를 뽑아낸다
     const randomAngle = Phaser.Math.FloatBetween(0, Math.PI * 2);
 
@@ -126,7 +126,7 @@ function spawnEliteMonster(scene) {
 function spawnMonster(scene) {
 
     // 생성범위
-    const SPAWN_RADIUS = 400;
+    const SPAWN_RADIUS = 480;
     // Between을 통해 랜덤한 각도를 뽑아낸다
     const randomAngle = Phaser.Math.FloatBetween(0, Math.PI * 2);
 

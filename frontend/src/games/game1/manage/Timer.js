@@ -4,13 +4,13 @@ export function TimerSetting(scene) {
 
     // ====================타이머===================
 
-    scene.gamePlayTime = 180; // 기본모드는 3분에서 시작
+    scene.gamePlayTime = 1; // 기본모드는 3분에서 시작
     scene.timeOver = false;
 
     // 타이머 텍스트 구성
     scene.timerText = scene.add.text(
       scene.cameras.main.width / 2,    // x좌표
-      scene.cameras.main.height / 12,  // y좌표
+      scene.cameras.main.height / 15,  // y좌표
       "03:00" , {  // 기본 텍스트(3분)
       fontFamily: "Mona",
       fontSize: "32px",

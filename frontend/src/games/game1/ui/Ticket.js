@@ -26,7 +26,7 @@ export function ticketUseUI(scene) {
     );
 
     // 티켓 사용 문구
-    const ticketUseText = scene.add.text(centerX, centerY / 1.5 , 
+    const ticketUseText = scene.add.text(centerX, centerY / 3 , 
         "특별 티켓을 사용하시겠습니까?" , {
         fontFamily: "Mona",
         fontSize: "20px",
@@ -34,7 +34,7 @@ export function ticketUseUI(scene) {
     }).setOrigin(0.5); // 중앙정렬
 
     // 티켓 효과 설명
-    const ticketInfo = scene.add.text(centerX, centerY / 1.33 , 
+    const ticketInfo = scene.add.text(centerX, centerY / 2 , 
         "사용 시 모든 점수가 2배가 됩니다!" , {
         fontFamily: "Mona",
         fontSize: "16px",
@@ -42,7 +42,7 @@ export function ticketUseUI(scene) {
     }).setOrigin(0.5); // 중앙정렬
 
     // 티켓 이미지
-    const ticketIcon = scene.add.image(centerX, centerY, "ticket")
+    const ticketIcon = scene.add.image(centerX, centerY / 1.25, "ticket")
         .setOrigin(0.5).setScale(2);
 
     // 티켓 갯수 텍스트

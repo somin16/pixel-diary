@@ -34,7 +34,7 @@ export function gameOver(scene) {
     );
 
     // 게임오버 텍스트
-    const gameOverText = scene.add.text(centerX, centerY - 150, "GAME OVER", {
+    const gameOverText = scene.add.text(centerX, centerY / 2, "GAME OVER", {
       fontFamily: "Mona",
       fontSize: "48px",
       fontStyle: "bold",
