@@ -4,50 +4,27 @@ import { useTheme } from '../../../stores/useThemeStore';
 import { getAssetUrl } from '../../../utils/AssetHelper';
 import { formatDisplayDate } from '../../../utils/DateFormatter';
 import { supabase } from '../../../utils/SupabaseClient';
+import { useAnnouncements } from '../../../hooks/queries/useAnnouncementQueries';
+
 import AnnouncementCard from '../../../components/more/announcement/AnnouncementCard';
 import FloatingActionButton from '../../../components/home/FloatingActionButton';
 import Header from '../../../components/common/Header';
+
 
 export default function AnnouncementList() {
   const navigate = useNavigate();
   const currentTheme = useTheme((state) => state.currentTheme);
 
-  const [announcements, setAnnouncements] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const { data, isLoading, isError } = useAnnouncements();
+  const announcements = data?.announcements || [];
+
+  // isAdmin 체크는 React Query 대상이 아니라(공지 API 응답이 아니라 세션 정보라서) 그대로 유지
   const [isAdmin, setIsAdmin] = useState(false);
-
-  const fetchAnnouncements = async () => {
-    try {
-      setLoading(true);
-
-      const [{ data: { session } }, response] = await Promise.all([
-        supabase.auth.getSession(),
-        fetch(`${import.meta.env.VITE_BACKEND_URL}/api/v1/announcements/`, {
-          method: 'GET',
-          headers: { 'Content-Type': 'application/json' },
-        })
-      ]);
-
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
       const role = session?.user?.user_metadata?.role;
       setIsAdmin(role === 'admin');
-
-      if (!response.ok) {
-        const errorBody = await response.text();
-        console.error(`서버 응답 에러 (${response.status}):`, errorBody);
-        throw new Error('서버에서 데이터를 가져오지 못했습니다.');
-      }
-
-      const data = await response.json();
-      setAnnouncements(data.announcements || []);
-    } catch (error) {
-      console.error('Fetch Error:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchAnnouncements();
+    });
   }, []);
 
   return (
@@ -65,9 +42,14 @@ export default function AnnouncementList() {
 
       {/* 목록 */}
       <div className="flex-1 overflow-y-auto no-scrollbar flex justify-center">
-        {loading ? (
+        {/* 기본은 10분마다 로딩, 서버에 확인해서 추가된 공지가 있을때만 다시 로딩, 한번 로딩 되면 약 10분간은 로딩X */}
+        {isLoading ? (
           <div className="flex h-[10%] justify-center mt-[50%] text-3xl text-gray-600 font-bold animate-bounce">
             불러오는 중...
+          </div>
+        ) : isError ? (
+          <div className='flex justify-center mt-[50%] text-sm text-gray-500 font-bold'>
+            공지사항을 불러오지 못했습니다.
           </div>
         ) : (
           <div className="flex flex-col w-[95%]">
