@@ -5,6 +5,7 @@ import { useTheme } from "../../stores/useThemeStore"; // 테마 전역상태관
 import FloatingActionButton from "../../components/home/FloatingActionButton"; // FAB 버튼 컴포넌트
 import Calendar from "../../components/home/Calendar"; // 달력 컴포넌트
 import { authFetch } from "../../utils/AuthHelper";
+import { useQueryClient } from "@tanstack/react-query"; // 쿼리 클라이언트
 
 // 출석 관련 모듈 및 Zustand 스토어 임포트 
 import Attendance from "../../components/more/attendance/AttendanceDialog";
@@ -13,6 +14,9 @@ import { useAttendanceStore } from "../../stores/useAttendanceStore";
 export default function Home() {
   const navigate = useNavigate();
   const currentTheme = useTheme((state) => state.currentTheme);
+
+  // 쿼리 클라이언트
+  const queryClient = useQueryClient(); // 훅으로 가져오기
 
   // 출석 관련 상태 정의
   const [isAttendanceOpen, setIsAttendanceOpen] = useState(false);
@@ -49,6 +53,13 @@ export default function Home() {
 
     verifyAttendance();
   }, [hasCheckedToday, setHasCheckedToday]);
+
+  // useEffect(() => {
+  // ‼️TODO:Diary 도메인 useDiaryQueries 완성되면 useQueryClient()로 prefetch 적용하기 주석 해제
+  // 위치 : src/pages/home/Home.jsx
+  
+  //   queryClient.prefetchQuery({ queryKey: queryKeys.diaries, queryFn: diaryApi.getList });
+  // }, []);
 
   // 달력의 기준이 되는 날짜 상태 (오늘 날짜로 초기화)
   // 이 값이 바뀌면 달력이 해당 월로 이동함
