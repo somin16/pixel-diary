@@ -98,7 +98,7 @@ export function useAddItem() {
   return useMutation({
     mutationFn: adminApi.addItem,
     onSuccess: () => {
-      // 유일하게 남는 크로스 도메인 지점 - 상점 담당의 items 캐시
+      // 크로스 도메인 지점 - 상점 담당의 items 캐시 ( 쿼리키를 공유하고 있다는 뜻 )
       queryClient.invalidateQueries({ queryKey: queryKeys.items });
     },
   });
