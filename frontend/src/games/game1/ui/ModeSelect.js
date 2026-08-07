@@ -16,15 +16,15 @@ export async function createModeSelectUI(scene) {
     const centerX = width / 2;
     const centerY = height / 2;
 
-    // 상단 타이틀(게임 모드 선택)
-    scene.add.text(centerX, centerY - 250, '게임 모드 선택', {
+    // 상단 타이틀(게임 맵 선택)
+    scene.add.text(centerX, centerY - 250, '맵 선택', {
         fontFamily: 'Mona',
         fontSize: '40px',
         fontStyle: 'bold',
         color: '#ffffff'
     }).setOrigin(0.5);
 
-    // 일반모드 버튼
+    // 일반 맵 버튼
     createModeButton("basic", centerX - 85, centerY, () => {
 
         // 티켓 사용 UI일 경우엔 클릭 x
@@ -33,8 +33,8 @@ export async function createModeSelectUI(scene) {
         // 0개가 아닐 경우에만 UI 생성
         if (scene.ticketCount != 0) {
 
-            // 클릭 이벤트
-            ticketUseUI(scene);
+            // 클릭 이벤트(기본맵으로 보내준다)
+            ticketUseUI(scene, "default");
         }
 
         // 0개면 그냥 바로 시작
@@ -44,22 +44,43 @@ export async function createModeSelectUI(scene) {
 
                 // 이렇게 하면 GameScene에 isTicketUse값을 넘겨줄 수 있다
                 // 0개니 사용을 안함으로 false
-                isTicketUse: false
+                isTicketUse: false,
+
+                // 고른 맵이 어떤 것인지도 보내준다
+                mapType: "default"
             });
         }
     }
     ,scene);
 
         
-    // 무한모드 버튼
+    // 추가 맵 버튼
     createModeButton("infinity", centerX + 85, centerY, () => {
 
         // 티켓 사용 UI일 경우엔 클릭 x
         if (scene.isTicketSelect == true) return;
 
-        // 클릭 이벤트
-        console.log("구현 X");
+        // 0개가 아닐 경우에만 UI 생성
+        if (scene.ticketCount != 0) {
+
+            // 클릭 이벤트(눈 맵으로 보내준다)
+            ticketUseUI(scene, "snow");
         }
+
+        // 0개면 그냥 바로 시작
+        else {
+
+            scene.scene.start('GameScene', {
+
+                // 이렇게 하면 GameScene에 isTicketUse값을 넘겨줄 수 있다
+                // 0개니 사용을 안함으로 false
+                isTicketUse: false,
+
+                // 고른 맵이 어떤 것인지도 보내준다
+                mapType: "snow"
+            });
+        }
+    }
     ,scene);
 }
 
@@ -102,10 +123,10 @@ export function createModeButton(modType, x, y, onClick, scene) {
     if (modType == "basic") {
 
         // 모드 이름
-        modName.setText("일반 모드");
+        modName.setText("일반 맵");
 
         // 모드 설명
-        modInfo.setText("기본적인 모드입니다!");
+        modInfo.setText("기본적인 맵입니다!");
 
         // 모드 설명 이미지
         modImageView.setTexture("slime_move1");
@@ -116,10 +137,10 @@ export function createModeButton(modType, x, y, onClick, scene) {
     else {
 
         // 모드 이름
-        modName.setText("무한 모드");
+        modName.setText("추가 맵");
 
         // 모드 설명
-        modInfo.setText("구현중..");
+        modInfo.setText("어려운 난이도의 맵을 구현중..");
 
         // 모드 설명 이미지
         modImageView.setTexture("phalanx_move1");
