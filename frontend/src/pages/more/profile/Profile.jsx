@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from 'react-router-dom';
 import { useTheme } from '../../../stores/useThemeStore'; // useTheme 불러오기
 import { getAssetUrl } from "../../../utils/AssetHelper"; // 헬퍼 불러오기
-// import { AuthValidator } from "../../../utils/AuthValidator"; // TODO : 유저이름 중복&길이 검사
+import AuthValidator from "../../../utils/AuthValidator"; 
 
 // 컴포넌트 불러오기
 import Header from "../../../components/common/Header";
@@ -149,7 +149,16 @@ const Profile = () => {
   };
 
   // '내 정보 수정하기' 버튼 클릭 시 (닉네임만 변경 - Mutation 실행)
-  const handleUpdate = () => {
+  const handleUpdate = async () => {
+    // 닉네임 유효성(길이) 검사
+    const validation = await AuthValidator.validateUserName(nickname);
+
+    // 검사 실패 시 에러 메시지 띄우고 서버 요청(Mutation) 중단
+    if (validation.state === 'error') {
+      showMessage("error", validation.message);
+      return; 
+    }
+    // 검사 통과 시 서버에 변경 요청
     updateNicknameMut.mutate({ user_name: nickname }, {
       onSuccess: () => showMessage("success", "정보가 수정되었습니다"),
       onError: (error) => {
