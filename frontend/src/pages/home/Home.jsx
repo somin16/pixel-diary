@@ -11,6 +11,9 @@ import { useQueryClient } from "@tanstack/react-query"; // 쿼리 클라이언�
 import Attendance from "../../components/more/attendance/AttendanceDialog";
 import { useAttendanceStore } from "../../stores/useAttendanceStore";
 
+// 리액트 쿼리
+import { useAttendance } from "../../hooks/queries/useAttendanceQueries";
+
 export default function Home() {
   const navigate = useNavigate();
   const currentTheme = useTheme((state) => state.currentTheme);
@@ -20,39 +23,24 @@ export default function Home() {
 
   // 출석 관련 상태 정의
   const [isAttendanceOpen, setIsAttendanceOpen] = useState(false);
-  const { hasCheckedToday, setHasCheckedToday } = useAttendanceStore();
+  const { hasPromptedThisSession, setHasPromptedThisSession } = useAttendanceStore();
+  const { data: attendanceData, isSuccess: isAttendanceSuccess } = useAttendance();
 
   // 로그인 직후 자동 출석 체크 및 다이얼로그 제어 로직
   useEffect(() => {
-    if (hasCheckedToday) return;
+    if (hasPromptedThisSession) return; // 이번 세션에 이미 판단했으면 재판단 안 함
 
-    const verifyAttendance = async () => {
-      try {
-        // 1. authFetch를 사용해 백엔드 API로 출석 기록 조회
-        const result = await authFetch(
-          `${import.meta.env.VITE_BACKEND_URL}/api/v1/profile/attendance/`,
-          { method: "GET" }
-        );
-
-        // 2. YYYY-MM-DD 형식으로 오늘 날짜 구하기
-        const today = new Date().toLocaleDateString("sv-SE");
-
-        // 3. 백엔드에서 준 출석 날짜 목록에 오늘 날짜가 '없다면' 창 띄우기
-        if (!result.attendance_dates.includes(today)) {
-          setIsAttendanceOpen(true);
-        }
-
-      } catch (error) {
-        // 세션이 없거나 서버 에러일 경우 처리
-        console.error("출석 기록 조회 중 오류 발생:", error);
-      } finally {
-        // 4. 성공하든 에러가 나든 오늘 조회는 끝났으니 도장 찍기
-        setHasCheckedToday(true);
+    if (isAttendanceSuccess && attendanceData) {
+      const today = new Date().toLocaleDateString("sv-SE");
+      
+      // 오늘 날짜가 출석 기록에 없으면 창 띄우기
+      if (!attendanceData.attendance_dates.includes(today)) {
+        setIsAttendanceOpen(true);
       }
-    };
-
-    verifyAttendance();
-  }, [hasCheckedToday, setHasCheckedToday]);
+      
+      setHasPromptedThisSession(true); // 출석 여부와 무관하게 "판단 완료" 표시
+    }
+  }, [isAttendanceSuccess, attendanceData, hasPromptedThisSession, setHasPromptedThisSession]);
 
   // useEffect(() => {
   // ‼️TODO:Diary 도메인 useDiaryQueries 완성되면 useQueryClient()로 prefetch 적용하기 주석 해제

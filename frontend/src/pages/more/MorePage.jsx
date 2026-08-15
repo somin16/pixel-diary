@@ -9,7 +9,6 @@ import { queryKeys } from "../../utils/queryKeys";
 
 // zuStand 함수 불러오기
 import { useGetCoinStore } from "../../stores/useCoinStore";
-import { useProfileStore } from '../../stores/useProfileStore';
 
 // 컴포넌트 불러오기
 import ProfileBar from "../../components/more/profile/ProfileBar";
@@ -50,9 +49,6 @@ const MorePage = () => {
   // 알림 빨간 점 상태 관리
   const [hasUnreadReply, setHasUnreadReply] = useState(false); // 일반 유저용 (답변 완료되었으나 안 읽음)
   const [hasNewContact, setHasNewContact] = useState(false);   // 관리자용 (새로운 답변 대기 문의 존재)
-
-  // 유저 프로필 전역 상태 (Zustand)
-  const { nickname, email, profileImage, fetchProfile, isFetched } = useProfileStore();
 
   useEffect(() => {
     let isMounted = true; // 
@@ -100,9 +96,6 @@ const MorePage = () => {
     };
     checkAdmin();
     startGetCoin(); // 코인조회를 더보기 창에서 실행
-    if (!isFetched) {
-      fetchProfile(); // 프로필 데이터 중복 조회 방지 (데이터가 없을 때만 API 호출)
-    }
 
     // 포커스 이벤트 대신 Supabase Realtime 채널 구독
     const contactChannel = supabase
@@ -122,7 +115,7 @@ const MorePage = () => {
       isMounted = false; // cleanup에서 false로 변경
       supabase.removeChannel(contactChannel);
     };
-  }, [startGetCoin, fetchProfile, isFetched]);
+  }, [startGetCoin]);
 
   useEffect(() => {
     // 더보기 화면 들어오면, 자주 가는 하위 화면 데이터 미리 당김
@@ -172,11 +165,7 @@ const MorePage = () => {
       </header>
 
       {/* 프로필 영역 */}
-      <ProfileBar
-        nickname={nickname}
-        email={email}
-        profileImage={profileImage}
-      />
+      <ProfileBar />
 
       {/* 더보기 메뉴 아이콘 그리드 영역 */}
       <nav className="grid grid-cols-3 gap-x-[15px] gap-y-[30px] px-[10px]">

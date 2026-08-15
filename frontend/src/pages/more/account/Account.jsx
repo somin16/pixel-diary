@@ -1,12 +1,10 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from 'react-router-dom';
+import { useQueryClient } from '@tanstack/react-query';
 import { useTheme } from '../../../stores/useThemeStore'; // useTheme 불러오기
 import { getAssetUrl } from "../../../utils/AssetHelper"; // 헬퍼 불러오기
 import { supabase } from "../../../utils/SupabaseClient"; // supabase 불러오기
 import { authFetch } from "../../../utils/AuthHelper";
-
-// zustand 불러오기
-import { useProfileStore } from '../../../stores/useProfileStore';
 
 // 컴포넌트 불러오기
 import LogoutDialog from '../../../components/more/auth/LogoutDialog';
@@ -29,6 +27,8 @@ const Account = () => {
 
   //  테마 전역 관리
   const currentTheme = useTheme((state) => state.currentTheme);
+
+  const queryClient = useQueryClient();
 
   // 다이얼로그 상태 관리 'logout' | 'withdrawal' | null
   const [dialog, setDialog] = useState(null);
@@ -109,8 +109,8 @@ const Account = () => {
         console.error("로컬 세션 삭제 무시:", e);
       }
 
-      // 로그아웃 시 프로필 정보 메모리에서 지우기
-      useProfileStore.getState().clearProfile();
+      // 로그아웃 시 React Query 캐시 전체 초기화 (유저 데이터, 프로필 등 모두 삭제)
+      queryClient.clear();
 
       setDialog(null);
       setResultDialog('logout');
@@ -146,8 +146,8 @@ const Account = () => {
         console.error("로컬 세션 삭제 무시:", e);
       }
 
-      // 회원탈퇴 시 프로필 메모리 지우기
-      useProfileStore.getState().clearProfile();
+      // 회원탈퇴 시 React Query 캐시 전체 초기화
+      queryClient.clear();
 
       setDialog(null);
       setResultDialog('withdrawal');

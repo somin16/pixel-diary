@@ -41,6 +41,9 @@ import AddItemPage from "./pages/more/add_item/AddItemPage"; // 더보기 - 아�
 import ContactReply from "./pages/more/contact_reply/ContactReply"; // 더보기 - 문의사항 답변 화면
 // ------------------------ 리액트 쿼리 ----------------------------
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { queryKeys } from "./utils/queryKeys"; 
+import { profileApi } from "./api/profileApi"; // 프로필 API
+import { attendanceApi } from "./api/attendanceApi"; // 출석 API
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -73,11 +76,11 @@ function AppInner() {
   async function prefetchCriticalData(queryClient) {
     // ‼️TODO: 각 담당자 API 완성되면 주석 해제, 로그인시 프리패치 되어야하는 목록 위치: src/App.jsx
     
-    // await Promise.all([
-    //   queryClient.prefetchQuery({ queryKey: queryKeys.profile, queryFn: profileApi.getProfile }),
-    //   queryClient.prefetchQuery({ queryKey: queryKeys.coins, queryFn: storeApi.getCoins }),
-    //   queryClient.prefetchQuery({ queryKey: queryKeys.attendance, queryFn: attendanceApi.getAttendance }),
-    // ]);
+    await Promise.all([
+      queryClient.prefetchQuery({ queryKey: queryKeys.profile, queryFn: profileApi.getProfile }),
+    //queryClient.prefetchQuery({ queryKey: queryKeys.coins, queryFn: storeApi.getCoins }),
+      queryClient.prefetchQuery({ queryKey: queryKeys.attendance, queryFn: attendanceApi.getAttendance }),
+    ]);
   }
 
   useEffect(() => {

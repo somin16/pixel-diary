@@ -1,18 +1,17 @@
 // src/components/more/attendance/AttendanceDialog.jsx
-import React, { useState, useEffect } from "react";
+import React from "react";
 import { useTheme } from "../../../stores/useThemeStore";
 import { getAssetUrl } from "../../../utils/AssetHelper";
-import { authFetch } from "../../../utils/AuthHelper";
 import toast from "react-hot-toast";
-import { useAttendanceStore } from "../../../stores/useAttendanceStore";
 
 // 컴포넌트 불러오기
 import DialogBox from "../../common/dialog/DialogBox";
 import CloseButton from "../../common/CloseButton";
 import DayBox from "./DayBox";
 
-// zustand 함수 불러오기
+// zustand & 리액트 쿼리 불러오기
 import { useAddCoinStore } from "../../../stores/useCoinStore";
+import { useAttendance, useCheckAttendance } from "../../../hooks/queries/useAttendanceQueries";
 
 // 7일 출석 보상 데이터 구조 (서버 연동 시 초기화 기준이 됨)
 const ATTENDANCE_DAYS = [
@@ -28,50 +27,23 @@ const ATTENDANCE_DAYS = [
 const AttendanceDialog = ({ onClose }) => {
   const currentTheme = useTheme((state) => state.currentTheme);
 
-  const [attendedDays, setAttendedDays] = useState(0); // 누적 출석일
-  const [hasCheckedToday, setHasCheckedToday] = useState(false); // 당일 출석 버튼을 눌렀는지 여부
-  const [loading, setLoading] = useState(false); // 출석 체크 버튼 눌렀을 때 로딩 상태
-  const [fetchLoading, setFetchLoading] = useState(true); // 출석 기록 조회 로딩
-  const setGlobalHasCheckedToday = useAttendanceStore((state) => state.setHasCheckedToday);
+  // React Query 훅
+  const { data: attendanceData, isLoading: fetchLoading, isError } = useAttendance();
+  const checkAttendanceMut = useCheckAttendance();
 
-  // 팝업 열릴 때 출석 기록 조회
-  useEffect(() => {
-    const fetchAttendance = async () => {
-      setFetchLoading(true);
-      try {
-        // GET 요청으로 출석 기록 조회
-        const result = await authFetch(
-          `${import.meta.env.VITE_BACKEND_URL}/api/v1/profile/attendance/`,
-          { method: "GET" }
-        );
-
-        // total_count로 현재 출석 일수 설정
-        setAttendedDays(result.total_count);
-
-        // 오늘 날짜가 attendance_dates에 있으면 이미 출석한 것
-        const today = new Date().toLocaleDateString("sv-SE"); // YYYY-MM-DD 형식
-        if (result.attendance_dates.includes(today)) {
-          setHasCheckedToday(true);
-          setGlobalHasCheckedToday(true); // 출석 완료 확인
-        }
-
-      } catch (error) {
-        console.error("출석 기록 조회 실패", error);
-      } finally {
-        setFetchLoading(false);
-      }
-    };
-    fetchAttendance();
-  }, [setGlobalHasCheckedToday]);
+  // 서버 데이터를 기반으로 출석 상태 계산
+  const attendedDays = attendanceData?.total_count || 0;
+  const today = new Date().toLocaleDateString("sv-SE");
+  const isTodayChecked = attendanceData?.attendance_dates?.includes(today) || false;
 
   const handleDayClick = async (day) => {
-
     if (attendedDays >= 7) {
       toast("이번 주 출석을 모두 완료했습니다!", { id: "all-done" });
       return;
     }
-    if (fetchLoading) return; // 출석 기록 불러오는 중엔 클릭 막기
-    if (loading) return;  // 출석 체크 및 보상 받는중이면 클릭 막기 
+
+    // 로딩 중이거나 이미 통신 중이면 중복 클릭 방지
+    if (fetchLoading || checkAttendanceMut.isPending) return;
 
     // 과거 출석일 클릭 시 무시
     if (day <= attendedDays) {
@@ -79,7 +51,7 @@ const AttendanceDialog = ({ onClose }) => {
     }
 
     // 당일 출석 완료 후 미래 날짜 클릭 시 안내 (중복 알림 방지 적용)
-    if (hasCheckedToday) {
+    if (isTodayChecked) {
       // id를 부여하여 중복된 토스트가 연달아 뜨지 않도록 처리
       toast("이미 출석 체크를 완료하였습니다", { id: "already-checked" });
       return;
@@ -89,58 +61,35 @@ const AttendanceDialog = ({ onClose }) => {
     if (day !== attendedDays + 1) {
       return;
     }
-    // 출석 체크 API 호출 시작
-    setLoading(true);
-    try {
-      // POST 요청으로 출석 체크 및 보상 지급
-      const result = await authFetch(
-        `${import.meta.env.VITE_BACKEND_URL}/api/v1/profile/attendance/`,
-        { method: "POST" }
-      );
 
-      // 서버 응답으로 출석 일수 업데이트
-      setAttendedDays(result.current_day);
+    // 출석 체크 실행 (useMutation 활용)
+    checkAttendanceMut.mutate(undefined, {
+      onSuccess: (result) => {
+        // 보상 목록에서 코인과 티켓 각각 분리
+        const coinReward = result.reward.find((r) => r.reward_type === "coin");
+        const ticketReward = result.reward.find((r) => r.reward_type === "ticket");
 
-      // 오늘 출석 완료 처리
-      setHasCheckedToday(true);
+        // 코인 리워드가 있을때만 코인추가를 실행
+        if (coinReward) {
+          useAddCoinStore.getState().addDirectCoin(coinReward.amount);
+        }
 
-      // 전역 상태에도 출석 완료 기록 남기기 (이후 Home에서 다이얼로그 안 띄움)
-      setGlobalHasCheckedToday(true);
-
-      // 보상 목록에서 코인과 티켓 각각 분리
-      const coinReward = result.reward.find((r) => r.reward_type === "coin");
-      const ticketReward = result.reward.find((r) => r.reward_type === "ticket");
-
-      // 코인 리워드가 있을때만 코인추가를 실행
-      if (coinReward) {
-
-        useAddCoinStore.getState().addDirectCoin(coinReward.amount);
+        // 티켓 보상이 있는 날이면 코인 + 티켓 알림
+        if (ticketReward && ticketReward.amount > 0) {
+          toast(`${coinReward?.amount || 0}코인과 티켓 ${ticketReward.amount}개를 받았습니다!`);
+        } else {
+          // 일반 날이면 코인만 알림
+          toast(`${coinReward?.amount || 0}코인을 받았습니다!`);
+        }
+      },
+      onError: (error) => {
+        if (error.status === 400) {
+          toast("이미 출석 체크를 완료하였습니다", { id: "already-checked" });
+        } else {
+          toast(error.message || "출석 체크에 실패했습니다.");
+        }
       }
-
-      // 티켓 보상이 있는 날이면 코인 + 티켓 알림
-      if (ticketReward && ticketReward.amount > 0) {
-        toast(`${coinReward?.amount || 0}코인과 티켓 ${ticketReward.amount}개를 받았습니다!`);
-      } else {
-        // 일반 날이면 코인만 알림
-        toast(`${coinReward?.amount || 0}코인을 받았습니다!`);
-      }
-
-    } catch (error) {
-      // 서버에서 400 에러 = 오늘 이미 출석한 경우
-      if (error.status === 400) {
-        toast("이미 출석 체크를 완료하였습니다", { id: "already-checked" });
-        setHasCheckedToday(true);
-
-        // 예외 처리로 이미 출석된 걸 알았을 때도 전역 상태 업데이트
-        setGlobalHasCheckedToday(true);
-      } else {
-        // 그 외 에러 (서버 오류 등)
-        toast(error.message || "출석 체크에 실패했습니다.");
-      }
-    } finally {
-      // 성공이든 실패든 로딩 종료
-      setLoading(false);
-    }
+    });
   };
 
 
@@ -162,38 +111,41 @@ const AttendanceDialog = ({ onClose }) => {
         <h1 className="text-3xl font-bold tracking-widest text-black mt-[1%] mb-[12%]">
           출석 체크
         </h1>
+        
+        {isError ? (
+          <p className="text-sm text-gray-500 py-10">출석 정보를 불러오지 못했습니다</p>
+        ) : (
+          <div className="w-full flex flex-col gap-[9%] z-10">
+            {/* 1~4일차 */}
+            <div className="grid grid-cols-4 gap-[2%] w-full">
+              {ATTENDANCE_DAYS.slice(0, 4).map((item) => (
+                <DayBox
+                  key={item.day}
+                  item={item}
+                  isAttended={item.day <= attendedDays} // 출석한 날이면 체크 표시
+                  onClick={() => handleDayClick(item.day)}
+                  currentTheme={currentTheme}
+                  coinReward={item.coin}
+                />
+              ))}
+            </div>
 
-        <div className="w-full flex flex-col gap-[9%] z-10">
-          {/* 1~4일차 */}
-          <div className="grid grid-cols-4 gap-[2%] w-full">
-            {ATTENDANCE_DAYS.slice(0, 4).map((item) => (
-              <DayBox
-                key={item.day}
-                item={item}
-                isAttended={item.day <= attendedDays} // 출석한 날이면 체크 표시
-                onClick={() => handleDayClick(item.day)}
-                currentTheme={currentTheme}
-                coinReward={item.coin}
-              />
-            ))}
+            {/* 5~7일차 */}
+            <div className="grid grid-cols-4 gap-[2%] w-full relative left-[6%]">
+              {ATTENDANCE_DAYS.slice(4, 7).map((item) => (
+                <DayBox
+                  key={item.day}
+                  item={item}
+                  isAttended={item.day <= attendedDays} // 출석한 날이면 체크 표시
+                  onClick={() => handleDayClick(item.day)}
+                  currentTheme={currentTheme}
+                  coinReward={item.coin}
+                />
+              ))}
+              <div className="w-full h-full"></div>
+            </div>
           </div>
-
-          {/* 5~7일차 */}
-          <div className="grid grid-cols-4 gap-[2%] w-full relative left-[6%]">
-            {ATTENDANCE_DAYS.slice(4, 7).map((item) => (
-              <DayBox
-                key={item.day}
-                item={item}
-                isAttended={item.day <= attendedDays} // 출석한 날이면 체크 표시
-                onClick={() => handleDayClick(item.day)}
-                currentTheme={currentTheme}
-                coinReward={item.coin}
-              />
-            ))}
-            <div className="w-full h-full"></div>
-          </div>
-        </div>
-
+        )}
       </div>
     </DialogBox>
   );
