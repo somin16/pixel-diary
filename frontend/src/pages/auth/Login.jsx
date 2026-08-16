@@ -9,6 +9,7 @@ import AuthValidator from '../../utils/AuthValidator';
 // 3. 커스텀 훅 불러오기
 import { useTheme } from '../../stores/useThemeStore';
 import useDebounce from '../../hooks/useDebounce';
+import { useLogin } from '../../hooks/mutations/useAuthMutations';
 
 // 4. 슈파베이스 불러오기
 import { supabase } from "../../utils/SupabaseClient";
@@ -29,8 +30,8 @@ export default function Login() { // 로그인 페이지 내보내기
   // 디바운스 적용 (서버 요청 횟수 조절)
   const debouncedUserEmail = useDebounce(user_email, 500); // 0.5초 딜레이
 
-  // [상태] 로그인 중인지 아닌지
-  const [loading, setLoading] = useState(false); // 기본값 false
+  // 로그인 뮤테이션 - loading 상태는 이제 login.isPending으로 대체
+  const login = useLogin();
 
   // [상태] 피드백 메시지
   const [emailStatus, setEmailStatus] = useState({ state: 'default', message: '' });
@@ -68,7 +69,7 @@ export default function Login() { // 로그인 페이지 내보내기
   }, [password]);
 
   // 일반 로그인 로직
-  const onEmailLoginSubmit = async (e) => {
+  const onEmailLoginSubmit = (e) => {
     e.preventDefault();
 
     // 최종 확인 : 에러가 있거나 빈값이면 중단
@@ -77,45 +78,29 @@ export default function Login() { // 로그인 페이지 내보내기
       return;
     }
 
-    setLoading(true);
+    // authApi.login 호출 -> 성공/실패는 onSuccess/onError에서 처리
+    login.mutate(
+      { user_email, password },
+      {
+        onSuccess: (authData) => {
+          const params = new URLSearchParams({
+            access_token: authData.access_token,
+            refresh_token: authData.refresh_token || '',
+            provider: 'email'
+          });
 
-    try { //백엔드 API 연동 /api/v1/auth/login/
-      const loginEndpoint = `${import.meta.env.VITE_BACKEND_URL}/api/v1/auth/login/`;
-      const response = await fetch(loginEndpoint, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ user_email: user_email, password: password }),
-        credentials: 'include'
-      });
-
-      const authData = await response.json();
-
-      if (response.ok) {
-        const params = new URLSearchParams({
-          access_token: authData.access_token,
-          refresh_token: authData.refresh_token || '',
-          provider: 'email'
-        });
-
-        // 세션 설정을 여기서 하지 않고, 정보를 담아 리다이렉트 페이지로 넘깁니다.
-        navigate(`/auth/auth-redirect?${params.toString()}`);
-      } else {
-        // 서버에서 온 에러 처리
-        setEmailStatus({
-          state: 'error',
-          message: authData.message || "로그인 정보를 확인해주세요."
-        });
+          // 세션 설정을 여기서 하지 않고, 정보를 담아 리다이렉트 페이지로 넘깁니다.
+          navigate(`/auth/auth-redirect?${params.toString()}`);
+        },
+        onError: (error) => {
+          // authApi.js의 handleResponse가 서버 메시지를 error.message로 던져줌
+          setEmailStatus({
+            state: 'error',
+            message: error.message || "로그인 정보를 확인해주세요."
+          });
+        },
       }
-    } catch (commError) {
-      console.error("통신 장애:", commError);
-      // 서버가 꺼져있을 때 사용자에게 알림
-      setEmailStatus({
-        state: 'error',
-        message: "서버와 연결 X . 잠시 후 시도해주세요."
-      });
-    } finally {
-      setLoading(false);
-    }
+    );
   };
 
 
@@ -188,7 +173,7 @@ export default function Login() { // 로그인 페이지 내보내기
 
         {/* 로그인 버튼 */}
         <SubmitButton // auth/SubmitButton 컴포넌트 불러와서 사용
-          loading={loading}
+          loading={login.isPending} // 뮤테이션 상태로 대체
           disabled={emailStatus.state !== 'success' || passwordStatus.state !== 'success'}
           currentTheme={currentTheme}
           text="로그인"
