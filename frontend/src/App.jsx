@@ -81,16 +81,23 @@ function AppInner() {
   }
 
   useEffect(() => {
-    // 현재 세션 가져오기
+    // 현재 세션 가져오기 (앱 최초 실행 시)
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
       setLoading(false);
        if (session) prefetchCriticalData(queryClient); // 세션 확인되면 바로 병렬 prefetch
     });
 
-    // 로그인 상태 변화 감시
+    // 로그인 상태 변화 감시 (로그아웃/재로그인 포함)
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setSession(session);
+      if (_event === 'SIGNED_OUT') {
+      queryClient.clear(); // 이전 계정 캐시 제거 (다른 유저 데이터 노출 방지)
+    }
+
+    if (_event === 'SIGNED_IN' && session) {
+      prefetchCriticalData(queryClient); // 로그인마다 prefetch 재실행
+    }
     });
 
     return () => subscription.unsubscribe();
