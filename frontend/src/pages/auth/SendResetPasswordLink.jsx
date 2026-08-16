@@ -1,17 +1,14 @@
 // 1. 리액트 불러오기
-import { data, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 
 // 2. 유틸 함수 불러오기
-import { getAssetUrl } from "../../utils/AssetHelper";
 import AuthValidator from '../../utils/AuthValidator';
 
 // 3. 커스텀 훅 불러오기
 import { useTheme } from '../../stores/useThemeStore';
 import useDebounce from '../../hooks/useDebounce';
-
-// 4. 슈파베이스 불러오기
-import { supabase } from "../../utils/SupabaseClient";
+import { useResetPassword } from '../../hooks/mutations/useAuthMutations';
 
 // 5. 컴포넌트 불러오기
 import InputBox from '../../components/auth/InputBox';
@@ -23,8 +20,10 @@ export default function SendResetPasswordLink() { // 비밀번호 재설정 링�
 
   // [상태] 입력값 관리
   const [step, setStep] = useState(1); // 1. 이메일 입력, 2. 발송 완료
-  const [loading, setLoading] = useState(false);
   const [user_email, setUser_email] = useState('');
+
+  // 비밀번호 재설정 이메일 발송 뮤테이션 - loading은 resetPassword.isPending으로 대체
+  const resetPassword = useResetPassword();
 
   // [상태] 피드백 메시지
   const [emailStatus, setEmailStatus] = useState({ state: 'default', message: '' });
@@ -48,8 +47,8 @@ export default function SendResetPasswordLink() { // 비밀번호 재설정 링�
     checkEmail();
   }, [debouncedUserEmail]);
 
-  // 링크 발송 함수 (백엔드 API 연동)
-  const handleSendEmail = async (e) => {
+  // 링크 발송 함수
+  const handleSendEmail = (e) => {
     e.preventDefault();
 
     // 이메일 형식이 안 맞거나 빈 값이면 중단
@@ -57,46 +56,18 @@ export default function SendResetPasswordLink() { // 비밀번호 재설정 링�
       return;
     }
 
-    setLoading(true);
-
-    try {
-      const sendMailEndpoint = `${import.meta.env.VITE_BACKEND_URL}/api/v1/auth/password/reset/`;
-      const response = await fetch(sendMailEndpoint, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ user_email: user_email })
-      });
-
-      // 응답 상태 확인
-      if (response.ok) { // 성공
-        const authData = await response.json(); // 성공했을 때만 JSON을 파싱
+    // authApi.resetPassword 호출
+    resetPassword.mutate(user_email, {
+      onSuccess: () => {
         setStep(2); // 성공 시 2단계 화면으로 전환 (이메일 발송 완료)
-      } else {
-        // 실패했을 때 (400, 404, 500 등)
-        // 에러 메시지 추출 시도 (JSON이 아닐 경우를 대비해 처리)
-        let errorMessage = "서버 오류로 인해 발송 실패. 다시 시도해 주세요.";
-        try {
-          const errorData = await response.json();
-          errorMessage = errorData.message || errorMessage;
-        } catch (pasingError) {
-          // 서버가 JSON이 아닌 HTML 에러 페이지를 보낸 경우 대응
-          console.error("에러 데이터 파싱 실패:", pasingError);
-        }
-
+      },
+      onError: (error) => {
         setEmailStatus({
           state: 'error',
-          message: errorMessage
+          message: error.message || "서버 오류로 인해 발송 실패. 다시 시도해 주세요."
         });
-      }
-    } catch (error) {
-      console.error("통신 장애:", error);
-      setEmailStatus({
-        state: 'error',
-        message: '서버와 연결할 수 없습니다.'
-      });
-    } finally {
-      setLoading(false);
-    }
+      },
+    });
   };
 
   return (
@@ -122,8 +93,8 @@ export default function SendResetPasswordLink() { // 비밀번호 재설정 링�
 
           {/* 발송 버튼 */}
           <SubmitButton // auth/SubmitButton 컴포넌트 불러와서 사용
-            loading={loading}
-            disabled={loading || emailStatus.state !== 'success'}
+            loading={resetPassword.isPending} // 뮤테이션 상태로 대체
+            disabled={resetPassword.isPending || emailStatus.state !== 'success'}
             currentTheme={currentTheme}
             text="발송"
           />

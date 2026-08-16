@@ -1,7 +1,5 @@
-import { useGameTicket } from "../../TicketApiManage";
-
 // 티켓 사용여부 UI 생성
-export function ticketUseUI(scene) {
+export function ticketUseUI(scene, selectMapType) {
 
     // UI를 모두 넣을 컨테이너
     scene.ticketUI = scene.add.container(0, 0);
@@ -52,6 +50,9 @@ export function ticketUseUI(scene) {
         fill: "#ffffff"
     }).setOrigin(0.5); // 중앙정렬
 
+    // 연타방지용 변수
+    let isProcessing = false;
+
     // 사용 버튼 배경
     const yesButton = scene.add.rectangle(centerX - 75, centerY / 0.75, 100, 40, 0x44aa44)
             
@@ -59,20 +60,16 @@ export function ticketUseUI(scene) {
         .setInteractive()   // 이걸 넣어줘야 클릭이 가능
         .on('pointerdown', async () => { // 누를때 작동
 
-            // 티켓선택 끝
-            scene.isTicketSelect = false;
+            if (isProcessing) return; // 이미 눌렀으면 안눌리게
+            isProcessing = true;
 
             // 티켓 사용 API
-            await useGameTicket();
+            window.dispatchEvent(new CustomEvent("useTicket"));
 
-            // 클릭 이벤트
-            scene.scene.start('GameScene', {
-
-                // 이렇게 하면 GameScene에 isTicketUse값을 넘겨줄 수 있다
-                // 사용한다고 했으니 true
-                isTicketUse: true
-            });
-    });
+            // 게임 시작 로직
+            startGame(scene, selectMapType, true); // 쓴다고 했으니 true로
+        }
+    );
 
     // 사용 버튼 텍스트
     const yesButtonText = scene.add.text(centerX - 75, centerY / 0.75, "티켓 사용!", {
@@ -88,17 +85,10 @@ export function ticketUseUI(scene) {
         .setInteractive()   // 이걸 넣어줘야 클릭이 가능
         .on('pointerdown', () => { // 누를때 작동
 
-            // 티켓선택 끝
-            scene.isTicketSelect = false;
-
-            // 클릭 이벤트
-            scene.scene.start('GameScene', {
-
-                // 이렇게 하면 GameScene에 isTicketUse값을 넘겨줄 수 있다
-                // 사용안하니 false
-                isTicketUse: false
-            });
-    });
+            // 게임 시작 로직
+            startGame(scene, selectMapType, false); // 안쓴다고 했으니 false로
+        }
+    );
 
     // 아니요 버튼 텍스트
     const noButtonText = scene.add.text(centerX + 75, centerY / 0.75, "사용 안 함", {
@@ -120,4 +110,38 @@ export function ticketUseUI(scene) {
         noButton,
         noButtonText
     ])
+}
+
+// 게임 시작 로직(씬, 맵타입, 티켓사용여부)
+function startGame(scene, selectMapType, ticketUse) {
+
+    // 티켓선택 끝
+    scene.isTicketSelect = false;
+
+    if (selectMapType == "default") {
+
+        // 클릭 이벤트
+        scene.scene.start('GameScene', {
+
+            // 이렇게 하면 GameScene에 isTicketUse값을 넘겨줄 수 있다
+            isTicketUse: ticketUse,
+
+            // 고른 맵이 어떤 것인지도 보내준다
+            mapType: "default"
+        });
+    }
+
+    // 추가맵(눈)일 경우에
+    else {
+
+        // 클릭 이벤트
+        scene.scene.start('GameScene', {
+
+            // 이렇게 하면 GameScene에 isTicketUse값을 넘겨줄 수 있다
+            isTicketUse: ticketUse,
+
+            // 고른 맵이 어떤 것인지도 보내준다
+            mapType: "snow"
+        });
+    }
 }
