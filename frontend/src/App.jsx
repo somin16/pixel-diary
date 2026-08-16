@@ -73,11 +73,12 @@ function AppInner() {
   async function prefetchCriticalData(queryClient) {
     // ‼️TODO: 각 담당자 API 완성되면 주석 해제, 로그인시 프리패치 되어야하는 목록 위치: src/App.jsx
     
-    // await Promise.all([
+    await Promise.all([
     //   queryClient.prefetchQuery({ queryKey: queryKeys.profile, queryFn: profileApi.getProfile }),
-    //   queryClient.prefetchQuery({ queryKey: queryKeys.coins, queryFn: storeApi.getCoins }),
+    queryClient.prefetchQuery({ queryKey: queryKeys.items, queryFn: storeApi.getItem }),
+    queryClient.prefetchQuery({ queryKey: queryKeys.inventoryItems, queryFn: inventoryApi.getItem }),
     //   queryClient.prefetchQuery({ queryKey: queryKeys.attendance, queryFn: attendanceApi.getAttendance }),
-    // ]);
+    ]);
   }
 
   useEffect(() => {
