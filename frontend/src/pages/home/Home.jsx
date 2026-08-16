@@ -23,24 +23,28 @@ export default function Home() {
 
   // 출석 관련 상태 정의
   const [isAttendanceOpen, setIsAttendanceOpen] = useState(false);
-  const { hasPromptedThisSession, setHasPromptedThisSession } = useAttendanceStore();
+  const { lastPromptedDate, setLastPromptedDate } = useAttendanceStore();
   const { data: attendanceData, isSuccess: isAttendanceSuccess } = useAttendance();
 
   // 로그인 직후 자동 출석 체크 및 다이얼로그 제어 로직
   useEffect(() => {
-    if (hasPromptedThisSession) return; // 이번 세션에 이미 판단했으면 재판단 안 함
+    // 2번 문제(시간대) 코드는 냅두고 기존 방식 그대로 사용
+    const today = new Date().toLocaleDateString("sv-SE");
+    
+    // 이번 세션이 아니라 "오늘" 이미 판단했으면 재판단 안 함
+    // 자정이 지나 today 값이 다음 날로 바뀌면 이 조건문을 무사히 통과하게 됨
+    if (lastPromptedDate === today) return; 
 
     if (isAttendanceSuccess && attendanceData) {
-      const today = new Date().toLocaleDateString("sv-SE");
-      
       // 오늘 날짜가 출석 기록에 없으면 창 띄우기
       if (!attendanceData.attendance_dates.includes(today)) {
         setIsAttendanceOpen(true);
       }
       
-      setHasPromptedThisSession(true); // 출석 여부와 무관하게 "판단 완료" 표시
+      // 출석 여부와 무관하게 오늘 날짜를 저장하여 "오늘자 판단 완료" 표시
+      setLastPromptedDate(today); 
     }
-  }, [isAttendanceSuccess, attendanceData, hasPromptedThisSession, setHasPromptedThisSession]);
+  }, [isAttendanceSuccess, attendanceData, lastPromptedDate, setLastPromptedDate]);
 
   // useEffect(() => {
   // ‼️TODO:Diary 도메인 useDiaryQueries 완성되면 useQueryClient()로 prefetch 적용하기 주석 해제

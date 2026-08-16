@@ -407,7 +407,7 @@ class AttendanceView(APIView):
                 headers=headers,
                 params={
                     "user_id": f"eq.{user_id}",
-                    "select": "current_day,start_date,attendance_dates",
+                    "select": "current_day,last_checked_at,start_date,attendance_dates",
                 },
             )
 
@@ -416,7 +416,7 @@ class AttendanceView(APIView):
 
             attendance_data = attendance_response.json()
 
- # 출석 기록이 없는 경우
+            # 출석 기록이 없는 경우
             if not attendance_data:
                 return Response(
                     {
@@ -434,17 +434,18 @@ class AttendanceView(APIView):
             kst = timezone(timedelta(hours=9))
             today = datetime.now(kst).date()
 
-            # 마지막 출석 시간 변환 (POST와 동일하게 추가)
-            last_checked_at_str = attendance.get("last_checked_at")
-            if last_checked_at_str:
-                last_checked_at = datetime.fromisoformat(last_checked_at_str.replace("Z", "+00:00")).astimezone(kst)
-                last_checked_date = last_checked_at.date()
-            else:
-                last_checked_date = today  # 혹시 모를 에러 방지
-
-            # 시작일 변환 (없으면 마지막 출석일 사용)
+            # [수정] start_date 안전하게 가져오기 (과거 데이터 기준일 명확화)
             start_date_str = attendance.get("start_date")
-            start_date = datetime.strptime(start_date_str, "%Y-%m-%d").date() if start_date_str else last_checked_date
+            if start_date_str:
+                start_date = datetime.strptime(start_date_str, "%Y-%m-%d").date()
+            elif attendance_dates:
+                # DB에 start_date 컬럼이 비어있어도, 과거 출석 배열이 있다면 첫 날짜를 기준일로 삼음
+                try:
+                    start_date = datetime.strptime(attendance_dates[0], "%Y-%m-%d").date()
+                except ValueError:
+                    start_date = today
+            else:
+                start_date = today
 
             # 시작일로부터 7일이 지났는지 확인
             days_since_start = (today - start_date).days
