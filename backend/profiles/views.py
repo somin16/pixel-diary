@@ -431,6 +431,35 @@ class AttendanceView(APIView):
             attendance = attendance_data[0]
             attendance_dates = attendance.get("attendance_dates") or []
 
+            # 시작일로부터 7일이 지났는지 확인 (만료 시 조회 단계에서도 초기화된 것처럼 응답)
+            start_date_str = attendance.get("start_date")
+            if start_date_str:
+                kst = timezone(timedelta(hours=9))
+                today = datetime.now(kst).date()
+                start_date = datetime.strptime(start_date_str, "%Y-%m-%d").date()
+                days_since_start = (today - start_date).days
+
+                if days_since_start >= 7:
+                    return Response(
+                        {
+                            "total_count": 0,
+                            "week_start_date": None,
+                            "attendance_dates": [],
+                            "message": "출석 기록이 없습니다.",
+                        },
+                        status=status.HTTP_200_OK,
+                    )
+
+            return Response(
+                {
+                    "total_count": len(attendance_dates),
+                    "week_start_date": attendance.get("start_date"),
+                    "attendance_dates": attendance_dates,
+                    "message": "출석 기록 조회 성공",
+                },
+                status=status.HTTP_200_OK,
+            )
+
             return Response(
                 {
                     "total_count": len(attendance_dates),
