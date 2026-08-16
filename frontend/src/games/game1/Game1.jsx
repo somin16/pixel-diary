@@ -3,19 +3,33 @@ import { useNavigate } from "react-router-dom";
 import Phaser from "phaser";
 import GameScene from "./scenes/GameScene";
 import ModeSelectScene from "./scenes/ModeSelectScene";
+import { useRemoveTicket, useSubmitFinalScore } from "../../hooks/queries/useGameQueries";
 
 const Game1 = () => {
   const gameContainer = useRef(null);
   const navigate = useNavigate();
+  const { mutate: submitScore } = useSubmitFinalScore(1); // 미니게임1에서 사용하기에 1
+                                                          // 차후에 미니게임2에서 사용 할때는 2로 입력하시면 됩니다.
+  const { mutate: removeTicket } = useRemoveTicket();
 
   useEffect(() => {
-    // Phaser가 보내는 '게임 종료' 신호를 듣고 반응하는 함수
+
+    // 게임 종료시 이벤트
     const handleExitGame = () => {
-      navigate("/"); // 새로고침(메모리 초기화) 없이 부드럽게 홈으로 이동!
+      navigate("/"); // 새로고침(메모리 초기화) 없이 부드럽게 홈으로 이동
     };
 
-    // 신호 수신기 부착
+    // 점수 저장 이벤트
+    const handelSubmitScore = (event) => submitScore(event.detail);
+
+    // 티켓 사용 이벤트
+    const handleRemoveTicket = () => removeTicket();
+
+    // 이벤트 설정
+    // 이제 함수식으로 불러올 수 있습니다
     window.addEventListener("exitMiniGame", handleExitGame);
+    window.addEventListener("submitFinalScore", handelSubmitScore);
+    window.addEventListener("useTicket", handleRemoveTicket);
 
     const config = {
       type: Phaser.AUTO,
@@ -46,7 +60,10 @@ const Game1 = () => {
     // 컴포넌트가 꺼질 때 게임 엔진도 같이 파괴 (메모리 누수 방지)
     return () => {
       game.destroy(true);
-      window.removeEventListener("exitMiniGame", handleExitGame); // 신호 수신기 제거
+      // 이벤트 제거
+      window.removeEventListener("exitMiniGame", handleExitGame); 
+      window.removeEventListener("submitFinalScore", handelSubmitScore);
+      window.removeEventListener("useTicket", handleRemoveTicket);
     };
   }, [navigate]);
 
