@@ -37,32 +37,3 @@ export async function getGameTicket() {
         return 0;
     }
 };
-
-// 티켓 사용 API 연동
-// async function: 비동기 함수 (게임에 방해되지않도록 백그라운드에서 실행됩니다)
-export async function useGameTicket() {
-
-    try {
-
-        // API 호출
-        await authFetch(
-
-            // 티켓 사용
-            `${import.meta.env.VITE_BACKEND_URL}/api/v1/users/inventory/tickets/`, {
-
-                method: 'PATCH',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ item_id: TICKET_ITEM_ID })
-            }
-        );
-
-        // 성공시 확인용 메세지
-        console.log("티켓 사용 성공");
-    } 
-    
-    // 에러가 발생했을 경우(콘솔 확인용)
-    catch (error) {
-        
-        console.error("티켓 사용 실패, 에러코드: ", error.message);
-    }
-};
