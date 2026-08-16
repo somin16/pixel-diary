@@ -151,12 +151,20 @@ export default class GameScene extends Phaser.Scene {
     // 몬스터에게 피격시 이벤트
     overlapMonstersHit(this);
 
-    // 상자생성 이벤트(Object/Chest.js)
-    addEventSpawnChest(this);
+    // 기본 맵에서만 작동되는 로직
+    if (this.mapType == "default") {
 
-    // 레드슬라임 생성 이벤트(Monsters.js)
-    addEventRedSlimeSpawn(this);
+        // 레드슬라임 생성 이벤트(Monsters.js)
+        addEventRedSlimeSpawn(this);
+    }
 
+	// 눈 맵에서 적용되는 로직
+	else {
+
+		// 상자생성 이벤트(Object/Chest.js)
+    	addEventSpawnChest(this);
+	}
+	
     // 엘리트 몬스터 생성 이벤트(Monsters.js)
     addEliteMonsterSpawn(this);
 
