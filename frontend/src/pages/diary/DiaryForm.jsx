@@ -2,6 +2,13 @@ import { useEffect, useRef, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useBackNavigate } from "../../hooks/useBackNavigate";
 import { authFetch } from "../../utils/AuthHelper";
+import {
+  useDiaries,
+  useDiaryDetail,
+  useCreateDiary,
+  useUpdateDiary,
+  useSaveDeco,
+} from "../../hooks/queries/useDiaryQueries";
 import { useTheme } from "../../stores/useThemeStore";
 import { getAssetUrl } from "../../utils/AssetHelper";
 import DiaryOptionSelector from "../../components/diary/DiaryOptionSelector";
@@ -76,11 +83,42 @@ export default function DiaryForm() {
   // 저장 진행 중 여부 (중복 클릭 방지)
   const [isSaving, setIsSaving] = useState(false);
 
-  // ── [기능] 수정 모드일 때 기존에 썼던 일기 내용을 서버에서 가져오기 ────────────────
+  // ── React Query: 일기 목록(날짜 중복 확인용), 수정 모드 원본 데이터, 저장 mutation들 ──────
+  const { data: diariesData } = useDiaries(); // handleDateChange에서 날짜 중복 확인용
+  const { data: editData } = useDiaryDetail(isEditMode ? diaryId : undefined);
+  const createDiary = useCreateDiary();
+  const updateDiary = useUpdateDiary();
+  const saveDeco = useSaveDeco();
+
+  // ── [기능] 수정 모드일 때 기존에 썼던 일기 내용을 서버에서 가져와 폼 상태에 채워넣기 ────
   useEffect(() => {
-    if (!isEditMode || !diaryId) return;
-    fetchDiaryForEdit();
-  }, [isEditMode, diaryId]);
+    if (!isEditMode || !editData) return;
+
+    setSelectedDate(editData.created_at?.split("T")[0] ?? today);
+    setContent(editData.content ?? "");
+    setImageUrl(editData.image_url ?? "");
+
+    // 감정 이모지 복원
+    if (editData.emotion_item?.item_id) {
+      setSelectedEmojiId(editData.emotion_item.item_id);
+      setSelectedEmojiImg(editData.emotion_item?.image_url ?? null);
+    }
+    // 액자 복원
+    if (editData.theme_item?.item_id) {
+      setSelectedFrameId(editData.theme_item.item_id);
+      setSelectedFrameImg(editData.theme_item?.image_url ?? defaultFrame.img);
+    }
+    // 스티커 목록 복원
+    if (editData.sticker?.length) {
+      setStickers(editData.sticker.map((s, i) => ({
+        id: s.item_id,
+        img: s.image_url ?? '',
+        instanceId: Date.now() + i, // 화면에서 구분하기 위한 고유 키
+        x: s.pos_x ?? null,
+        y: s.pos_y ?? null,
+      })));
+    }
+  }, [isEditMode, editData, today]);
 
   // ── [기능] 하드웨어 뒤로가기 시 임시 이미지 삭제 ──────────────────────────
   useEffect(() => {
@@ -94,43 +132,6 @@ export default function DiaryForm() {
       listener.then(l => l.remove());
     };
   }, [savedImageId]); // savedImageId 바뀔 때마다 최신 handleClose 반영
-
-  const fetchDiaryForEdit = async () => {
-    try {
-      const data = await authFetch(
-        `${import.meta.env.VITE_BACKEND_URL}/api/v1/diaries/${diaryId}/`
-      );
-
-      // 서버에서 받은 데이터를 각각의 상태 변수에 채워 넣습니다.
-      setSelectedDate(data.created_at?.split("T")[0] ?? today);
-      setContent(data.content ?? "");
-      setImageUrl(data.image_url ?? "");
-
-      // 감정 이모지 복원
-      if (data.emotion_item?.item_id) {
-        setSelectedEmojiId(data.emotion_item.item_id);
-        setSelectedEmojiImg(data.emotion_item?.image_url ?? null);
-      }
-      // 액자 복원
-      if (data.theme_item?.item_id) {
-        setSelectedFrameId(data.theme_item.item_id);
-        setSelectedFrameImg(data.theme_item?.image_url ?? defaultFrame.img);
-      }
-      // 스티커 목록 복원
-      if (data.sticker?.length) {
-        setStickers(data.sticker.map((s, i) => ({
-          id: s.item_id,
-          img: s.image_url ?? '',
-          instanceId: Date.now() + i, // 화면에서 구분하기 위한 고유 키
-          x: s.pos_x ?? null,
-          y: s.pos_y ?? null,
-        })));
-      }
-    } catch (error) {
-      console.error("수정 데이터 로드 실패:", error);
-    }
-  };
-
 
   // ── [기능] 단계별 화면 이동 처리 ───────────────────────────────────────────
   // 3단계: 옵션 선택 전 일기 내용을 영어 프롬프트로 변환 (POST /api/v1/prompt/)
@@ -281,42 +282,29 @@ export default function DiaryForm() {
       // 1. 먼저 일기 본문(글)을 저장하거나 수정합니다.
       let finalDiaryId = savedDiaryId;
       if (!isEditMode || !finalDiaryId) {
-        // 새 일기 작성
-        const data = await authFetch(
-          `${import.meta.env.VITE_BACKEND_URL}/api/v1/diaries/`,
-          { method: "POST", body: JSON.stringify({ content, image_id: savedImageId ?? "", }) } // AI 생성 이미지의 image_id 같이 전송
-          // 백엔드에서 ai_image 테이블의 diary_id를 업데이트하고 is_temp를 false로 변경함
-        );
+        // 새 일기 작성 (AI 생성 이미지의 image_id 같이 전송)
+        // 백엔드에서 ai_image 테이블의 diary_id를 업데이트하고 is_temp를 false로 변경함
+        const data = await createDiary.mutateAsync({ content, image_id: savedImageId ?? "" });
         finalDiaryId = data.diary_id;
       } else {
         // 기존 일기 수정
-        await authFetch(
-          `${import.meta.env.VITE_BACKEND_URL}/api/v1/diaries/${finalDiaryId}/`,
-          { method: "PATCH", body: JSON.stringify({ content }) }
-        );
+        await updateDiary.mutateAsync({ diaryId: finalDiaryId, content });
       }
 
       // 2. 그 다음 꾸미기 정보(액자, 이모지, 스티커 위치 등)를 저장합니다.
-      await authFetch(
-        `${import.meta.env.VITE_BACKEND_URL}/api/v1/diaries/${finalDiaryId}/deco/`,
-        {
-          method: "POST",
-          body: JSON.stringify({
-            emoji_id: selectedEmojiId,
-            diary_theme_id: selectedFrameId,
-            sticker: stickers.map((s) => ({
-              item_id: s.id,   // stickers의 id를 item_id로
-              pos_x: Math.round(s.x || 0), // null 방지 및 정수화
-              pos_y: Math.round(s.y || 0)  // null 방지 및 정수화
-            })),
-          }),
-        }
-      );
+      await saveDeco.mutateAsync({
+        diaryId: finalDiaryId,
+        emoji_id: selectedEmojiId,
+        diary_theme_id: selectedFrameId,
+        sticker: stickers.map((s) => ({
+          item_id: s.id,   // stickers의 id를 item_id로
+          pos_x: Math.round(s.x || 0), // null 방지 및 정수화
+          pos_y: Math.round(s.y || 0)  // null 방지 및 정수화
+        })),
+      });
+      // createDiary/updateDiary/saveDeco의 onSuccess에서 diaries·diaryDetail 캐시가 자동으로 무효화됨
 
-      // 3. 일기 목록 데이터가 바뀌었으니 저장된 캐시를 지웁니다.
-      sessionStorage.removeItem('diary_list');
-
-      // 4. 저장 완료 후 임시 이미지 삭제
+      // 3. 저장 완료 후 임시 이미지 삭제
       if (savedImageId) {
         try {
           await authFetch(
@@ -356,12 +344,11 @@ export default function DiaryForm() {
   // ── [기능] 기타 조작 함수들 ──────────────────────────────────────────────
 
   // 날짜가 바뀌면 주소를 업데이트합니다.
-  async function handleDateChange(newDate) {
+  function handleDateChange(newDate) {
     const urlDate = newDate.replace(/\.\s?/g, '-').replace(/-$/, '');
 
-    // 캐시에서 해당 날짜 일기 존재 여부 확인
-    const cached = sessionStorage.getItem('diary_list');
-    const diaries = cached ? JSON.parse(cached) : [];
+    // React Query 캐시(useDiaries)에서 해당 날짜 일기 존재 여부 확인
+    const diaries = diariesData?.diaries || [];
     const found = diaries.find(d => d.created_at?.split("T")[0] === urlDate);
 
     if (found) {
