@@ -61,6 +61,9 @@ export default class GameScene extends Phaser.Scene {
 
     // 티켓사용 여부를 여기에 할당
     this.isTicketUse = data.isTicketUse;
+
+    // 선택된 맵이 어떤 맵인지를 여기에 할당
+    this.mapType = data.mapType;
   }
 
   create() { // create: 말그대로 생성, 오브젝트를 작성하는 곳
@@ -95,7 +98,6 @@ export default class GameScene extends Phaser.Scene {
 
     // 타일맵 깔기(background/Background.js)
     backgroundTileSet(this);
-
 
     // ====================타이머===================
 

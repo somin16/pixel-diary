@@ -90,9 +90,15 @@ export function loadAllSprite(scene) {
 
     // =======================타일======================================
 
-    // 타일
+    // 기본맵 타일
     scene.load.image("map1_tile1", "/assets/game1/tile/map1/map1_tile1.png");
 
+    // 눈맵 타일
+    scene.load.image("map2_tile1", "/assets/game1/tile/map2/map2_tile1.png")
+    scene.load.image("map2_tile2", "/assets/game1/tile/map2/map2_tile2.png")
+    scene.load.image("map2_tile3", "/assets/game1/tile/map2/map2_tile3.png")
+    scene.load.image("map2_tile4", "/assets/game1/tile/map2/map2_tile4.png")
+    scene.load.image("map2_tile5", "/assets/game1/tile/map2/map2_tile5.png")
 
     // =========================ui=======================================
     // HP/경험치바에서 공용으로 사용하는 ui바 배경
