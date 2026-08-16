@@ -1,4 +1,11 @@
 // src/hooks/mutations/useAuthMutations.js
+//
+// 로그인/회원가입/탈퇴 등은 전부 "실행·변경" 동작이라 useMutation이 맞고,
+// 그래서 폴더도 queries가 아닌 mutations에 위치함
+// (queries 폴더는 나중에 유저 정보 조회 같은 GET용 useQuery 훅을 위한 자리)
+//
+// 에러 처리는 화면을 통째로 바꿀 필요가 없으므로,
+// isError로 조건부 렌더링하기보다 각 mutate 호출부의 onError 콜백(토스트 등)에서 처리
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { authApi } from '../../api/authApi';
 import { supabase } from '../../utils/SupabaseClient';
