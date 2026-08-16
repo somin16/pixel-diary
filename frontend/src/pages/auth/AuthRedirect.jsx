@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../../utils/SupabaseClient';
+import { authApi } from '../../api/authApi';
 
 export default function AuthRedirect() {
   const navigate = useNavigate();
