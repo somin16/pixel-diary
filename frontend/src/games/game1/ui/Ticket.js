@@ -1,5 +1,3 @@
-import { useGameTicket } from "../../TicketApiManage";
-
 // 티켓 사용여부 UI 생성
 export function ticketUseUI(scene, selectMapType) {
 
@@ -52,6 +50,9 @@ export function ticketUseUI(scene, selectMapType) {
         fill: "#ffffff"
     }).setOrigin(0.5); // 중앙정렬
 
+    // 연타방지용 변수
+    let isProcessing = false;
+
     // 사용 버튼 배경
     const yesButton = scene.add.rectangle(centerX - 75, centerY / 0.75, 100, 40, 0x44aa44)
             
@@ -59,8 +60,11 @@ export function ticketUseUI(scene, selectMapType) {
         .setInteractive()   // 이걸 넣어줘야 클릭이 가능
         .on('pointerdown', async () => { // 누를때 작동
 
+            if (isProcessing) return; // 이미 눌렀으면 안눌리게
+            isProcessing = true;
+
             // 티켓 사용 API
-            await useGameTicket();
+            window.dispatchEvent(new CustomEvent("useTicket"));
 
             // 게임 시작 로직
             startGame(scene, selectMapType, true); // 쓴다고 했으니 true로

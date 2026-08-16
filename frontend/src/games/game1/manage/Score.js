@@ -1,5 +1,4 @@
 import Phaser, { Scale } from 'phaser';
-import { authFetch } from '../../../utils/AuthHelper'; // ../ 은 상위 경로를 의미합니다
 
 // zuStand 함수 불러오기
 import { useGetCoinStore } from "../../../stores/useCoinStore";
@@ -253,42 +252,6 @@ export async function gameClear(scene) {
         restartGameButtonText
     ]);
 
-    // API연동 함수 실행(서버에 연산이 모두 끝난 최종점수를 보내준다)
-    // await: API통신을 위해 잠시 대기, 얘가 위에 있으면 실행이 늦기에 아래로 내렷습니다
-    await finalScoreSubmit(finalScore);
+    // API연동 이벤트 실행(연산이 모두 끝난 최종점수를 보내준다)
+    window.dispatchEvent(new CustomEvent("submitFinalScore", { detail: finalScore }))
 }
-
-// 점수 저장 API 연동
-// async function: 비동기 함수 (게임에 방해되지않도록 백그라운드에서 실행됩니다)
-export async function finalScoreSubmit(finalScore)  {
-
-    try {
-
-        // body에 넣어줄 점수값
-        const submitScore = {
-
-            // 브루노 테스트할때 body에 넣어주듯이 넣는다
-            game_score: finalScore
-        };
-
-        // API 호출
-        // await: API통신을 위해 잠시 대기
-        // 이미 만들어진 authFetch를 사용해 유저의 세션 정보를 받아옵니다
-        await authFetch(
-
-            // api/v1/games/1/scores(게임-결과-저장)를 실행
-            `${import.meta.env.VITE_BACKEND_URL}/api/v1/games/1/scores/`, {
-
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' }, 
-                body: JSON.stringify(submitScore),                
-            }
-        );
-    } 
-    
-    // 에러가 발생했을 경우(콘솔 확인용)
-    catch (error) {
-        
-        console.error("저장 실패 에러코드: ", error.message);
-    }
-};
