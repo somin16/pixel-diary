@@ -9,9 +9,7 @@ import AuthValidator from '../../utils/AuthValidator';
 // 3. 커스텀 훅 불러오기
 import { useTheme } from "../../stores/useThemeStore";
 import useDebounce from '../../hooks/useDebounce';
-
-// 4. 슈파베이스 불러오기
-import { supabase } from "../../utils/SupabaseClient";
+import { useSignup } from '../../hooks/mutations/useAuthMutations';
 
 // 5. 컴포넌트 불러오기
 import InputBox from '../../components/auth/InputBox';
@@ -30,8 +28,8 @@ export default function Signup() { // 회원가입 페이지 내보내기
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
 
-  // [상태] 회원가입 중인지 아닌지
-  const [loading, setLoading] = useState(false); // 기본값 false
+  // 회원가입 뮤테이션 - loading은 signup.isPending으로 대체
+  const signup = useSignup();
 
   // 디바운스 적용 (서버 요청 횟수 조절)
   const debouncedUserEmail = useDebounce(user_email, 500) // 0.5초 딜레이
@@ -77,10 +75,9 @@ export default function Signup() { // 회원가입 페이지 내보내기
 
 
   // 일반 회원가입 로직
-  const onSignupSubmit = async (e) => {
+  const onSignupSubmit = (e) => {
     e.preventDefault();
 
-    // 
     const isAllValid =
       emailStatus.state === 'success' &&
       userNameStatus.state === 'success' &&
@@ -93,28 +90,19 @@ export default function Signup() { // 회원가입 페이지 내보내기
       return;
     }
 
-    setLoading(true);
-
-    try { //백엔드 API 연동 /api/v1/auth/signup/
-      const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/v1/auth/signup/`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ user_email, user_name, password })
-      });
-
-      if (response.ok) {
-        navigate('/auth/auth-redirect?from=signup');
-      } else {
-        // 실패 시 (서버에서 준 에러 메시지 포함)
-        const err = await response.json();
-        const message = encodeURIComponent(err.message || "알 수 없는 오류가 발생했습니다.");
-        navigate(`/auth/auth-redirect?from=signup&message=${message}`);
+    // authApi.signup 호출 -> 성공/실패 모두 auth-redirect로 이동해서 안내 (기존 로직과 동일)
+    signup.mutate(
+      { user_email, user_name, password },
+      {
+        onSuccess: () => {
+          navigate('/auth/auth-redirect?from=signup');
+        },
+        onError: (error) => {
+          const message = encodeURIComponent(error.message || "알 수 없는 오류가 발생했습니다.");
+          navigate(`/auth/auth-redirect?from=signup&message=${message}`);
+        },
       }
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setLoading(false);
-    }
+    );
   }
 
   return (
@@ -173,8 +161,8 @@ export default function Signup() { // 회원가입 페이지 내보내기
 
         {/* 회원가입 버튼 */}
         <SubmitButton // auth/SubmitButton 컴포넌트 불러와서 사용
-          loading={loading}
-          disabled={loading || userNameStatus.state !== 'success' || emailStatus.state !== 'success' || passwordStatus.state !== 'success' || confirmStatus.state !== 'success'}
+          loading={signup.isPending} // 뮤테이션 상태로 대체
+          disabled={signup.isPending || userNameStatus.state !== 'success' || emailStatus.state !== 'success' || passwordStatus.state !== 'success' || confirmStatus.state !== 'success'}
           currentTheme={currentTheme}
           text="회원가입"
         />
