@@ -416,7 +416,7 @@ class AttendanceView(APIView):
 
             attendance_data = attendance_response.json()
 
-            # 출석 기록이 없는 경우
+ # 출석 기록이 없는 경우
             if not attendance_data:
                 return Response(
                     {
@@ -431,35 +431,36 @@ class AttendanceView(APIView):
             attendance = attendance_data[0]
             attendance_dates = attendance.get("attendance_dates") or []
 
-            # 시작일로부터 7일이 지났는지 확인 (만료 시 조회 단계에서도 초기화된 것처럼 응답)
+            kst = timezone(timedelta(hours=9))
+            today = datetime.now(kst).date()
+
+            # 마지막 출석 시간 변환 (POST와 동일하게 추가)
+            last_checked_at_str = attendance.get("last_checked_at")
+            if last_checked_at_str:
+                last_checked_at = datetime.fromisoformat(last_checked_at_str.replace("Z", "+00:00")).astimezone(kst)
+                last_checked_date = last_checked_at.date()
+            else:
+                last_checked_date = today  # 혹시 모를 에러 방지
+
+            # 시작일 변환 (없으면 마지막 출석일 사용)
             start_date_str = attendance.get("start_date")
-            if start_date_str:
-                kst = timezone(timedelta(hours=9))
-                today = datetime.now(kst).date()
-                start_date = datetime.strptime(start_date_str, "%Y-%m-%d").date()
-                days_since_start = (today - start_date).days
+            start_date = datetime.strptime(start_date_str, "%Y-%m-%d").date() if start_date_str else last_checked_date
 
-                if days_since_start >= 7:
-                    return Response(
-                        {
-                            "total_count": 0,
-                            "week_start_date": None,
-                            "attendance_dates": [],
-                            "message": "출석 기록이 없습니다.",
-                        },
-                        status=status.HTTP_200_OK,
-                    )
+            # 시작일로부터 7일이 지났는지 확인
+            days_since_start = (today - start_date).days
 
-            return Response(
-                {
-                    "total_count": len(attendance_dates),
-                    "week_start_date": attendance.get("start_date"),
-                    "attendance_dates": attendance_dates,
-                    "message": "출석 기록 조회 성공",
-                },
-                status=status.HTTP_200_OK,
-            )
+            if days_since_start >= 7:
+                return Response(
+                    {
+                        "total_count": 0,
+                        "week_start_date": None,
+                        "attendance_dates": [],
+                        "message": "출석 기록이 만료되어 초기화 상태로 응답합니다.",
+                    },
+                    status=status.HTTP_200_OK,
+                )
 
+            # 7일이 지나지 않은 경우 정상 응답
             return Response(
                 {
                     "total_count": len(attendance_dates),
