@@ -4,7 +4,8 @@ import { useTheme } from '../../../stores/useThemeStore';
 import { getAssetUrl } from '../../../utils/AssetHelper';
 import { formatDisplayDate } from '../../../utils/DateFormatter';
 import { supabase } from '../../../utils/SupabaseClient';
-import { authFetch } from '../../../utils/AuthHelper';
+import { useAnnouncementDetail } from '../../../hooks/queries/useAnnouncementQueries';
+import { useDeleteAnnouncement } from '../../../hooks/queries/useAdminQueries';
 
 import Header from '../../../components/common/Header';
 import AnnouncementDialog from '../../../components/more/announcement/AnnouncementDialog';
@@ -12,63 +13,29 @@ import AnnouncementDialog from '../../../components/more/announcement/Announceme
 export default function AnnouncementDetail() {
 
   const navigate = useNavigate();
-
   const currentTheme = useTheme((state) => state.currentTheme);
-
   const { announcement_id } = useParams();
-  const [announcement, setAnnouncement] = useState(null);
-  const [loading, setLoading] = useState(true);
+
+  // 기존 useState(announcement), useState(loading), fetchAnnouncements, useEffect 제거하고 이 한 줄로 대체
+  const { data: announcement, isLoading, isError } = useAnnouncementDetail(announcement_id);
+  const deleteAnnouncement = useDeleteAnnouncement(); // mutation 추가
+
+  // isAdmin은 공지 API 응답이 아니라 세션 정보라 그대로 유지
   const [isAdmin, setIsAdmin] = useState(false);
-
-  const fetchAnnouncements = async () => {
-    try {
-      setLoading(true);
-
-      const [{ data: { session } }, response] = await Promise.all([
-        supabase.auth.getSession(),
-        fetch(`${import.meta.env.VITE_BACKEND_URL}/api/v1/announcements/${announcement_id}/`, {
-          method: 'GET',
-          headers: { 'Content-Type': 'application/json' },
-        })
-      ]);
-
+   useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
       const role = session?.user?.user_metadata?.role;
       setIsAdmin(role === 'admin');
-
-      if (!response.ok) {
-        const errorBody = await response.text();
-        console.error(`서버 응답 에러 (${response.status}):`, errorBody);
-        throw new Error('서버에서 데이터를 가져오지 못했습니다.');
-      }
-
-      const data = await response.json();
-      setAnnouncement(data);
-    } catch (error) {
-      console.error('Fetch Error:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleDelete = async () => {
-    try {
-      // 삭제 전 확인
-      if (!window.confirm('공지사항을 삭제하시겠습니까?')) return;
-
-      await authFetch(
-        `${import.meta.env.VITE_BACKEND_URL}/api/v1/admin/announcements/${announcement_id}/`,
-        { method: 'DELETE' }
-      );
-      // 삭제 성공 시 목록으로 이동
-      navigate('/more/announcement/list');
-    } catch (error) {
-      console.error('Delete Error:', error);
-    }
-  };
-
-  useEffect(() => {
-    fetchAnnouncements();
+    });
   }, []);
+
+  const handleDelete = () => {
+    if (!window.confirm('공지사항을 삭제하시겠습니까?')) return;
+    deleteAnnouncement.mutate(
+      { announcementId: announcement_id },
+      { onSuccess: () => navigate('/more/announcement/list') }
+    );
+  };
 
   return (
     <div
@@ -82,13 +49,17 @@ export default function AnnouncementDetail() {
         title="공지사항"
         backPath="/more/announcement/list"
       />
-      {loading ? (
+      {isLoading ? (
         <div className="flex justify-center h-[10%] mt-[50%] text-3xl text-gray-600 font-bold animate-bounce">
           불러오는 중...
         </div>
+      ) : isError ? (
+        <div className='flex justify-center mt-[50%] text-sm text-gray-500 font-bold'>
+          공지사항을 불러오지 못했습니다
+        </div>
       ) : (
         <div className='w-[95%]'>
-          {!loading && announcement && (
+          { announcement && (
             <AnnouncementDialog
               title={announcement.title}
               content={announcement.content}

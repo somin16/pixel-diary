@@ -3,6 +3,9 @@ import { useNavigate } from 'react-router-dom';
 import { useTheme } from '../../stores/useThemeStore'; // useTheme 불러오기
 import { getAssetUrl } from "../../utils/AssetHelper"; // 헬퍼 불러오기
 import { supabase } from "../../utils/SupabaseClient";
+import { announcementApi } from "../../api/announcementApi"; // API 함수 목록
+import { useQueryClient } from "@tanstack/react-query";
+import { queryKeys } from "../../utils/queryKeys";
 
 // zuStand 함수 불러오기
 import { useGetCoinStore } from "../../stores/useCoinStore";
@@ -31,6 +34,9 @@ const MorePage = () => {
 
   //  테마 전역 관리
   const currentTheme = useTheme((state) => state.currentTheme);
+
+  // 쿼리 클라이언트
+  const queryClient = useQueryClient(); // 훅으로 가져오기
 
   // 더보기에서 조회를 하는편이 더 낫지 않을까? 해서 이쪽으로 옮겨봤습니다
   const { startGetCoin } = useGetCoinStore();
@@ -117,6 +123,15 @@ const MorePage = () => {
       supabase.removeChannel(contactChannel);
     };
   }, [startGetCoin, fetchProfile, isFetched]);
+
+  useEffect(() => {
+    // 더보기 화면 들어오면, 자주 가는 하위 화면 데이터 미리 당김
+    // ‼️TODO: 각 담당자 API 완성되면 주석 해제 위치: src/pages/more/MorePage.jsx
+    
+    // queryClient.prefetchQuery({ queryKey: queryKeys.items, queryFn: storeApi.getItems });
+    // queryClient.prefetchQuery({ queryKey: queryKeys.decoItems, queryFn: storeApi.getDecoItems });
+    queryClient.prefetchQuery({ queryKey: queryKeys.announcements, queryFn: announcementApi.getList });
+  }, []);
 
   // isAdmin 여부에 따라 메뉴 필터링
   const visibleMenuItems = menuItems.filter(

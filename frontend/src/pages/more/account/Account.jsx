@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useTheme } from '../../../stores/useThemeStore'; // useTheme 불러오기
 import { getAssetUrl } from "../../../utils/AssetHelper"; // 헬퍼 불러오기
 import { supabase } from "../../../utils/SupabaseClient"; // supabase 불러오기
-import { authFetch } from "../../../utils/AuthHelper";
+import { useLogout, useWithdraw, useChangePassword } from '../../../hooks/mutations/useAuthMutations'; // 인증 관련 뮤테이션 훅
 
 // zustand 불러오기
 import { useProfileStore } from '../../../stores/useProfileStore';
@@ -39,6 +39,11 @@ const Account = () => {
   const [userEmail, setUserEmail] = useState("");
   // 로그인 수단 상태
   const [loginProvider, setLoginProvider] = useState("");
+
+  // 로그아웃 / 탈퇴 / 비밀번호 변경 뮤테이션
+  const logout = useLogout();
+  const withdraw = useWithdraw();
+  const changePassword = useChangePassword();
 
   // 렌더링 시 Supabase에서 현재 로그인한 유저 이메일 가져오기
   useEffect(() => {
@@ -83,38 +88,12 @@ const Account = () => {
     return true;
   });
 
-  // 로그아웃 확인
+  // 로그아웃 확인 - useLogout 훅이 백엔드 호출 + 로컬 세션/캐시 정리를 담당
   const handleLogout = async () => {
     try {
-      // 현재 세션에서 토큰들 가져오기
-      const { data: { session } } = await supabase.auth.getSession();
-
-      if (session) {
-        // 백엔드 로그아웃 API 호출해서 백엔드 세션만 먼저 만료시킴
-        await authFetch(
-          `${import.meta.env.VITE_BACKEND_URL}/api/v1/auth/logout/`,
-          {
-            method: 'POST',
-            body: JSON.stringify({ refresh_token: session.refresh_token }),
-          }
-        );
-      }
-      // 팝업 띄우기 '전'에 로컬 세션 즉시 삭제
-      try {
-        await supabase.auth.signOut({ scope: 'local' });
-        sessionStorage.clear(); // deco_all_items, deco_owned_ids, diary_list 등 삭제
-        localStorage.removeItem('access_token');
-        localStorage.removeItem('refresh_token');
-      } catch (e) {
-        console.error("로컬 세션 삭제 무시:", e);
-      }
-
-      // 로그아웃 시 프로필 정보 메모리에서 지우기
-      useProfileStore.getState().clearProfile();
-
+      await logout.mutateAsync();
       setDialog(null);
       setResultDialog('logout');
-
     } catch (error) {
       console.error("로그아웃 중 에러 발생:", error);
       alert("로그아웃에 실패했습니다. 다시 시도해 주세요.");
@@ -123,35 +102,24 @@ const Account = () => {
 
   // 회원탈퇴 확인 - 소셜 유저는 password 없이 요청
   const handleWithdrawal = async (password) => {
+    // 현재 세션에서 토큰들 가져오기
+    const { data: { session } } = await supabase.auth.getSession();
+
+    if (!session) {
+      alert('로그인 세션이 만료되었습니다. 다시 로그인해 주세요.');
+      return;
+    }
+
+    const body = loginProvider === 'email'
+      ? { password }          // 이메일 유저만 비밀번호 전송
+      : {};                   // 소셜 유저는 빈 바디
+
     try {
-      const { data: { session } } = await supabase.auth.getSession();
-
-      if (!session) {
-        alert('로그인 세션이 만료되었습니다. 다시 로그인해 주세요.');
-        return;
-      }
-
-      const body = loginProvider === 'email'
-        ? { password }          // 이메일 유저만 비밀번호 전송
-        : {};                   // 소셜 유저는 빈 바디
-
-      await authFetch(`${import.meta.env.VITE_BACKEND_URL}/api/v1/auth/withdrawal/`, {
-        method: 'POST',
-        body: JSON.stringify(body),
-      });
-      // 서버 처리 완료 직후, 팝업 띄우기 '전'에 로컬 세션 즉시 삭제 (유령 세션 방지)
-      try {
-        await supabase.auth.signOut({ scope: 'local' });
-      } catch (e) {
-        console.error("로컬 세션 삭제 무시:", e);
-      }
-
-      // 회원탈퇴 시 프로필 메모리 지우기
-      useProfileStore.getState().clearProfile();
+      // useWithdraw 훅이 백엔드 탈퇴 요청 + 로컬 세션/캐시 정리를 담당
+      await withdraw.mutateAsync(body);
 
       setDialog(null);
       setResultDialog('withdrawal');
-
     } catch (error) {
       console.error('회원탈퇴 중 에러 발생:', error);
       let message = '회원탈퇴에 실패했습니다. 다시 시도해 주세요.';
@@ -165,35 +133,20 @@ const Account = () => {
     }
   };
 
-  // 비밀번호 변경 API 연동 함수
+  // 비밀번호 변경 - useChangePassword 훅이 백엔드 요청 + 새 토큰으로 Supabase 세션 갱신까지 담당
   const handlePasswordChange = async ({ currentPw, newPw }) => {
+    const { data: { session } } = await supabase.auth.getSession();
+
+    if (!session) {
+      alert('로그인 세션이 만료되었습니다. 다시 로그인해 주세요.');
+      return;
+    }
+
     try {
-      const { data: { session } } = await supabase.auth.getSession();
-
-      if (!session) {
-        alert('로그인 세션이 만료되었습니다. 다시 로그인해 주세요.');
-        return;
-      }
-
-      // 장고 백엔드 API 호출 (PATCH 메서드 전달)
-      const response = await authFetch(`${import.meta.env.VITE_BACKEND_URL}/api/v1/auth/password/`, {
-        method: 'PATCH',
-        body: JSON.stringify({
-          current_password: currentPw,
-          new_password: newPw,
-        }),
+      await changePassword.mutateAsync({
+        current_password: currentPw,
+        new_password: newPw,
       });
-
-      // 응답 데이터 추출
-      const data = response.data || response;
-
-      // 새로 발급해 준 토큰으로 슈파베이스 세션 갱신
-      if (data?.access_token && data?.refresh_token) {
-        await supabase.auth.setSession({
-          access_token: data.access_token,
-          refresh_token: data.refresh_token
-        });
-      }
 
       // 성공 시 팝업 전환
       setDialog(null);

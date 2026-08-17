@@ -1,16 +1,14 @@
 // 관리자 전용 아이템 추가 페이지
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { useTheme } from '../../../stores/useThemeStore';
 import { getAssetUrl } from '../../../utils/AssetHelper';
-import { authFetch } from '../../../utils/AuthHelper';
 import Header from '../../../components/common/Header';
+import { useAddItem } from '../../../hooks/queries/useAdminQueries';
 
 const ITEM_TYPES = ['app_theme', 'diary_theme', 'sticker', 'emoji', 'ticket'];
 
 // 메인 페이지: AddItemPage
 export default function AddItemPage() {
-  const navigate = useNavigate();
   const currentTheme = useTheme((state) => state.currentTheme);
 
   // 폼 데이터 상태 관리
@@ -23,9 +21,10 @@ export default function AddItemPage() {
     linked_item_id: '',
   });
 
-  // 로딩 및 결과 메시지 상태 관리
-  const [loading, setLoading] = useState(false);
+  // 결과 메시지 상태 관리 (로딩은 addItem.isPending으로 대체)
   const [message, setMessage] = useState({ text: '', isError: false });
+
+  const addItem = useAddItem();
 
   // 입력값 변경 핸들러
   const handleChange = (e) => {
@@ -37,49 +36,40 @@ export default function AddItemPage() {
   };
 
   // 아이템 추가 제출 핸들러
-  const handleSubmit = async () => {
+  const handleSubmit = () => {
     // 필수값 확인
     if (!formData.item_name || !formData.item_type || !formData.item_info) {
       setMessage({ text: '필수값을 모두 입력해주세요.', isError: true });
       return;
     }
 
-    setLoading(true);
     setMessage({ text: '', isError: false });
 
-    try {
-      // 빈 문자열이면 0으로 처리
-      const submitData = {
-        ...formData,
-        item_price: formData.item_price === '' ? 0 : Number(formData.item_price),
-        linked_item_id: formData.linked_item_id === '' ? null : Number(formData.linked_item_id),
-      };
+    // 빈 문자열이면 0/null로 처리
+    const submitData = {
+      ...formData,
+      item_price: formData.item_price === '' ? 0 : Number(formData.item_price),
+      linked_item_id: formData.linked_item_id === '' ? null : Number(formData.linked_item_id),
+    };
 
-      const result = await authFetch(
-        `${import.meta.env.VITE_BACKEND_URL}/api/v1/admin/items/`,
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(submitData),  // formData → submitData
-        }
-      );
+    addItem.mutate(submitData, {
+      onSuccess: (result) => {
+        setMessage({ text: `아이템이 추가되었습니다. (ID: ${result.item_id})`, isError: false });
 
-      setMessage({ text: `아이템이 추가되었습니다. (ID: ${result.item_id})`, isError: false });
-
-      // 폼 초기화
-      setFormData({
-        item_name: '',
-        item_type: 'app_theme',
-        item_price: '',
-        item_info: '',
-        item_image_url: '',
-        linked_item_id: '',
-      });
-    } catch (error) {
-      setMessage({ text: error.message || '아이템 추가에 실패했습니다.', isError: true });
-    } finally {
-      setLoading(false);
-    }
+        // 폼 초기화
+        setFormData({
+          item_name: '',
+          item_type: 'app_theme',
+          item_price: '',
+          item_info: '',
+          item_image_url: '',
+          linked_item_id: '',
+        });
+      },
+      onError: (error) => {
+        setMessage({ text: error.message || '아이템 추가에 실패했습니다.', isError: true });
+      },
+    });
   };
 
   return (
@@ -171,18 +161,18 @@ export default function AddItemPage() {
 
         {/* 연결할 diary_theme ID - app_theme 타입일 때만 표시 */}
         {formData.item_type === 'app_theme' && (
-            <div className="flex flex-col gap-1">
-                <label className="text-sm font-bold" style={{ color: '#333' }}>연결할 diary_theme ID (선택)</label>
-                <input
-                    type="number"
-                    name="linked_item_id"
-                    value={formData.linked_item_id}
-                    onChange={handleChange}
-                    placeholder="연결할 diary_theme의 item_id 입력"
-                    className="px-3 py-2 border-4 text-sm outline-none bg-white"
-                    style={{ borderColor: '#333' }}
-                />
-            </div>
+          <div className="flex flex-col gap-1">
+            <label className="text-sm font-bold" style={{ color: '#333' }}>연결할 diary_theme ID (선택)</label>
+            <input
+              type="number"
+              name="linked_item_id"
+              value={formData.linked_item_id}
+              onChange={handleChange}
+              placeholder="연결할 diary_theme의 item_id 입력"
+              className="px-3 py-2 border-4 text-sm outline-none bg-white"
+              style={{ borderColor: '#333' }}
+            />
+          </div>
         )}
 
         {/* 결과 메시지 */}
@@ -195,11 +185,11 @@ export default function AddItemPage() {
         {/* 아이템 추가 버튼 */}
         <button
           onClick={handleSubmit}
-          disabled={loading}
+          disabled={addItem.isPending}
           className="w-full py-2 text-sm font-bold border-4 active:translate-y-0.5 transition-transform disabled:opacity-50"
           style={{ borderColor: '#333', backgroundColor: '#fff' }}
         >
-          {loading ? '추가 중...' : '아이템 추가'}
+          {addItem.isPending ? '추가 중...' : '아이템 추가'}
         </button>
       </div>
     </div>

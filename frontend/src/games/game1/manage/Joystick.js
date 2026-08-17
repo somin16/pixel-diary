@@ -15,10 +15,10 @@ export function createJoystick(scene) {
         radius: 60, // 조이스틱 이동 반경               
             
         // 베이스 디자인(조이스틱 밑배경)
-        base: scene.add.circle(0, 0, 80, 0x888888, 0.4), 
+        base: scene.add.circle(0, 0, 80, 0x6e6e6e, 0.4), 
             
         // 손잡이 디자인(실제 조작되는 조이스틱)
-        thumb: scene.add.circle(0, 0, 40, 0xcccccc, 0.8),
+        thumb: scene.add.circle(0, 0, 40, 0x6e6e6e, 0.7),
             
         // 8방향 이동
         dir: '8dir',

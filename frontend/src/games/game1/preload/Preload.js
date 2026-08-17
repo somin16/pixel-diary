@@ -29,70 +29,81 @@ export function loadAllSprite(scene) {
     scene.load.image("fire_ball_particle","/assets/game1/attacks/fire_ball/fire_ball_particle.png")
 
 
-    // ======================몬스터===================================
+    // ======================기본맵 몬스터===================================
     // 몬스터 이미지
 
     // 슬라임(몬스터1)
-    scene.load.image("slime_move1", "/assets/game1/monster/nomal/slime_move1.png");
-    scene.load.image("slime_move2", "/assets/game1/monster/nomal/slime_move2.png");
+    scene.load.image("slime_move1", "/assets/game1/monster/default/nomal/slime_move1.png");
+    scene.load.image("slime_move2", "/assets/game1/monster/default/nomal/slime_move2.png");
 
     // 큐브골렘(몬스터2)
     // 애니메이션이 많을경우엔 이미지가 아니라 스프라이트시트로 받는다
     // 이때는 .spritesheet를 사용
-    scene.load.spritesheet("cube_golem_move", "/assets/game1/monster/nomal/cube_golem_move.png", {
+    scene.load.spritesheet("cube_golem_move", "/assets/game1/monster/default/nomal/cube_golem_move.png", {
         frameWidth: 16, 
         frameHeight: 16
     }); 
 
     // 레드슬라임(몬스터3)
-    scene.load.image("red_slime_move1", "/assets/game1/monster/nomal/red_slime_move1.png");
-    scene.load.image("red_slime_move2", "/assets/game1/monster/nomal/red_slime_move2.png");
+    scene.load.image("red_slime_move1", "/assets/game1/monster/default/nomal/red_slime_move1.png");
+    scene.load.image("red_slime_move2", "/assets/game1/monster/default/nomal/red_slime_move2.png");
 
     // 슬라임 소대(몬스터11)
-    scene.load.image("phalanx_move1", "/assets/game1/monster/elite/phalanx_move1.png")
-    scene.load.image("phalanx_move2", "/assets/game1/monster/elite/phalanx_move2.png")
+    scene.load.image("phalanx_move1", "/assets/game1/monster/default/elite/phalanx_move1.png")
+    scene.load.image("phalanx_move2", "/assets/game1/monster/default/elite/phalanx_move2.png")
 
     // 킹슬라임?(몬스터101)
     // 스프라이트 시트로 만들어졌으니 .image가 아닌 .spritesheet로 생성
-    scene.load.spritesheet("king_slime_move", "/assets/game1/monster/boss/king_slime_move.png", {
+    scene.load.spritesheet("king_slime_move", "/assets/game1/monster/default/boss/king_slime_move.png", {
         frameWidth: 64,
         frameHeight: 48
     });
 
     // 킹슬라임?의 돌진모션
     // 프레임이 적어서 시트로 안받아도 되지만 스프라이트 시트 사용에 익숙해지기 위해 시트로 사용하겠습니다
-    scene.load.spritesheet("king_slime_dash", "/assets/game1/monster/boss/king_slime_dash.png", {
+    scene.load.spritesheet("king_slime_dash", "/assets/game1/monster/default/boss/king_slime_dash.png", {
         frameWidth: 64,
         frameHeight: 48
     });
 
     // 킹슬라임?의 돌진 준비모션
-    scene.load.spritesheet("king_slime_dash_ready", "/assets/game1/monster/boss/king_slime_dash_ready.png", {
+    scene.load.spritesheet("king_slime_dash_ready", "/assets/game1/monster/default/boss/king_slime_dash_ready.png", {
         frameWidth: 64,
         frameHeight: 48
     });
 
     // 킹슬라임?의 점프 모션 1~3
-    scene.load.spritesheet("king_slime_jump_1", "/assets/game1/monster/boss/king_slime_jump_1.png", {
+    scene.load.spritesheet("king_slime_jump_1", "/assets/game1/monster/default/boss/king_slime_jump_1.png", {
         frameWidth: 64,
         frameHeight: 48
     });
 
-    scene.load.spritesheet("king_slime_jump_2", "/assets/game1/monster/boss/king_slime_jump_2.png", {
+    scene.load.spritesheet("king_slime_jump_2", "/assets/game1/monster/default/boss/king_slime_jump_2.png", {
         frameWidth: 64,
         frameHeight: 48
     });
 
-    scene.load.spritesheet("king_slime_jump_3", "/assets/game1/monster/boss/king_slime_jump_3.png", {
+    scene.load.spritesheet("king_slime_jump_3", "/assets/game1/monster/default/boss/king_slime_jump_3.png", {
         frameWidth: 64,
         frameHeight: 48
     });
+
+    // ======================눈 맵 몬스터================================
+
+    scene.load.image("ice_slime", "/assets/game1/monster/snow/nomal/ice_slime.png")
+    scene.load.image("ice_slime_blink", "/assets/game1/monster/snow/nomal/ice_slime_blink.png")
 
     // =======================타일======================================
 
-    // 타일
+    // 기본맵 타일
     scene.load.image("map1_tile1", "/assets/game1/tile/map1/map1_tile1.png");
 
+    // 눈맵 타일
+    scene.load.image("map2_tile1", "/assets/game1/tile/map2/map2_tile1.png")
+    scene.load.image("map2_tile2", "/assets/game1/tile/map2/map2_tile2.png")
+    scene.load.image("map2_tile3", "/assets/game1/tile/map2/map2_tile3.png")
+    scene.load.image("map2_tile4", "/assets/game1/tile/map2/map2_tile4.png")
+    scene.load.image("map2_tile5", "/assets/game1/tile/map2/map2_tile5.png")
 
     // =========================ui=======================================
     // HP/경험치바에서 공용으로 사용하는 ui바 배경

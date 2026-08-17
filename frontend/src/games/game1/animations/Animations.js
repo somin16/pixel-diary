@@ -17,6 +17,8 @@ export function createAllAnimations(scene) {
       repeat: -1,
     });
 
+    // ======================== 기본맵 몬스터들 ================================
+
     // 몬스터1
     // 슬라임 애니메이션
     scene.anims.create({
@@ -134,6 +136,16 @@ export function createAllAnimations(scene) {
       }),
       duration: 600,
       repeat: 0
+    });
+
+    // ======================= 눈맵 몬스터들 ========================
+
+    // 냉동 슬라임 애니메이션
+    scene.anims.create({
+      key: "ice_slime_animation",
+      frames: [{ key: "ice_slime"}, { key: "ice_slime_blink"}, { key: "ice_slime"}],
+      frameRate: 2,
+      repeat: -1,
     });
 
     // 보상 획득 화면 이미지의 애니메이션

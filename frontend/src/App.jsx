@@ -39,6 +39,27 @@ import AnnouncementForm from "./pages/more/announcement/AnnouncementForm"; // �
 import AdminUserList from "./pages/more/user_management/AdminUserList"; // 더보기 - 유저 관리 목록 화면
 import AddItemPage from "./pages/more/add_item/AddItemPage"; // 더보기 - 아이템 추가 화면
 import ContactReply from "./pages/more/contact_reply/ContactReply"; // 더보기 - 문의사항 답변 화면
+// ------------------------ 리액트 쿼리 ----------------------------
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 1000 * 60 * 5,
+      gcTime: 1000 * 60 * 30, // 캐시 완전 삭제까지 30분 (화면 벗어나도 캐시 유지 시간) -> 리액트 쿼리 v5부터 캐시타임이 gc타임으로 변경됨
+      retry: (failureCount, error) => {
+        if (error?.status === 401) return false; // 인증 에러는 재시도 안 함
+        if (error?.status === 404) return false; // 없는 리소스도 재시도 무의미
+        return failureCount < 2;
+      },
+      refetchOnWindowFocus: true, // 앱이 다시 포커스될 때 자동 재확인 (카카오톡도 이렇게 함) -> 백그라운드 갔다가 다시 열 때 해당 됨
+      refetchOnReconnect: true,   // 네트워크 끊겼다 복구되면 자동 재확인 (모바일 필수)
+    },
+    mutations: {
+      retry: 0, // mutation은 재시도 안 함 (중복 결제/중복 생성 방지)
+    },
+  },
+});
 
 // BrowserRouter 안에서 훅을 호출하는 내부 컴포넌트
 function AppInner() {
@@ -49,16 +70,34 @@ function AppInner() {
 
   const { currentTheme } = useTheme();
 
+  async function prefetchCriticalData(queryClient) {
+    // ‼️TODO: 각 담당자 API 완성되면 주석 해제, 로그인시 프리패치 되어야하는 목록 위치: src/App.jsx
+    
+    // await Promise.all([
+    //   queryClient.prefetchQuery({ queryKey: queryKeys.profile, queryFn: profileApi.getProfile }),
+    //   queryClient.prefetchQuery({ queryKey: queryKeys.coins, queryFn: storeApi.getCoins }),
+    //   queryClient.prefetchQuery({ queryKey: queryKeys.attendance, queryFn: attendanceApi.getAttendance }),
+    // ]);
+  }
+
   useEffect(() => {
-    // 현재 세션 가져오기
+    // 현재 세션 가져오기 (앱 최초 실행 시)
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
       setLoading(false);
+       if (session) prefetchCriticalData(queryClient); // 세션 확인되면 바로 병렬 prefetch
     });
 
-    // 로그인 상태 변화 감시
+    // 로그인 상태 변화 감시 (로그아웃/재로그인 포함)
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setSession(session);
+      if (_event === 'SIGNED_OUT') {
+      queryClient.clear(); // 이전 계정 캐시 제거 (다른 유저 데이터 노출 방지)
+    }
+
+    if (_event === 'SIGNED_IN' && session) {
+      prefetchCriticalData(queryClient); // 로그인마다 prefetch 재실행
+    }
     });
 
     return () => subscription.unsubscribe();
@@ -191,8 +230,10 @@ function AppInner() {
 
 export default function App() {
   return (
+    <QueryClientProvider client={queryClient}>
     <BrowserRouter>
       <AppInner />
     </BrowserRouter>
+    </QueryClientProvider>
   );
 }

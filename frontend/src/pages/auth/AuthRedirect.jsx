@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../../utils/SupabaseClient';
+import { authApi } from '../../api/authApi';
 
 export default function AuthRedirect() {
   const navigate = useNavigate();
@@ -93,38 +94,26 @@ export default function AuthRedirect() {
       }
 
       // [ case2 ]네이버 로그인 처리
-      // 구글/카카오와 달리 code를 백엔드로 보내서 토큰을 받아야 함
       if (provider === 'naver' && code) {
         try {
-          // 백엔드 /api/v1/auth/naver/로 code 전송
-          // 백엔드에서 네이버 API로 토큰 요청 후 Supabase 유저 생성/조회
-          const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/v1/auth/naver/`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ code })
+          // 직접 fetch 대신 authApi.naverLogin 사용
+          const data = await authApi.naverLogin(code);
+
+          // Supabase 엔진에 세션을 직접 주입
+          const { error } = await supabase.auth.setSession({
+            access_token: data.access_token,
+            refresh_token: data.refresh_token,
           });
 
-          if (response.ok) {
-            const data = await response.json();
-            // Supabase 엔진에 세션을 직접 주입
-            const { error } = await supabase.auth.setSession({
-              access_token: data.access_token,
-              refresh_token: data.refresh_token,
-            });
-
-            if (error) {
-              console.error("세션 주입 실패:", error.message);
-              setStatus('error');
-              setTimeout(() => navigate('/auth/login'), 2000);
-              return;
-            }
-            localStorage.removeItem('naver_state'); // 사용한 state 삭제
-            setStatus('success');
-            setTimeout(() => navigate('/', { replace: true }), 1500);
-          } else {
+          if (error) {
+            console.error("세션 주입 실패:", error.message);
             setStatus('error');
             setTimeout(() => navigate('/auth/login'), 2000);
+            return;
           }
+          localStorage.removeItem('naver_state'); // 사용한 state 삭제
+          setStatus('success');
+          setTimeout(() => navigate('/', { replace: true }), 1500);
         } catch (err) {
           console.error("네이버 로그인 에러:", err);
           setStatus('error');

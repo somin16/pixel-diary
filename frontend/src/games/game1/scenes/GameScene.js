@@ -61,6 +61,9 @@ export default class GameScene extends Phaser.Scene {
 
     // 티켓사용 여부를 여기에 할당
     this.isTicketUse = data.isTicketUse;
+
+    // 선택된 맵이 어떤 맵인지를 여기에 할당
+    this.mapType = data.mapType;
   }
 
   create() { // create: 말그대로 생성, 오브젝트를 작성하는 곳
@@ -95,7 +98,6 @@ export default class GameScene extends Phaser.Scene {
 
     // 타일맵 깔기(background/Background.js)
     backgroundTileSet(this);
-
 
     // ====================타이머===================
 
@@ -149,12 +151,20 @@ export default class GameScene extends Phaser.Scene {
     // 몬스터에게 피격시 이벤트
     overlapMonstersHit(this);
 
-    // 상자생성 이벤트(Object/Chest.js)
-    addEventSpawnChest(this);
+    // 기본 맵에서만 작동되는 로직
+    if (this.mapType == "default") {
 
-    // 레드슬라임 생성 이벤트(Monsters.js)
-    addEventRedSlimeSpawn(this);
+        // 레드슬라임 생성 이벤트(Monsters.js)
+        addEventRedSlimeSpawn(this);
+    }
 
+	// 눈 맵에서 적용되는 로직
+	else {
+
+		// 상자생성 이벤트(Object/Chest.js)
+    	addEventSpawnChest(this);
+	}
+	
     // 엘리트 몬스터 생성 이벤트(Monsters.js)
     addEliteMonsterSpawn(this);
 
