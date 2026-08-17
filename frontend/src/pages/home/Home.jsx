@@ -16,7 +16,15 @@ export default function Home() {
   const currentTheme = useTheme((state) => state.currentTheme);
 
   // 달력에서 날짜 클릭 시 해당 날짜 일기 존재 여부를 확인하는 데 사용
-  const { data: diariesData } = useDiaries();
+  const { data: diariesData, isError: isDiariesError } = useDiaries();
+
+  // 일기 목록 로드 실패 시 처리 (추후 alert/toast 추가 예정)
+  useEffect(() => {
+    if (isDiariesError) {
+      console.error("일기 목록 로드 실패");
+      // TODO: 사용자에게 alert 또는 toast로 안내 추가 예정
+    }
+  }, [isDiariesError]);
 
   // 출석 관련 상태 정의
   const [isAttendanceOpen, setIsAttendanceOpen] = useState(false);
