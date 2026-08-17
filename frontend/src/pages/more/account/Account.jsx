@@ -6,10 +6,6 @@ import { getAssetUrl } from "../../../utils/AssetHelper"; // 헬퍼 불러오기
 import { supabase } from "../../../utils/SupabaseClient"; // supabase 불러오기
 import { useLogout, useWithdraw, useChangePassword } from '../../../hooks/mutations/useAuthMutations'; // 인증 관련 뮤테이션 훅
 
-// zustand 불러오기
-import { useProfileStore } from '../../../stores/useProfileStore';
-import { authFetch } from "../../../utils/AuthHelper";
-
 // 컴포넌트 불러오기
 import LogoutDialog from '../../../components/more/auth/LogoutDialog';
 import WithdrawalDialog from '../../../components/more/auth/WithdrawalDialog';
