@@ -18,7 +18,7 @@ const useMusicStore = create(
     (set, get) => ({
       // --- 상태 ---
       isMuted: false,   // 뮤트 여부
-      volume: 0.3,      // 볼륨 (0.0 ~ 1.0)
+      volume: 0.0,      // 볼륨 (0.0 ~ 1.0)
       currentTheme: '', // 현재 재생 중인 테마
 
       // --- 액션 ---
