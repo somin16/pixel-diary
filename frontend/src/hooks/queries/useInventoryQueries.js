@@ -1,4 +1,3 @@
-// src/hooks/queries/useInventoryQueries.js
 // 보관함 화면(Inventory.jsx)에서 쓰는 React Query 훅
 import { useQuery } from '@tanstack/react-query';
 import { queryKeys } from '../../utils/queryKeys';

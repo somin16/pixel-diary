@@ -9,18 +9,15 @@ import Header from "../../../components/common/Header";
 import CategoryTabs from "../../../components/more/shop/CategoryTabs"; // 상점과 동일한 탭 컴포넌트 재사용
 import InventoryItemGrid from "../../../components/more/inventory/InventoryItemGrid"; // 보관함 전용 그리드
 
-// 코인 전역 상태
-import { useGetCoinStore } from "../../../stores/useCoinStore";
-
-// react-query 훅: 보관함 목록 + 상점 아이템 목록(상세 정보 매핑용)
+// react-query 훅: 보관함 목록 + 상점 아이템 목록(상세 정보 매핑용) + 코인 잔액
 import { useStoreItems } from "../../../hooks/queries/useStoreQueries";
 import { useInventoryItems } from "../../../hooks/queries/useInventoryQueries";
+import { useCoin } from "../../../hooks/queries/useCoinQueries"; // zustand 대신 서버 데이터를 직접 구독
 
 // 카테고리 탭 목록
 const TABS = ["모두", "스티커", "이모티콘", "테마"];
 
 // 아이템 타입별로 정렬할 때 쓰는 우선순위 (숫자가 작을수록 먼저 표시)
-// 컴포넌트 밖에 선언 - 매 렌더링마다 새로 안 만들도록
 const TYPE_ORDER = {
   'app_theme': 0,
   'emoji': 1,
@@ -37,9 +34,6 @@ const Inventory = () => {
   // 현재 선택된 카테고리 탭
   const [activeTab, setActiveTab] = useState("모두");
 
-  // 코인 잔액만 필요 (여기서는 갱신은 안 하므로 setMyCoins는 안 가져옴)
-  const { coin: myCoins } = useGetCoinStore();
-
   // 현재 화면에서 초록 테두리로 표시할 아이템의 id (주로 "적용 중인 테마" 표시용)
   const [selectedItemId, setSelectedItemId] = useState(null);
 
@@ -50,8 +44,12 @@ const Inventory = () => {
   // 보관함 응답에는 item_id, item_count 정도만 있고, 이름/이미지 같은 상세 정보는 상점 목록에서 가져와야 함
   const { data: itemsData, isLoading: isItemsLoading } = useStoreItems();
 
-  // 두 데이터 중 하나라도 아직 로딩 중이면 전체 로딩 처리
-  const loading = isInventoryLoading || isItemsLoading;
+  // ── 코인 잔액 조회 ──────────────────────────────
+  const { data: coinData, isLoading: isCoinLoading } = useCoin();
+  const myCoins = coinData?.coin ?? 0; // 데이터 없으면 0으로 표시
+
+  // 세 데이터 중 하나라도 로딩 중이면 전체 로딩 처리
+  const loading = isInventoryLoading || isItemsLoading || isCoinLoading;
 
   // ── 보관함 데이터 + 아이템 상세 정보를 합쳐서 화면에서 쓸 형태로 가공 ──────────────────────────────
   const items = useMemo(() => {
@@ -68,24 +66,23 @@ const Inventory = () => {
         return item && item.item_type !== 'diary_theme';
       })
       .map((inv) => {
-        const item = itemMap[inv.item_id]; // 이 보관함 항목에 대응하는 상점 아이템 정보
+        const item = itemMap[inv.item_id];
         return {
           id: item.item_id,
-          // 티켓 타입은 개수도 같이 보여줌 (예: "일기 이모지 티켓 - 3"), 그 외는 이름만
+          // 티켓 타입은 개수도 같이 보여줌, 그 외는 이름만
           name: item.item_type === 'ticket'
             ? `${item.item_info} - ${inv.item_count}`
             : item.item_info,
           type: item.item_type,
           icon: item.item_image_url || 'home_icon_x3',
-          item_count: inv.item_count, // 보유 개수 (티켓처럼 여러 개 살 수 있는 아이템용)
-          // app_theme 타입이면 item_name(예: winter_light_theme)에서 '_theme'를 떼어내
-          // 실제 테마 전환에 쓰는 키(winter_light)를 만듦. 그 외 타입은 필요 없으므로 null.
+          item_count: inv.item_count,
+          // app_theme 타입이면 item_name에서 '_theme'를 떼어내 실제 테마 전환에 쓰는 키를 만듦
           themeKey: item.item_type === 'app_theme' ? item.item_name.replace('_theme', '') : null,
         };
       })
       // 타입별 정렬: app_theme → emoji → sticker → ticket 순서로 보여주기 위함
       .sort((a, b) => (TYPE_ORDER[a.type] ?? 99) - (TYPE_ORDER[b.type] ?? 99));
-  }, [inventoryData, itemsData]); // 두 데이터 중 하나라도 바뀌면 재계산
+  }, [inventoryData, itemsData]);
 
   // ── 카테고리 탭에 따른 필터링 ──────────────────────────────
   const filteredItems = activeTab === "모두"
@@ -98,28 +95,25 @@ const Inventory = () => {
     });
 
   // ── 현재 적용 중인 테마 아이템에 자동으로 선택 테두리 표시 ──────────────────────────────
-  // items나 currentTheme이 바뀔 때마다 다시 확인 (예: 화면 진입 직후 items가 늦게 채워지는 경우 대응)
   useEffect(() => {
     const appliedThemeItem = items.find(
       (item) => item.type === "app_theme" && item.themeKey === currentTheme
     );
     if (appliedThemeItem) {
-      setSelectedItemId(appliedThemeItem.id); // 찾았으면 해당 아이템에 테두리 표시
+      setSelectedItemId(appliedThemeItem.id);
     }
   }, [currentTheme, items]);
 
-  // ── 아이템 클릭 시 처리 ──────────────────────────────
-  // 현재는 테마(app_theme) 타입만 클릭에 반응함 (스티커/이모티콘은 클릭해도 아무 동작 없음)
+  // ── 아이템 클릭 시 처리 (테마 타입만 반응) ──────────────────────────────
   const handleItemClick = (item) => {
     if (item.type === "app_theme") {
-      // 이미 적용 중인 테마를 또 클릭한 경우 - 변경할 필요 없으니 안내만
       if (item.themeKey === currentTheme) {
         toast("이미 적용 중인 테마입니다");
         return;
       }
-      setTheme(item.themeKey);      // 전역 테마 상태 변경 → 앱 전체 배경/색상이 바뀜
-      toast("테마를 변경했습니다")   // 변경됐다는 알림 표시
-      setSelectedItemId(item.id);   // 방금 클릭한 아이템에 선택 테두리 표시
+      setTheme(item.themeKey);      // 전역 테마 상태 변경
+      toast("테마를 변경했습니다")
+      setSelectedItemId(item.id);   // 선택 테두리 표시
     }
   };
 
@@ -129,7 +123,7 @@ const Inventory = () => {
       className="relative w-full h-full pt-[13%] pb-0 flex flex-col items-center bg-[length:100%_100%]"
       style={{ backgroundImage: `url(${getAssetUrl(currentTheme, 'backgrounds', 'inventory_background_x3')})` }}
     >
-      {/* 뒤로가기 버튼만 있는 헤더, 누르면 /more로 이동 */}
+      {/* 뒤로가기 버튼만 있는 헤더 */}
       <Header isBackButton={true} backPath="/more" />
 
       {/* 보관함 타이틀 텍스트 */}
@@ -148,7 +142,7 @@ const Inventory = () => {
         </h1>
       </div>
 
-      {/* 우측 상단: 상점 이동 버튼 + 코인 표시 영역 (Shop.jsx와 거의 동일한 구조) */}
+      {/* 우측 상단: 상점 이동 버튼 + 코인 표시 영역 */}
       <div className="absolute top-[15%] right-[2%] flex flex-col items-end z-10 gap-3">
         {/* 상점 아이콘 클릭 시 /more/shop으로 이동 */}
         <button
@@ -158,7 +152,7 @@ const Inventory = () => {
           <img src={getAssetUrl(currentTheme, 'icons', 'shop_icon_x3')} className="w-[80px] h-auto block" alt="상점" />
         </button>
 
-        {/* 코인 잔액 표시 (여기서는 조회만 하고 갱신 로직은 없음) */}
+        {/* 코인 잔액 표시 */}
         <div className="relative flex items-center justify-center h-[44px]">
           <img
             src={getAssetUrl(currentTheme, 'boxes', 'have_money_box_x2')}
@@ -202,9 +196,9 @@ const Inventory = () => {
         </div>
       ) : (
         <InventoryItemGrid
-          items={filteredItems}           // 카테고리 필터링된 목록
-          selectedItemId={selectedItemId} // 초록 테두리로 표시할 아이템 id
-          onItemClick={handleItemClick}   // 클릭 시 테마 변경 처리
+          items={filteredItems}
+          selectedItemId={selectedItemId}
+          onItemClick={handleItemClick}
         />
       )}
 

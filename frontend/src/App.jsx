@@ -5,6 +5,10 @@ import { supabase } from "./utils/SupabaseClient";
 import { useAndroidBackButton } from "./hooks/useAndroidBackButtons"; // 모바일에서 뒤로가기 훅
 import { useTheme } from './stores/useThemeStore';
 import useMusicStore from './stores/useMusicStore';
+import { queryKeys } from "./utils/queryKeys"; // 캐시 key 모음
+import { storeApi } from "./api/storeApi";     
+import { inventoryApi } from "./api/inventoryApi"; 
+import { coinApi } from "./api/coinApi";         
 
 // ----------------- 컴포넌트 불러오기 ----------------------------------
 import AppShell from "./components/layout/AppShell"; // AppShell 불러오기
@@ -75,6 +79,7 @@ function AppInner() {
     
     await Promise.all([
     //   queryClient.prefetchQuery({ queryKey: queryKeys.profile, queryFn: profileApi.getProfile }),
+    queryClient.prefetchQuery({ queryKey: queryKeys.coins, queryFn: coinApi.getCoin }),
     queryClient.prefetchQuery({ queryKey: queryKeys.items, queryFn: storeApi.getItem }),
     queryClient.prefetchQuery({ queryKey: queryKeys.inventoryItems, queryFn: inventoryApi.getItem }),
     //   queryClient.prefetchQuery({ queryKey: queryKeys.attendance, queryFn: attendanceApi.getAttendance }),

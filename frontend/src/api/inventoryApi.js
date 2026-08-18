@@ -1,4 +1,3 @@
-// src/api/inventoryApi.js
 // 보관함(유저가 보유한 아이템) 관련 API 호출 함수 모음
 import { authFetch } from '../utils/AuthHelper';
 
