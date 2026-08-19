@@ -11,15 +11,17 @@ export function useCoin() {
   });
 }
 
-// ── 코인 지급/차감 ──────────────────────────────
-// 미니게임에서 보상을 줄 때 등 코인 값을 직접 변경해야 할 때 사용
+// 코인은 출석/상점구매/미니게임 등 여러 도메인이 공유하는 값이라, 어디서 호출하든
+// 성공 시 coins 캐시를 무효화해서 앱 전체가 항상 최신 코인을 보게 만듦
 export function useUpdateCoin() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: coinApi.updateCoin,
+    mutationFn: ({ payload }) => coinApi.updateCoin(payload), 
     onSuccess: () => {
-      // 코인이 바뀌었으니 화면에 보여지는 코인 잔액도 최신화되도록 캐시 무효화
       queryClient.invalidateQueries({ queryKey: queryKeys.coins });
+    },
+    onError: (error) => {
+      console.error('코인 변경 실패:', error);
     },
   });
 }

@@ -7,8 +7,9 @@ import { ticketApi } from '../../api/ticketApi';
 // itemId를 넘기면 특정 종류 티켓만, 안 넘기면 전체 조회
 export function useTicket(itemId) {
   return useQuery({
-    queryKey: queryKeys.tickets(itemId), // itemId별로 다른 캐시로 취급
+    queryKey: queryKeys.tickets(itemId), // 그대로 사용 가능, 다만 itemId 없이 호출하면 ['tickets', undefined]가 됨
     queryFn: () => ticketApi.getTicket(itemId),
+    enabled: !!itemId, // itemId 없을 땐 요청 자체를 안 보내도록 방어
   });
 }
 
@@ -16,10 +17,13 @@ export function useTicket(itemId) {
 export function useUpdateTicket() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ticketApi.updateTicket,
+    mutationFn: ({ payload }) => ticketApi.updateTicket(payload),
     onSuccess: () => {
       // 어떤 itemId의 티켓 목록도 최신화되어야 하므로 'tickets'로 시작하는 캐시 전부 무효화
       queryClient.invalidateQueries({ queryKey: ['tickets'] });
+    },
+    onError: (error) => {
+      console.error('티켓 변경 실패:', error);
     },
   });
 }

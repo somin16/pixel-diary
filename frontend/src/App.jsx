@@ -81,7 +81,7 @@ function AppInner() {
     //   queryClient.prefetchQuery({ queryKey: queryKeys.profile, queryFn: profileApi.getProfile }),
     queryClient.prefetchQuery({ queryKey: queryKeys.coins, queryFn: coinApi.getCoin }),
     queryClient.prefetchQuery({ queryKey: queryKeys.items, queryFn: storeApi.getItem }),
-    queryClient.prefetchQuery({ queryKey: queryKeys.inventoryItems, queryFn: inventoryApi.getItem }),
+    queryClient.prefetchQuery({ queryKey: queryKeys.inventory, queryFn: inventoryApi.getItem }),
     //   queryClient.prefetchQuery({ queryKey: queryKeys.attendance, queryFn: attendanceApi.getAttendance }),
     ]);
   }
