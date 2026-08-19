@@ -1,14 +1,15 @@
 import Phaser from "phaser";
-import Slime from "../monsters/Slime.js"; 
-import Cubegolem from "../monsters/Cubegolem.js";
+import Slime from "./default/Slime.js"; 
+import Cubegolem from "./default/Cubegolem.js";
 import { addBigExpBall, addExpBall } from "../player/ExpBall.js";
 import { updateHP } from "../player/Hp.js";
-import RedSlime from "./RedSlime.js";
-import Phalanx from "./Phalanx.js";
+import RedSlime from "./default/RedSlime.js";
+import Phalanx from "./default/Phalanx.js";
 import { addDropItemMagnet } from "../object/Magnet.js";
 import { addDropItemMeat } from "../object/Meat.js";
-import KingSlime from "./KingSlime.js";
+import KingSlime from "./default/KingSlime.js";
 import { addScore, gameClear, lockScore } from "../manage/Score.js";
+import IceSlime from "./snow/IceSlime.js";
 
 // 몬스터 이동 로직
 export function monsterMove(scene) {
@@ -145,26 +146,39 @@ function spawnMonster(scene) {
     // 하지만 보스 몬스터(킹슬라임)가 스폰됐을 경우에는 슬라임만 등장한다(난이도 조절)
     if (scene.gamePlayTime < 160 && !scene.isBossSpawn) {
 
-      slimeSpawnPercent = 80;
+		slimeSpawnPercent = 80;
     }
 
     else {
-      slimeSpawnPercent = 100;
+		slimeSpawnPercent = 100;
     }
 
     // 1부터 100을 랜덤으로 뽑는다
     const randomSpawn = Phaser.Math.Between(1, 100);
 
-    // 뽑은게 슬라임의 스폰값보다 낮으면 슬라임, 높으면 다른몬스터
-    if (randomSpawn <= slimeSpawnPercent) spawnSlime(SPAWN_X, SPAWN_Y, scene); // 여기에 소환이 되면 안됨으로 부모 클래스인 scene을 추가
-    else spawnCubegolem(SPAWN_X, SPAWN_Y, scene);
+    // 눈맵인지 기본맵인지 판단
+    if (scene.mapType == "default") {
+
+		// 뽑은게 슬라임의 스폰값보다 낮으면 슬라임, 높으면 다른몬스터
+		if (randomSpawn <= slimeSpawnPercent) spawnSlime(SPAWN_X, SPAWN_Y, scene); // 여기에 소환이 되면 안됨으로 부모 클래스인 scene을 추가
+		else spawnCubegolem(SPAWN_X, SPAWN_Y, scene);
+    }
+
+	else {
+
+		// 뽑은게 슬라임의 스폰값보다 낮으면 슬라임, 높으면 다른몬스터
+		if (randomSpawn <= slimeSpawnPercent) spawnSlime(SPAWN_X, SPAWN_Y, scene); // 여기에 소환이 되면 안됨으로 부모 클래스인 scene을 추가
+		else spawnIceSlime(SPAWN_X, SPAWN_Y, scene);
+	}
 }
+
+// ================ 기본맵 몬스터들 ===================
 
 // 슬라임 소대 생성
 function spawnPhalanx(PosX, PosY, scene) {
 
-  let phalanx = new Phalanx(scene, PosX, PosY, scene.monsterStatus);
-  scene.monsters.add(phalanx);
+    let phalanx = new Phalanx(scene, PosX, PosY, scene.monsterStatus);
+    scene.monsters.add(phalanx);
 }
 
 // 슬라임 생성
@@ -187,72 +201,80 @@ function spawnCubegolem(PosX, PosY, scene) {
 // 레드슬라임 생성
 function spawnRedSlime(scene) {
 
-  // 생성범위
-  const SPAWN_RADIUS = 450;
-  // Between을 통해 랜덤한 각도를 뽑아낸다
-  const randomAngle = Phaser.Math.FloatBetween(0, Math.PI * 2);
+	// 생성범위
+	const SPAWN_RADIUS = 450;
+	// Between을 통해 랜덤한 각도를 뽑아낸다
+	const randomAngle = Phaser.Math.FloatBetween(0, Math.PI * 2);
 
-  // 플레이어의 현재 위치와 비교하여 원의 테두리 좌표에 몬스터가 스폰될 위치를 정합니다
-  const SPAWN_X = scene.player.x + Math.cos(randomAngle) * SPAWN_RADIUS;
-  const SPAWN_Y = scene.player.y + Math.sin(randomAngle) * SPAWN_RADIUS;
+	// 플레이어의 현재 위치와 비교하여 원의 테두리 좌표에 몬스터가 스폰될 위치를 정합니다
+	const SPAWN_X = scene.player.x + Math.cos(randomAngle) * SPAWN_RADIUS;
+	const SPAWN_Y = scene.player.y + Math.sin(randomAngle) * SPAWN_RADIUS;
 
-  // 현재는 3마리 고정
-  for (let i = 0; i < 3; i++) {
+	// 현재는 3마리 고정
+	for (let i = 0; i < 3; i++) {
 
-    // 뭉쳐있으면 한마리처럼 보임으로 -33 ~ 33사이로 랜덤하게 거리를 준다
-    let offsetX = Phaser.Math.Between(-33, 33);
-    let offsetY = Phaser.Math.Between(-33, 33);
+		// 뭉쳐있으면 한마리처럼 보임으로 -33 ~ 33사이로 랜덤하게 거리를 준다
+		let offsetX = Phaser.Math.Between(-33, 33);
+		let offsetY = Phaser.Math.Between(-33, 33);
 
-    // 레드슬라임 생성(monsters/RedSlime.js)
-    let redSlime = new RedSlime(scene, SPAWN_X + offsetX, SPAWN_Y + offsetY, scene.monsterStatus);
-    scene.monsters.add(redSlime); // monsters 배열에 넣는다
-  }
+		// 레드슬라임 생성(monsters/RedSlime.js)
+		let redSlime = new RedSlime(scene, SPAWN_X + offsetX, SPAWN_Y + offsetY, scene.monsterStatus);
+		scene.monsters.add(redSlime); // monsters 배열에 넣는다
+	}
 }
 
 // 킹슬라임? 생성
 function spawnKingSlime(PosX, PosY, scene) {
 
-  let kingSlime = new KingSlime(scene, PosX, PosY, scene.monsterStatus);
-  scene.monsters.add(kingSlime);
+	let kingSlime = new KingSlime(scene, PosX, PosY, scene.monsterStatus);
+	scene.monsters.add(kingSlime);
 
-  // 킹슬라임? 의 공격 타이머
-  scene.kingslimeAttackEvent = scene.time.addEvent({
-    delay: 8000,
-    callback: () => kingSlime.selectAttack(scene.player),
-    callbackScope: scene,
-    loop: true,
-  });
+	// 킹슬라임? 의 공격 타이머
+	scene.kingslimeAttackEvent = scene.time.addEvent({
+		delay: 8000,
+		callback: () => kingSlime.selectAttack(scene.player),
+		callbackScope: scene,
+		loop: true,
+	});
 }
 
 // 레드 슬라임 생성(전용)
 export function addEventRedSlimeSpawn(scene) {
 
-  // 중복방지
-  if (scene.redSlimeSpawnEvent) {
-    scene.redSlimeSpawnEvent.remove();
-  }
+	// 중복방지
+	if (scene.redSlimeSpawnEvent) {
+		scene.redSlimeSpawnEvent.remove();
+	}
 
-  scene.redSlimeSpawnEvent = scene.time.addEvent({
-    delay: 20000,   // 20초마다 레드슬라임 등장
-    callback: () => spawnRedSlime(scene),
-    callbackScope: scene,
-    loop: true,
-  });
+	scene.redSlimeSpawnEvent = scene.time.addEvent({
+		delay: 20000,   // 20초마다 레드슬라임 등장
+		callback: () => spawnRedSlime(scene),
+		callbackScope: scene,
+		loop: true,
+	});
+}
+
+
+// =================== 눈 맵 몬스터들 ====================
+function spawnIceSlime(PosX, PosY, scene) {
+
+	let iceSlime = new IceSlime(scene, PosX, PosY, scene.monsterStatus);
+    scene.monsters.add(iceSlime); // monsters 배열에 넣는다
 }
 
 // 이벤트 생성 함수
 export function addEventMonsterLevelUp(scene) {
 
-  // 화살표 함수로 수정했으니, 함수호출을 한번 따로 해줘야 게임이 시작될때 몬스터가 스폰됩니다  
-  monsterLevelUp(scene)
+	// 화살표 함수로 수정했으니, 함수호출을 한번 따로 해줘야 게임이 시작될때 몬스터가 스폰됩니다  
+	monsterLevelUp(scene)
 
-  // 20초마다 몬스터의 체력이 증가하고 스폰률이 올라가는 이벤트
-  scene.time.addEvent({
-    delay: 20000,
-    callback: () => monsterLevelUp(scene), // 다시 확인해본 결과, 화살표 함수로 수정하는편이 좋을것같아 수정했습니다
-    callbackScope: scene,
-    loop: true,
-  });
+	// 20초마다 몬스터의 체력이 증가하고 스폰률이 올라가는 이벤트
+	scene.time.addEvent({
+		delay: 20000,
+		callback: () => monsterLevelUp(scene), // 다시 확인해본 결과, 화살표 함수로 수정하는편이 좋을것같아 수정했습니다
+		callbackScope: scene,
+		loop: true,
+	});
 } 
 
 // 몬스터 레벨업(스탯 증가)
@@ -267,29 +289,30 @@ function updateMonsterSpawn(scene) {
 
     // 중복 방지
     if (scene.monsterSpawnTimer) {
-      scene.monsterSpawnTimer.remove();
+		
+		scene.monsterSpawnTimer.remove();
     }
 
     // 시간이 지날수록 스폰속도가 점점 빨라진다
     let newDelay = 2500 - (50 * scene.monsterStatus);
 
     scene.monsterSpawnTimer = scene.time.addEvent({
-      delay: newDelay,
-      callback: () => spawnMonster(scene),
-      callbackScope: scene,
-      loop: true,
+		delay: newDelay,
+		callback: () => spawnMonster(scene),
+		callbackScope: scene,
+		loop: true,
     })
 }
 
 // 엘리트 몬스터 스폰(1분)
 export function addEliteMonsterSpawn(scene) {
 
-  scene.eliteMonsterSpawnTimer = scene.time.addEvent({
-    delay: 60000,
-    callback: () => spawnEliteMonster(scene),
-    callbackScope: scene,
-    loop: true
-  })
+	scene.eliteMonsterSpawnTimer = scene.time.addEvent({
+		delay: 60000,
+		callback: () => spawnEliteMonster(scene),
+		callbackScope: scene,
+		loop: true
+	})
 }
 
 // 몬스터가 죽었는지 살았는지 감지
@@ -298,19 +321,19 @@ export function monsterDead(monster, scene) {
     // 죽었으면~
     if (monster.hp <= 0) {
 
-      // 중복 방지 체크용(보상이 2번 드랍되는 현상 방지)
-      if (monster.isDeadD) return;
-      monster.isDeadD = true;
+		// 중복 방지 체크용(보상이 2번 드랍되는 현상 방지)
+		if (monster.isDeadD) return;
+		monster.isDeadD = true;
 
-      // 엘리트 몬스터가 죽었을때
-      if (monster.isElite == true) {
+		// 엘리트 몬스터가 죽었을때
+		if (monster.isElite == true) {
 
-        addScore(100, scene); // 점수 추가
-        addBigExpBall(monster.x, monster.y, scene);
-      }
+			addScore(100, scene); // 점수 추가
+			addBigExpBall(monster.x, monster.y, scene);
+		}
 
-      // 큐브 골렘이 죽었을때
-      else if (monster.monsterID == 2) {
+    // 큐브 골렘이 죽었을때
+    else if (monster.monsterID == 2) {
 
         addScore(30, scene); // 점수 추가
 
@@ -320,16 +343,16 @@ export function monsterDead(monster, scene) {
 
         if (meatDropPercent >= randomValue) addDropItemMeat(monster.x, monster.y, scene);
         else addExpBall(monster.x, monster.y, scene);
-      }
+    }
 
-      // 보스가 죽엇을 때
-      else if (monster.isBoss == true){
+    // 보스가 죽엇을 때
+    else if (monster.isBoss == true){
 
-        gameClear(scene);
-      }
+    	gameClear(scene);
+    }
 
-      // 그 외
-      else {
+    // 그 외
+    else {
 
         addScore(15, scene); // 점수 추가
 

@@ -5,6 +5,10 @@ import { supabase } from "./utils/SupabaseClient";
 import { useAndroidBackButton } from "./hooks/useAndroidBackButtons"; // 모바일에서 뒤로가기 훅
 import { useTheme } from './stores/useThemeStore';
 import useMusicStore from './stores/useMusicStore';
+import { queryKeys } from "./utils/queryKeys"; // 캐시 key 모음
+import { storeApi } from "./api/storeApi";     
+import { inventoryApi } from "./api/inventoryApi"; 
+import { coinApi } from "./api/coinApi";         
 
 // ----------------- 컴포넌트 불러오기 ----------------------------------
 import AppShell from "./components/layout/AppShell"; // AppShell 불러오기
@@ -77,9 +81,11 @@ function AppInner() {
     // ‼️TODO: 각 담당자 API 완성되면 주석 해제, 로그인시 프리패치 되어야하는 목록 위치: src/App.jsx
     
     await Promise.all([
-      queryClient.prefetchQuery({ queryKey: queryKeys.profile, queryFn: profileApi.getProfile }),
-    //queryClient.prefetchQuery({ queryKey: queryKeys.coins, queryFn: storeApi.getCoins }),
-      queryClient.prefetchQuery({ queryKey: queryKeys.attendance, queryFn: attendanceApi.getAttendance }),
+    queryClient.prefetchQuery({ queryKey: queryKeys.profile, queryFn: profileApi.getProfile }),
+    queryClient.prefetchQuery({ queryKey: queryKeys.coins, queryFn: coinApi.getCoin }),
+    queryClient.prefetchQuery({ queryKey: queryKeys.items, queryFn: storeApi.getItem }),
+    queryClient.prefetchQuery({ queryKey: queryKeys.inventory, queryFn: inventoryApi.getItem }),
+    queryClient.prefetchQuery({ queryKey: queryKeys.attendance, queryFn: attendanceApi.getAttendance }),
     ]);
   }
 

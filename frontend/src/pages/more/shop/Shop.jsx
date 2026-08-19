@@ -1,10 +1,8 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useMemo } from "react";
 import { useNavigate } from 'react-router-dom';
-import { useTheme } from '../../../stores/useThemeStore'; // useTheme 불러오기
-import { getAssetUrl } from "../../../utils/AssetHelper"; // 헬퍼 불러오기 
-import { authFetch } from '../../../utils/AuthHelper';
+import { useTheme } from '../../../stores/useThemeStore';
+import { getAssetUrl } from "../../../utils/AssetHelper";
 
-// 컴포넌트 불러오기
 import Header from "../../../components/common/Header";
 import ResultDialog from "../../../components/common/dialog/ResultDialog";
 import PreviewDialog from "../../../components/more/shop/PreviewDialog";
@@ -13,113 +11,71 @@ import ItemDetailDialog from "../../../components/more/shop/ItemDetailDialog";
 import PurchaseDialog from "../../../components/more/shop/PurchaseDialog";
 import CategoryTabs from "../../../components/more/shop/CategoryTabs";
 
-// zuStand 함수 불러오기
-import { useGetCoinStore } from "../../../stores/useCoinStore";
+import { useStoreItems, usePurchaseItem } from "../../../hooks/queries/useStoreQueries";
+import { useInventoryItems } from "../../../hooks/queries/useInventoryQueries";
+import { useCoin } from "../../../hooks/queries/useCoinQueries";
 
-// 아이템 카테고리 목록
 const TABS = ["모두", "스티커", "이모티콘", "테마"];
 
-
 const Shop = () => {
-  // navigate('/경로') 처럼 사용하여 원하는 주소로 화면을 전환
   const navigate = useNavigate();
-
-  //  테마 전역 관리
   const currentTheme = useTheme((state) => state.currentTheme);
 
-  // 컴포넌트 상태 관리 (State)
   const [activeTab, setActiveTab] = useState("모두");
-  const { coin: myCoins, setMyCoins } = useGetCoinStore(); // 유저 코인관련 함수들 불러오기(변수명은 유지했습니다)
   const [selectedItem, setSelectedItem] = useState(null);
   const [dialogStep, setDialogStep] = useState(null);
-  const [items, setItems] = useState([]); // API에서 불러온 아이템 목록
-  const [loading, setLoading] = useState(true); // 아이템 목록 로딩 상태
 
-  // 아이템 구매 처리 로직
-  const handlePurchase = async () => {
-      try {
-          const result = await authFetch(
-              `${import.meta.env.VITE_BACKEND_URL}/api/v1/items/${selectedItem.id}/purchase/`,
-              {
-                  method: 'POST',
-                  headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify({ item_count: 1 }),
-              }
-          );
+  // ── 상점 아이템 목록 조회 ──────────────────────────────
+  const { data: itemsData, isLoading: isItemsLoading, isError: isItemsError } = useStoreItems();
+  // ── 보관함 조회 ──────────────────────────────
+  const { data: inventoryData, isLoading: isInventoryLoading, isError: isInventoryError } = useInventoryItems();
+  // ── 코인 조회 ──────────────────────────────
+  const { data: coinData, isLoading: isCoinLoading, isError: isCoinError } = useCoin();
+  const myCoins = coinData?.coin ?? 0;
 
-          // 구매 성공 시 코인 업데이트
-          if (result.current_coin !== null) {
-              setMyCoins(result.current_coin);  // 남은 코인으로 업데이트
-          }
+  const loading = isItemsLoading || isInventoryLoading || isCoinLoading;
+  const isError = isItemsError || isInventoryError || isCoinError; // 셋 중 하나라도 실패하면 에러 처리
 
-          // ticket 타입만 중복 구매 허용
-          if (selectedItem.type !== 'ticket') {
-              setItems(prev => prev.map(item =>
-                  item.id === selectedItem.id ? { ...item, isSoldOut: true } : item
-              ));
-          }
+  const purchaseItem = usePurchaseItem();
 
-          setDialogStep("success");
-      } catch (error) {
+  const items = useMemo(() => {
+    const ownedItemIds = new Set(
+      (inventoryData?.items || []).map((item) => item.item_id)
+    );
+    return (itemsData?.items || [])
+      .filter((item) => item.item_type !== 'diary_theme' && item.item_type !== 'ticket')
+      .map((item) => ({
+        id: item.item_id,
+        name: item.item_info,
+        type: item.item_type,
+        price: item.item_price,
+        icon: item.item_image_url || 'home_icon_x3',
+        preview: item.item_name,
+        isSoldOut: !item.item_stackable && ownedItemIds.has(item.item_id),
+      }));
+  }, [itemsData, inventoryData]);
+
+  const handlePurchase = () => {
+    purchaseItem.mutate(
+      { itemId: selectedItem.id },
+      {
+        onSuccess: () => setDialogStep("success"),
+        onError: (error) => {
           if (error.message === "이미 보유한 아이템입니다.") {
-              setDialogStep("soldout");  // 새로운 다이얼로그 스텝 추가
+            setDialogStep("soldout");
           } else {
-              setDialogStep("fail");  // 코인 부족
+            setDialogStep("fail");
           }
+        },
       }
+    );
   };
 
-  // 모든 다이얼로그 창을 닫고 선택된 아이템 상태를 초기화하는 함수
   const closeDialog = () => {
     setSelectedItem(null);
     setDialogStep(null);
   };
 
-  // 아이템 목록 불러오기
-  useEffect(() => {
-      const fetchItems = async () => {
-          try {
-              // 아이템 목록과 인벤토리 동시 조회
-              const [itemResult, inventoryResult, profileResult] = await Promise.all([
-                  authFetch(`${import.meta.env.VITE_BACKEND_URL}/api/v1/items/`),
-                  authFetch(`${import.meta.env.VITE_BACKEND_URL}/api/v1/users/inventory/`),
-                  authFetch(`${import.meta.env.VITE_BACKEND_URL}/api/v1/profile/`),
-              ]);
-
-              // 보유한 아이템 ID 목록
-              const ownedItemIds = new Set(
-                  (inventoryResult.items || []).map(item => item.item_id)
-              );
-
-              // 코인 업데이트
-              if (profileResult.coin !== undefined) {
-                  setMyCoins(profileResult.coin);
-              }
-
-              const mappedItems = (itemResult.items || [])
-                  .filter(item => item.item_type !== 'diary_theme' && item.item_type !== 'ticket')
-                  .map(item => ({
-                      id: item.item_id,
-                      name: item.item_info,
-                      type: item.item_type,
-                      price: item.item_price,
-                      icon: item.item_image_url || 'home_icon_x3',
-                      preview: item.item_name,
-                      // item_stackable이 false인 아이템이 인벤토리에 있으면 isSoldOut: true
-                      isSoldOut: !item.item_stackable && ownedItemIds.has(item.item_id),
-                  }));
-              setItems(mappedItems);
-          } catch (error) {
-              console.error('데이터 조회 실패:', error);
-          } finally {
-              setLoading(false);
-          }
-      };
-      fetchItems();
-  }, []);
-
-  // 아이템 카테고리 필터링 
-  // activeTab이 "모두"일 때는 전체 리스트를, 아니면 타입이 일치하는 것만 걸러내서 나타냄
   const filteredItems = activeTab === "모두"
     ? items
     : items.filter(item => {
@@ -130,55 +86,45 @@ const Shop = () => {
     });
 
   return (
-    // 상점 전체 화면 컨테이너 (배경 이미지 적용)
     <div
       className="relative w-full h-full pt-[13%] pb-0 flex flex-col items-center bg-[length:100%_100%]"
       style={{ backgroundImage: `url(${getAssetUrl(currentTheme, 'backgrounds', 'store_background_x3')})` }}
     >
-      {/* 뒤로가기 버튼만 있는 헤더 */}
       <Header isBackButton={true} backPath="/more" />
 
-      {/* 상점 타이틀 영역 */}
       <div className="absolute top-[17%] left-[12%] z-20 pointer-events-none">
         <h1
           className="text-5xl font-extrabold m-0 text-left"
           style={{
             color: '#926653',
-            WebkitTextStroke: '10px white', // 글자 외곽선
+            WebkitTextStroke: '10px white',
             textShadow: '0 0 1px white',
             paintOrder: 'stroke fill',
-            letterSpacing: '-4px' // 자간 조정
+            letterSpacing: '-4px'
           }}
         >
           상점
         </h1>
       </div>
 
-      {/* 보관함 & 재화 영역 */}
       <div className="absolute top-[14%] right-[2%] flex flex-col items-end z-10 gap-3">
-        {/* 보관함 아이콘 */}
         <button
           onClick={() => navigate('/more/inventory')}
           className="bg-transparent border-none p-0 cursor-pointer outline-none"
         >
-          {/* 부모 너비가 명확하지 않아서 px로 유지 */}
           <img src={getAssetUrl(currentTheme, 'icons', 'inventory_icon_x3')} className="w-[80px] h-auto block" alt="보관함" />
         </button>
 
-        {/* 코인 박스 + 안쪽 플러스 버튼 */}
         <div className="relative flex items-center justify-center h-[44px]">
-          {/* 코인 배경 이미지 */}
           <img
             src={getAssetUrl(currentTheme, 'boxes', 'have_money_box_x2')}
             className="h-full w-auto block pointer-events-none"
             alt="코인 배경"
           />
-          {/* 현재 보유 코인 텍스트 */}
           <span className="absolute right-[25%] top-1/2 -translate-y-1/2 text-base font-bold text-black tracking-wider pointer-events-none">
             {myCoins}
           </span>
 
-          {/* 재화 충전 버튼 */}
           <div className="absolute right-[1.6%] inset-y-0 flex items-center justify-center mt-[-1%]">
             <button className="bg-transparent border-none p-0 cursor-pointer outline-none">
               <img
@@ -191,18 +137,19 @@ const Shop = () => {
         </div>
       </div>
 
-      {/* 카테고리 탭 */}
       <CategoryTabs
         tabs={TABS}
         activeTab={activeTab}
         setActiveTab={setActiveTab}
-        marginTop="mt-[100px]" // 필요 시 상단 여백 조절 가능
+        marginTop="mt-[100px]"
       />
 
-      {/* 로딩 중에는 로딩 메시지를 표시 */}
-      {/* 아이템 그리드 분리 - ShopItem에 filteredItems를 전달*/}
-      {/* 탭 조건에 맞게 필터링된 아이템 목록을 화면에 렌더링 */}
-      {loading ? (
+      {/* ── 로딩 / 에러 / 정상 3단 분기 ── */}
+      {isError ? (
+        <div className="w-full flex-1 flex items-center justify-center text-sm text-gray-500 font-bold">
+          상점 정보를 불러오지 못했습니다. 잠시 후 다시 시도해주세요.
+        </div>
+      ) : loading ? (
         <div
           className="w-full flex-1 p-[3%] pb-0 overflow-y-auto bg-[length:100%_100%]"
           style={{ backgroundImage: `url(${getAssetUrl(currentTheme, 'boxes', 'store_box_x3')})` }}
@@ -215,15 +162,12 @@ const Shop = () => {
         <ShopItemGrid
           items={filteredItems}
           onItemClick={(item) => {
-            setSelectedItem(item);  // 클릭한 아이템 정보 저장
-            setDialogStep("detail");  // 상세 정보 팝업 띄우기
+            setSelectedItem(item);
+            setDialogStep("detail");
           }}
         />
       )}
 
-      {/* 다이얼로그 영역(dialogStep 상태에 따라 다른 팝업을 렌더링) */}
-
-      {/* 아이템 상세 정보 팝업 */}
       {dialogStep === 'detail' && (
         <ItemDetailDialog
           selectedItem={selectedItem}
@@ -233,7 +177,6 @@ const Shop = () => {
         />
       )}
 
-      {/* 구매 확인 팝업 */}
       {dialogStep === 'confirm' && (
         <PurchaseDialog
           selectedItem={selectedItem}
@@ -243,9 +186,6 @@ const Shop = () => {
         />
       )}
 
-      {/* 결과 알림 및 미리보기 창 */}
-
-      {/* 구매 성공 알림 팝업 */}
       {dialogStep === 'success' && (
         <ResultDialog
           message="구매가 완료되었습니다"
@@ -258,7 +198,6 @@ const Shop = () => {
         />
       )}
 
-      {/* 구매 실패 알림 팝업 */}
       {dialogStep === 'fail' && (
           <ResultDialog 
               message={
@@ -278,9 +217,6 @@ const Shop = () => {
           />
       )}
 
-      {/* 이미 보유한 아이템은 클릭 X */}
-
-      {/* 테마 미리보기 팝업 */}
       {dialogStep === "preview" && (
         <PreviewDialog
           currentTheme={selectedItem.preview}
