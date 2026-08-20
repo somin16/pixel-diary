@@ -221,23 +221,25 @@ class AttendanceView(APIView):
 
                 else:
                     start_date = today
-
-                # 시작일로부터 며칠이 지났는지 확인
-                # 시작일로부터 7일 이상 지났거나 이미 7일차 출석을 완료한 경우 새로운 주차로 초기화
-                days_since_start = (today - start_date).days
-
-                if days_since_start >= 7 or current_day >= 7:
-                    current_day = 0
-                    start_date = today
-                    attendance_dates = []
-                    last_checked_date = None
                     
                 # 오늘 이미 출석한 경우 400 반환
+                # 리셋 판단보다 먼저 검사 - 7일차 출석 당일 재요청 시 보상 중복 지급 방지
                 if last_checked_date == today:
                     return Response(
                         {"message": "오늘 이미 출석 체크를 완료했습니다."},
                         status=status.HTTP_400_BAD_REQUEST,
                     )
+                    
+                # 시작일로부터 며칠이 지났는지 확인
+                # 시작일로부터 7일 이상 지났거나 이미 7일차 출석을 완료한 경우 새로운 주차로 초기화
+                days_since_start = (today - start_date).days
+                
+                if days_since_start >= 7 or current_day >= 7:
+                    current_day = 0
+                    start_date = today
+                    attendance_dates = []
+                    last_checked_date = None
+                
                 # 오늘 출석 처리
                 current_day += 1
                 attendance_dates.append(str(today))

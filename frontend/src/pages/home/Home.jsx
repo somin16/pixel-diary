@@ -26,9 +26,9 @@ export default function Home() {
   const { lastPromptedDate, setLastPromptedDate } = useAttendanceStore();
   const { data: attendanceData, isSuccess: isAttendanceSuccess } = useAttendance();
 
-  // 로그인 직후 자동 출석 체크 및 다이얼로그 제어 로직
+  // 로그인 직후 자동 출석 여부 확인 및 다이얼로그 자동 노출 로직(조회)
   useEffect(() => {
-    // 2번 문제(시간대) 코드는 냅두고 기존 방식 그대로 사용
+    // 오늘 날짜 (로컬 시간 기준, 백엔드 KST와 시간대 다를 경우 하루 어긋날 수 있음)
     const today = new Date().toLocaleDateString("sv-SE");
     
     // 이번 세션이 아니라 "오늘" 이미 판단했으면 재판단 안 함
@@ -37,7 +37,9 @@ export default function Home() {
 
     if (isAttendanceSuccess && attendanceData) {
       // 오늘 날짜가 출석 기록에 없으면 창 띄우기
-      if (!attendanceData.attendance_dates.includes(today)) {
+      const isTodayChecked = attendanceData.attendance_dates.includes(today);
+
+      if (!isTodayChecked) {
         setIsAttendanceOpen(true);
       }
       
