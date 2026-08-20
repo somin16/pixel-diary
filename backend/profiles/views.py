@@ -533,3 +533,116 @@ class AttendanceView(APIView):
                 {"message": "출석 기록 조회 중 오류가 발생했습니다."},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
+            
+            
+class AttendanceResetView(APIView):
+    """
+    앱 접속 시 호출 — 출석 기록이 7일 이상 지났으면 실제로 DB를 초기화하는 API
+    (AttendanceView의 GET과 달리, 이 API는 조회가 아니라 "실제 리셋"이 목적이라 POST로 분리)
+    """
+
+    def post(self, request):
+        """
+        POST /api/v1/profile/attendance/reset/
+        - Authorization 헤더의 access_token으로 현재 유저 확인
+        - 출석 시작일로부터 7일 이상 지났으면 DB를 실제로 초기화
+        - 지나지 않았으면 아무 작업 없이 200 반환
+        """
+        access_token = extract_access_token(request)
+        if not access_token:
+            return Response(
+                {"message": "Authorization 헤더에 유효한 Bearer 토큰이 필요합니다."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        try:
+            user = get_user_from_token(access_token)
+            if not user:
+                return Response(
+                    {"message": "유효하지 않은 토큰입니다."},
+                    status=status.HTTP_401_UNAUTHORIZED,
+                )
+
+            user_id = user.get("id")
+            supabase_url = os.getenv("SUPABASE_URL")
+            headers = get_supabase_headers()
+
+            # 출석 기록 조회
+            attendance_response = requests.get(
+                f"{supabase_url}/rest/v1/attendance",
+                headers=headers,
+                params={
+                    "user_id": f"eq.{user_id}",
+                    "select": "attendance_id,start_date,attendance_dates",
+                },
+            )
+
+            if attendance_response.status_code != 200:
+                raise Exception(f"Supabase API 오류: {attendance_response.text}")
+
+            attendance_data = attendance_response.json()
+
+            # 출석 기록 자체가 없으면 리셋할 것도 없음
+            if not attendance_data:
+                return Response(
+                    {"reset": False, "message": "출석 기록이 없습니다."},
+                    status=status.HTTP_200_OK,
+                )
+
+            attendance = attendance_data[0]
+            attendance_dates = attendance.get("attendance_dates") or []
+
+            kst = timezone(timedelta(hours=9))
+            today = datetime.now(kst).date()
+
+            # start_date 결정 (AttendanceView의 GET/POST와 동일한 우선순위 로직)
+            start_date_str = attendance.get("start_date")
+            if start_date_str:
+                start_date = datetime.strptime(start_date_str, "%Y-%m-%d").date()
+            elif attendance_dates:
+                try:
+                    start_date = datetime.strptime(attendance_dates[0], "%Y-%m-%d").date()
+                except ValueError:
+                    start_date = today
+            else:
+                start_date = today
+
+            days_since_start = (today - start_date).days
+
+            # 7일 이상 지났으면 실제로 DB 초기화
+            if days_since_start >= 7:
+                reset_response = requests.patch(
+                    f"{supabase_url}/rest/v1/attendance"
+                    f"?attendance_id=eq.{attendance.get('attendance_id')}",
+                    headers=headers,
+                    json={
+                        "current_day": 0,
+                        "last_checked_at": None,
+                        "start_date": str(today),
+                        "attendance_dates": [],
+                    },
+                )
+
+                if reset_response.status_code not in [200, 204]:
+                    return Response(
+                        {"message": "출석 기록 초기화 중 오류가 발생했습니다."},
+                        status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                    )
+
+                return Response(
+                    {"reset": True, "message": "만료된 출석 기록을 초기화했습니다."},
+                    status=status.HTTP_200_OK,
+                )
+
+            # 7일이 지나지 않았으면 아무 작업 안 함
+            return Response(
+                {"reset": False, "message": "아직 초기화 대상이 아닙니다."},
+                status=status.HTTP_200_OK,
+            )
+
+        except Exception as error:
+            print(f"=== ATTENDANCE RESET ERROR ===\n{error}\n==============================")
+            return Response(
+                {"message": "출석 기록 초기화 중 오류가 발생했습니다."},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )

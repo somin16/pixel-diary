@@ -21,4 +21,12 @@ export const attendanceApi = {
     });
     return response;
   },
+
+  // 앱 접속 시 만료된 출석 기록 초기화
+  resetIfExpired: async () => {
+    const response = await authFetch(`${BASE_URL}/api/v1/profile/attendance/reset/`, {
+      method: "POST",
+    });
+    return response;
+  },
 };

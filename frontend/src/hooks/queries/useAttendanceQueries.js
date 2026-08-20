@@ -22,3 +22,14 @@ export const useCheckAttendance = () => {
     },
   });
 };
+
+// 접속 시 만료된 출석 기록을 실제로 초기화하는 훅 (AttendanceResetView 호출)
+export const useResetAttendanceIfExpired = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: attendanceApi.resetIfExpired,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.attendance }); // 리셋됐으면 캐시도 최신화
+    },
+  });
+};
