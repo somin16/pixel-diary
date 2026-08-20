@@ -11,6 +11,9 @@ import { useDiaries } from "../../hooks/queries/useDiaryQueries";
 import Attendance from "../../components/more/attendance/AttendanceDialog";
 import { useAttendanceStore } from "../../stores/useAttendanceStore";
 
+// 리액트 쿼리
+import { useAttendance } from "../../hooks/queries/useAttendanceQueries";
+
 export default function Home() {
   const navigate = useNavigate();
   const currentTheme = useTheme((state) => state.currentTheme);
@@ -28,39 +31,30 @@ export default function Home() {
 
   // 출석 관련 상태 정의
   const [isAttendanceOpen, setIsAttendanceOpen] = useState(false);
-  const { hasCheckedToday, setHasCheckedToday } = useAttendanceStore();
+  const { lastPromptedDate, setLastPromptedDate } = useAttendanceStore();
+  const { data: attendanceData, isSuccess: isAttendanceSuccess } = useAttendance();
 
-  // 로그인 직후 자동 출석 체크 및 다이얼로그 제어 로직
+  // 로그인 직후 자동 출석 여부 확인 및 다이얼로그 자동 노출 로직(조회)
   useEffect(() => {
-    if (hasCheckedToday) return;
+    // 오늘 날짜 (로컬 시간 기준, 백엔드 KST와 시간대 다를 경우 하루 어긋날 수 있음)
+    const today = new Date().toLocaleDateString("sv-SE");
+    
+    // 이번 세션이 아니라 "오늘" 이미 판단했으면 재판단 안 함
+    // 자정이 지나 today 값이 다음 날로 바뀌면 이 조건문을 무사히 통과하게 됨
+    if (lastPromptedDate === today) return; 
 
-    const verifyAttendance = async () => {
-      try {
-        // 1. authFetch를 사용해 백엔드 API로 출석 기록 조회
-        const result = await authFetch(
-          `${import.meta.env.VITE_BACKEND_URL}/api/v1/profile/attendance/`,
-          { method: "GET" }
-        );
+    if (isAttendanceSuccess && attendanceData) {
+      // 오늘 날짜가 출석 기록에 없으면 창 띄우기
+      const isTodayChecked = attendanceData.attendance_dates.includes(today);
 
-        // 2. YYYY-MM-DD 형식으로 오늘 날짜 구하기
-        const today = new Date().toLocaleDateString("sv-SE");
-
-        // 3. 백엔드에서 준 출석 날짜 목록에 오늘 날짜가 '없다면' 창 띄우기
-        if (!result.attendance_dates.includes(today)) {
-          setIsAttendanceOpen(true);
-        }
-
-      } catch (error) {
-        // 세션이 없거나 서버 에러일 경우 처리
-        console.error("출석 기록 조회 중 오류 발생:", error);
-      } finally {
-        // 4. 성공하든 에러가 나든 오늘 조회는 끝났으니 도장 찍기
-        setHasCheckedToday(true);
+      if (!isTodayChecked) {
+        setIsAttendanceOpen(true);
       }
-    };
-
-    verifyAttendance();
-  }, [hasCheckedToday, setHasCheckedToday]);
+      
+      // 출석 여부와 무관하게 오늘 날짜를 저장하여 "오늘자 판단 완료" 표시
+      setLastPromptedDate(today); 
+    }
+  }, [isAttendanceSuccess, attendanceData, lastPromptedDate, setLastPromptedDate]);
 
   // 달력의 기준이 되는 날짜 상태 (오늘 날짜로 초기화)
   // 이 값이 바뀌면 달력이 해당 월로 이동함

@@ -2,20 +2,24 @@ import React from "react";
 import { useNavigate } from "react-router-dom";
 import { useTheme } from "../../../stores/useThemeStore"; // useTheme 불러오기
 import { getAssetUrl } from "../../../utils/AssetHelper"; // 헬퍼 불러오기
+import { useProfile } from '../../../hooks/queries/useProfileQueries';
 
-/**
- * ProfileBar (MorePage 상단 사용자 프로필 영역)
- * @param {string} nickname - 사용자 닉네임
- * @param {string} email - 사용자 이메일
- * @param {string} profileImage - 프로필 이미지 URL (없으면 기본 아이콘)
- */
+// ProfileBar 컴포넌트 (MorePage 상단 사용자 프로필 영역)
 
-const ProfileBar = ({ nickname, email, profileImage }) => {
+const ProfileBar = () => {
   // navigate('/경로') 처럼 사용하여 원하는 주소로 화면을 전환
   const navigate = useNavigate();
 
   // 테마 전역 관리
   const currentTheme = useTheme((state) => state.currentTheme);
+
+  // React Query로 프로필 데이터 가져오기
+  const { data: profileData, isLoading, isError } = useProfile();
+
+  // 데이터가 없을 때를 대비한 변수 할당
+  const nickname = isLoading ? "로딩중..." : isError ? "정보 없음" : (profileData?.name || "이름 없음");
+  const email = isLoading ? "로딩중..." : isError ? "정보 없음" : (profileData?.email || "");
+  const profileImage = profileData?.profile_image || null;
 
   return (
     <section
