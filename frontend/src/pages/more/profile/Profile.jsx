@@ -5,9 +5,6 @@ import { getAssetUrl } from "../../../utils/AssetHelper"; // 헬퍼 불러오기
 import { useUpdateProfileImage, useResetProfileImage, useChangeUsername } from '../../../hooks/mutations/useAuthMutations'; // ✅ 인증 관련 뮤테이션 훅
 import AuthValidator from "../../../utils/AuthValidator"; 
 
-// zustand 함수 불러오기
-import { useProfileStore } from '../../../stores/useProfileStore';
-
 // 컴포넌트 불러오기
 import Header from "../../../components/common/Header";
 import ImageButton from "../../../components/common/ImageButton";
@@ -26,25 +23,13 @@ const Profile = () => {
   // React Query 변수 할당
   const { data: profileData, isLoading: isProfileLoading, isError, refetch } = useProfile();
 
-  // 전역 스토어에서 프로필 데이터 원본 및 통신 함수 가져오기
-  const {
-    nickname: storeNickname,
-    email: storeEmail,
-    profileImage: storeImage,
-    isFetched,
-    fetchProfile,
-    updateProfileLocally // 수정 완료 시 쓸 함수
-  } = useProfileStore();
-
   // 사용자 정보 상태 관리
-  const [nickname, setNickname] = useState(storeNickname); // 닉네임
-  const [email, setEmail] = useState(storeEmail); // 이메일
-  const [profileImage, setProfileImage] = useState(storeImage); // 프로필 사진
+  const [nickname, setNickname] = useState(""); // 닉네임
+  const [profileImage, setProfileImage] = useState(null); // 프로필 사진
 
   // 메세지 상태
   const [successMessage, setSuccessMessage] = useState(""); // 수정 완료 메세지
   const [errorMessage, setErrorMessage] = useState(""); // 에러 메세지
-  const [isUploading, setIsUploading] = useState(false); // 로딩 상태 추가
 
   const fileInputRef = useRef(null); // 숨겨진 파일 선택창 조작용
   const [isMenuOpen, setIsMenuOpen] = useState(false); // 프로필 사진 메뉴 상태
@@ -56,6 +41,9 @@ const Profile = () => {
   const updateProfileImage = useUpdateProfileImage();
   const resetProfileImage = useResetProfileImage();
   const changeUsername = useChangeUsername();
+
+  // 3개의 Mutation 중 하나라도 진행 중이면 로딩 상태로 간주
+  const isUploading = updateProfileImage.isPending || resetProfileImage.isPending || changeUsername.isPending;
 
   // ──────────────────────────────────────────────────
   // 공통 메시지 출력 함수
@@ -106,24 +94,20 @@ const Profile = () => {
     if (!profileImage) return; // 이미 기본 사진이면 무시
 
     try {
-      setIsUploading(true); // 로딩 켜기
       try {
         await resetProfileImage.mutateAsync();
       } catch (error) {
         // 백엔드에서 400(이미 기본 프로필) 에러가 와도 목표 달성이므로 무시하고 진행
         if (error.message !== "이미 기본 프로필 사진입니다.") throw error;
       }
+
       await refetch(); // 사진 삭제 후 서버 데이터 갱신
       setProfileImage(null);
-      updateProfileLocally(nickname, null); // 스토어 동기화
-
       showMessage("success", "기본 프로필 사진으로 변경되었습니다");
 
     } catch (error) {
         console.error("기본 이미지 변경 오류:", error);
         showMessage("error", "기본 이미지 변경에 실패했습니다");
-    } finally {
-      setIsUploading(false); 
     }
   };
 
@@ -132,8 +116,6 @@ const Profile = () => {
     if (!file) return;
 
     try {
-      setIsUploading(true); // 로딩 켜기
-
       // 화면에 먼저 미리보기 렌더링
       if (profileImage && typeof profileImage === 'string' && profileImage.startsWith('blob:')) {
         URL.revokeObjectURL(profileImage);
@@ -151,8 +133,7 @@ const Profile = () => {
         const cleanUrl = newImageUrl.split('?')[0];
         const cacheBustedUrl = `${cleanUrl}?t=${new Date().getTime()}`;
 
-        // 더보기 페이지(Zustand 스토어)와 현재 화면 모두 즉시 강제 갱신
-        updateProfileLocally(nickname, cacheBustedUrl);
+        // 현재 화면 즉시 갱신 (캐시버스팅으로 이미지 새로고침 강제)
         setProfileImage(cacheBustedUrl);
       }
       
@@ -161,10 +142,8 @@ const Profile = () => {
     } catch (error) {
       console.error("이미지 업로드 오류:", error);
       showMessage("error", "사진 업로드에 실패했습니다");
-      setProfileImage(storeImage); // 실패 시 이전 사진으로 복구
-    } finally {
-      setIsUploading(false); // 로딩 끄기
-    }
+      setProfileImage(profileData?.profile_image || null); // 실패 시 이전 사진으로 복구
+    } 
   };
 
   // 내 정보 수정하기 버튼 클릭 시 (닉네임만 변경 - 이미지는 즉시 업로드) - useChangeUsername 훅 사용
@@ -179,35 +158,25 @@ const Profile = () => {
     }
 
     try {
-      setIsUploading(true); // 통신 시작 전 로딩 켜기 (버튼 비활성화)
       await changeUsername.mutateAsync(nickname);
 
       await refetch(); // 사진 삭제 후 서버 데이터 갱신
-      updateProfileLocally(nickname, storeImage); // 스토어 닉네임 동기화
       showMessage("success", "정보가 수정되었습니다");
 
     } catch (error) {
       console.error("닉네임 변경 오류:", error);
       showMessage("error", "닉네임 변경에 실패했습니다. 다시 시도해 주세요.");
-    } finally {
-      setIsUploading(false); // 로딩 끄기 (버튼 활성화)
-    }
+    } 
   };
 
   // ──────────────────────────────────────────────────
   // useEffect
   // ──────────────────────────────────────────────────
 
-  // 프로필 데이터 조회
-  useEffect(() => {
-    fetchProfile();
-  }, [fetchProfile]);
-
   // 데이터 로딩 완료 시 로컬 폼 상태 동기화
   useEffect(() => {
     if (profileData) {
-      setNickname(profileData?.name || storeNickname || "");
-      setEmail(profileData?.email || storeEmail || "");
+      setNickname(profileData?.name || "");
 
       // 현재 화면에 방금 고른 사진(blob)이 떠있다면 서버 사진으로 덮어쓰지 않음
       setProfileImage((prev) => {
@@ -215,12 +184,7 @@ const Profile = () => {
           return prev;
         }
 
-        // 서버에서 받아온 값이 확실한 null이면 무조건 null 유지
-        if (profileData.profile_image === null) {
-          return null;
-        }
-
-        return storeImage || profileData?.profile_image || null;
+        return profileData?.profile_image || null;
       });
     }
   }, [profileData]);
@@ -292,7 +256,7 @@ const Profile = () => {
             {isMenuOpen && (
               <div
                 className="fixed inset-0 z-50 bg-black/50 flex justify-center items-center"
-                onClick={() => setIsMenuOpen(false)}
+                onClick={() => setIsMenuOpen(false)} // 어두운 배경 클릭 시 닫힘
               >
                 <div
                   className="flex flex-col bg-white rounded-2xl shadow-xl overflow-hidden w-[80%] max-w-[300px]"
@@ -301,7 +265,7 @@ const Profile = () => {
                   <button
                     onClick={() => {
                       setIsMenuOpen(false);
-                      fileInputRef.current.click();
+                      fileInputRef.current.click(); // 파일 선택창 열기
                     }}
                     className="px-4 py-4 text-base text-gray-800 hover:bg-gray-100 font-bold"
                   >
@@ -334,8 +298,8 @@ const Profile = () => {
               className="hidden"
               onChange={(e) => {
                 const file = e.target.files[0];
-                handleImageUpload(file);
-                e.target.value = ''; 
+                handleImageUpload(file); // 선택 즉시 업로드 함수 호출
+                e.target.value = ''; // 같은 파일을 다시 선택해도 작동하도록 input 값 초기화
               }}
             />
           </section>
