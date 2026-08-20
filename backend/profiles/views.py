@@ -178,48 +178,76 @@ class AttendanceView(APIView):
                 raise Exception(f"Supabase API 오류: {attendance_response.text}")
 
             attendance_data = attendance_response.json()
-
+            
+            # 기존 출석 기록이 있는 경우
             if attendance_data:
                 attendance = attendance_data[0]
-
-                # 마지막 출석 시간 문자열을 한국 시간 기준 날짜로 변환
-                last_checked_at_str = attendance.get("last_checked_at")
-                last_checked_at = datetime.fromisoformat(last_checked_at_str.replace("Z", "+00:00")).astimezone(kst)
-                last_checked_date = last_checked_at.date()
+                attendance_id = attendance.get("attendance_id")
                 
-                # 시작일 문자열을 날짜 객체로 변환 (없으면 마지막 출석일 사용)
-                start_date_str = attendance.get("start_date")
-                start_date = datetime.strptime(start_date_str, "%Y-%m-%d").date() if start_date_str else last_checked_date
-
+                # 현재 출석 일차
+                current_day = attendance.get("current_day") or 0
+                
                 # 기존 출석 날짜 목록 가져오기
                 attendance_dates = attendance.get("attendance_dates") or []
 
+                # 마지막 출석 시간 문자열을 한국 시간 기준 날짜로 변환
+                last_checked_at_str = attendance.get("last_checked_at")
+
+                if last_checked_at_str:
+                    last_checked_at = datetime.fromisoformat(
+                        last_checked_at_str.replace("Z", "+00:00")
+                    ).astimezone(kst)
+                    last_checked_date = last_checked_at.date()
+                else:
+                    last_checked_date = None
+                
+                
+                # --------------------------------------------------------
+                # 출석 시작일 확인
+                #
+                # 1. start_date가 있으면 해당 날짜 사용
+                # 2. 없으면 기존 출석 날짜의 첫 번째 날짜 사용
+                # 3. 둘 다 없으면 오늘 날짜 사용
+                # --------------------------------------------------------
+                start_date_str = attendance.get("start_date")
+
+                if start_date_str:
+                    start_date = datetime.strptime(start_date_str,"%Y-%m-%d").date()
+                elif attendance_dates:
+                    try:
+                        start_date = datetime.strptime(attendance_dates[0],"%Y-%m-%d").date()
+                    except ValueError:
+                        start_date = today
+
+                else:
+                    start_date = today
+                    
                 # 오늘 이미 출석한 경우 400 반환
+                # 리셋 판단보다 먼저 검사 - 7일차 출석 당일 재요청 시 보상 중복 지급 방지
                 if last_checked_date == today:
                     return Response(
                         {"message": "오늘 이미 출석 체크를 완료했습니다."},
                         status=status.HTTP_400_BAD_REQUEST,
                     )
-                
-                # 첫 출석일로부터 7일이 지난 경우 초기화
+                    
+                # 시작일로부터 며칠이 지났는지 확인
+                # 시작일로부터 7일 이상 지났거나 이미 7일차 출석을 완료한 경우 새로운 주차로 초기화
                 days_since_start = (today - start_date).days
-                if days_since_start >= 7:
-                    current_day = 1
+                
+                if days_since_start >= 7 or current_day >= 7:
+                    current_day = 0
                     start_date = today
-                    attendance_dates = [str(today)]  # 초기화 후 오늘 날짜만
-                else:
-                    current_day = attendance.get("current_day")
-                    if current_day >= 7:
-                        current_day = 1
-                        start_date = today
-                        attendance_dates = [str(today)]  # 7일차 완료 후 초기화
-                    else:
-                        current_day += 1
-                        attendance_dates.append(str(today))  # 오늘 날짜 추가
-
-                # 출석 기록 업데이트
-                requests.patch(
-                    f"{supabase_url}/rest/v1/attendance?attendance_id=eq.{attendance.get('attendance_id')}",
+                    attendance_dates = []
+                    last_checked_date = None
+                
+                # 오늘 출석 처리
+                current_day += 1
+                attendance_dates.append(str(today))
+                
+                # 출석 기록 DB 업데이트
+                attendance_update_response = requests.patch(
+                    f"{supabase_url}/rest/v1/attendance"
+                    f"?attendance_id=eq.{attendance_id}",
                     headers=headers,
                     json={
                         "current_day": current_day,
@@ -229,20 +257,36 @@ class AttendanceView(APIView):
                     },
                 )
 
+                if attendance_update_response.status_code not in [200, 204]:
+                    raise Exception(
+                        f"출석 기록 저장 실패: "
+                        f"{attendance_update_response.text}"
+                    )
+                    
+            # 기존 출석 기록이 없는 경우 → 첫 출석
             else:
-                # 첫 출석인 경우 새로 생성
                 current_day = 1
-                requests.post(
+                start_date = today
+                attendance_dates = [str(today)]
+
+                # 새로운 출석 기록 생성
+                attendance_create_response = requests.post(
                     f"{supabase_url}/rest/v1/attendance",
                     headers=headers,
                     json={
                         "user_id": user_id,
                         "current_day": current_day,
                         "last_checked_at": now_kst.isoformat(),
-                        "start_date": str(today),
-                        "attendance_dates": [str(today)],
+                        "start_date": str(start_date),
+                        "attendance_dates": attendance_dates,
                     },
                 )
+
+                if attendance_create_response.status_code not in [200, 201]:
+                    raise Exception(
+                        f"출석 기록 생성 실패: "
+                        f"{attendance_create_response.text}"
+                    )
 
             # 일차별 보상 계산
             reward = ATTENDANCE_REWARDS.get(current_day)
@@ -407,7 +451,7 @@ class AttendanceView(APIView):
                 headers=headers,
                 params={
                     "user_id": f"eq.{user_id}",
-                    "select": "current_day,start_date,attendance_dates",
+                    "select": "attendance_id,current_day,last_checked_at,start_date,attendance_dates",
                 },
             )
 
@@ -421,6 +465,7 @@ class AttendanceView(APIView):
                 return Response(
                     {
                         "total_count": 0,
+                        "current_day": 0,
                         "week_start_date": None,
                         "attendance_dates": [],
                         "message": "출석 기록이 없습니다.",
@@ -431,10 +476,51 @@ class AttendanceView(APIView):
             attendance = attendance_data[0]
             attendance_dates = attendance.get("attendance_dates") or []
 
+            kst = timezone(timedelta(hours=9))
+            today = datetime.now(kst).date()
+
+            # --------------------------------------------------------
+            # start_date 가져오기
+            #
+            # 1. start_date가 있으면 해당 날짜 사용
+            # 2. start_date가 없으면 기존 출석 배열의 첫 날짜 사용
+            # 3. 둘 다 없으면 오늘 날짜 사용
+            # --------------------------------------------------------
+            start_date_str = attendance.get("start_date")
+            
+            if start_date_str:
+                start_date = datetime.strptime(start_date_str, "%Y-%m-%d").date()
+            elif attendance_dates:
+                # DB에 start_date 컬럼이 비어있어도, 과거 출석 배열이 있다면 첫 날짜를 기준일로 삼음
+                try:
+                    start_date = datetime.strptime(attendance_dates[0], "%Y-%m-%d").date()
+                except ValueError:
+                    start_date = today
+            else:
+                start_date = today
+                
+            # 시작일로부터 7일이 지난 경우 초기화
+            days_since_start = (today - start_date).days
+
+            # 만료됐으면 DB는 그대로 두고, 응답만 "리셋된 것처럼" 계산해서 반환
+            if days_since_start >= 7:
+                return Response(
+                    {
+                        "total_count": 0,
+                        "current_day": 0,
+                        "week_start_date": None,
+                        "attendance_dates": [],
+                        "message": "출석 기록이 만료되어 새로운 주차로 초기화되었습니다.",
+                    },
+                    status=status.HTTP_200_OK,
+                )
+
+            # 7일이 지나지 않은 경우 정상 응답
             return Response(
                 {
                     "total_count": len(attendance_dates),
-                    "week_start_date": attendance.get("start_date"),
+                    "current_day": attendance.get("current_day") or 0,
+                    "week_start_date": str(start_date),
                     "attendance_dates": attendance_dates,
                     "message": "출석 기록 조회 성공",
                 },
@@ -445,5 +531,118 @@ class AttendanceView(APIView):
             print(f"=== ATTENDANCE GET ERROR ===\n{error}\n===========================")
             return Response(
                 {"message": "출석 기록 조회 중 오류가 발생했습니다."},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
+            
+            
+class AttendanceResetView(APIView):
+    """
+    앱 접속 시 호출 — 출석 기록이 7일 이상 지났으면 실제로 DB를 초기화하는 API
+    (AttendanceView의 GET과 달리, 이 API는 조회가 아니라 "실제 리셋"이 목적이라 POST로 분리)
+    """
+
+    def post(self, request):
+        """
+        POST /api/v1/profile/attendance/reset/
+        - Authorization 헤더의 access_token으로 현재 유저 확인
+        - 출석 시작일로부터 7일 이상 지났으면 DB를 실제로 초기화
+        - 지나지 않았으면 아무 작업 없이 200 반환
+        """
+        access_token = extract_access_token(request)
+        if not access_token:
+            return Response(
+                {"message": "Authorization 헤더에 유효한 Bearer 토큰이 필요합니다."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        try:
+            user = get_user_from_token(access_token)
+            if not user:
+                return Response(
+                    {"message": "유효하지 않은 토큰입니다."},
+                    status=status.HTTP_401_UNAUTHORIZED,
+                )
+
+            user_id = user.get("id")
+            supabase_url = os.getenv("SUPABASE_URL")
+            headers = get_supabase_headers()
+
+            # 출석 기록 조회
+            attendance_response = requests.get(
+                f"{supabase_url}/rest/v1/attendance",
+                headers=headers,
+                params={
+                    "user_id": f"eq.{user_id}",
+                    "select": "attendance_id,start_date,attendance_dates",
+                },
+            )
+
+            if attendance_response.status_code != 200:
+                raise Exception(f"Supabase API 오류: {attendance_response.text}")
+
+            attendance_data = attendance_response.json()
+
+            # 출석 기록 자체가 없으면 리셋할 것도 없음
+            if not attendance_data:
+                return Response(
+                    {"reset": False, "message": "출석 기록이 없습니다."},
+                    status=status.HTTP_200_OK,
+                )
+
+            attendance = attendance_data[0]
+            attendance_dates = attendance.get("attendance_dates") or []
+
+            kst = timezone(timedelta(hours=9))
+            today = datetime.now(kst).date()
+
+            # start_date 결정 (AttendanceView의 GET/POST와 동일한 우선순위 로직)
+            start_date_str = attendance.get("start_date")
+            if start_date_str:
+                start_date = datetime.strptime(start_date_str, "%Y-%m-%d").date()
+            elif attendance_dates:
+                try:
+                    start_date = datetime.strptime(attendance_dates[0], "%Y-%m-%d").date()
+                except ValueError:
+                    start_date = today
+            else:
+                start_date = today
+
+            days_since_start = (today - start_date).days
+
+            # 7일 이상 지났으면 실제로 DB 초기화
+            if days_since_start >= 7:
+                reset_response = requests.patch(
+                    f"{supabase_url}/rest/v1/attendance"
+                    f"?attendance_id=eq.{attendance.get('attendance_id')}",
+                    headers=headers,
+                    json={
+                        "current_day": 0,
+                        "last_checked_at": None,
+                        "start_date": str(today),
+                        "attendance_dates": [],
+                    },
+                )
+
+                if reset_response.status_code not in [200, 204]:
+                    return Response(
+                        {"message": "출석 기록 초기화 중 오류가 발생했습니다."},
+                        status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                    )
+
+                return Response(
+                    {"reset": True, "message": "만료된 출석 기록을 초기화했습니다."},
+                    status=status.HTTP_200_OK,
+                )
+
+            # 7일이 지나지 않았으면 아무 작업 안 함
+            return Response(
+                {"reset": False, "message": "아직 초기화 대상이 아닙니다."},
+                status=status.HTTP_200_OK,
+            )
+
+        except Exception as error:
+            print(f"=== ATTENDANCE RESET ERROR ===\n{error}\n==============================")
+            return Response(
+                {"message": "출석 기록 초기화 중 오류가 발생했습니다."},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )

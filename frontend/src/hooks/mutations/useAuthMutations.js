@@ -9,7 +9,6 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { authApi } from '../../api/authApi';
 import { supabase } from '../../utils/SupabaseClient';
-import { useProfileStore } from '../../stores/useProfileStore';
 
 // 이메일 중복 확인 - onBlur 등 특정 시점에 수동 호출
 export function useCheckEmail() {
@@ -47,7 +46,6 @@ export function useLogout() {
       await supabase.auth.signOut({ scope: 'local' });
       sessionStorage.clear();
       queryClient.clear();
-      useProfileStore.getState().clearProfile();
     },
   });
 }
@@ -72,7 +70,7 @@ export function useResetPassword() {
   return useMutation({ mutationFn: authApi.resetPassword });
 }
 
-// 닉네임 변경 - 스토어 동기화는 호출부(Profile.jsx)에서 처리
+// 닉네임 변경 - 캐시 갱신은 호출부(Profile.jsx)의 refetch()가 담당
 export function useChangeUsername() {
   return useMutation({
     mutationFn: (userName) => authApi.changeUsername(userName),
@@ -87,17 +85,16 @@ export function useWithdraw() {
     onSuccess: async () => {
       await supabase.auth.signOut({ scope: 'local' });
       queryClient.clear();
-      useProfileStore.getState().clearProfile();
     },
   });
 }
 
-// 프로필 사진 변경 - 스토어 동기화는 호출부(Profile.jsx)에서 처리
+// 프로필 사진 변경 - 캐시 갱신은 호출부(Profile.jsx)의 refetch()가 담당
 export function useUpdateProfileImage() {
   return useMutation({ mutationFn: authApi.updateProfileImage });
 }
 
-// 프로필 사진 초기화 - 스토어 동기화는 호출부(Profile.jsx)에서 처리
+// 프로필 사진 초기화 - 캐시 갱신은 호출부(Profile.jsx)의 refetch()가 담당
 export function useResetProfileImage() {
   return useMutation({ mutationFn: authApi.resetProfileImage });
 }

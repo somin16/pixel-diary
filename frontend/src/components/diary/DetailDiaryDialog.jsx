@@ -3,7 +3,7 @@ import { getAssetUrl } from "../../utils/AssetHelper";
 import CloseButton from "../common/CloseButton";
 import { useNavigate } from "react-router-dom";
 import { formatDisplayDate } from "../../utils/DateFormatter";
-import { authFetch } from "../../utils/AuthHelper";
+import { useDeleteDiary, useDeleteDeco } from "../../hooks/queries/useDiaryQueries";
 import DeleteDialog from "./dialog/DeleteDialog";
 import ResultDialog from "../common/dialog/ResultDialog";
 import DuplicateDateDialog from "./dialog/DuplicateDateDialog";
@@ -100,6 +100,8 @@ const DetailDiaryDialog = ({
 
   const navigate = useNavigate();
   const { goTo, goBack } = useBackNavigate();
+  const deleteDiary = useDeleteDiary();
+  const deleteDeco = useDeleteDeco();
 
   const MAX_LENGTH = 160;
   const length = (content || '').length
@@ -233,24 +235,19 @@ const DetailDiaryDialog = ({
   }
 
   // 2. DeleteDialog에서 '삭제하기'를 눌렀을 때 (실제 API 호출)
-  async function handleActualDelete() {
-    try {
-      // authFetch 사용 (이전에 만든 도우미 함수)
-      // 성공 시 바로 JSON 결과가 반환됨
-      await authFetch(`${import.meta.env.VITE_BACKEND_URL}/api/v1/diaries/${diaryId}/`, {
-        method: 'DELETE',
-      });
-
-      //삭제 성공 시 목록 캐시를 날려버립니다.
-      sessionStorage.removeItem('diary_list');
-
-      // 성공하면 결과 창 띄우기
-      setDialogState('result');
-    } catch (error) {
-      console.error("삭제 실패:", error);
-      alert(error.message || "삭제 중 오류가 발생했습니다.");
-      setDialogState(null);
-    }
+  function handleActualDelete() {
+    deleteDiary.mutate(
+      { diaryId },
+      {
+        // mutation onSuccess에서 diaries/diaryDetail 캐시가 자동으로 무효화됨
+        onSuccess: () => setDialogState('result'),
+        onError: (error) => {
+          console.error("삭제 실패:", error);
+          alert(error.message || "삭제 중 오류가 발생했습니다.");
+          setDialogState(null);
+        },
+      }
+    );
   }
 
   // 3. ResultDialog에서 '확인'을 눌렀을 때 처리 분기
@@ -271,28 +268,22 @@ const DetailDiaryDialog = ({
     await onRefresh();
   }
 
-  // 꾸미기 초기화 
-  async function handleResetDeco() {
-    try {
-      setIsMenuOpen(false);
+  // 꾸미기 초기화
+  function handleResetDeco() {
+    setIsMenuOpen(false);
 
-      // authFetch 이용해 꾸미기 초기화 API 호출
-      await authFetch(`${import.meta.env.VITE_BACKEND_URL}/api/v1/diaries/${diaryId}/deco/`, {
-        method: 'DELETE',
-      });
-
-      //삭제 성공 시 목록 캐시를 날려버립니다.
-      sessionStorage.removeItem('diary_list');
-
-      // 성공하면 결과 창 띄우기
-      setDialogState('deco_reset_success');
-
-
-    } catch (error) {
-      console.error("꾸미기 초기화 실패:", error);
-      toast("꾸미기 내용이 없습니다");
-      setDialogState(null);
-    }
+    deleteDeco.mutate(
+      { diaryId },
+      {
+        // mutation onSuccess에서 diaries/diaryDetail 캐시가 자동으로 무효화됨
+        onSuccess: () => setDialogState('deco_reset_success'),
+        onError: (error) => {
+          console.error("꾸미기 초기화 실패:", error);
+          toast("꾸미기 내용이 없습니다");
+          setDialogState(null);
+        },
+      }
+    );
   }
 
   // 공유 (TODO: 구현)

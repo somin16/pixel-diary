@@ -1,12 +1,10 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from 'react-router-dom';
+import { useQueryClient } from '@tanstack/react-query';
 import { useTheme } from '../../../stores/useThemeStore'; // useTheme 불러오기
 import { getAssetUrl } from "../../../utils/AssetHelper"; // 헬퍼 불러오기
 import { supabase } from "../../../utils/SupabaseClient"; // supabase 불러오기
 import { useLogout, useWithdraw, useChangePassword } from '../../../hooks/mutations/useAuthMutations'; // 인증 관련 뮤테이션 훅
-
-// zustand 불러오기
-import { useProfileStore } from '../../../stores/useProfileStore';
 
 // 컴포넌트 불러오기
 import LogoutDialog from '../../../components/more/auth/LogoutDialog';
@@ -29,6 +27,8 @@ const Account = () => {
 
   //  테마 전역 관리
   const currentTheme = useTheme((state) => state.currentTheme);
+
+  const queryClient = useQueryClient();
 
   // 다이얼로그 상태 관리 'logout' | 'withdrawal' | null
   const [dialog, setDialog] = useState(null);

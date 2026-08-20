@@ -5,6 +5,10 @@ import { supabase } from "./utils/SupabaseClient";
 import { useAndroidBackButton } from "./hooks/useAndroidBackButtons"; // 모바일에서 뒤로가기 훅
 import { useTheme } from './stores/useThemeStore';
 import useMusicStore from './stores/useMusicStore';
+import { queryKeys } from "./utils/queryKeys"; // 캐시 key 모음
+import { storeApi } from "./api/storeApi";     
+import { inventoryApi } from "./api/inventoryApi"; 
+import { coinApi } from "./api/coinApi";         
 
 // ----------------- 컴포넌트 불러오기 ----------------------------------
 import AppShell from "./components/layout/AppShell"; // AppShell 불러오기
@@ -41,6 +45,9 @@ import AddItemPage from "./pages/more/add_item/AddItemPage"; // 더보기 - 아�
 import ContactReply from "./pages/more/contact_reply/ContactReply"; // 더보기 - 문의사항 답변 화면
 // ------------------------ 리액트 쿼리 ----------------------------
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { profileApi } from "./api/profileApi"; // 프로필 API
+import { attendanceApi } from "./api/attendanceApi"; // 출석 API
+import { useResetAttendanceIfExpired } from './hooks/queries/useAttendanceQueries';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -70,22 +77,32 @@ function AppInner() {
 
   const { currentTheme } = useTheme();
 
+  const resetAttendanceIfExpired = useResetAttendanceIfExpired(); // 앱 접속 시 만료된 출석 기록 초기화용 mutation
+
   async function prefetchCriticalData(queryClient) {
     // ‼️TODO: 각 담당자 API 완성되면 주석 해제, 로그인시 프리패치 되어야하는 목록 위치: src/App.jsx
     
-    // await Promise.all([
-    //   queryClient.prefetchQuery({ queryKey: queryKeys.profile, queryFn: profileApi.getProfile }),
-    //   queryClient.prefetchQuery({ queryKey: queryKeys.coins, queryFn: storeApi.getCoins }),
-    //   queryClient.prefetchQuery({ queryKey: queryKeys.attendance, queryFn: attendanceApi.getAttendance }),
-    // ]);
+    await Promise.all([
+      queryClient.prefetchQuery({ queryKey: queryKeys.profile, queryFn: profileApi.getProfile }),
+      queryClient.prefetchQuery({ queryKey: queryKeys.coins, queryFn: coinApi.getCoin }),
+      queryClient.prefetchQuery({ queryKey: queryKeys.items, queryFn: storeApi.getItem }),
+      queryClient.prefetchQuery({ queryKey: queryKeys.inventory, queryFn: inventoryApi.getItem }),
+      queryClient.prefetchQuery({ queryKey: queryKeys.attendance, queryFn: attendanceApi.getAttendance }),
+    ]);
   }
 
   useEffect(() => {
     // 현재 세션 가져오기 (앱 최초 실행 시)
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
       setSession(session);
+      if (session) {
+        // 세션 확인되면 출석 만료 여부부터 확인 후, 병렬로 나머지 데이터 prefetch
+        await resetAttendanceIfExpired.mutateAsync().catch((err) => {
+          console.error("출석 초기화 확인 실패:", err); // 실패해도 앱 진입은 막지 않음
+        });
+        await prefetchCriticalData(queryClient);
+      }
       setLoading(false);
-       if (session) prefetchCriticalData(queryClient); // 세션 확인되면 바로 병렬 prefetch
     });
 
     // 로그인 상태 변화 감시 (로그아웃/재로그인 포함)
