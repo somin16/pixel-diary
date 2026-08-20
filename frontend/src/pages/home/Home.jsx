@@ -5,9 +5,9 @@ import { useTheme } from "../../stores/useThemeStore"; // 테마 전역상태관
 import FloatingActionButton from "../../components/home/FloatingActionButton"; // FAB 버튼 컴포넌트
 import Calendar from "../../components/home/Calendar"; // 달력 컴포넌트
 import { authFetch } from "../../utils/AuthHelper";
-import { useQueryClient } from "@tanstack/react-query"; // 쿼리 클라이언트
+import { useDiaries } from "../../hooks/queries/useDiaryQueries";
 
-// 출석 관련 모듈 및 Zustand 스토어 임포트 
+// 출석 관련 모듈 및 Zustand 스토어 임포트
 import Attendance from "../../components/more/attendance/AttendanceDialog";
 import { useAttendanceStore } from "../../stores/useAttendanceStore";
 
@@ -18,8 +18,16 @@ export default function Home() {
   const navigate = useNavigate();
   const currentTheme = useTheme((state) => state.currentTheme);
 
-  // 쿼리 클라이언트
-  const queryClient = useQueryClient(); // 훅으로 가져오기
+  // 달력에서 날짜 클릭 시 해당 날짜 일기 존재 여부를 확인하는 데 사용
+  const { data: diariesData, isError: isDiariesError, error: diariesError } = useDiaries();
+
+  // 일기 목록 로드 실패 시 처리 (추후 alert/toast 추가 예정)
+  useEffect(() => {
+    if (isDiariesError) {
+      console.error("일기 목록 로드 실패:", diariesError);
+      // TODO: 사용자에게 alert 또는 toast로 안내 추가 예정
+    }
+  }, [isDiariesError, diariesError]);
 
   // 출석 관련 상태 정의
   const [isAttendanceOpen, setIsAttendanceOpen] = useState(false);
@@ -48,13 +56,6 @@ export default function Home() {
     }
   }, [isAttendanceSuccess, attendanceData, lastPromptedDate, setLastPromptedDate]);
 
-  // useEffect(() => {
-  // ‼️TODO:Diary 도메인 useDiaryQueries 완성되면 useQueryClient()로 prefetch 적용하기 주석 해제
-  // 위치 : src/pages/home/Home.jsx
-  
-  //   queryClient.prefetchQuery({ queryKey: queryKeys.diaries, queryFn: diaryApi.getList });
-  // }, []);
-
   // 달력의 기준이 되는 날짜 상태 (오늘 날짜로 초기화)
   // 이 값이 바뀌면 달력이 해당 월로 이동함
   const [viewDate, setViewDate] = useState(new Date());
@@ -72,49 +73,25 @@ export default function Home() {
   // 해당 날짜에 이미 쓴 일기가 있으면 → 상세보기로 이동
   // 없으면 → 일기 작성 페이지로 이동
   //
-  // ★ 캐시(sessionStorage) 활용:
-  //   - 처음 클릭 시에만 API를 호출하고 결과를 sessionStorage에 저장
-  //   - 이후 클릭에서는 저장된 데이터를 바로 사용 → API 호출 없이 즉시 이동
-  //   - 새 일기 저장(handleFinalSave) 시 캐시를 삭제하여 최신 데이터 유지
-  const handleDateClick = async (dateString) => {
-    try {
-      let diaries = [];
+  // useDiaries()가 Home 마운트 시 이미 목록을 캐시해두므로,
+  // 여기서는 그 캐시 데이터에서 날짜를 찾기만 하면 됨 (별도 fetch 불필요)
+  const handleDateClick = (dateString) => {
+    const diaries = diariesData?.diaries || [];
 
-      // sessionStorage에 캐시된 일기 목록이 있는지 확인
-      const cached = sessionStorage.getItem('diary_list');
-      if (cached) {
-        // 캐시 있음 → API 호출 없이 바로 사용
-        diaries = JSON.parse(cached);
-      } else {
-        // 캐시 없음 → API 호출 후 캐시에 저장
-        const data = await authFetch(
-          `${import.meta.env.VITE_BACKEND_URL}/api/v1/diaries/`
-        );
-        diaries = data.diaries || [];
+    // 클릭한 날짜("YYYY-MM-DD")와 일치하는 일기 찾기
+    // created_at은 "2026-05-14T07:07:59+09:00" 형식이므로 "T" 앞까지만 비교
+    const found = diaries.find(
+      (d) => d.created_at?.split("T")[0] === dateString
+    );
 
-        // 다음 클릭 시 재사용할 수 있도록 sessionStorage에 저장
-        sessionStorage.setItem('diary_list', JSON.stringify(diaries));
-      }
-
-      // 클릭한 날짜("YYYY-MM-DD")와 일치하는 일기 찾기
-      // created_at은 "2026-05-14T07:07:59+09:00" 형식이므로 "T" 앞까지만 비교
-      const found = diaries.find(
-        (d) => d.created_at?.split("T")[0] === dateString
-      );
-
-      if (found) {
-        // 해당 날짜에 일기 있음 → 상세보기로 이동
-        // state로 diaryId 전달 → DiaryDetail에서 API 호출에 사용
-        navigate(`/diary/${dateString}`, {
-          state: { diaryId: found.diary_id },
-        });
-      } else {
-        // 해당 날짜에 일기 없음 → 일기 작성 페이지로 이동
-        navigate(`/diary/write/${dateString}`);
-      }
-    } catch (err) {
-      console.error("날짜 클릭 처리 실패:", err);
-      // 에러 발생 시 작성 페이지로 fallback (사용자 경험 유지)
+    if (found) {
+      // 해당 날짜에 일기 있음 → 상세보기로 이동
+      // state로 diaryId 전달 → DiaryDetail에서 API 호출에 사용
+      navigate(`/diary/${dateString}`, {
+        state: { diaryId: found.diary_id },
+      });
+    } else {
+      // 해당 날짜에 일기 없음 → 일기 작성 페이지로 이동
       navigate(`/diary/write/${dateString}`);
     }
   };

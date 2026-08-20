@@ -16,7 +16,7 @@ OLLAMA_URL = "http://localhost:11434/api/chat"
 OLLAMA_MODEL = "qwen2.5:7b"
 
 # ▼ Groq 모델명 (.env의 GROQ_API_KEY 필요)
-GROQ_MODEL = "qwen/qwen3-32b"
+GROQ_MODEL = "qwen/qwen3.6-27b"
 
 # ▼ Cerebras 모델명 (.env의 CEREBRAS_API_KEY 필요)
 CEREBRAS_MODEL = "qwen-3-235b-a22b-instruct-2507"

@@ -1,9 +1,9 @@
 import { useNavigate, useLocation } from "react-router-dom";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import DetailDiaryDialog from "../../components/diary/DetailDiaryDialog";
 import { useTheme } from "../../stores/useThemeStore";
 import { getAssetUrl } from "../../utils/AssetHelper";
-import { authFetch } from "../../utils/AuthHelper";
+import { useDiaryDetail } from "../../hooks/queries/useDiaryQueries";
 
 export default function DiaryDetail() {
   const navigate = useNavigate(); // 페이지 이동을 도와주는 도구
@@ -13,61 +13,31 @@ export default function DiaryDetail() {
   // 이전 페이지(목록 등)에서 전달해준 '일기 고유 번호'를 가져옵니다.
   const diaryId = location.state?.diaryId;
 
-  // ── [상태 변수] 화면에 보여줄 일기 데이터를 담아두는 바구니 ──────────────────
-  const [diaryData, setDiaryData] = useState({
-    date: "",          // 날짜
-    content: "",       // 일기 내용
-    imageUrl: "",      // AI가 그려준 그림 주소
-    selectedEmoji: null,  // 선택했던 이모지
-    selectedFrame: null,  // 선택했던 액자
-    stickers: [],      // 붙여놓은 스티커들
-  });
-  const [loading, setLoading] = useState(true); // 데이터를 가져오는 중인지 확인하는 상태
-  const [error, setError] = useState(null);     // 에러가 발생했는지 확인하는 상태
-
-  // ── [시작점] 페이지가 열리자마자 실행되는 부분 ──────────────────────────────
+  // 볼 일기의 번호(ID)가 없다면, 메인 화면으로 쫓아냅니다.
   useEffect(() => {
-    // 만약 볼 일기의 번호(ID)가 없다면, 메인 화면으로 쫓아냅니다.
-    if (!diaryId) {
-      navigate("/", { replace: true });
-      return;
-    }
-    // 번호가 있다면 서버에 일기 데이터를 달라고 요청합니다.
-    fetchDiary();
-  }, [diaryId]);
+    if (!diaryId) navigate("/", { replace: true });
+  }, [diaryId, navigate]);
 
-  // ── [기능] 서버에서 일기 데이터를 가져오는 함수 ─────────────────────────────
-  const fetchDiary = async () => {
-    try {
-      setLoading(true); // "로딩 시작!"
-      const data = await authFetch(
-        `${import.meta.env.VITE_BACKEND_URL}/api/v1/diaries/${diaryId}/`
-      );
+  // ── [상태] 서버에서 받아온 일기 데이터 (React Query 캐시) ─────────────────
+  const { data, isLoading, isError, refetch } = useDiaryDetail(diaryId);
 
-      // 4. 받아온 데이터를 우리 화면에 맞게 변환해서 바구니(state)에 담습니다.
-      setDiaryData({
-        date: data.created_at?.split("T")[0] ?? "", // 날짜 형식 정리 (예: 2024-03-21)
-        content: data.content ?? "",
-        imageUrl: data.image_url ?? "",
+  // 서버 응답을 화면에서 쓰기 좋은 형태로 변환
+  const diaryData = {
+    date: data?.created_at?.split("T")[0] ?? "", // 날짜 형식 정리 (예: 2024-03-21)
+    content: data?.content ?? "",
+    imageUrl: data?.image_url ?? "",
 
-        selectedEmoji: data.emotion_item?.image_url ?? null,
-        selectedFrame: data.theme_item?.image_url ?? null,
+    selectedEmoji: data?.emotion_item?.image_url ?? null,
+    selectedFrame: data?.theme_item?.image_url ?? null,
 
-        // 스티커들은 여러 개일 수 있으니 목록을 하나씩 돌면서 변환합니다.
-        stickers: (data.sticker ?? []).map((s, i) => ({
-          id: s.item_id,
-          img: s.image_url ?? '',
-          instanceId: Date.now() + i,         // 화면에서 구분하기 위한 임시 번호
-          x: s.pos_x ?? null,                 // 저장된 가로 위치
-          y: s.pos_y ?? null,                 // 저장된 세로 위치
-        })),
-      });
-    } catch (err) {
-      console.error("fetchDiary Error:", err);
-      setError(err.message); // 에러가 나면 사용자에게 보여줄 메시지 저장
-    } finally {
-      setLoading(false); // "로딩 끝!"
-    }
+    // 스티커들은 여러 개일 수 있으니 목록을 하나씩 돌면서 변환합니다.
+    stickers: (data?.sticker ?? []).map((s, i) => ({
+      id: s.item_id,
+      img: s.image_url ?? '',
+      instanceId: `${s.item_id}-${i}`,    // 화면에서 구분하기 위한 고유 키 (렌더 중 Date.now() 호출 금지라 결정론적 값 사용)
+      x: s.pos_x ?? null,                 // 저장된 가로 위치
+      y: s.pos_y ?? null,                 // 저장된 세로 위치
+    })),
   };
 
   // 닫기 버튼을 누르면 일기 목록 페이지로 이동합니다.
@@ -80,8 +50,11 @@ export default function DiaryDetail() {
     }
   }
 
+  // diaryId가 없는 동안은(위 useEffect가 리다이렉트 처리 중) 아무것도 그리지 않음
+  if (!diaryId) return null;
+
   // ── [화면 1] 데이터를 불러오는 동안 보여주는 화면 (로딩중) ────────────────────
-  if (loading) {
+  if (isLoading) {
     return (
       <div
         className="relative w-full h-full overflow-hidden flex items-center justify-center"
@@ -97,7 +70,7 @@ export default function DiaryDetail() {
   }
 
   // ── [화면 2] 데이터를 가져오다 에러가 났을 때 보여주는 화면 ────────────────────
-  if (error) {
+  if (isError) {
     return (
       <div
         className="relative w-full h-full overflow-hidden flex items-center justify-center"
@@ -108,7 +81,7 @@ export default function DiaryDetail() {
       >
         <div className="absolute inset-0 bg-black/60 backdrop-blur-xs" />
         <div className="relative z-10 flex flex-col items-center gap-4">
-          <span className="text-white text-lg">{error}</span>
+          <span className="text-white text-lg">일기를 불러오지 못했습니다.</span>
           <button onClick={handleClose} className="text-white underline text-sm">
             목록으로 돌아가기
           </button>
@@ -141,7 +114,7 @@ export default function DiaryDetail() {
         selectedFrame={diaryData.selectedFrame}
         stickers={diaryData.stickers}
         onClose={handleClose}
-        onRefresh={fetchDiary}
+        onRefresh={refetch}
       />
     </div>
   );
