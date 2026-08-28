@@ -39,7 +39,7 @@ import { backGroundTileCameraSet, backgroundTileSet } from "../background/Backgr
 // ==============오브젝트===================
 
 // 상자 생성
-import { addEventSpawnChest } from "../object/Chest.js";
+import { spawnChest } from "../object/Chest.js";
 
 
 // ===============타이머====================
@@ -162,7 +162,7 @@ export default class GameScene extends Phaser.Scene {
 	else {
 
 		// 상자생성 이벤트(Object/Chest.js)
-    	addEventSpawnChest(this);
+    spawnChest(this);
 	}
 	
     // 엘리트 몬스터 생성 이벤트(Monsters.js)

@@ -172,6 +172,9 @@ export function loadAllSprite(scene) {
     // 상자
     scene.load.image("chest_level_1", "/assets/game1/object/chest/chest_level_1.png");
 
+    // 선물상자
+    scene.load.image("snow_chest", "/assets/game1/object/chest/snow_chest.png");
+
     // 고기(회복 아이템)
     scene.load.image("meat", "/assets/game1/object/drop_item/meat.png");
 
