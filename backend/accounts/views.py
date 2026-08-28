@@ -87,12 +87,17 @@ class SignupView(APIView):
         """
         POST /api/v1/auth/signup
         - 이메일, 비밀번호, 닉네임을 받아 Supabase Auth에 유저 생성
+        - 성별, 나이는 선택 입력 (user_metadata에 저장)
         - 생성된 유저의 ID와 완료 메시지 반환
         """
         # 요청 Body에서 필수값 추출 (앞뒤 공백 제거)
         user_email = request.data.get("user_email", "").strip()
         password = request.data.get("password", "").strip()
         user_name = request.data.get("user_name", "").strip()
+
+        # 선택값 추출 (성별, 나이)
+        gender = request.data.get("gender", "").strip() or None
+        age = request.data.get("age", None)
 
         # 필수값(이메일, 비밀번호, 닉네임) 누락 시 400 반환
         if not all([user_email, password, user_name]):
@@ -115,18 +120,46 @@ class SignupView(APIView):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
+        # 성별 값 검증 (입력된 경우에만 - male/female 허용)
+        if gender is not None and gender not in ["male", "female"]:
+            return Response(
+                {"message": "성별 값이 올바르지 않습니다."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        # 나이 값 검증 (입력된 경우에만 - 숫자이고 0보다 커야 함)
+        if age is not None and age != "":
+            try:
+                age = int(age)
+                if age <= 0:
+                    raise ValueError
+            except (ValueError, TypeError):
+                return Response(
+                    {"message": "나이는 올바른 숫자여야 합니다."},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+        else:
+            age = None
+
         try:
             supabase_url = os.getenv("SUPABASE_URL")
             headers = get_supabase_headers()
 
-            # Supabase Admin API로 유저 생성 (email_confirm=True: 이메일 인증 없이 바로 가입 처리)
+             # user_metadata 구성 - 선택값은 입력된 경우에만 포함 (빈 값 저장 방지)
+            user_metadata = {"user_name": user_name}
+            if gender is not None:
+                user_metadata["gender"] = gender
+            if age is not None:
+                user_metadata["age"] = age
+
+             # Supabase Admin API로 유저 생성 (email_confirm=True: 이메일 인증 없이 바로 가입 처리)
             response = requests.post(
                 f"{supabase_url}/auth/v1/admin/users",
                 headers=headers,
                 json={
                     "email": user_email,
                     "password": password,
-                    "user_metadata": {"user_name": user_name},  # 닉네임은 메타데이터로 저장
+                    "user_metadata": user_metadata,
                     "email_confirm": True,
                 },
             )
