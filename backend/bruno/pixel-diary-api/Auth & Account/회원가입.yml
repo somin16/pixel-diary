@@ -12,7 +12,9 @@ http:
       {
         "user_email": "",
         "password": "",
-        "user_name": ""
+        "user_name": "",
+        "gender": "",
+        "age": ""
       }
   auth: inherit
 
@@ -33,4 +35,6 @@ docs: |-
   - 400 Bad Request: 필수값 누락 (이메일, 비밀번호, 닉네임)
   - 400 Bad Request: 비밀번호 8자 미만
   - 400 Bad Request: 이메일 형식 오류
+  - 400 Bad Request: 성별 값 검증 실패 (male, female만 허용)
+  - 400 Bad Request: 나이 값 검증 (숫자이고 0보다 커야 함)
   - 409 Conflict: 이메일 중복
