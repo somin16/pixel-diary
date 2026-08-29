@@ -142,15 +142,39 @@ export function createAllAnimations(scene) {
 
     // 냉동 슬라임 애니메이션
     scene.anims.create({
-      key: "ice_slime_animation",
-      frames: [{ key: "ice_slime"}, { key: "ice_slime_blink"}, { key: "ice_slime"}],
-      frameRate: 2,
-      repeat: -1,
+        key: "ice_slime_animation",
+        frames: [{ key: "ice_slime"}, { key: "ice_slime_blink"}, { key: "ice_slime"}],
+        frameRate: 2,
+        repeat: -1,
+    });
+
+    // 마법사 슬라임 움직임 애니메이션
+    scene.anims.create({
+        key: "magic_slime_move_animation",
+        frames: scene.anims.generateFrameNumbers("magic_slime", {
+            start: 0,
+            end: 1,
+        }),
+        duration: 500,
+        repeat: -1
+    });
+
+    // 마법사 슬라임 공격 애니메이션
+    scene.anims.create({
+        key :"magic_slime_attack_animation",
+        frames: scene.anims.generateFrameNumbers("magic_slime", {
+            start: 2,
+            end: 9,
+        }),
+        duration: 1250,
+        repeat: 0
     });
 
     // 보상 획득 화면 이미지의 애니메이션
-    scene.anims.create({ key: "game_end_image_animation", frames: scene.anims.generateFrameNumbers("game_end_image", {
-
+    scene.anims.create({ 
+        
+        key: "game_end_image_animation", 
+        frames: scene.anims.generateFrameNumbers("game_end_image", {
         start: 0,
         end: 19,
       }),
