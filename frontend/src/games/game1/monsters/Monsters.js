@@ -10,6 +10,7 @@ import { addDropItemMeat } from "../object/Meat.js";
 import KingSlime from "./default/KingSlime.js";
 import { addScore, gameClear, lockScore } from "../manage/Score.js";
 import IceSlime from "./snow/IceSlime.js";
+import MagicSlime from "./snow/MagicSlime.js";
 
 // 몬스터 이동 로직
 export function monsterMove(scene) {
@@ -186,7 +187,8 @@ function spawnSlime(PosX, PosY, scene) { // 함수를 따로 할당했기에 어
 
     // 슬라임을 생성(monsters/Slime.js)
     // 현재 클래스(씬)의 X좌표, Y좌표값에 현재 난이도증가정도(mosnterStatus)를 적용해서 슬라임을 소환한다
-    let slime = new Slime(scene, PosX, PosY, scene.monsterStatus);
+    // 테스트를 위해 일반 슬라임을 마법사 슬라임으로 변경한 부분입니다 확인 안하셔도됩니다.
+    let slime = new MagicSlime(scene, PosX, PosY, scene.monsterStatus);
     scene.monsters.add(slime); // monsters 배열에 넣는다
 }
 
