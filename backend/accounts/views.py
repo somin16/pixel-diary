@@ -96,7 +96,9 @@ class SignupView(APIView):
         user_name = request.data.get("user_name", "").strip()
 
         # 선택값 추출 (성별, 나이)
-        gender = request.data.get("gender", "").strip() or None
+        gender = request.data.get("gender", "")
+        if gender == "":
+            gender = None
         age = request.data.get("age", None)
 
         # 필수값(이메일, 비밀번호, 닉네임) 누락 시 400 반환
