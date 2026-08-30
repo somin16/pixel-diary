@@ -1073,3 +1073,111 @@ class NaverLoginView(APIView):
                 {"message": "네이버 로그인 중 오류가 발생했습니다."},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
+
+
+class UpdateGenderAgeView(APIView):
+    """성별/나이 추가·수정 API"""
+
+    def patch(self, request):
+        """
+        PATCH /api/v1/auth/gender-age
+        - Authorization 헤더의 access_token으로 현재 유저 확인
+        - gender, age는 요청에 포함된 필드만 처리
+        - 값이 빈 문자열("")로 오면 해당 필드를 명시적으로 NULL 처리
+        - 변경 완료 메시지 반환
+        """
+        # Authorization 헤더에서 access_token 추출 (Bearer 토큰 방식)
+        access_token = extract_access_token(request)
+        if not access_token:
+            return Response(
+                {"message": "Authorization 헤더에 유효한 Bearer 토큰이 필요합니다."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        # 요청 body에 해당 키가 "포함됐는지" 여부를 먼저 확인 (값이 ""여도 True)
+        gender_provided = "gender" in request.data
+        age_provided = "age" in request.data
+
+        # 성별 처리 - 빈 문자열/None이면 초기화(NULL), 값 있으면 검증
+        gender = request.data.get("gender", None)
+        if gender is not None and isinstance(gender, str):
+            gender = gender.strip() or None
+        else:
+            gender = None if gender == "" else gender
+
+        if gender_provided and gender is not None and gender not in ["male", "female"]:
+            return Response(
+                {"message": "성별 값이 올바르지 않습니다."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        # 나이 처리 - 빈 문자열/None이면 초기화(NULL), 값 있으면 검증
+        age_raw = request.data.get("age", None)
+        age = None
+        if age_provided and age_raw not in (None, ""):
+            try:
+                age = int(age_raw)
+                if age <= 0:
+                    raise ValueError
+            except (ValueError, TypeError):
+                return Response(
+                    {"message": "나이는 올바른 숫자여야 합니다."},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+
+        try:
+            supabase_url = os.getenv("SUPABASE_URL")
+
+            # access_token으로 현재 유저 정보 조회 (기존 user_metadata 확보용)
+            user_headers = {
+                "apikey": os.getenv("SUPABASE_ANON_KEY"),
+                "Authorization": f"Bearer {access_token}",
+                "Content-Type": "application/json",
+            }
+            user_response = requests.get(
+                f"{supabase_url}/auth/v1/user",
+                headers=user_headers,
+            )
+
+            # 유효하지 않은 토큰인 경우 401 반환
+            if user_response.status_code != 200:
+                return Response(
+                    {"message": "유효하지 않은 토큰입니다."},
+                    status=status.HTTP_401_UNAUTHORIZED,
+                )
+
+            user_data = user_response.json()
+            user_id = user_data.get("id")
+
+            # 기존 메타데이터에 요청으로 받은 필드만 덮어쓰기 (None이면 NULL로 초기화됨)
+            current_metadata = user_data.get("user_metadata", {}) or {}
+            updated_metadata = {**current_metadata}
+            if gender_provided:
+                updated_metadata["gender"] = gender
+            if age_provided:
+                updated_metadata["age"] = age
+
+            # Supabase Admin API로 성별/나이 변경 (병합된 user_metadata 전체 전송)
+            admin_headers = get_supabase_headers()
+            change_response = requests.put(
+                f"{supabase_url}/auth/v1/admin/users/{user_id}",
+                headers=admin_headers,
+                json={"user_metadata": updated_metadata},
+            )
+
+            # 변경 실패 시 예외 발생
+            if change_response.status_code != 200:
+                raise Exception(f"Supabase API 오류: {change_response.text}")
+
+            return Response(
+                {"message": "성별/나이 정보가 수정되었습니다."},
+                status=status.HTTP_200_OK,
+            )
+
+        except Exception as error:
+            # 오류 발생 시 터미널에 출력 (개발 완료 후 삭제 예정)
+            print(f"=== UPDATE GENDER/AGE ERROR ===\n{error}\n===============================")
+            return Response(
+                {"message": "성별/나이 수정 중 오류가 발생했습니다."},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )

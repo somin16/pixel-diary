@@ -1,5 +1,5 @@
 from django.urls import path
-from .views import CheckEmailView, SignupView, LoginView, LogoutView, ChangePasswordView, WithdrawalView, ChangeUsernameView, UserImageView, ResetPasswordView, TokenRefreshView, NaverLoginView
+from .views import CheckEmailView, SignupView, LoginView, LogoutView, ChangePasswordView, WithdrawalView, ChangeUsernameView, UserImageView, ResetPasswordView, TokenRefreshView, NaverLoginView, UpdateGenderAgeView
 
 # 인증 관련 URL 패턴
 # /api/v1/auth/ 하위 경로는 config/urls.py에서 include로 연결됨
@@ -15,4 +15,5 @@ urlpatterns = [
     path("userimage/", UserImageView.as_view(), name="userimage"),               # 프로필 사진 변경 / 기본으로 변경
     path("refresh/", TokenRefreshView.as_view(), name="token-refresh"),          # 토큰 갱신
     path("naver/", NaverLoginView.as_view(), name="naver-login"),                # 네이버 로그인
+    path("gender-age/", UpdateGenderAgeView.as_view()),                      # 성별/나이 추가 및 수정
 ]
