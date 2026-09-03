@@ -39,7 +39,7 @@ class DiaryView(APIView):
         일기 작성 및 저장
         POST /api/v1/diaries
         - Authorization 헤더의 access_token으로 현재 유저 확인
-        - image_id, content를 받아 Supabase diaries 테이블에 저장
+        - image_id, content, emotion을 받아 Supabase diaries 테이블에 저장
         - 저장된 diary_id와 완료 메시지 반환
         - 같은 날짜에 일기를 중복으로 작성 불가 (중복 체크)
         """
@@ -54,10 +54,18 @@ class DiaryView(APIView):
         # 요청 Body에서 필수값 추출 (앞뒤 공백 제거)
         image_id = request.data.get("image_id") or None
         content = request.data.get("content", "").strip()
+        emotion = request.data.get("emotion") or None
 
-        if not all([image_id, content]):
+        if not all([image_id, content, emotion]):
             return Response(
-                {"message": "image_id와 content는 필수입니다."},
+                {"message": "image_id, content, emotion은 필수입니다."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        # 감정 값 검증 - 정해진 5가지 값만 허용
+        if emotion not in ["happy", "calm", "tired", "sad", "angry"]:
+            return Response(
+                {"message": "감정 값이 올바르지 않습니다."},
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
@@ -104,6 +112,7 @@ class DiaryView(APIView):
                     "user_id": user_id,
                     "image_id": image_id,
                     "content": content,
+                    "emotion": emotion,
                 },
             )
 
@@ -227,7 +236,7 @@ class DiaryDetailView(APIView):
         일기 수정
         PATCH /api/v1/diaries/{diary_id}
         - Authorization 헤더의 access_token으로 현재 유저 확인
-        - content를 받아 Supabase diaries 테이블에서 해당 일기 수정
+        - content, emotion을 받아 Supabase diaries 테이블에서 해당 일기 수정
         - 수정된 updated_at 반환
         """
         # Authorization 헤더에서 access_token 추출
@@ -238,13 +247,21 @@ class DiaryDetailView(APIView):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        # 요청 Body에서 content 추출
+        # 요청 Body에서 content, emotion 추출
         content = request.data.get("content", "").strip()
+        emotion = request.data.get("emotion") or None
 
-        # content 누락 시 400 반환
-        if not content:
+        # content, emotion 누락 시 400 반환
+        if not all([content, emotion]):
             return Response(
-                {"message": "content는 필수입니다."},
+                {"message": "content와 emotion은 필수입니다."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        # 감정 값 검증 - 정해진 5가지 값만 허용
+        if emotion not in ["happy", "calm", "tired", "sad", "angry"]:
+            return Response(
+                {"message": "감정 값이 올바르지 않습니다."},
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
@@ -272,6 +289,7 @@ class DiaryDetailView(APIView):
                 headers={**headers, "Prefer": "return=representation"},
                 json={
                     "content": content,
+                    "emotion": emotion,
                     "updated_at": now_kst,
                 },
             )
@@ -438,7 +456,7 @@ class DiaryDetailView(APIView):
                 params={
                     "id": f"eq.{diary_id}",
                     "user_id": f"eq.{user_id}",
-                    "select": "id,content,ai_image!diaries_image_id_fkey(image_url),created_at", # 외래키를 사용하라고 supabase에게 명시적으로 알려줌
+                    "select": "id,content,emotion,ai_image!diaries_image_id_fkey(image_url),created_at", # 외래키를 사용하라고 supabase에게 명시적으로 알려줌
                 },
             )
 
@@ -468,7 +486,7 @@ class DiaryDetailView(APIView):
                 },
             )
 
-            emotion_item = None
+            emoji_item = None
             theme_item = None
             sticker_list = []
 
@@ -490,7 +508,7 @@ class DiaryDetailView(APIView):
                     )
                     if emoji_response.json():
                         emoji = emoji_response.json()[0]
-                        emotion_item = {
+                        emoji_item = {
                             "item_id": emoji.get("item_id"),
                             "image_url": emoji.get("item_image_url"),
                         }
@@ -540,8 +558,9 @@ class DiaryDetailView(APIView):
                 {
                     "diary_id": diary.get("id"),
                     "content": diary.get("content"),
+                    "emotion": diary.get("emotion"),
                     "image_url": image_url, 
-                    "emotion_item": emotion_item,
+                    "emoji_item": emoji_item,
                     "theme_item": theme_item,
                     "sticker": sticker_list,
                     "created_at": created_at_kst,
