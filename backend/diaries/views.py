@@ -30,6 +30,7 @@ def check_inventory_item(supabase_url, headers, user_id, item_id, expected_type,
         return f"{item_label} 아이템이 아닙니다."
     return None
 
+DIARY_COIN_REWARD = 100     # 보상 수량은 현재 임시로 정해둔 것 입니다.
 
 class DiaryView(APIView):
     """일기 작성 및 저장, 목록 조회 API"""
@@ -42,6 +43,7 @@ class DiaryView(APIView):
         - image_id, content, emotion을 받아 Supabase diaries 테이블에 저장
         - 저장된 diary_id와 완료 메시지 반환
         - 같은 날짜에 일기를 중복으로 작성 불가 (중복 체크)
+        - 일기 작성 완료 시 코인 100개 지급 (코인 지급 실패해도 일기 저장은 유지)
         """
         # Authorization 헤더에서 access_token 추출
         access_token = extract_access_token(request)
@@ -131,6 +133,31 @@ class DiaryView(APIView):
                     json={"diary_id": diary_id, "is_temp": False},
                 )
 
+            # 일기 작성 완료 보상 - 현재 코인 조회 후 지급
+            user_response = requests.get(
+                f"{SUPABASE_URL}/rest/v1/users",
+                headers=headers,
+                params={
+                    "user_id": f"eq.{user_id}",
+                    "select": "coin",
+                },
+            )
+
+            user_data = user_response.json()
+            if user_data:
+                current_coin = user_data[0].get("coin")
+                updated_coin = current_coin + DIARY_COIN_REWARD
+
+                coin_res = requests.patch(
+                    f"{SUPABASE_URL}/rest/v1/users?user_id=eq.{user_id}",
+                    headers=headers,
+                    json={"coin": updated_coin},
+                )
+
+                # 코인 지급 실패해도 일기 저장 자체는 이미 성공했으므로 에러로 처리하지 않고 로그만 남김
+                if coin_res.status_code not in [200, 204]:
+                    print(f"=== DIARY COIN REWARD FAILED ===\nuser_id={user_id}\n===============================")
+
             # created_at을 한국 시간으로 변환해서 반환
             kst = timezone(timedelta(hours=9))
             created_at_str = diary.get("created_at")
@@ -141,6 +168,7 @@ class DiaryView(APIView):
                 {
                     "diary_id": diary.get("id"),
                     "created_at": created_at_kst,
+                    "coin_reward": DIARY_COIN_REWARD,
                     "message": "일기가 성공적으로 저장되었습니다.",
                 },
                 status=status.HTTP_201_CREATED,
