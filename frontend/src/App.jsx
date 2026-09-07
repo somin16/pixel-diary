@@ -12,6 +12,7 @@ import { coinApi } from "./api/coinApi";
 
 // ----------------- 컴포넌트 불러오기 ----------------------------------
 import AppShell from "./components/layout/AppShell"; // AppShell 불러오기
+import { LockGateRoute } from "./components/more/lock/LockGateRoute"; // 앱 잠금 레이아웃 라우트
 import Home from "./pages/home/Home"; // 홈 화면
 // ----------------------- 게임 ---------------------------------------
 import Game1 from "./games/game1/Game1"; // 게임1 화면
@@ -35,6 +36,7 @@ import Inventory from "./pages/more/inventory/Inventory"; // 더보기 - 보관�
 import Account from "./pages/more/account/Account"; // 더보기 - 계정 설정 화면
 import Notification from "./pages/more/notification/Notification"; // 더보기 - 알림 설정 화면
 import Contact from "./pages/more/contact/Contact"; // 더보기 - 문의사항 화면
+import Lock from "./pages/more/lock/Lock"; // 더보기 - 앱 잠금 설정 화면
 // ---------------------- 더보기 (공지사항) -----------------------------
 import AnnouncementList from "./pages/more/announcement/AnnouncementList"; // 더보기 - 공지사항 목록 화면
 import AnnouncementDetail from "./pages/more/announcement/AnnouncementDetail"; // 더보기 - 공지사항 상세 조회 화면
@@ -166,7 +168,7 @@ function AppInner() {
         </Route>
       ) : (
         /* 세션이 있을 때 (로그인 후) */
-        <>
+        <Route element={<LockGateRoute />}>
           {/* 주소가 /game1run 이면 미니게임1 화면을 보여줘 */}
           <Route path="/game1run" element={<Game1 />} />
 
@@ -236,10 +238,13 @@ function AppInner() {
             {/* 주소가 /more/contact-reply 이면 문의사항 답변 화면을 보여줘 (관리자 전용) */}
             <Route path="/more/contact-reply" element={<ContactReply />} />
 
+            {/* 주소가 /more/setting/lock 이면 앱 잠금 설정 화면을 보여줘 */}
+            <Route path="/more/setting/lock" element={<Lock />} />
+
             {/* ⚠️ 이상한 주소로 가도 홈으로 보내기 */}
             <Route path="*" element={<Navigate to="/" replace />} />
           </Route>
-        </>
+        </Route>
       )}
     </Routes>
   );
