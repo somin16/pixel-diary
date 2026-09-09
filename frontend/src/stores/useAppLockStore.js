@@ -21,7 +21,9 @@ const LOCKOUT_MS = 30 * 1000; // 잠금(쿨다운) 지속 시간
 // 모듈 스코프 변수 - 여러 컴포넌트가 이 스토어를 구독해도 초기화/리스너 등록은 한 번만 실행
 let backgroundedAt = null;  // 마지막으로 백그라운드로 넘어간 시각
 let appStateListenerAttached = false;  // appStateChange 리스너 중복 등록 방지
-let didInit = false;  // init() 중복 실행 방지
+let biometryListenerAttached = false;  // biometryChange 리스너 중복 등록 방지
+let skipNextLockCheck = false;  // 방금 로그인 직후엔 잠금화면을 안 띄우기 위한 1회성 플래그
+let initPromise = null;  // 진행 중인 init() 호출 - 동시에 여러 곳에서 불러도 실행은 한 번만 되게 공유
 
 const useAppLockStore = create((set, get) => ({
   isReady: false,  // 초기 로딩이 끝났는지 (콘텐츠 flash 방지용)
@@ -31,60 +33,82 @@ const useAppLockStore = create((set, get) => ({
   biometricAvailable: false,  // 기기가 생체인증 하드웨어 자체를 지원하는지 여부
   lockedUntil: 0,  // PIN 재시도 가능 시각(ms epoch), 0이면 쿨다운 없음
 
-  // 앱 전체에서 딱 한 번만 실행 - LockGate, 설정 화면 등 여러 곳에서 불러도 중복 실행 안 됨
+  // LockGate, App.jsx 등 여러 곳에서 불러도 안전
+  // 상태(hasPin, isLocked 등)는 부를 때마다 매번 새로 읽어옴 (한 번만 실행으로 막아버리면, 재로그인처럼 값이 바뀐 상황을 못 따라감)
+  // 같은 Promise를 공유해서 실제 실행은 한 번만 되게 함 (동시 호출 시 나중 응답이 먼저 응답을 덮어쓰는 문제 방지)
   init: async () => {
-    if (didInit) return;
-    didInit = true;
+    if (initPromise) return initPromise;
 
-    // PIN 설정 여부 + 잠금 설정값 + 실패 시도 상태를 한 번에 조회
-    const [pinSet, settings, attempt] = await Promise.all([
-      isPinSet(),
-      getLockSettings(),
-      getAttemptState(),
-    ]);
+    initPromise = (async () => {
+      // PIN 설정 여부 + 잠금 설정값 + 실패 시도 상태를 한 번에 조회
+      const [pinSet, settings, attempt] = await Promise.all([
+        isPinSet(),
+        getLockSettings(),
+        getAttemptState(),
+      ]);
 
-    // 저장된 쿨다운이 아직 유효하면 복원, 이미 끝나있었다면 남은 기록 정리
-    let lockedUntil = 0;
-    if (attempt.lockedUntil > Date.now()) {
-      lockedUntil = attempt.lockedUntil;
-    } else if (attempt.lockedUntil) {
-      await clearAttemptState();
-    }
+      // 저장된 쿨다운이 아직 유효하면 복원, 이미 끝나있었다면 남은 기록 정리
+      let lockedUntil = 0;
+      if (attempt.lockedUntil > Date.now()) {
+        lockedUntil = attempt.lockedUntil;
+      } else if (attempt.lockedUntil) {
+        await clearAttemptState();
+      }
 
-    // 생체인증 하드웨어 지원 여부 확인, 예외 발생 시 미지원으로 간주
-    let biometricAvailable = false;
-    try {
-      const result = await NativeBiometric.isAvailable();
-      biometricAvailable = !!result.isAvailable;
-    } catch {
-      biometricAvailable = false;
-    }
+      // 생체인증 하드웨어 지원 여부 확인, 예외 발생 시 미지원으로 간주
+      let biometricAvailable = false;
+      try {
+        const result = await NativeBiometric.isAvailable();
+        biometricAvailable = !!result.isAvailable;
+      } catch {
+        biometricAvailable = false;
+      }
 
-    // 지금까지 조회한 값을 한 번에 반영
-    set({
-      hasPin: pinSet,
-      biometricEnabled: settings.biometricEnabled,
-      isLocked: pinSet && settings.lockEnabled,
-      lockedUntil,
-      biometricAvailable,
-      isReady: true,
-    });
-
-    // 백그라운드 → 포그라운드 복귀 감지, 잠금 설정이 켜져 있으면 재잠금
-    if (!appStateListenerAttached) {
-      appStateListenerAttached = true;
-      await App.addListener('appStateChange', ({ isActive }) => {
-        if (!isActive) {
-          backgroundedAt = Date.now();
-          return;
-        }
-        (async () => {
-          const currentSettings = await getLockSettings();
-          if (!currentSettings.lockEnabled) return;
-          const elapsed = backgroundedAt ? Date.now() - backgroundedAt : Infinity;
-          if (elapsed >= currentSettings.gracePeriodMs) set({ isLocked: true });
-        })();
+      // 지금까지 조회한 값을 한 번에 반영
+      // 방금 로그인 직후(markFreshLogin 호출됨)라면, PIN이 설정돼 있어도 이번만 잠금 스킵
+      set({
+        hasPin: pinSet,
+        biometricEnabled: settings.biometricEnabled,
+        isLocked: skipNextLockCheck ? false : pinSet && settings.lockEnabled,
+        lockedUntil,
+        biometricAvailable,
+        isReady: true,
       });
+      skipNextLockCheck = false;  // 한 번 썼으면 리셋
+
+      // 백그라운드 → 포그라운드 복귀 감지, 잠금 설정이 켜져 있으면 재잠금
+      if (!appStateListenerAttached) {
+        appStateListenerAttached = true;
+        await App.addListener('appStateChange', ({ isActive }) => {
+          if (!isActive) {
+            backgroundedAt = Date.now();
+            return;
+          }
+          (async () => {
+            const currentSettings = await getLockSettings();
+            if (!currentSettings.lockEnabled) return;
+            const elapsed = backgroundedAt ? Date.now() - backgroundedAt : Infinity;
+            if (elapsed >= currentSettings.gracePeriodMs) {
+              set({ isLocked: true });
+            }
+          })();
+        });
+      }
+
+      // 백그라운드에 있던 동안 지문/얼굴 등록이 바뀌었으면(추가/해제) 감지해서 반영
+      // (플러그인 공식 기능 - src/definitions.ts의 addListener('biometryChange', ...))
+      if (!biometryListenerAttached) {
+        biometryListenerAttached = true;
+        await NativeBiometric.addListener('biometryChange', (result) => {
+          set({ biometricAvailable: !!result.isAvailable });
+        });
+      }
+    })();
+
+    try {
+      await initPromise;
+    } finally {
+      initPromise = null;  // 끝나면 리셋 - 나중에(재로그인 등) 다시 부르면 새로 실행되게
     }
   },
 
@@ -162,6 +186,11 @@ const useAppLockStore = create((set, get) => ({
   toggleBiometric: async (enabled) => {
     await setLockSettings({ biometricEnabled: enabled });
     set({ biometricEnabled: enabled });
+  },
+
+  // 외부(App.jsx의 SIGNED_IN 이벤트)에서 "방금 로그인했다"고 알려줄 때 호출
+  markFreshLogin: () => {
+    skipNextLockCheck = true;
   },
 
   // 외부에서 강제로 즉시 잠금 상태로 전환할 때 사용 (예: "지금 잠그기" 버튼)

@@ -59,6 +59,7 @@ export function LockScreen({
 
   const tryBiometric = useCallback(async () => {
     if (!biometricAvailable || !biometricEnabled) return;
+    if (isLockedOut) return; // PIN 쿨다운 중엔 생체인증도 같이 막음
     if (isAuthenticatingRef.current) return;
     isAuthenticatingRef.current = true;
     try {
@@ -66,7 +67,7 @@ export function LockScreen({
     } finally {
       isAuthenticatingRef.current = false;
     }
-  }, [biometricAvailable, biometricEnabled, onUnlockWithBiometric]);
+  }, [biometricAvailable, biometricEnabled, isLockedOut, onUnlockWithBiometric]);
 
   // 잠금 화면에 들어오면 생체인증이 켜져 있는 경우 자동으로 한 번 시도
   useEffect(() => {
@@ -142,7 +143,8 @@ export function LockScreen({
         <button
           type="button"
           onClick={tryBiometric}
-          className="mt-1 text-sm text-emerald-600 underline underline-offset-2"
+          disabled={isLockedOut}
+          className="mt-1 text-sm text-emerald-600 underline underline-offset-2 disabled:opacity-40 disabled:pointer-events-none"
         >
           생체 인증 사용하기
         </button>

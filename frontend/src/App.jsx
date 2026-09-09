@@ -13,6 +13,7 @@ import { coinApi } from "./api/coinApi";
 // ----------------- 컴포넌트 불러오기 ----------------------------------
 import AppShell from "./components/layout/AppShell"; // AppShell 불러오기
 import { LockGateRoute } from "./components/more/lock/LockGateRoute"; // 앱 잠금 레이아웃 라우트
+import useAppLockStore from "./stores/useAppLockStore"; // 로그인 직후 잠금 스킵 처리용
 import Home from "./pages/home/Home"; // 홈 화면
 // ----------------------- 게임 ---------------------------------------
 import Game1 from "./games/game1/Game1"; // 게임1 화면
@@ -94,18 +95,26 @@ function AppInner() {
   }
 
   useEffect(() => {
+    // 세션 확인이랑 동시에 잠금 상태 초기화도 미리 시작 (병렬 진행)
+    useAppLockStore.getState().init();
+
     // 현재 세션 가져오기 (앱 최초 실행 시)
     supabase.auth.getSession().then(async ({ data: { session } }) => {
       setSession(session);
+      setLoading(false); // 세션 확인되자마자 바로 렌더링 시작
       if (session) {
-        // 세션 확인되면 출석 만료 여부부터 확인 후, 병렬로 나머지 데이터 prefetch
-        await resetAttendanceIfExpired.mutateAsync().catch((err) => {
-          console.error("출석 초기화 확인 실패:", err); // 실패해도 앱 진입은 막지 않음
-        });
-        await prefetchCriticalData(queryClient);
+        (async () => {
+          // 세션 확인되면 화면부터 먼저 보여주고, 출석 만료 여부 확인
+          // 나머지 데이터 prefetch는 백그라운드에서 이어서 진행 (화면 렌더링을 막지 않음)
+          await resetAttendanceIfExpired.mutateAsync().catch((err) => {
+            console.error("출석 초기화 확인 실패:", err); // 실패해도 앱 진입은 막지 않음
+          });
+          await prefetchCriticalData(queryClient);
+        })();
       }
-      setLoading(false);
     });
+
+    let hasHandledInitialAuth = false;
 
     // 로그인 상태 변화 감시 (로그아웃/재로그인 포함)
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
@@ -115,8 +124,12 @@ function AppInner() {
     }
 
     if (_event === 'SIGNED_IN' && session) {
+      if (hasHandledInitialAuth) {
+        useAppLockStore.getState().markFreshLogin(); // 방금 로그인했으면 이번엔 잠금화면 스킵
+      }
       prefetchCriticalData(queryClient); // 로그인마다 prefetch 재실행
     }
+    hasHandledInitialAuth = true;
     });
 
     return () => subscription.unsubscribe();

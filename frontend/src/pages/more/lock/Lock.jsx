@@ -1,6 +1,6 @@
 // pages/more/lock/Lock.jsx
 // "잠금 설정" 페이지 - 앱 잠금/생체인증 켜고 끄기, PIN 설정/변경
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useTheme } from '../../../stores/useThemeStore';
 import { getAssetUrl } from '../../../utils/AssetHelper';
 import useAppLockStore from '../../../stores/useAppLockStore';
@@ -24,11 +24,6 @@ function Lock() {
   const changePin = useAppLockStore((s) => s.changePin); // 기존 PIN 변경 액션
   const disableLock = useAppLockStore((s) => s.disableLock); // PIN/생체인증 전부 초기화하고 잠금 끄는 액션
   const toggleBiometric = useAppLockStore((s) => s.toggleBiometric); // 생체인증 사용 여부만 토글하는 액션
-
-  // init()은 스토어 안에서 중복 실행 방지 처리가 되어 있어, LockGate랑 별개로 여기서 불러도 안전함
-  useEffect(() => {
-    useAppLockStore.getState().init();
-  }, []);
 
   // PIN 설정/변경 입력 흐름 상태
   // step: null(설정 중 아님) / 'enter'(새 PIN 입력) / 'confirm'(새 PIN 재입력)
