@@ -100,6 +100,31 @@ export function loadAllSprite(scene) {
         frameHeight: 18
     });
 
+    // 크리스마스 슬라임
+    scene.load.spritesheet("x_mas_slime", "/assets/game1/monster/snow/elite/x_mas_slime.png", {
+        frameWidth: 64,
+        frameHeight: 32
+    });
+
+    // 산타 슬라임
+    scene.load.spritesheet("santa_slime", "/assets/game1/monster/snow/elite/santa_slime.png", {
+        frameWidth: 18,
+        frameHeight: 16
+    });
+
+    // 박스 슬라임
+    scene.load.spritesheet("box_slime", "/assets/game1/monster/snow/elite/box_slime.png", {
+        frameWidth: 16,
+        frameHeight: 20
+    });
+
+    // 루돌프 슬라임
+    scene.load.spritesheet("rudolph_slime", "/assets/game1/monster/snow/elite/rudolph_slime.png", {
+        frameWidth: 18,
+        frameHeight: 16
+    });
+
+
     // =======================타일======================================
 
     // 기본맵 타일

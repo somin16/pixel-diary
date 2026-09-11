@@ -24,7 +24,7 @@ import { magnetActive } from "../object/Magnet.js";
 // ==============몬스터 관련=================
 
 // 몬스터 레벨업, 몬스터 스폰 업데이트
-import { addEventMonsterLevelUp, addEventRedSlimeSpawn, addEliteMonsterSpawn, monsterMove, overlapMonstersHit } from "../monsters/Monsters.js";
+import { addEventMonsterLevelUp, addEventRedSlimeSpawn, addEliteMonsterSpawn, monsterMove, overlapMonstersHit, addEventMagicSlimeSpawn } from "../monsters/Monsters.js";
 
 
 // ============이미지====================
@@ -161,8 +161,11 @@ export default class GameScene extends Phaser.Scene {
 	// 눈 맵에서 적용되는 로직
 	else {
 
+		// 마법사 슬라임 생성 이벤트
+		addEventMagicSlimeSpawn(this);
+
 		// 상자생성 이벤트(Object/Chest.js)
-    spawnChest(this);
+    	spawnChest(this);
 	}
 	
     // 엘리트 몬스터 생성 이벤트(Monsters.js)

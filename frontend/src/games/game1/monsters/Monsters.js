@@ -11,6 +11,10 @@ import KingSlime from "./default/KingSlime.js";
 import { addScore, gameClear, lockScore } from "../manage/Score.js";
 import IceSlime from "./snow/IceSlime.js";
 import MagicSlime from "./snow/MagicSlime.js";
+import XmasSlime from "./snow/XmasSlime.js";
+import SantaSlime from "./snow/SantaSlime.js";
+import BoxSlime from "./snow/BoxSlime.js";
+import RudolpSlime from "./snow/RudolphSlime.js";
 
 // 몬스터 이동 로직
 export function monsterMove(scene) {
@@ -121,7 +125,8 @@ function spawnEliteMonster(scene) {
     const SPAWN_X = scene.player.x + Math.cos(randomAngle) * SPAWN_RADIUS;
     const SPAWN_Y = scene.player.y + Math.sin(randomAngle) * SPAWN_RADIUS;
 
-    spawnPhalanx(SPAWN_X,SPAWN_Y,scene);
+    if (scene.mapType == "default") spawnPhalanx(SPAWN_X, SPAWN_Y, scene);
+    else spawnXmasSlime(SPAWN_X, SPAWN_Y, scene);
 }
 
 // 몬스터 스폰
@@ -187,8 +192,7 @@ function spawnSlime(PosX, PosY, scene) { // 함수를 따로 할당했기에 어
 
     // 슬라임을 생성(monsters/Slime.js)
     // 현재 클래스(씬)의 X좌표, Y좌표값에 현재 난이도증가정도(mosnterStatus)를 적용해서 슬라임을 소환한다
-    // 테스트를 위해 일반 슬라임을 마법사 슬라임으로 변경한 부분입니다 확인 안하셔도됩니다.
-    let slime = new MagicSlime(scene, PosX, PosY, scene.monsterStatus);
+    let slime = new Slime(scene, PosX, PosY, scene.monsterStatus);
     scene.monsters.add(slime); // monsters 배열에 넣는다
 }
 
@@ -258,11 +262,73 @@ export function addEventRedSlimeSpawn(scene) {
 
 
 // =================== 눈 맵 몬스터들 ====================
+// 냉동 슬라임
 function spawnIceSlime(PosX, PosY, scene) {
 
 	let iceSlime = new IceSlime(scene, PosX, PosY, scene.monsterStatus);
     scene.monsters.add(iceSlime); // monsters 배열에 넣는다
 }
+
+// 마법사 슬라임 소환
+function spawnMagicSlime(scene) {
+
+    // 생성범위
+	const SPAWN_RADIUS = 450;
+	// Between을 통해 랜덤한 각도를 뽑아낸다
+	const randomAngle = Phaser.Math.FloatBetween(0, Math.PI * 2);
+
+	// 플레이어의 현재 위치와 비교하여 원의 테두리 좌표에 몬스터가 스폰될 위치를 정합니다
+	const SPAWN_X = scene.player.x + Math.cos(randomAngle) * SPAWN_RADIUS;
+	const SPAWN_Y = scene.player.y + Math.sin(randomAngle) * SPAWN_RADIUS;
+
+    let magicSlime = new MagicSlime(scene, SPAWN_X, SPAWN_Y, scene.monsterStatus);
+    scene.monsters.add(magicSlime); // monsters 배열에 넣는다
+}
+
+// 마법사 슬라임 소환 이벤트
+export function addEventMagicSlimeSpawn(scene) {
+
+    // 중복방지
+    if (scene.magicSlimeSpawnEvent) {
+        scene.magicSlimeSpawnEvent.remove();
+    }
+
+    scene.magicSlimeSpawnEvent = scene.time.addEvent({
+        delay: 16000,
+        callback: () => spawnMagicSlime(scene),
+        callbackScope: scene,
+        loop: true,
+    });
+}
+
+// 크리스마스 슬라임 소환
+function spawnXmasSlime(PosX, PosY, scene) {
+
+    let xmasSlime = new XmasSlime(scene, PosX, PosY, scene.monsterStatus);
+    scene.monsters.add(xmasSlime);
+}
+
+// 산타 슬라임 소환
+export function spawnSantaSlime(PosX, PosY, scene) {
+
+    let santaSlime = new SantaSlime(scene, PosX, PosY, scene.monsterStatus);
+    scene.monsters.add(santaSlime);
+}
+
+// 상자 슬라임 소환
+export function spawnBoxSlime(PosX, PosY, scene) {
+
+    let boxSlime = new BoxSlime(scene, PosX, PosY, scene.monsterStatus);
+    scene.monsters.add(boxSlime);
+}
+
+// 루돌프 슬라임 소환
+export function spawnRudolpSlime(PosX, PosY, scene) {
+
+    let rudolpSlime = new RudolpSlime(scene, PosX, PosY, scene.monsterStatus);
+    scene.monsters.add(rudolpSlime);
+}
+
 
 // 이벤트 생성 함수
 export function addEventMonsterLevelUp(scene) {
@@ -310,7 +376,7 @@ function updateMonsterSpawn(scene) {
 export function addEliteMonsterSpawn(scene) {
 
 	scene.eliteMonsterSpawnTimer = scene.time.addEvent({
-		delay: 60000,
+		delay: 30000, // 차후에 1분으로 수정됩니다
 		callback: () => spawnEliteMonster(scene),
 		callbackScope: scene,
 		loop: true

@@ -90,6 +90,7 @@ export default class MagicSlime extends Phaser.Physics.Arcade.Sprite {
         // 패턴이 끝나면 다시 움직이기
         this.scene.time.delayedCall(1500, () => {
 
+            if (!this.active) return;
             this.isAttack = false;
             this.play("magic_slime_move_animation", true);
         });
