@@ -288,6 +288,13 @@ class AttendanceView(APIView):
                         f"{attendance_create_response.text}"
                     )
 
+            # 리셋 없이 전체 출석 이력을 보관하는 로그 테이블에 오늘 날짜 기록
+            requests.post(
+                f"{supabase_url}/rest/v1/attendance_log",
+                headers=headers,
+                json={"user_id": user_id, "checked_date": str(today)},
+            )
+
             # 일차별 보상 계산
             reward = ATTENDANCE_REWARDS.get(current_day)
             coin_reward = reward.get("coin")
