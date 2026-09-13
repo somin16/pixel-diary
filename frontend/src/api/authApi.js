@@ -64,6 +64,16 @@ export const authApi = {
       body: JSON.stringify({ user_name: userName }),
     }),
 
+  // 성별/나이 추가,수정 - 빈 문자열로 보내면 백엔드가 해당 필드를 NULL로 초기화(선택 해제) 처리함
+  updateGenderAge: ({ gender, age }) =>
+    authFetch(`${BASE_URL}/api/v1/auth/gender-age/`, {
+      method: 'PATCH',
+      body: JSON.stringify({
+        gender: gender || '',
+        age: age === '' || age === null || age === undefined ? '' : Number(age),
+      }),
+    }),
+
   // 회원 탈퇴 - body는 호출하는 쪽(Account.jsx)에서 로그인 수단에 맞게 구성해서 넘김
   withdraw: (body) =>
     authFetch(`${BASE_URL}/api/v1/auth/withdrawal/`, {
