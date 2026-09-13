@@ -610,16 +610,22 @@ class ChangeUsernameView(APIView):
                     {"message": "유효하지 않은 토큰입니다."},
                     status=status.HTTP_401_UNAUTHORIZED,
                 )
- 
-            # 현재 유저 id 추출
-            user_id = user_response.json().get("id")
+                
+            user_data = user_response.json()
+            user_id = user_data.get("id")
+                
+            # 기존 메타데이터에 user_name만 덮어쓰기 (gender, age, profile_image_url 등 나머지는 보존)
+            # Supabase Admin API의 user_metadata PUT은 부분 수정이 아니라 전체 교체이므로,
+            # 여기서 먼저 병합해서 통째로 보내야 다른 필드가 날아가지 않음
+            current_metadata = user_data.get("user_metadata", {}) or {}
+            updated_metadata = {**current_metadata, "user_name": user_name}
  
             # Supabase Admin API로 닉네임 변경 (user_metadata에 저장)
             admin_headers = get_supabase_headers()
             change_response = requests.put(
                 f"{supabase_url}/auth/v1/admin/users/{user_id}",
                 headers=admin_headers,
-                json={"user_metadata": {"user_name": user_name}},
+                json={"user_metadata": updated_metadata},
             )
  
             # 닉네임 변경 실패 시 예외 발생

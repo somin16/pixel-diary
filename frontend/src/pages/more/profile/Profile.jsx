@@ -2,13 +2,14 @@ import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from 'react-router-dom';
 import { useTheme } from '../../../stores/useThemeStore'; // useTheme 불러오기
 import { getAssetUrl } from "../../../utils/AssetHelper"; // 헬퍼 불러오기
-import { useUpdateProfileImage, useResetProfileImage, useChangeUsername } from '../../../hooks/mutations/useAuthMutations'; // ✅ 인증 관련 뮤테이션 훅
+import { useUpdateProfileImage, useResetProfileImage, useChangeUsername, useUpdateGenderAge, } from '../../../hooks/mutations/useAuthMutations'; // ✅ 인증 관련 뮤테이션 훅
 import AuthValidator from "../../../utils/AuthValidator"; 
 
 // 컴포넌트 불러오기
 import Header from "../../../components/common/Header";
 import ImageButton from "../../../components/common/ImageButton";
 import InputField from "../../../components/more/auth/InputField";
+import Dropdown from "../../../components/common/Dropdown";
 
 // 프로필 조회 훅 불러오기
 import { useProfile } from '../../../hooks/queries/useProfileQueries';
@@ -27,6 +28,18 @@ const Profile = () => {
   const [nickname, setNickname] = useState(""); // 닉네임
   const [profileImage, setProfileImage] = useState(null); // 프로필 사진
 
+  // 성별/나이 상태 관리 (선택 입력)
+  const [gender, setGender] = useState(''); // '' | 'male' | 'female'
+  const [age, setAge] = useState(''); // '' | 숫자 문자열
+  const [ageError, setAgeError] = useState(''); // 나이 형식 에러 메시지
+ 
+  // 성별, 나이 드롭다운
+  const genderOptions = [
+    { value: '', label: '선택 안함' },
+    { value: 'male', label: '남성' },
+    { value: 'female', label: '여성' },
+  ];
+
   // 메세지 상태
   const [successMessage, setSuccessMessage] = useState(""); // 수정 완료 메세지
   const [errorMessage, setErrorMessage] = useState(""); // 에러 메세지
@@ -37,13 +50,14 @@ const Profile = () => {
   // 메시지 타이머 제어용 Ref (연속 클릭 시 메시지 깜빡임 방지)
   const messageTimerRef = useRef(null);
 
-  // 프로필 사진 변경/초기화, 닉네임 변경 뮤테이션
+  // 프로필 사진 변경/초기화, 닉네임 변경, 성별/나이 변경 뮤테이션
   const updateProfileImage = useUpdateProfileImage();
   const resetProfileImage = useResetProfileImage();
   const changeUsername = useChangeUsername();
+  const updateGenderAge = useUpdateGenderAge();
 
-  // 3개의 Mutation 중 하나라도 진행 중이면 로딩 상태로 간주
-  const isUploading = updateProfileImage.isPending || resetProfileImage.isPending || changeUsername.isPending;
+  // 4개의 Mutation 중 하나라도 진행 중이면 로딩 상태로 간주
+  const isUploading = updateProfileImage.isPending || resetProfileImage.isPending || changeUsername.isPending || updateGenderAge.isPending;
 
   // ──────────────────────────────────────────────────
   // 공통 메시지 출력 함수
@@ -146,7 +160,15 @@ const Profile = () => {
     } 
   };
 
-  // 내 정보 수정하기 버튼 클릭 시 (닉네임만 변경 - 이미지는 즉시 업로드) - useChangeUsername 훅 사용
+  // 나이 입력 처리
+  const handleAgeChange = (e) => {
+    const value = e.target.value;
+    setAge(value);
+    const result = AuthValidator.validateAge(value);
+    setAgeError(result.state === 'error' ? result.message : '');
+  };
+
+  // 내 정보 수정하기 버튼 클릭 시 (닉네임, 성별, 나이 변경 - 이미지는 즉시 업로드) - useChangeUsername 훅 사용
   const handleUpdate = async () => {
     // AuthValidator 비동기 검사 실행
     const validation = await AuthValidator.validateUserName(nickname);
@@ -157,15 +179,33 @@ const Profile = () => {
       return; 
     }
 
+    // 나이 형식이 잘못됐으면 중단
+    if (ageError) {
+      showMessage("error", ageError);
+      return;
+    }
+
     try {
-      await changeUsername.mutateAsync(nickname);
-
-      await refetch(); // 사진 삭제 후 서버 데이터 갱신
-      showMessage("success", "정보가 수정되었습니다");
-
+      // 원래 값(profileData)과 비교해서 실제로 바뀐 항목만 API 호출
+      const nicknameChanged = nickname !== (profileData?.name || "");
+      const genderChanged = gender !== (profileData?.gender || '');
+      const ageChanged = age !== (profileData?.age != null ? String(profileData.age) : '');
+ 
+      // Promise.all로 동시에 보내면 두 요청이 서로 상대방이 아직 안 바꾼 옛날
+      // user_metadata를 읽어서 덮어써버리는 레이스 컨디션이 생길 수 있어서 순차 실행으로 처리
+      if (nicknameChanged) {
+        await changeUsername.mutateAsync(nickname);
+      }
+      if (genderChanged || ageChanged) {
+        await updateGenderAge.mutateAsync({ gender, age });
+      }
+ 
+      showMessage("success", "정보가 수정되었습니다"); // 메세지 먼저 띄운 후 서버 데이터 갱신
+      refetch().catch((err) => console.error("프로필 갱신 실패:", err));
+ 
     } catch (error) {
-      console.error("닉네임 변경 오류:", error);
-      showMessage("error", "닉네임 변경에 실패했습니다. 다시 시도해 주세요.");
+      console.error("정보 수정 오류:", error);
+      showMessage("error", "정보 수정에 실패했습니다. 다시 시도해 주세요.");
     } 
   };
 
@@ -177,6 +217,8 @@ const Profile = () => {
   useEffect(() => {
     if (profileData) {
       setNickname(profileData?.name || "");
+      setGender(profileData?.gender || '');
+      setAge(profileData?.age != null ? String(profileData.age) : ''); 
 
       // 현재 화면에 방금 고른 사진(blob)이 떠있다면 서버 사진으로 덮어쓰지 않음
       setProfileImage((prev) => {
@@ -228,9 +270,11 @@ const Profile = () => {
       ) : (
         <>
           {/* 프로필 사진 영역 */}
-          <section className="relative w-auto h-auto my-[10%] flex justify-center items-center">
+          <section className="relative w-auto h-auto mt-0 mb-[10%] flex justify-center items-center">
             <div
-              className="relative flex justify-center items-center cursor-pointer"
+              className={`relative flex justify-center items-center ${
+                isUploading ? "opacity-50 pointer-events-none" : "cursor-pointer"
+              }`}
               onClick={handleImageClick}
             >
               <img
@@ -305,7 +349,7 @@ const Profile = () => {
           </section>
 
           {/* 입력 필드 영역 */}
-          <section className="flex flex-col w-full px-[20%] gap-[10%] mb-[10%]">
+          <section className="flex flex-col w-full px-[20%] gap-[5.5%] mb-[15%]">
             <div className="flex flex-col w-full">
               <InputField
                 label="닉네임"
@@ -313,6 +357,61 @@ const Profile = () => {
                 onChange={(e) => setNickname(e.target.value)}
                 placeholder="닉네임을 입력하세요"
               />
+            </div>
+
+            {/* 성별 선택 (선택 입력) */}
+            <div className="flex flex-col gap-2 w-full">
+              <label className="text-xs text-black">성별 (선택)</label>
+              <Dropdown
+                options={genderOptions}
+                value={gender}
+                onChange={setGender}
+                listClassName="mt-1 bg-white border border-gray-300 rounded-lg shadow-lg overflow-hidden divide-y divide-gray-200"
+                renderTrigger={({ selectedLabel, isOpen, toggle }) => (
+                  <div className="relative w-full h-11 flex items-center">
+                    <img
+                      src={getAssetUrl(currentTheme, 'boxes', 'info_box_x3')}
+                      alt="입력창 배경"
+                      className="absolute top-0 left-0 w-full h-full z-10"
+                    />
+                    <button
+                      type="button"
+                      onClick={toggle}
+                      className="relative z-20 w-full h-full bg-transparent border-none outline-none px-4 text-xs text-black flex items-center justify-between"
+                    >
+                      <span className={gender === '' ? 'text-gray-400' : 'text-black'}>{selectedLabel}</span>
+                      <span className={`text-[10px] text-gray-600 ${isOpen ? 'rotate-180' : ''}`}>
+                        ▼
+                      </span>
+                    </button>
+                  </div>
+                )}
+                renderOption={({ option, isSelected, select }) => (
+                  <button
+                    type="button"
+                    onClick={select}
+                    className={`w-full text-center text-xs font-medium py-3 transition-colors ${
+                      isSelected ? 'bg-blue-900 text-white' : 'text-gray-800 hover:bg-gray-100'
+                    }`}
+                  >
+                    {option.label}
+                  </button>
+                )}
+              />
+            </div>
+ 
+            {/* 나이 입력 (선택 입력) */}
+            <div className="flex flex-col w-full">
+              <InputField
+                label="나이 (선택)"
+                type="text"
+                value={age}
+                onChange={handleAgeChange}
+                placeholder="나이를 입력하세요"
+              />
+              {ageError && (
+                <p className="text-xs text-[#EF4444] mt-1">{ageError}</p>
+              )}
             </div>
 
             {/* 이메일 입력 - 수정 불가 */}
@@ -325,7 +424,7 @@ const Profile = () => {
           </section>
 
           {/* 수정 완료 & 에러 메시지 영역 */}
-          <div className="w-full h-[5%] flex justify-center items-center mb-[3%]">
+          <div className="w-full h-[5%] flex justify-center items-center mb-[4%]">
             {isUploading && (
               <p className="text-xs font-medium text-gray-500 animate-pulse">
                 정보를 업데이트 중입니다...

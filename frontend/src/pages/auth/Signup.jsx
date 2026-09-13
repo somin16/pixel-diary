@@ -1,6 +1,6 @@
 // 1. 리액트 불러오기
 import { useNavigate } from 'react-router-dom';
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 
 // 2. 유틸 함수 불러오기
 import { getAssetUrl } from "../../utils/AssetHelper";
@@ -15,6 +15,7 @@ import { useBackNavigate } from '../../hooks/useBackNavigate';
 // 5. 컴포넌트 불러오기
 import InputBox from '../../components/auth/InputBox';
 import SubmitButton from '../../components/auth/SubmitButton';
+import Dropdown from '../../components/common/Dropdown';
 
 export default function Signup() { // 회원가입 페이지 내보내기
   // 페이지 이동
@@ -33,18 +34,13 @@ export default function Signup() { // 회원가입 페이지 내보내기
   const [confirmPassword, setConfirmPassword] = useState('');
   const [gender, setGender] = useState(''); // '' | 'male' | 'female'
   const [age, setAge] = useState(''); // 선택 입력 - 문자열로 관리, 제출 시 Number()로 변환
-
-  // 성별 커스텀 드롭다운 - 열림/닫힘 상태 및 바깥 클릭 감지용 ref
-  const [genderMenuOpen, setGenderMenuOpen] = useState(false);
-  const genderMenuRef = useRef(null);
  
+  // 성별, 나이 드롭다운
   const genderOptions = [
     { value: '', label: '선택 안함' },
     { value: 'male', label: '남성' },
     { value: 'female', label: '여성' },
   ];
-  const selectedGenderLabel =
-    genderOptions.find((opt) => opt.value === gender)?.label ?? '선택 안함';
 
   // 회원가입 뮤테이션 - loading은 signup.isPending으로 대체
   const signup = useSignup();
@@ -92,41 +88,11 @@ export default function Signup() { // 회원가입 페이지 내보내기
     setConfirmStatus(AuthValidator.validateConfirmPassword(password, confirmPassword));
   }, [password, confirmPassword]);
 
-  // 성별 드롭다운 바깥을 클릭하면 메뉴 닫기
-  useEffect(() => {
-    const handleClickOutside = (e) => {
-      if (genderMenuRef.current && !genderMenuRef.current.contains(e.target)) {
-        setGenderMenuOpen(false);
-      }
-    };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
- 
-  // 나이 입력 처리 - 비워두면 선택값이므로 통과, 값이 있으면 1 이상의 숫자인지만 확인
+  // 나이 입력 처리
   const handleAgeChange = (e) => {
     const value = e.target.value;
     setAge(value);
- 
-    if (value === '') {
-      setAgeStatus({ state: 'default', message: '' });
-      return;
-    }
- 
-    // 숫자가 아닌 문자(한글, 특수문자, 소수점 등)가 하나라도 섞여있으면 에러
-    if (!/^[0-9]+$/.test(value)) {
-      setAgeStatus({ state: 'error', message: '숫자만 입력할 수 있어요' });
-      return;
-    }
- 
-    // 숫자이지만 0 이하이면 에러
-    if (Number(value) <= 0) {
-      setAgeStatus({ state: 'error', message: '나이는 1 이상의 숫자로 입력해주세요' });
-      return;
-    }
- 
-    // 1 이상의 숫자면 통과(success)
-    setAgeStatus({ state: 'success', message: '' });
+    setAgeStatus(AuthValidator.validateAge(value));
   };
 
   // 일반 회원가입 로직
@@ -242,55 +208,44 @@ export default function Signup() { // 회원가입 페이지 내보내기
           currentTheme={currentTheme}
         />
 
-        {/* 성별 선택 (선택 입력) - 커스텀 드롭다운 */}
+        {/* 성별 선택 (선택 입력) 드롭다운 */}
         <div className="w-full flex flex-col">
-          <div className="w-full relative" ref={genderMenuRef}>
-            <div className="w-full relative flex items-center" style={genderBoxStyle}>
-              <span className="absolute -mt-[15%] ml-[5%] font-bold text-3xs">
-                성별 (선택)
-              </span>
+          <Dropdown
+            options={genderOptions}
+            value={gender}
+            onChange={setGender}
+            listClassName="bg-white border border-gray-300 rounded-lg shadow-lg overflow-hidden divide-y divide-gray-200"
+            renderTrigger={({ selectedLabel, isOpen, toggle }) => (
+              <div className="w-full relative flex items-center" style={genderBoxStyle}>
+                <span className="absolute -mt-[15%] ml-[5%] font-bold text-3xs">
+                  성별 (선택)
+                </span>
  
-              {/* 드롭다운 열고 닫는 버튼 - 선택된 값 + 화살표 아이콘 */}
+                {/* 드롭다운 열고 닫는 버튼 - 선택된 값 + 화살표 아이콘 */}
+                <button
+                  type="button"
+                  onClick={toggle}
+                  className="w-full h-full flex items-center justify-center gap-1 text-2xs font-bold mt-[1%] -mb-[1%]"
+                >
+                  <span className={gender === '' ? 'text-gray-400' : ''}>{selectedLabel}</span>
+                  <span className={`text-3xs ${isOpen ? 'rotate-180' : ''}`}>
+                    ▼
+                  </span>
+                </button>
+              </div>
+            )}
+            renderOption={({ option, isSelected, select }) => (
               <button
                 type="button"
-                onClick={() => setGenderMenuOpen((prev) => !prev)}
-                className="w-full h-full flex items-center justify-center gap-1 text-2xs font-bold mt-[1%] -mb-[1%]"
+                onClick={select}
+                className={`w-full text-center text-2xs font-bold py-3 transition-colors ${
+                  isSelected ? 'bg-blue-900 text-white' : 'text-gray-800 hover:bg-gray-100'
+                }`}
               >
-                <span>{selectedGenderLabel}</span>
-                <span
-                  className={`text-3xs transition-transform duration-150 ${
-                    genderMenuOpen ? 'rotate-180' : ''
-                  }`}
-                >
-                  ▼
-                </span>
+                {option.label}
               </button>
-            </div>
- 
-            {/* 드롭다운 목록 */}
-            {genderMenuOpen && (
-              <ul className="absolute left-0 right-0 top-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg z-20 overflow-hidden">
-                {genderOptions.map((opt) => (
-                  <li key={opt.value}>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setGender(opt.value);
-                        setGenderMenuOpen(false);
-                      }}
-                      className={`w-full text-center text-2xs font-bold py-2 transition-colors ${
-                        gender === opt.value
-                          ? 'bg-blue-800 text-white'
-                          : 'text-gray-700 hover:bg-gray-100'
-                      }`}
-                    >
-                      {opt.label}
-                    </button>
-                  </li>
-                ))}
-              </ul>
             )}
-          </div>
+          />
           {/* 다른 입력창들과 높이를 맞추기 위한 메시지 영역 (성별은 항상 유효하므로 비워둠) */}
           <div className="min-h-[1.5rem]" />
         </div>

@@ -77,6 +77,13 @@ export function useChangeUsername() {
   });
 }
 
+// 성별/나이 변경 - 캐시 갱신은 호출부(Profile.jsx)의 refetch()가 담당
+export function useUpdateGenderAge() {
+  return useMutation({
+    mutationFn: ({ gender, age }) => authApi.updateGenderAge({ gender, age }),
+  });
+}
+
 // 회원 탈퇴 - 성공 시 로컬 세션/캐시 정리
 export function useWithdraw() {
   const queryClient = useQueryClient();
