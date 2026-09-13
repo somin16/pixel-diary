@@ -11,11 +11,11 @@ export const authApi = {
       .then(handleResponse),
 
   // 회원가입 - 인증 불필요
-  signup: ({ user_email, user_name, password }) =>
+  signup: ({ user_email, user_name, password, gender, age }) =>
     fetch(`${BASE_URL}/api/v1/auth/signup/`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ user_email, user_name, password }),
+      body: JSON.stringify({ user_email, user_name, password, gender, age }),
     }).then(handleResponse),
 
   // 일반 로그인 - 인증 불필요

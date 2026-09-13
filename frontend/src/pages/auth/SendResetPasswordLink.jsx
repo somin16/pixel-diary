@@ -4,11 +4,13 @@ import { useState, useEffect } from 'react';
 
 // 2. 유틸 함수 불러오기
 import AuthValidator from '../../utils/AuthValidator';
+import { getAssetUrl } from '../../utils/AssetHelper';
 
 // 3. 커스텀 훅 불러오기
 import { useTheme } from '../../stores/useThemeStore';
 import useDebounce from '../../hooks/useDebounce';
 import { useResetPassword } from '../../hooks/mutations/useAuthMutations';
+import { useBackNavigate } from '../../hooks/useBackNavigate';
 
 // 5. 컴포넌트 불러오기
 import InputBox from '../../components/auth/InputBox';
@@ -17,6 +19,9 @@ import SubmitButton from '../../components/auth/SubmitButton';
 export default function SendResetPasswordLink() { // 비밀번호 재설정 링크 이메일로 보내는 페이지 내보내기
   // 페이지 이동
   const navigate = useNavigate();
+
+  // 뒤로가기 버튼용
+  const { goBack } = useBackNavigate();
 
   // [상태] 입력값 관리
   const [step, setStep] = useState(1); // 1. 이메일 입력, 2. 발송 완료
@@ -73,6 +78,19 @@ export default function SendResetPasswordLink() { // 비밀번호 재설정 링�
   return (
     // 전체 컨테이너
     <div className='w-full h-full items-center flex flex-col p-[15%]'>
+      {/* 뒤로 가기 버튼 - Header 컴포넌트를 거치지 않고 이 페이지에서 직접 구현 */}
+      <button
+        type="button"
+        onClick={() => goBack()}
+        className="bg-transparent border-none cursor-pointer p-0 absolute left-8 top-10 outline-none"
+      >
+        <img
+          src={getAssetUrl(currentTheme, 'icons', 'back_icon_x3')}
+          alt="뒤로 가기"
+          className="w-auto h-9"
+        />
+      </button>
+
       {/* 비밀번호 재설정 글씨 */}
       <h1 className='text-4xl font-bold text-center mt-[25%]'>Pixel Diary</h1><br />
       <h1 className='text-2xl font-bold text-center mb-[10%]'>비밀번호 재설정</h1>
