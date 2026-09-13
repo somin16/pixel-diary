@@ -1,0 +1,33 @@
+info:
+  name: 사용자-통계-조회
+  type: http
+  seq: 13
+
+http:
+  method: GET
+  url: http://127.0.0.1:8000/api/v1/auth/statistics/
+  headers:
+    - name: Authorization
+      value: "Bearer "
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: false
+
+docs: |-
+  ### Headers
+
+  - Authorization: Bearer 로그인할 시 받는 access_token
+
+  ---
+
+  ### Status Code
+
+  - **200 OK**: 통계 조회 성공
+  - **400 Bad Request**: Authorization 헤더에 Bearer 토큰 없음
+  - **401 Unauthorized**: 유효하지 않은 access_token인 경우
+  - **500 Internal Server Error**: Supabase API 오류 등 서버 내부 오류

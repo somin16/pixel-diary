@@ -4,7 +4,10 @@ import requests
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
-from utils import extract_access_token, get_supabase_headers, get_supabase_anon_headers
+from utils import extract_access_token, get_supabase_headers, get_supabase_anon_headers, get_user_from_token
+from datetime import datetime, timedelta, timezone
+
+SUPABASE_URL = os.getenv("SUPABASE_URL")
 
 
 def validate_email_format(email):
@@ -1179,5 +1182,106 @@ class UpdateGenderAgeView(APIView):
             print(f"=== UPDATE GENDER/AGE ERROR ===\n{error}\n===============================")
             return Response(
                 {"message": "성별/나이 수정 중 오류가 발생했습니다."},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
+
+
+class StatisticsView(APIView):
+    """사용자 통계(일기, 출석) 조회 API"""
+
+    def get(self, request):
+        """
+        GET /api/v1/auth/statistics
+        - Authorization 헤더의 access_token으로 현재 유저 확인
+        - 일기: 오늘 작성 여부, 총 작성 횟수, 감정별 작성 개수
+        - 출석: 오늘 출석 여부, 총 출석 일수
+        """
+        # Authorization 헤더에서 access_token 추출
+        access_token = extract_access_token(request)
+        if not access_token:
+            return Response(
+                {"message": "Authorization 헤더에 유효한 Bearer 토큰이 필요합니다."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        try:
+            # access_token으로 유저 정보 조회
+            user = get_user_from_token(access_token)
+
+            # 유효하지 않은 토큰인 경우 401 반환
+            if not user:
+                return Response(
+                    {"message": "유효하지 않은 토큰입니다."},
+                    status=status.HTTP_401_UNAUTHORIZED,
+                )
+
+            user_id = user.get("id")
+            headers = get_supabase_headers()
+            kst = timezone(timedelta(hours=9))
+            today = datetime.now(kst).date()
+
+            # --- 일기 통계 ---
+            diary_response = requests.get(
+                f"{SUPABASE_URL}/rest/v1/diaries",
+                headers=headers,
+                params={"user_id": f"eq.{user_id}", "select": "created_at,emotion"},
+            )
+
+            if diary_response.status_code != 200:
+                raise Exception(f"Supabase API 오류: {diary_response.text}")
+
+            diaries = diary_response.json()
+            diary_total_count = len(diaries)
+
+            diary_written_today = False
+            emotion_counts = {"happy": 0, "calm": 0, "tired": 0, "sad": 0, "angry": 0}
+
+            for row in diaries:
+                created_at = datetime.fromisoformat(row["created_at"].replace("Z", "+00:00")).astimezone(kst)
+                if created_at.date() == today:
+                    diary_written_today = True
+
+                emotion = row.get("emotion")
+                if emotion in emotion_counts:
+                    emotion_counts[emotion] += 1
+
+            # --- 출석 통계 ---
+            attendance_response = requests.get(
+                f"{SUPABASE_URL}/rest/v1/attendance_log",
+                headers=headers,
+                params={"user_id": f"eq.{user_id}", "select": "checked_date"},
+            )
+
+            if attendance_response.status_code != 200:
+                raise Exception(f"Supabase API 오류: {attendance_response.text}")
+
+            attendance_dates = {
+                datetime.strptime(row["checked_date"], "%Y-%m-%d").date()
+                for row in attendance_response.json()
+            }
+
+            attendance_total_days = len(attendance_dates)
+            attendance_checked_today = today in attendance_dates
+
+            return Response(
+                {
+                    "diary": {
+                        "written_today": diary_written_today,
+                        "total_count": diary_total_count,
+                        "emotion_counts": emotion_counts,
+                    },
+                    "attendance": {
+                        "checked_today": attendance_checked_today,
+                        "total_days": attendance_total_days,
+                    },
+                },
+                status=status.HTTP_200_OK,
+            )
+
+        except Exception as error:
+            # 오류 발생 시 터미널에 출력 (장애 추적용으로 유지)
+            print(f"=== STATISTICS ERROR ===\n{error}\n=======================")
+            return Response(
+                {"message": "통계 조회 중 오류가 발생했습니다."},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )

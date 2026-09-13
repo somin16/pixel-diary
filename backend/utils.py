@@ -13,7 +13,6 @@ def extract_access_token(request):
         return None
     return auth_header.split("Bearer ")[1].strip()
 
-
 def get_user_from_token(access_token):
     """
     access_token으로 Supabase에서 유저 정보 조회
