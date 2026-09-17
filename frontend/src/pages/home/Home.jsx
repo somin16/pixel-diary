@@ -4,7 +4,6 @@ import { getAssetUrl } from "../../utils/AssetHelper"; // 이미지 에셋 경�
 import { useTheme } from "../../stores/useThemeStore"; // 테마 전역상태관리 커스텀 훅
 import FloatingActionButton from "../../components/home/FloatingActionButton"; // FAB 버튼 컴포넌트
 import Calendar from "../../components/home/Calendar"; // 달력 컴포넌트
-import { authFetch } from "../../utils/AuthHelper";
 import { useDiaries } from "../../hooks/queries/useDiaryQueries";
 
 // 출석 관련 모듈 및 Zustand 스토어 임포트
@@ -13,6 +12,7 @@ import { useAttendanceStore } from "../../stores/useAttendanceStore";
 
 // 리액트 쿼리
 import { useAttendance } from "../../hooks/queries/useAttendanceQueries";
+import ResultDialog from "../../components/common/dialog/ResultDialog";
 
 export default function Home() {
   const navigate = useNavigate();
@@ -20,6 +20,7 @@ export default function Home() {
 
   // 달력에서 날짜 클릭 시 해당 날짜 일기 존재 여부를 확인하는 데 사용
   const { data: diariesData, isError: isDiariesError, error: diariesError } = useDiaries();
+  const [isDiaryNotfound, setisDiaryNotfound] = useState(false);
 
   // 일기 목록 로드 실패 시 처리 (추후 alert/toast 추가 예정)
   useEffect(() => {
@@ -71,7 +72,7 @@ export default function Home() {
   // ── 날짜 클릭 핸들러 ────────────────────────────────────────────────────
   // 달력에서 날짜를 클릭했을 때 실행됨
   // 해당 날짜에 이미 쓴 일기가 있으면 → 상세보기로 이동
-  // 없으면 → 일기 작성 페이지로 이동
+  // 없으면 → 해당 날짜에는 작성한 일기가 없다고 안내
   //
   // useDiaries()가 Home 마운트 시 이미 목록을 캐시해두므로,
   // 여기서는 그 캐시 데이터에서 날짜를 찾기만 하면 됨 (별도 fetch 불필요)
@@ -87,12 +88,13 @@ export default function Home() {
     if (found) {
       // 해당 날짜에 일기 있음 → 상세보기로 이동
       // state로 diaryId 전달 → DiaryDetail에서 API 호출에 사용
+      setisDiaryNotfound(false)
       navigate(`/diary/${dateString}`, {
         state: { diaryId: found.diary_id },
       });
     } else {
-      // 해당 날짜에 일기 없음 → 일기 작성 페이지로 이동
-      navigate(`/diary/write/${dateString}`);
+      // 해당 날짜에 일기 없음 → 해당 날짜에는 작성한 일기가 없다고 안내
+      setisDiaryNotfound(true)
     }
   };
 
@@ -131,6 +133,14 @@ export default function Home() {
       {/* 출석 다이얼로그 */}
       {isAttendanceOpen && (
         <Attendance onClose={() => setIsAttendanceOpen(false)} />
+      )}
+
+      {/* 일기 존재 여부 알림 팝업 */}
+      {isDiaryNotfound && (
+        <ResultDialog 
+        maxwidth="320px"
+        message={<>해당 날짜에는 작성한 일기가<br/>존재하지 않습니다.</>}
+        onConfirm={() => setisDiaryNotfound(false)}/>
       )}
     </div>
   );
