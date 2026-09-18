@@ -376,7 +376,7 @@ function updateMonsterSpawn(scene) {
 export function addEliteMonsterSpawn(scene) {
 
 	scene.eliteMonsterSpawnTimer = scene.time.addEvent({
-		delay: 30000, // 차후에 1분으로 수정됩니다
+		delay: 60000,
 		callback: () => spawnEliteMonster(scene),
 		callbackScope: scene,
 		loop: true
