@@ -321,32 +321,14 @@ const DetailDiaryDialog = ({
         {/* ── 날짜 + 이모지 영역 (z-60) ─────────────────────────────── */}
         <div className="absolute w-[75%] h-[8%] pt-[2%] flex justify-between items-center z-60">
 
-          {/* 날짜: create/edit 모드에서 클릭 시 date picker 열림 */}
+          {/* 날짜 */}
           <div className="absolute flex items-center">
             <span
               onClick={handleDateTextClick}
-              className={`text-[#5A5A5A] font-bold text-sm tracking-tighter ${(mode === 'create' || mode === 'edit') ? 'cursor-pointer hover:text-blue-500' : ''
-                }`}
+              className={`text-[#5A5A5A] font-bold text-sm }`}
             >
               {formatDisplayDate(diaryDate)}
             </span>
-
-            {/*
-                            숨겨진 날짜 선택기
-                            - handleDateTextClick에서 .showPicker()로 프로그래밍 방식으로 열림
-                            - 값 변경 시 "YYYY-MM-DD" → "YYYY. MM. DD" 변환 후 onDateChange 호출
-                        */}
-            <input
-              id="hidden-date-picker"
-              type="date"
-              className="absolute opacity-0 pointer-events-none w-0 h-0"
-              value={diaryDate ?? ""}
-              onChange={(e) => {
-                const newDate = e.target.value;
-                if (!newDate) return;
-                onDateChange?.(newDate.replace(/-/g, '. '));
-              }}
-            />
           </div>
 
           {/*
