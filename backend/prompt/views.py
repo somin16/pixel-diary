@@ -99,7 +99,8 @@ def call_llm_model_engine_type(messages, llm_model_engine_type="groq"):
         client = Groq(api_key=os.getenv("GROQ_API_KEY"))
         response = client.chat.completions.create(
             model=GROQ_MODEL,
-            messages=messages
+            messages=messages,
+            max_tokens=500,
         )
         content = response.choices[0].message.content.strip()
         # ▼ Qwen3 thinking 모드의 <think>...</think> 블록 제거
