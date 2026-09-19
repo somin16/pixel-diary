@@ -1291,3 +1291,71 @@ class StatisticsView(APIView):
                 {"message": "통계 조회 중 오류가 발생했습니다."},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
+
+
+class RegisterFCMTokenView(APIView):
+    """FCM 토큰 등록 API"""
+
+    def post(self, request):
+        """
+        POST /api/v1/auth/fcm-token
+        - Authorization 헤더의 access_token으로 현재 유저 확인
+        - fcm_token을 받아 저장 (이미 존재하는 토큰이면 user_id만 갱신)
+        - 등록 완료 메시지 반환
+        """
+        # Authorization 헤더에서 access_token 추출
+        access_token = extract_access_token(request)
+        if not access_token:
+            return Response(
+                {"message": "Authorization 헤더에 유효한 Bearer 토큰이 필요합니다."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        # 요청 Body에서 fcm_token 추출
+        fcm_token = request.data.get("fcm_token", "").strip()
+
+        # fcm_token 누락 시 400 반환
+        if not fcm_token:
+            return Response(
+                {"message": "fcm_token은 필수입니다."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        try:
+            # access_token으로 유저 정보 조회
+            user = get_user_from_token(access_token)
+
+            # 유효하지 않은 토큰인 경우 401 반환
+            if not user:
+                return Response(
+                    {"message": "유효하지 않은 토큰입니다."},
+                    status=status.HTTP_401_UNAUTHORIZED,
+                )
+
+            user_id = user.get("id")
+            headers = get_supabase_headers()
+
+            # upsert: fcm_token이 이미 있으면 user_id 갱신, 없으면 새로 생성
+            # (기기를 다른 계정으로 재로그인하는 경우 소유자가 바뀔 수 있으므로 upsert 처리)
+            response = requests.post(
+                f"{SUPABASE_URL}/rest/v1/fcm_tokens",
+                headers={**headers, "Prefer": "resolution=merge-duplicates"},
+                json={"user_id": user_id, "fcm_token": fcm_token},
+            )
+
+            # 저장 실패 시 예외 발생
+            if response.status_code not in [200, 201]:
+                raise Exception(f"Supabase API 오류: {response.text}")
+
+            return Response(
+                {"message": "FCM 토큰이 등록되었습니다."},
+                status=status.HTTP_201_CREATED,
+            )
+
+        except Exception as error:
+            # 오류 발생 시 터미널에 출력 (장애 추적용으로 유지)
+            print(f"=== REGISTER FCM TOKEN ERROR ===\n{error}\n================================")
+            return Response(
+                {"message": "FCM 토큰 등록 중 오류가 발생했습니다."},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
