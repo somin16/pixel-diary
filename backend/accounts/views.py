@@ -1338,7 +1338,7 @@ class RegisterFCMTokenView(APIView):
             # upsert: fcm_token이 이미 있으면 user_id 갱신, 없으면 새로 생성
             # (기기를 다른 계정으로 재로그인하는 경우 소유자가 바뀔 수 있으므로 upsert 처리)
             response = requests.post(
-                f"{SUPABASE_URL}/rest/v1/fcm_tokens",
+                f"{SUPABASE_URL}/rest/v1/fcm_tokens?on_conflict=fcm_token",
                 headers={**headers, "Prefer": "resolution=merge-duplicates"},
                 json={"user_id": user_id, "fcm_token": fcm_token},
             )

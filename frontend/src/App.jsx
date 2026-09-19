@@ -9,7 +9,7 @@ import { queryKeys } from "./utils/queryKeys"; // 캐시 key 모음
 import { storeApi } from "./api/storeApi";     
 import { inventoryApi } from "./api/inventoryApi"; 
 import { coinApi } from "./api/coinApi";         
-import { PushNotifications } from '@capacitor/push-notifications';  // 푸시 알림
+import { initPush } from './utils/pushHelper';
 
 // ----------------- 컴포넌트 불러오기 ----------------------------------
 import AppShell from "./components/layout/AppShell"; // AppShell 불러오기
@@ -52,7 +52,6 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { profileApi } from "./api/profileApi"; // 프로필 API
 import { attendanceApi } from "./api/attendanceApi"; // 출석 API
 import { useResetAttendanceIfExpired } from './hooks/queries/useAttendanceQueries';
-import { authApi } from "./api/authApi";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -105,6 +104,7 @@ function AppInner() {
       setSession(session);
       setLoading(false); // 세션 확인되자마자 바로 렌더링 시작
       if (session) {
+        initPush();
         (async () => {
           // 세션 확인되면 화면부터 먼저 보여주고, 출석 만료 여부 확인
           // 나머지 데이터 prefetch는 백그라운드에서 이어서 진행 (화면 렌더링을 막지 않음)
@@ -112,34 +112,6 @@ function AppInner() {
             console.error("출석 초기화 확인 실패:", err); // 실패해도 앱 진입은 막지 않음
           });
           await prefetchCriticalData(queryClient);
-          
-          // 토큰 발급 성공 시
-          PushNotifications.addListener('registration', async (token) => {
-            try {
-              await authApi.registerFcmToken(token.value);
-            } catch (err) {
-              console.error('FCM 토큰 등록 실패:', err); // 등록 실패해도 앱 진입은 막지 않음
-            }
-          });
-
-          // 토큰 발급 실패 시
-          PushNotifications.addListener('registrationError', (error) => {
-            console.error('FCM 등록 실패:', error);
-          });
-
-          async function registerPush() {
-            let permStatus = await PushNotifications.checkPermissions();
-            if (permStatus.receive === 'prompt') {
-              permStatus = await PushNotifications.requestPermissions();
-            }
-            if (permStatus.receive !== 'granted') {
-              console.log('푸시 알림 권한이 거부되었습니다.');
-              return;
-            }
-            await PushNotifications.register();
-          }
-
-          await registerPush();
         })();
       }
     });
@@ -157,6 +129,7 @@ function AppInner() {
       if (hasHandledInitialAuth) {
         useAppLockStore.getState().markFreshLogin(); // 방금 로그인했으면 이번엔 잠금화면 스킵
       }
+      initPush();
       prefetchCriticalData(queryClient); // 로그인마다 prefetch 재실행
     }
     hasHandledInitialAuth = true;
