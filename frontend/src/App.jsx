@@ -19,6 +19,7 @@ import Home from "./pages/home/Home"; // 홈 화면
 // ----------------------- 게임 ---------------------------------------
 import Game1 from "./games/game1/Game1"; // 게임1 화면
 import Game2 from "./games/game2/Game2"; // 게임2 화면
+import MinigameHub from "./games/common/MinigameHub"; // 미니게임 허브 화면
 // ----------------------- 계정 ---------------------------------------
 import Login from "./pages/auth/Login"; // 로그인 화면
 import AuthRedirect from "./pages/auth/AuthRedirect"; // 로그인, 회원가입 진행 시 화면
@@ -52,6 +53,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { profileApi } from "./api/profileApi"; // 프로필 API
 import { attendanceApi } from "./api/attendanceApi"; // 출석 API
 import { useResetAttendanceIfExpired } from './hooks/queries/useAttendanceQueries';
+
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -185,6 +187,9 @@ function AppInner() {
       ) : (
         /* 세션이 있을 때 (로그인 후) */
         <Route element={<LockGateRoute />}>
+          {/* 주소가 /minigamehub 이면 미니게임허브 화면을 보여줘 */}
+          <Route path="/minigamehub" element={<MinigameHub />} />
+
           {/* 주소가 /game1run 이면 미니게임1 화면을 보여줘 */}
           <Route path="/game1run" element={<Game1 />} />
 

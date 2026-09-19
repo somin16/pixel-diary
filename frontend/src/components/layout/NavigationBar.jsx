@@ -28,7 +28,7 @@ export default function NavigationBar() {
     {
       id: 'game',
       label: '게임',
-      path: '/game1run',
+      path: '/minigamehub',
       iconActive: getAssetUrl(currentTheme, 'icons', 'game_icon_x3'),
       iconInactive: getAssetUrl(currentTheme, 'icons', 'game_icon_x3'),
     },
