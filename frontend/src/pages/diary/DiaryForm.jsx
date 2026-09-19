@@ -66,6 +66,7 @@ export default function DiaryForm() {
   // ref: 비동기 함수 내에서도 항상 최신 prompt에 접근하기 위해 별도 유지
   const convertedPromptRef = useRef({ positive_prompt: '', negative_prompt: '' });
   const [savedDiaryId, setSavedDiaryId] = useState(diaryId); // 저장된 일기의 ID
+  const [selectedEmotion, setSelectedEmotion] = useState(null); // 'happy' | 'sad' | 'calm' | 'tired' | 'angry'
   const [stickers, setStickers] = useState([]); // 화면에 붙인 스티커 목록
   const [duplicateDateInfo, setDuplicateDateInfo] = useState(null); // 이미 작성된 일기가 있는지 확인하기위한 상태 
   const [savedImageId, setSavedImageId] = useState(null); // 백엔드 DiaryView.post()에서 image_id를 받아 ai_image.diary_id를 업데이트함
@@ -106,6 +107,7 @@ export default function DiaryForm() {
     if (editData.emotion_item?.item_id) {
       setSelectedEmojiId(editData.emotion_item.item_id);
       setSelectedEmojiImg(editData.emotion_item?.image_url ?? null);
+      setSelectedEmotion(editData.emotion_item?.name ?? null); // 백엔드가 내려주는 필드명에 맞춰 조정
     }
     // 액자 복원
     if (editData.theme_item?.item_id) {
@@ -310,7 +312,7 @@ export default function DiaryForm() {
       if (!isEditMode || !finalDiaryId) {
         // 새 일기 작성 (AI 생성 이미지의 image_id 같이 전송)
         // 백엔드에서 ai_image 테이블의 diary_id를 업데이트하고 is_temp를 false로 변경함
-        const data = await createDiary.mutateAsync({ content, image_id: savedImageId ?? "", emotion: selectedEmojiId });
+        const data = await createDiary.mutateAsync({ content, image_id: savedImageId ?? "", emotion: selectedEmotion });
         finalDiaryId = data.diary_id;
       } else {
         // 기존 일기 수정
@@ -320,7 +322,7 @@ export default function DiaryForm() {
       // 2. 그 다음 꾸미기 정보(액자, 이모지, 스티커 위치 등)를 저장합니다.
       await saveDeco.mutateAsync({
         diaryId: finalDiaryId,
-        emoji_id: selectedEmojiId,
+        emotion: selectedEmotion,
         diary_theme_id: selectedFrameId,
         sticker: stickers.map((s) => ({
           item_id: s.id,   // stickers의 id를 item_id로
@@ -410,10 +412,11 @@ export default function DiaryForm() {
       // 스티커 추가: 기존 목록에 새 스티커를 더함
       setStickers((prev) => [...prev, { ...item, id: item.item_id, instanceId: Date.now(), x: null, y: null }]);
     } else if (type === 'emoji') {
-      setSelectedEmojiId(item.item_id);
-      setSelectedEmojiImg(item.img);
-      applyEmotionTag(extractEmotionKeyword(item));
-
+      setSelectedEmojiId(item.item_id);      // 화면 표시/인벤토리 참조용
+      setSelectedEmojiImg(item.img);         // 화면 표시용 이미지
+      const keyword = extractEmotionKeyword(item); // 'happy' 등 문자열
+      applyEmotionTag(keyword);              // 그림 옵션 태그에 반영
+      setSelectedEmotion(keyword);           // 저장 API용 문자열 보관
     } else if (type === 'frame') {
       // 액자 교체 및 기억하기
       setSelectedFrameId(item.item_id);
