@@ -18,6 +18,8 @@ import DetailDiaryDialog from "../../components/diary/DetailDiaryDialog";
 import ImageButton from "../../components/common/ImageButton";
 import { App } from '@capacitor/app';
 import { Capacitor } from "@capacitor/core";
+import { aiGenerateApi } from "../../api/aiGenerateApi"; // 그림 생성 api 호출
+import { promptApi } from "../../api/promptApi"; // 프롬프트 생성 api 호출
 
 /**
  * 일기 작성 / 수정 페이지
@@ -52,6 +54,8 @@ export default function DiaryForm() {
   const [imageUrl, setImageUrl] = useState(''); // AI가 그려준 그림 주소
   const [selectedDate, setSelectedDate] = useState(diaryDate ?? today); // 선택된 날짜
   const [isGenerating, setIsGenerating] = useState(false); // AI 그림 생성 중인지 여부
+  const [progress, setProgress] = useState(0); // AI 생성 진행률 (0 ~ 100 %)
+  const wsRef = useRef(null); // ComfyUI 웹소켓 참조 (언마운트 시 정리용)
   const [decoMode, setDecoMode] = useState(null); // 꾸미기 모드 (스티커/액자/이모지)
   const [isDecoOpen, setIsDecoOpen] = useState(false); // 꾸미기 창이 열렸는지 여부
   const [tags, setTags] = useState([]); // AI 그림 옵션 태그들 (추가: 일반, 제거: '-' 접두사)
@@ -62,6 +66,7 @@ export default function DiaryForm() {
   // ref: 비동기 함수 내에서도 항상 최신 prompt에 접근하기 위해 별도 유지
   const convertedPromptRef = useRef({ positive_prompt: '', negative_prompt: '' });
   const [savedDiaryId, setSavedDiaryId] = useState(diaryId); // 저장된 일기의 ID
+  const [selectedEmotion, setSelectedEmotion] = useState(null); // 'happy' | 'sad' | 'calm' | 'tired' | 'angry'
   const [stickers, setStickers] = useState([]); // 화면에 붙인 스티커 목록
   const [duplicateDateInfo, setDuplicateDateInfo] = useState(null); // 이미 작성된 일기가 있는지 확인하기위한 상태 
   const [savedImageId, setSavedImageId] = useState(null); // 백엔드 DiaryView.post()에서 image_id를 받아 ai_image.diary_id를 업데이트함
@@ -102,6 +107,7 @@ export default function DiaryForm() {
     if (editData.emotion_item?.item_id) {
       setSelectedEmojiId(editData.emotion_item.item_id);
       setSelectedEmojiImg(editData.emotion_item?.image_url ?? null);
+      setSelectedEmotion(editData.emotion_item?.name ?? null); // 백엔드가 내려주는 필드명에 맞춰 조정
     }
     // 액자 복원
     if (editData.theme_item?.item_id) {
@@ -133,50 +139,46 @@ export default function DiaryForm() {
     };
   }, [savedImageId]); // savedImageId 바뀔 때마다 최신 handleClose 반영
 
+  // 컴포넌트 언마운트 시 열려있는 웹소켓 정리
+  useEffect(() => {
+    return () => {
+      wsRef.current?.close();
+    };
+  }, []);
+
   // ── [기능] 단계별 화면 이동 처리 ───────────────────────────────────────────
   // 3단계: 옵션 선택 전 일기 내용을 영어 프롬프트로 변환 (POST /api/v1/prompt/)
   async function handleSelectOption() {
-    try {
-      const data = await authFetch(
-        `${import.meta.env.VITE_BACKEND_URL}/api/v1/prompt/`,
-        {
-          method: 'POST',
-          body: JSON.stringify({ diary: content }),
-        }
-      );
-      const next = { positive_prompt: data.positive_prompt, negative_prompt: data.negative_prompt };
-      convertedPromptRef.current = next;
-      setConvertedPrompt(next);
-    } catch (error) {
-      console.error('프롬프트 변환 실패:', error);
-      const fallback = { positive_prompt: content, negative_prompt: '' };
-      convertedPromptRef.current = fallback;
-      setConvertedPrompt(fallback);
-    }
-    setStep(3);
+  try {
+    const data = await promptApi.convert(content);
+    const next = { positive_prompt: data.positive_prompt, negative_prompt: data.negative_prompt };
+    convertedPromptRef.current = next;
+    setConvertedPrompt(next);
+  } catch (error) {
+    console.error('프롬프트 변환 실패:', error);
+    const fallback = { positive_prompt: content, negative_prompt: '' };
+    convertedPromptRef.current = fallback;
+    setConvertedPrompt(fallback);
   }
+  setStep(3);
+}
 
   // 옵션 없이 바로 그리기: 일기 내용 그대로 변환 후 생성
   async function handleDrawWithoutOption() {
-    setIsGenerating(true);
-    setStep(4);
-    try {
-      const promptData = await authFetch(
-        `${import.meta.env.VITE_BACKEND_URL}/api/v1/prompt/`,
-        {
-          method: 'POST',
-          body: JSON.stringify({ diary: content }),
-        }
-      );
-      await _generateImage(promptData.positive_prompt, promptData.negative_prompt);
-    } catch (error) {
-      console.error('이미지 생성 실패:', error);
-      setSaveError('generate_fail'); // 에러 다이얼로그 띄우기
-      setStep(2); // 이전 단계로
-    } finally {
-      setIsGenerating(false);
-    }
+  setIsGenerating(true);
+  setProgress(0); // 추가: 새 생성 시작 시 진행률 초기화
+  setStep(4);
+  try {
+    const promptData = await promptApi.convert(content);
+    await _generateImage(promptData.positive_prompt, promptData.negative_prompt);
+  } catch (error) {
+    console.error('이미지 생성 실패:', error);
+    setSaveError('generate_fail'); // 에러 다이얼로그 띄우기
+    setStep(2); // 이전 단계로
+  } finally {
+    setIsGenerating(false);
   }
+}
 
   // 태그 변경 시 state만 업데이트 (PATCH는 옵션 적용하기 버튼에서 처리)
   function handleTagsChange(newTags) {
@@ -185,55 +187,45 @@ export default function DiaryForm() {
 
   // AI 그림 생성 함수 (옵션 적용하기 버튼)
   async function handleGenerateImage() {
-    setIsGenerating(true);
-    setStep(4);
-    try {
-      if (!convertedPromptRef.current.positive_prompt) {
-        // 프롬프트 없으면 POST
-        const data = await authFetch(
-          `${import.meta.env.VITE_BACKEND_URL}/api/v1/prompt/`,
-          {
-            method: 'POST',
-            body: JSON.stringify({ diary: content }),
-          }
-        );
-        const next = { positive_prompt: data.positive_prompt, negative_prompt: data.negative_prompt };
-        convertedPromptRef.current = next;
-        setConvertedPrompt(next);
-      }
-
-      if (tags.length > 0) {
-        // 태그 있으면 PATCH
-        const requestTags = tags.filter(t => !t.startsWith('-')).join(', ');
-        const removeTags = tags.filter(t => t.startsWith('-')).map(t => t.substring(1)).join(', ');
-        console.log("--------그림 새로 그리는 중-----------------------------")
-        console.log("추가:",requestTags);
-        console.log("제거:",removeTags);
-        const data = await authFetch(
-          `${import.meta.env.VITE_BACKEND_URL}/api/v1/prompt/`,
-          {
-            method: 'PATCH',
-            body: JSON.stringify({
-              prompt: convertedPromptRef.current.positive_prompt,
-              request: requestTags,
-              remove: removeTags,
-            }),
-          }
-        );
-        const next = { positive_prompt: data.positive_prompt, negative_prompt: data.negative_prompt };
-        convertedPromptRef.current = next;
-        setConvertedPrompt(next);
-      }
-
-      await _generateImage(convertedPromptRef.current.positive_prompt, convertedPromptRef.current.negative_prompt);
-    } catch (error) {
-      console.error('이미지 생성 실패:', error);
-      setSaveError('generate_fail'); //에러 다이얼로그 띄우기
-      setStep(3);
-    } finally {
-      setIsGenerating(false);
+  setIsGenerating(true);
+  setProgress(0); // 추가: 새 생성 시작 시 진행률 초기화
+  setStep(4);
+  try {
+    if (!convertedPromptRef.current.positive_prompt) {
+      // 프롬프트 없으면 POST
+      const data = await promptApi.convert(content);
+      const next = { positive_prompt: data.positive_prompt, negative_prompt: data.negative_prompt };
+      convertedPromptRef.current = next;
+      setConvertedPrompt(next);
     }
+
+    if (tags.length > 0) {
+      // 태그 있으면 PATCH
+      const requestTags = tags.filter(t => !t.startsWith('-')).join(', ');
+      const removeTags = tags.filter(t => t.startsWith('-')).map(t => t.substring(1)).join(', ');
+      console.log("--------그림 새로 그리는 중-----------------------------")
+      console.log("추가:",requestTags);
+      console.log("제거:",removeTags);
+
+      const data = await promptApi.refine({
+        prompt: convertedPromptRef.current.positive_prompt,
+        request: requestTags,
+        remove: removeTags,
+      });
+      const next = { positive_prompt: data.positive_prompt, negative_prompt: data.negative_prompt };
+      convertedPromptRef.current = next;
+      setConvertedPrompt(next);
+    }
+
+    await _generateImage(convertedPromptRef.current.positive_prompt, convertedPromptRef.current.negative_prompt);
+  } catch (error) {
+    console.error('이미지 생성 실패:', error);
+    setSaveError('generate_fail');//에러 다이얼로그 띄우기
+    setStep(3);
+  } finally {
+    setIsGenerating(false);
   }
+}
 
   // 실제 ai-generate API 호출 (내부 공통 함수)
   async function _generateImage(positivePrompt, negativePrompt) {
@@ -241,28 +233,64 @@ export default function DiaryForm() {
     console.log("긍정프롬프트:",positivePrompt);
     console.log("부정프롬프트:",negativePrompt);
     console.log("----------------------------------------------------------")
-    const data = await authFetch(
-      `${import.meta.env.VITE_BACKEND_URL}/api/v1/ai-generate/`,
-      {
-        method: 'POST',
-        body: JSON.stringify({
-          positive_prompt: positivePrompt || content,
-          negative_prompt: negativePrompt || '',
-        }),
-      }
-    );
-    // 이미지 URL을 받은 후 실제 로드 완료까지 기다림
-  await new Promise((resolve, reject) => {
-    const img = new Image();
-    img.onload = resolve;  // 로드 성공 시 다음으로
-    img.onerror = resolve; // 실패해도 일단 넘어감 (무한 대기 방지)
-    img.src = data.image_url;
-  });
 
-    setImageUrl(data.image_url);
-    setSavedImageId(data.image_id);
-    setStep(5);
-  }
+    // 1단계: 큐잉만 하고 즉시 응답 받음
+      const queueData = await aiGenerateApi.start({
+        positive_prompt: positivePrompt || content,
+        negative_prompt: negativePrompt || '',
+      });
+
+      // 2단계(진행률 구독) + 3단계(완료 후 결과 조회)를 함께 처리
+      const { image_id, image_url } = await _waitForGeneration(queueData);
+
+      // 이미지 URL을 받은 후 실제 로드 완료까지 기다림 (기존 로직 유지)
+      await new Promise((resolve) => {
+        const img = new Image();
+        img.onload = resolve;
+        img.onerror = resolve;
+        img.src = image_url;
+      });
+
+      setImageUrl(image_url);
+      setSavedImageId(image_id);
+      setStep(5);
+    }
+
+    // 신규 함수: ComfyUI 웹소켓으로 진행률 구독하다가 완료되면 결과 API 호출
+    function _waitForGeneration({ client_id, prompt_id, comfyui_url }) {
+      return new Promise((resolve, reject) => {
+        const wsUrl = comfyui_url.replace(/^http/, 'ws'); // http(s) → ws(s)
+        const ws = new WebSocket(`${wsUrl}/ws?clientId=${client_id}`);
+        wsRef.current = ws;
+
+        ws.onmessage = async (event) => {
+          if (typeof event.data !== 'string') return; // 미리보기 이미지(바이너리)는 무시
+
+          const msg = JSON.parse(event.data);
+
+          if (msg.type === 'progress') {
+            const { value, max } = msg.data;
+            setProgress(Math.round((value / max) * 100));
+          }
+
+          // 해당 prompt의 실행이 끝나면 node가 null로 옴
+          if (msg.type === 'executing' && msg.data.node === null && msg.data.prompt_id === prompt_id) {
+            ws.close();
+            try {
+              const result = await aiGenerateApi.getResult(prompt_id, comfyui_url);
+              setProgress(100);
+              resolve(result);
+            } catch (error) {
+              reject(error);
+            }
+          }
+        };
+
+        ws.onerror = () => {
+          reject(new Error('진행률 연결에 실패했습니다.'));
+        };
+      });
+    }
 
   function handleRegenerateImage() {
     setTags([]); // 이전 태그 초기화
@@ -284,17 +312,17 @@ export default function DiaryForm() {
       if (!isEditMode || !finalDiaryId) {
         // 새 일기 작성 (AI 생성 이미지의 image_id 같이 전송)
         // 백엔드에서 ai_image 테이블의 diary_id를 업데이트하고 is_temp를 false로 변경함
-        const data = await createDiary.mutateAsync({ content, image_id: savedImageId ?? "" });
+        const data = await createDiary.mutateAsync({ content, image_id: savedImageId ?? "", emotion: selectedEmotion });
         finalDiaryId = data.diary_id;
       } else {
         // 기존 일기 수정
-        await updateDiary.mutateAsync({ diaryId: finalDiaryId, content });
+        await updateDiary.mutateAsync({ diaryId: finalDiaryId, content, emotion: selectedEmojiId });
       }
 
       // 2. 그 다음 꾸미기 정보(액자, 이모지, 스티커 위치 등)를 저장합니다.
       await saveDeco.mutateAsync({
         diaryId: finalDiaryId,
-        emoji_id: selectedEmojiId,
+        emotion: selectedEmotion,
         diary_theme_id: selectedFrameId,
         sticker: stickers.map((s) => ({
           item_id: s.id,   // stickers의 id를 item_id로
@@ -365,15 +393,30 @@ export default function DiaryForm() {
     });
   }
 
+  // 감정 이모지 → 태그 키워드 추출 (재사용 가능하게 분리)
+  function extractEmotionKeyword(item) {
+    const emojiString = item.name || item.code || '';
+    return emojiString ? emojiString.split('_').pop() : '';
+  }
+
+  function applyEmotionTag(keyword) {
+    if (!keyword) return;
+    setTags((prevTags) => {
+      const filtered = prevTags.filter(t => t !== 'happy' && t !== 'sad' && t !== 'angry' && t !== 'joy');
+      return [keyword, ...filtered]; // 기존엔 prevTags를 그대로 뒀는데, filtered로 바꿔야 실제 중복 제거가 됩니다
+    });
+  }
   // 꾸미기 패널에서 아이템을 클릭했을 때의 동작
   const handleSelectItem = (type, item) => {
     if (type === 'sticker') {
       // 스티커 추가: 기존 목록에 새 스티커를 더함
       setStickers((prev) => [...prev, { ...item, id: item.item_id, instanceId: Date.now(), x: null, y: null }]);
     } else if (type === 'emoji') {
-      // 이모지 선택
-      setSelectedEmojiId(item.item_id);
-      setSelectedEmojiImg(item.img);
+      setSelectedEmojiId(item.item_id);      // 화면 표시/인벤토리 참조용
+      setSelectedEmojiImg(item.img);         // 화면 표시용 이미지
+      const keyword = extractEmotionKeyword(item); // 'happy' 등 문자열
+      applyEmotionTag(keyword);              // 그림 옵션 태그에 반영
+      setSelectedEmotion(keyword);           // 저장 API용 문자열 보관
     } else if (type === 'frame') {
       // 액자 교체 및 기억하기
       setSelectedFrameId(item.item_id);
@@ -506,10 +549,25 @@ export default function DiaryForm() {
       {/* AI 로딩 화면 (그림 그리는 중...) */}
       {isGenerating && (
         <div className="absolute inset-0 z-[100] flex items-center justify-center bg-white">
-          <div className="flex flex-col items-center gap-4">
-            <div className="w-20 h-20 animate-spin bg-white/30 rounded-full border-4 border-dashed" />
-            <span className="text-xl">AI Drawing...</span>
-          </div>
+            <img src="/assets/theme/winter_light/animation/generating.gif" alt="AI Drawing" className="h-full " />
+            <div className="absolute bottom-[23%] w-[50%] h-[4%] p-[1%] pt-[1.2%] bg-white rounded-lg overflow-hidden">
+              <div
+                className="h-full bg-blue-900 rounded-lg transition-all duration-200"
+                style={{ width: `${progress}%` }}
+              />
+            </div>
+            <span className="absolute bottom-[18%] text-2xl text-gray-500">{progress}%</span>
+            <span className="absolute top-[43%] text-xl text-gray-700 animate-bounce">
+              {progress < 10
+                ? '일기를 읽고 있어요'
+                : progress < 20
+                ? '그림을 그릴 준비를 하고 있어요'
+                : progress < 80
+                ? '픽셀을 그려넣는 중'
+                : progress < 100
+                ? '색을 입히는 중'
+                : '완성!'}
+            </span>
         </div>
       )}
 
