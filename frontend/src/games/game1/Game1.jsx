@@ -1,3 +1,6 @@
+import { Capacitor } from "@capacitor/core";
+import { ScreenOrientation } from "@capacitor/screen-orientation";
+
 import React, { useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import Phaser from "phaser";
@@ -6,11 +9,41 @@ import ModeSelectScene from "./scenes/ModeSelectScene";
 import { useRemoveTicket, useSubmitFinalScore } from "../../hooks/queries/useGameQueries";
 
 const Game1 = () => {
-  const gameContainer = useRef(null);
-  const navigate = useNavigate();
-  const { mutate: submitScore } = useSubmitFinalScore(1); // 미니게임1에서 사용하기에 1
-                                                          // 차후에 미니게임2에서 사용 할때는 2로 입력하시면 됩니다.
-  const { mutate: removeTicket } = useRemoveTicket();
+	const gameContainer = useRef(null);
+	const navigate = useNavigate();
+	const { mutate: submitScore } = useSubmitFinalScore(1); // 미니게임1에서 사용하기에 1
+															// 차후에 미니게임2에서 사용 할때는 2로 입력하시면 됩니다.
+	const { mutate: removeTicket } = useRemoveTicket();
+
+	// ================= 화면 방향 관리 =================
+  	useEffect(() => {
+
+		// 일반 웹 브라우저에서는 실행 X
+		if (!Capacitor.isNativePlatform()) return;
+
+		// 게임 진입 시 가로 화면으로 전환 및 고정
+		const landscapeRequest = ScreenOrientation.lock({
+		orientation: "landscape",
+		
+		}).catch((error) => {
+			console.error("가로 화면 전환 실패:", error);
+		});
+
+		// 게임 화면에서 나갈 때 세로 화면으로 복구
+		return () => {
+
+		// 진입 요청이 끝난 뒤 복구 요청 실행
+		void landscapeRequest
+			.then(() =>
+			ScreenOrientation.lock({
+				orientation: "portrait",
+			})
+			)
+			.catch((error) => {
+			console.error("세로 화면 복구 실패:", error);
+			});
+		};
+  }, []);
 
   useEffect(() => {
 
@@ -37,12 +70,11 @@ const Game1 = () => {
       roundPixels: true, // 픽셀 찌그러짐 방지
 
     scale: {
-        mode: Phaser.Scale.ENVELOP, // FIT 대신 ENVELOP 사용: 
-        // 화면을 꽉 채우기 위해 확대하며, 비율이 다르면 일부가 잘릴 수 있음
-        autoCenter: Phaser.Scale.CENTER_BOTH,
+        mode: Phaser.Scale.RESIZE,
+        autoCenter: Phaser.Scale.NO_CENTER,
         parent: gameContainer.current, // 렌더링 기준 설정
-        width: 360,
-        height: 800,
+        // width: 800,
+        // height: 360,
       },
 
       physics: {
@@ -67,29 +99,28 @@ const Game1 = () => {
     };
   }, [navigate]);
 
-  return (
+return (
+  <div
+    style={{
+      position: "fixed",
+      inset: 0,
+      zIndex: 9999,
+
+      overflow: "hidden",
+      backgroundColor: "#000000",
+      touchAction: "none",
+      textAlign: "left",
+    }}
+  >
     <div
+      ref={gameContainer}
       style={{
-
-        position: "absolute", // 독자적인 화면 구축
-        top: 0,
-        // pc 화면에서 정중앙 정렬 유지
-        left: "50%",
-        transform: "translateX(-50%)",
-        zIndex: 9999,
-
         width: "100%",
         height: "100%",
-        maxWidth: "430px",
-        overflow: "hidden",
-
-
-        textAlign: "left",
       }}
-    >
-      <div ref={gameContainer} style={{ width: "100%", height: "100%" }} />
-    </div>
-  );
+    />
+  </div>
+);
 };
 
 export default Game1;
