@@ -9,6 +9,7 @@ import { queryKeys } from "./utils/queryKeys"; // 캐시 key 모음
 import { storeApi } from "./api/storeApi";     
 import { inventoryApi } from "./api/inventoryApi"; 
 import { coinApi } from "./api/coinApi";         
+import { PushNotifications } from '@capacitor/push-notifications';  // 푸시 알림
 
 // ----------------- 컴포넌트 불러오기 ----------------------------------
 import AppShell from "./components/layout/AppShell"; // AppShell 불러오기
@@ -51,6 +52,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { profileApi } from "./api/profileApi"; // 프로필 API
 import { attendanceApi } from "./api/attendanceApi"; // 출석 API
 import { useResetAttendanceIfExpired } from './hooks/queries/useAttendanceQueries';
+import { authApi } from "./api/authApi";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -110,6 +112,34 @@ function AppInner() {
             console.error("출석 초기화 확인 실패:", err); // 실패해도 앱 진입은 막지 않음
           });
           await prefetchCriticalData(queryClient);
+          
+          // 토큰 발급 성공 시
+          PushNotifications.addListener('registration', async (token) => {
+            try {
+              await authApi.registerFcmToken(token.value);
+            } catch (err) {
+              console.error('FCM 토큰 등록 실패:', err); // 등록 실패해도 앱 진입은 막지 않음
+            }
+          });
+
+          // 토큰 발급 실패 시
+          PushNotifications.addListener('registrationError', (error) => {
+            console.error('FCM 등록 실패:', error);
+          });
+
+          async function registerPush() {
+            let permStatus = await PushNotifications.checkPermissions();
+            if (permStatus.receive === 'prompt') {
+              permStatus = await PushNotifications.requestPermissions();
+            }
+            if (permStatus.receive !== 'granted') {
+              console.log('푸시 알림 권한이 거부되었습니다.');
+              return;
+            }
+            await PushNotifications.register();
+          }
+
+          await registerPush();
         })();
       }
     });

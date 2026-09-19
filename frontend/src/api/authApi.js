@@ -96,6 +96,13 @@ export const authApi = {
     authFetch(`${BASE_URL}/api/v1/auth/userimage/`, {
       method: 'DELETE',
     }),
+  
+  // FCM 토큰 등록
+  registerFcmToken: (fcmToken) =>
+    authFetch(`${BASE_URL}/api/v1/auth/fcm-token/`, {
+      method: "POST",
+      body: JSON.stringify({ fcm_token: fcmToken }),
+    }),
 };
 
 // authFetch에는 이미 자체 에러 처리가 있으므로, 인증 불필요한 순수 fetch용 공통 응답 처리만 여기 둠
