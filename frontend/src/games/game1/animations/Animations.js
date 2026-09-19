@@ -11,10 +11,10 @@ export function createAllAnimations(scene) {
     // anims: 이미지를 조합하여 애니메이션을 만들어준다
     // 스프라이트 시트가 아닌 각 이미지 형식일경우 프레임마다 key값을 넣어준다
     scene.anims.create({ // 원래는 this로 시작했지만 지금은 부모 클래스에 넣어줘야하니 scene을 적는다
-      key: "move_animation",
-      frames: [{ key: "player_move1" }, { key: "player_move2" }, { key: "player_move3" }],
-      frameRate: 10,
-      repeat: -1,
+		key: "move_animation",
+		frames: [{ key: "player_move1" }, { key: "player_move2" }, { key: "player_move3" }],
+		frameRate: 10,
+		repeat: -1,
     });
 
     // ======================== 기본맵 몬스터들 ================================
@@ -22,10 +22,10 @@ export function createAllAnimations(scene) {
     // 몬스터1
     // 슬라임 애니메이션
     scene.anims.create({
-      key: "slime_animation",
-      frames: [{ key: "slime_move1"}, { key: "slime_move2"}],
-      frameRate: 5, // 키프레임 살짝 느리게(10으로 하니까 너무 촐싹거림)
-      repeat: -1,
+		key: "slime_animation",
+		frames: [{ key: "slime_move1"}, { key: "slime_move2"}],
+		frameRate: 5, // 키프레임 살짝 느리게(10으로 하니까 너무 촐싹거림)
+		repeat: -1,
     });
 
     // 몬스터2
@@ -35,135 +35,211 @@ export function createAllAnimations(scene) {
     // 큐브골렘은 12프레임의 애니메이션중 1,4,7,10프레임마다 잠깐씩 멈춰서는 몬스터기에 전용 애니메이션을 구축해준다
     for (let i = 0; i < 12; i ++) {
 
-      const isStopFrame = [0,3,6,9].includes(i); // 배열의 0,3,6,9번째를 할당(0부터 시작함으로 1씩 빼준다)
+		const isStopFrame = [0,3,6,9].includes(i); // 배열의 0,3,6,9번째를 할당(0부터 시작함으로 1씩 빼준다)
 
-      cubeGolemFrames.push({
-        key: 'cube_golem_move', // 불러올 스프라이트 시트
-        frame: i,
-        duration: isStopFrame ? 1000 : 100 // 0,3,6,9번째 프레임마다 1000ms로 할당
-                                           // 그 외에는 100ms 
-      });
+		cubeGolemFrames.push({
+			key: 'cube_golem_move', // 불러올 스프라이트 시트
+			frame: i,
+			duration: isStopFrame ? 1000 : 100 // 0,3,6,9번째 프레임마다 1000ms로 할당
+											// 그 외에는 100ms 
+		});
     }
 
     scene.anims.create({
-      key: 'cube_golem_animation',
-      frames: cubeGolemFrames, // 위에서 만들어진 프레임대로 애니메이션을 제작해준다
-      repeat: -1
+		key: 'cube_golem_animation',
+		frames: cubeGolemFrames, // 위에서 만들어진 프레임대로 애니메이션을 제작해준다
+		repeat: -1
     });
 
     // 몬스터3
     // 레드슬라임 애니메이션
     scene.anims.create({
-      key: "red_slime_animation",
-      frames: [{ key: "red_slime_move1"}, { key: "red_slime_move2"}],
-      frameRate: 10,
-      repeat: -1,
+      	key: "red_slime_animation",
+      	frames: [{ key: "red_slime_move1"}, { key: "red_slime_move2"}],
+      	frameRate: 10,
+      	repeat: -1,
     });
 
     // 몬스터11
     // 슬라임소대 애니메이션
     scene.anims.create({
-      key: "phalanx_animation",
-      frames: [{ key: "phalanx_move1"}, { key: "phalanx_move2"}],
-      frameRate: 5,
-      repeat: -1,
+		key: "phalanx_animation",
+		frames: [{ key: "phalanx_move1"}, { key: "phalanx_move2"}],
+		frameRate: 5,
+		repeat: -1,
     });
 
     // 몬스터101
     // 킹슬라임? 애니메이션
     scene.anims.create({
-      key: "king_slime_move_animation",
-      
-      // 10프레임을 받는다
-      frames: scene.anims.generateFrameNumbers("king_slime_move", {
-        start: 0,
-        end: 9
-      }),
-      duration: 1500,
-      repeat: -1
+		key: "king_slime_move_animation",
+		
+		// 10프레임을 받는다
+		frames: scene.anims.generateFrameNumbers("king_slime_move", {
+			start: 0,
+			end: 9
+		}),
+		duration: 1500,
+		repeat: -1
     });
 
     // 킹슬라임? 돌진 준비모션 애니메이션
     // 프레임이 적어서 시트로 안받아도 되지만 스프라이트 시트 사용에 익숙해지기 위해 시트로 사용하겠습니다
     scene.anims.create({
-      key: "king_slime_dash_ready_animation",
-      
-      // 3프레임을 받는다
-      frames: scene.anims.generateFrameNumbers("king_slime_dash_ready", {
-        start: 0,
-        end: 2
-      }),
-      duration: 500,
-      repeat: -1
+		key: "king_slime_dash_ready_animation",
+		
+		// 3프레임을 받는다
+		frames: scene.anims.generateFrameNumbers("king_slime_dash_ready", {
+			start: 0,
+			end: 2
+		}),
+		duration: 500,
+		repeat: -1
     });
 
     // 킹슬라임? 돌진 모션 애니메이션
     scene.anims.create({
-      key: "king_slime_dash_animation",
-      
-      // 2프레임을 받는다
-      frames: scene.anims.generateFrameNumbers("king_slime_dash", {
-        start: 0,
-        end: 1
-      }),
-      duration: 200,
-      repeat: -1
+		key: "king_slime_dash_animation",
+		
+		// 2프레임을 받는다
+		frames: scene.anims.generateFrameNumbers("king_slime_dash", {
+			start: 0,
+			end: 1
+		}),
+		duration: 200,
+		repeat: -1
     });
 
     // 킹슬라임? 점프 모션 애니메이션 1~3( 위에랑 다 똑같으니 가독성을 위해 이렇게 작성했습니다 )
-    scene.anims.create({ key: "king_slime_jump_1_animation", frames: scene.anims.generateFrameNumbers("king_slime_jump_1", {
-
-        start: 0,
-        end: 5
-      }),
-      duration: 800,
-      repeat: -1
+    scene.anims.create({ 
+		key: "king_slime_jump_1_animation", 
+		frames: scene.anims.generateFrameNumbers("king_slime_jump_1", {
+			start: 0,
+			end: 5
+		}),
+		duration: 800,
+		repeat: -1
     });
 
-    scene.anims.create({ key: "king_slime_jump_2_animation", frames: scene.anims.generateFrameNumbers("king_slime_jump_2", {
-
-        start: 0,
-        end: 1
-      }),
-      duration: 400,
-      repeat: 0
+    scene.anims.create({ 
+		key: "king_slime_jump_2_animation", 
+		frames: scene.anims.generateFrameNumbers("king_slime_jump_2", {
+			start: 0,
+			end: 1
+      	}),
+      	duration: 400,
+      	repeat: 0
     });
 
-    scene.anims.create({ key: "king_slime_jump_3_animation", frames: scene.anims.generateFrameNumbers("king_slime_jump_3", {
-
-        start: 0,
-        end: 3
-      }),
-      duration: 600,
-      repeat: 0
+    scene.anims.create({ 
+		key: "king_slime_jump_3_animation", 
+		frames: scene.anims.generateFrameNumbers("king_slime_jump_3", {
+			start: 0,
+			end: 3
+		}),
+		duration: 600,
+		repeat: 0
     });
 
     // ======================= 눈맵 몬스터들 ========================
 
     // 냉동 슬라임 애니메이션
     scene.anims.create({
-      key: "ice_slime_animation",
-      frames: [{ key: "ice_slime"}, { key: "ice_slime_blink"}, { key: "ice_slime"}],
-      frameRate: 2,
-      repeat: -1,
+        key: "ice_slime_animation",
+        frames: [{ key: "ice_slime"}, { key: "ice_slime_blink"}, { key: "ice_slime"}],
+        frameRate: 2,
+        repeat: -1,
     });
 
-    // 보상 획득 화면 이미지의 애니메이션
-    scene.anims.create({ key: "game_end_image_animation", frames: scene.anims.generateFrameNumbers("game_end_image", {
+    // 마법사 슬라임 움직임 애니메이션
+    scene.anims.create({
+        key: "magic_slime_move_animation",
+        frames: scene.anims.generateFrameNumbers("magic_slime", {
+            start: 0,
+            end: 1,
+        }),
+        duration: 500,
+        repeat: -1
+    });
 
+    // 마법사 슬라임 공격 애니메이션
+    scene.anims.create({
+        key :"magic_slime_attack_animation",
+        frames: scene.anims.generateFrameNumbers("magic_slime", {
+            start: 2,
+            end: 9,
+        }),
+        duration: 1250,
+        repeat: 0
+    });
+
+    // ========== 산타 슬라임에 사용되는 애니메이션들 ============
+    // 크리스마스 슬라임
+    scene.anims.create({
+      	key : "x_mas_slime_move_animation",
+      	frames: scene.anims.generateFrameNumbers("x_mas_slime", {
+          	start: 0,
+          	end: 7
+      	}),
+      	duration: 1000,
+      	repeat: -1
+    });
+
+    // 분리되는 슬라임들
+    // 산타 슬라임
+    scene.anims.create({
+        key : "santa_slime_move_animation",
+      	frames: scene.anims.generateFrameNumbers("santa_slime", {
+        	start: 0,
+        	end: 1
+      	}),
+      	duration: 500,
+      	repeat: -1
+    });
+
+	// 선물상자 슬라임
+    scene.anims.create({
+        key : "box_slime_move_animation",
+      	frames: scene.anims.generateFrameNumbers("box_slime", {
+        	start: 0,
+        	end: 1
+      	}),
+      	duration: 500,
+      	repeat: -1
+    });
+
+	// 루돌프 슬라임
+    scene.anims.create({
+        key : "rudolph_slime_move_animation",
+      	frames: scene.anims.generateFrameNumbers("rudolph_slime", {
+        	start: 0,
+        	end: 1
+      	}),
+      	duration: 500,
+      	repeat: -1
+    });
+
+	// ================================================================
+
+    // 보상 획득 화면 이미지의 애니메이션
+    scene.anims.create({ 
+        
+        key: "game_end_image_animation", 
+        frames: scene.anims.generateFrameNumbers("game_end_image", {
         start: 0,
         end: 19,
-      }),
-      duration: 1500,
-      repeat: -1
+      	}),
+      	
+		duration: 1500,
+      	repeat: -1
     });
 
     // 기본 공격(블레이드) 애니메이션
     scene.anims.create({
-      key: "blade_animation",
-      frames: [{ key: "blade_1" }, { key: "blade_2" }, { key: "blade_3" }],
-      frameRate: 10,
-      repeat: 0,
+      	key: "blade_animation",
+      	frames: [{ key: "blade_1" }, { key: "blade_2" }, { key: "blade_3" }],
+      	frameRate: 10,
+      	repeat: 0,
     });
 
 }

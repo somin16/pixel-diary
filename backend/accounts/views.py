@@ -4,7 +4,10 @@ import requests
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
-from utils import extract_access_token, get_supabase_headers, get_supabase_anon_headers
+from utils import extract_access_token, get_supabase_headers, get_supabase_anon_headers, get_user_from_token
+from datetime import datetime, timedelta, timezone
+
+SUPABASE_URL = os.getenv("SUPABASE_URL")
 
 
 def validate_email_format(email):
@@ -87,12 +90,19 @@ class SignupView(APIView):
         """
         POST /api/v1/auth/signup
         - 이메일, 비밀번호, 닉네임을 받아 Supabase Auth에 유저 생성
+        - 성별, 나이는 선택 입력 (user_metadata에 저장)
         - 생성된 유저의 ID와 완료 메시지 반환
         """
         # 요청 Body에서 필수값 추출 (앞뒤 공백 제거)
         user_email = request.data.get("user_email", "").strip()
         password = request.data.get("password", "").strip()
         user_name = request.data.get("user_name", "").strip()
+
+        # 선택값 추출 (성별, 나이)
+        gender = request.data.get("gender", "")
+        if gender == "":
+            gender = None
+        age = request.data.get("age", None)
 
         # 필수값(이메일, 비밀번호, 닉네임) 누락 시 400 반환
         if not all([user_email, password, user_name]):
@@ -115,18 +125,46 @@ class SignupView(APIView):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
+        # 성별 값 검증 (입력된 경우에만 - male/female 허용)
+        if gender is not None and gender not in ["male", "female"]:
+            return Response(
+                {"message": "성별 값이 올바르지 않습니다."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        # 나이 값 검증 (입력된 경우에만 - 숫자이고 0보다 커야 함)
+        if age is not None and age != "":
+            try:
+                age = int(age)
+                if age <= 0:
+                    raise ValueError
+            except (ValueError, TypeError):
+                return Response(
+                    {"message": "나이는 올바른 숫자여야 합니다."},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+        else:
+            age = None
+
         try:
             supabase_url = os.getenv("SUPABASE_URL")
             headers = get_supabase_headers()
 
-            # Supabase Admin API로 유저 생성 (email_confirm=True: 이메일 인증 없이 바로 가입 처리)
+             # user_metadata 구성 - 선택값은 입력된 경우에만 포함 (빈 값 저장 방지)
+            user_metadata = {"user_name": user_name}
+            if gender is not None:
+                user_metadata["gender"] = gender
+            if age is not None:
+                user_metadata["age"] = age
+
+             # Supabase Admin API로 유저 생성 (email_confirm=True: 이메일 인증 없이 바로 가입 처리)
             response = requests.post(
                 f"{supabase_url}/auth/v1/admin/users",
                 headers=headers,
                 json={
                     "email": user_email,
                     "password": password,
-                    "user_metadata": {"user_name": user_name},  # 닉네임은 메타데이터로 저장
+                    "user_metadata": user_metadata,
                     "email_confirm": True,
                 },
             )
@@ -572,16 +610,22 @@ class ChangeUsernameView(APIView):
                     {"message": "유효하지 않은 토큰입니다."},
                     status=status.HTTP_401_UNAUTHORIZED,
                 )
- 
-            # 현재 유저 id 추출
-            user_id = user_response.json().get("id")
+                
+            user_data = user_response.json()
+            user_id = user_data.get("id")
+                
+            # 기존 메타데이터에 user_name만 덮어쓰기 (gender, age, profile_image_url 등 나머지는 보존)
+            # Supabase Admin API의 user_metadata PUT은 부분 수정이 아니라 전체 교체이므로,
+            # 여기서 먼저 병합해서 통째로 보내야 다른 필드가 날아가지 않음
+            current_metadata = user_data.get("user_metadata", {}) or {}
+            updated_metadata = {**current_metadata, "user_name": user_name}
  
             # Supabase Admin API로 닉네임 변경 (user_metadata에 저장)
             admin_headers = get_supabase_headers()
             change_response = requests.put(
                 f"{supabase_url}/auth/v1/admin/users/{user_id}",
                 headers=admin_headers,
-                json={"user_metadata": {"user_name": user_name}},
+                json={"user_metadata": updated_metadata},
             )
  
             # 닉네임 변경 실패 시 예외 발생
@@ -1036,5 +1080,282 @@ class NaverLoginView(APIView):
             print(f"=== NAVER LOGIN ERROR ===\n{error}\n========================")
             return Response(
                 {"message": "네이버 로그인 중 오류가 발생했습니다."},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
+
+
+class UpdateGenderAgeView(APIView):
+    """성별/나이 추가·수정 API"""
+
+    def patch(self, request):
+        """
+        PATCH /api/v1/auth/gender-age
+        - Authorization 헤더의 access_token으로 현재 유저 확인
+        - gender, age는 요청에 포함된 필드만 처리
+        - 값이 빈 문자열("")로 오면 해당 필드를 명시적으로 NULL 처리
+        - 변경 완료 메시지 반환
+        """
+        # Authorization 헤더에서 access_token 추출 (Bearer 토큰 방식)
+        access_token = extract_access_token(request)
+        if not access_token:
+            return Response(
+                {"message": "Authorization 헤더에 유효한 Bearer 토큰이 필요합니다."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        # 요청 body에 해당 키가 "포함됐는지" 여부를 먼저 확인 (값이 ""여도 True)
+        gender_provided = "gender" in request.data
+        age_provided = "age" in request.data
+
+        # 성별 처리 - 빈 문자열/None이면 초기화(NULL), 값 있으면 검증
+        gender = request.data.get("gender", None)
+        if gender is not None and isinstance(gender, str):
+            gender = gender.strip() or None
+        else:
+            gender = None if gender == "" else gender
+
+        if gender_provided and gender is not None and gender not in ["male", "female"]:
+            return Response(
+                {"message": "성별 값이 올바르지 않습니다."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        # 나이 처리 - 빈 문자열/None이면 초기화(NULL), 값 있으면 검증
+        age_raw = request.data.get("age", None)
+        age = None
+        if age_provided and age_raw not in (None, ""):
+            try:
+                age = int(age_raw)
+                if age <= 0:
+                    raise ValueError
+            except (ValueError, TypeError):
+                return Response(
+                    {"message": "나이는 올바른 숫자여야 합니다."},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+
+        try:
+            supabase_url = os.getenv("SUPABASE_URL")
+
+            # access_token으로 현재 유저 정보 조회 (기존 user_metadata 확보용)
+            user_headers = {
+                "apikey": os.getenv("SUPABASE_ANON_KEY"),
+                "Authorization": f"Bearer {access_token}",
+                "Content-Type": "application/json",
+            }
+            user_response = requests.get(
+                f"{supabase_url}/auth/v1/user",
+                headers=user_headers,
+            )
+
+            # 유효하지 않은 토큰인 경우 401 반환
+            if user_response.status_code != 200:
+                return Response(
+                    {"message": "유효하지 않은 토큰입니다."},
+                    status=status.HTTP_401_UNAUTHORIZED,
+                )
+
+            user_data = user_response.json()
+            user_id = user_data.get("id")
+
+            # 기존 메타데이터에 요청으로 받은 필드만 덮어쓰기 (None이면 NULL로 초기화됨)
+            current_metadata = user_data.get("user_metadata", {}) or {}
+            updated_metadata = {**current_metadata}
+            if gender_provided:
+                updated_metadata["gender"] = gender
+            if age_provided:
+                updated_metadata["age"] = age
+
+            # Supabase Admin API로 성별/나이 변경 (병합된 user_metadata 전체 전송)
+            admin_headers = get_supabase_headers()
+            change_response = requests.put(
+                f"{supabase_url}/auth/v1/admin/users/{user_id}",
+                headers=admin_headers,
+                json={"user_metadata": updated_metadata},
+            )
+
+            # 변경 실패 시 예외 발생
+            if change_response.status_code != 200:
+                raise Exception(f"Supabase API 오류: {change_response.text}")
+
+            return Response(
+                {"message": "성별/나이 정보가 수정되었습니다."},
+                status=status.HTTP_200_OK,
+            )
+
+        except Exception as error:
+            # 오류 발생 시 터미널에 출력 (개발 완료 후 삭제 예정)
+            print(f"=== UPDATE GENDER/AGE ERROR ===\n{error}\n===============================")
+            return Response(
+                {"message": "성별/나이 수정 중 오류가 발생했습니다."},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
+
+
+class StatisticsView(APIView):
+    """사용자 통계(일기, 출석) 조회 API"""
+
+    def get(self, request):
+        """
+        GET /api/v1/auth/statistics
+        - Authorization 헤더의 access_token으로 현재 유저 확인
+        - 일기: 오늘 작성 여부, 총 작성 횟수, 감정별 작성 개수
+        - 출석: 오늘 출석 여부, 총 출석 일수
+        """
+        # Authorization 헤더에서 access_token 추출
+        access_token = extract_access_token(request)
+        if not access_token:
+            return Response(
+                {"message": "Authorization 헤더에 유효한 Bearer 토큰이 필요합니다."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        try:
+            # access_token으로 유저 정보 조회
+            user = get_user_from_token(access_token)
+
+            # 유효하지 않은 토큰인 경우 401 반환
+            if not user:
+                return Response(
+                    {"message": "유효하지 않은 토큰입니다."},
+                    status=status.HTTP_401_UNAUTHORIZED,
+                )
+
+            user_id = user.get("id")
+            headers = get_supabase_headers()
+            kst = timezone(timedelta(hours=9))
+            today = datetime.now(kst).date()
+
+            # --- 일기 통계 ---
+            diary_response = requests.get(
+                f"{SUPABASE_URL}/rest/v1/diaries",
+                headers=headers,
+                params={"user_id": f"eq.{user_id}", "select": "created_at,emotion"},
+            )
+
+            if diary_response.status_code != 200:
+                raise Exception(f"Supabase API 오류: {diary_response.text}")
+
+            diaries = diary_response.json()
+            diary_total_count = len(diaries)
+
+            diary_written_today = False
+            emotion_counts = {"happy": 0, "calm": 0, "tired": 0, "sad": 0, "angry": 0}
+
+            for row in diaries:
+                created_at = datetime.fromisoformat(row["created_at"].replace("Z", "+00:00")).astimezone(kst)
+                if created_at.date() == today:
+                    diary_written_today = True
+
+                emotion = row.get("emotion")
+                if emotion in emotion_counts:
+                    emotion_counts[emotion] += 1
+
+            # --- 출석 통계 ---
+            attendance_response = requests.get(
+                f"{SUPABASE_URL}/rest/v1/attendance_log",
+                headers=headers,
+                params={"user_id": f"eq.{user_id}", "select": "checked_date"},
+            )
+
+            if attendance_response.status_code != 200:
+                raise Exception(f"Supabase API 오류: {attendance_response.text}")
+
+            attendance_dates = {
+                datetime.strptime(row["checked_date"], "%Y-%m-%d").date()
+                for row in attendance_response.json()
+            }
+
+            attendance_total_days = len(attendance_dates)
+            attendance_checked_today = today in attendance_dates
+
+            return Response(
+                {
+                    "diary": {
+                        "written_today": diary_written_today,
+                        "total_count": diary_total_count,
+                        "emotion_counts": emotion_counts,
+                    },
+                    "attendance": {
+                        "checked_today": attendance_checked_today,
+                        "total_days": attendance_total_days,
+                    },
+                },
+                status=status.HTTP_200_OK,
+            )
+
+        except Exception as error:
+            # 오류 발생 시 터미널에 출력 (장애 추적용으로 유지)
+            print(f"=== STATISTICS ERROR ===\n{error}\n=======================")
+            return Response(
+                {"message": "통계 조회 중 오류가 발생했습니다."},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
+
+
+class RegisterFCMTokenView(APIView):
+    """FCM 토큰 등록 API"""
+
+    def post(self, request):
+        """
+        POST /api/v1/auth/fcm-token
+        - Authorization 헤더의 access_token으로 현재 유저 확인
+        - fcm_token을 받아 저장 (이미 존재하는 토큰이면 user_id만 갱신)
+        - 등록 완료 메시지 반환
+        """
+        # Authorization 헤더에서 access_token 추출
+        access_token = extract_access_token(request)
+        if not access_token:
+            return Response(
+                {"message": "Authorization 헤더에 유효한 Bearer 토큰이 필요합니다."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        # 요청 Body에서 fcm_token 추출
+        fcm_token = request.data.get("fcm_token", "").strip()
+
+        # fcm_token 누락 시 400 반환
+        if not fcm_token:
+            return Response(
+                {"message": "fcm_token은 필수입니다."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        try:
+            # access_token으로 유저 정보 조회
+            user = get_user_from_token(access_token)
+
+            # 유효하지 않은 토큰인 경우 401 반환
+            if not user:
+                return Response(
+                    {"message": "유효하지 않은 토큰입니다."},
+                    status=status.HTTP_401_UNAUTHORIZED,
+                )
+
+            user_id = user.get("id")
+            headers = get_supabase_headers()
+
+            # upsert: fcm_token이 이미 있으면 user_id 갱신, 없으면 새로 생성
+            # (기기를 다른 계정으로 재로그인하는 경우 소유자가 바뀔 수 있으므로 upsert 처리)
+            response = requests.post(
+                f"{SUPABASE_URL}/rest/v1/fcm_tokens",
+                headers={**headers, "Prefer": "resolution=merge-duplicates"},
+                json={"user_id": user_id, "fcm_token": fcm_token},
+            )
+
+            # 저장 실패 시 예외 발생
+            if response.status_code not in [200, 201]:
+                raise Exception(f"Supabase API 오류: {response.text}")
+
+            return Response(
+                {"message": "FCM 토큰이 등록되었습니다."},
+                status=status.HTTP_201_CREATED,
+            )
+
+        except Exception as error:
+            # 오류 발생 시 터미널에 출력 (장애 추적용으로 유지)
+            print(f"=== REGISTER FCM TOKEN ERROR ===\n{error}\n================================")
+            return Response(
+                {"message": "FCM 토큰 등록 중 오류가 발생했습니다."},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )

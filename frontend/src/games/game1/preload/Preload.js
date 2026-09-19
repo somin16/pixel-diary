@@ -90,8 +90,40 @@ export function loadAllSprite(scene) {
 
     // ======================눈 맵 몬스터================================
 
-    scene.load.image("ice_slime", "/assets/game1/monster/snow/nomal/ice_slime.png")
-    scene.load.image("ice_slime_blink", "/assets/game1/monster/snow/nomal/ice_slime_blink.png")
+    // 냉동 슬라임
+    scene.load.image("ice_slime", "/assets/game1/monster/snow/nomal/ice_slime.png");
+    scene.load.image("ice_slime_blink", "/assets/game1/monster/snow/nomal/ice_slime_blink.png");
+
+    // 마법사 슬라임
+    scene.load.spritesheet("magic_slime", "/assets/game1/monster/snow/nomal/magic_slime.png", {
+        frameWidth: 24,
+        frameHeight: 18
+    });
+
+    // 크리스마스 슬라임
+    scene.load.spritesheet("x_mas_slime", "/assets/game1/monster/snow/elite/x_mas_slime.png", {
+        frameWidth: 64,
+        frameHeight: 32
+    });
+
+    // 산타 슬라임
+    scene.load.spritesheet("santa_slime", "/assets/game1/monster/snow/elite/santa_slime.png", {
+        frameWidth: 18,
+        frameHeight: 16
+    });
+
+    // 박스 슬라임
+    scene.load.spritesheet("box_slime", "/assets/game1/monster/snow/elite/box_slime.png", {
+        frameWidth: 16,
+        frameHeight: 20
+    });
+
+    // 루돌프 슬라임
+    scene.load.spritesheet("rudolph_slime", "/assets/game1/monster/snow/elite/rudolph_slime.png", {
+        frameWidth: 18,
+        frameHeight: 16
+    });
+
 
     // =======================타일======================================
 
@@ -99,11 +131,11 @@ export function loadAllSprite(scene) {
     scene.load.image("map1_tile1", "/assets/game1/tile/map1/map1_tile1.png");
 
     // 눈맵 타일
-    scene.load.image("map2_tile1", "/assets/game1/tile/map2/map2_tile1.png")
-    scene.load.image("map2_tile2", "/assets/game1/tile/map2/map2_tile2.png")
-    scene.load.image("map2_tile3", "/assets/game1/tile/map2/map2_tile3.png")
-    scene.load.image("map2_tile4", "/assets/game1/tile/map2/map2_tile4.png")
-    scene.load.image("map2_tile5", "/assets/game1/tile/map2/map2_tile5.png")
+    scene.load.image("map2_tile1", "/assets/game1/tile/map2/map2_tile1.png");
+    scene.load.image("map2_tile2", "/assets/game1/tile/map2/map2_tile2.png");
+    scene.load.image("map2_tile3", "/assets/game1/tile/map2/map2_tile3.png");
+    scene.load.image("map2_tile4", "/assets/game1/tile/map2/map2_tile4.png");
+    scene.load.image("map2_tile5", "/assets/game1/tile/map2/map2_tile5.png");
 
     // =========================ui=======================================
     // HP/경험치바에서 공용으로 사용하는 ui바 배경
@@ -171,6 +203,9 @@ export function loadAllSprite(scene) {
 
     // 상자
     scene.load.image("chest_level_1", "/assets/game1/object/chest/chest_level_1.png");
+
+    // 선물상자
+    scene.load.image("snow_chest", "/assets/game1/object/chest/snow_chest.png");
 
     // 고기(회복 아이템)
     scene.load.image("meat", "/assets/game1/object/drop_item/meat.png");

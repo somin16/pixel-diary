@@ -1,5 +1,9 @@
 import Phaser from "phaser";
 import { monsterDead, monstersHitDamageBase } from "../monsters/Monsters";
+import { objectsHitDamageBase } from "../object/Objects";
+
+// 몬스터가 넉백되는 수치
+const knockback = 15;
 
 export function updateAttackFireBall(scene) {
 
@@ -59,9 +63,6 @@ function spawnFireBall(scene, radius, angleOffset) {
     scene.physics.add.overlap(fireBallEff, scene.monsters, (fireball, monster) => {
         if (monster.isHit) return;
 
-        // 몬스터가 넉백되는 수치
-        const knockback = 15;
-
         // 공통적으로 사용하는 몬스터가 받는 대미지 효과
         monstersHitDamageBase(monster, knockback, scene); 
         monster.hp -= (scene.player.damage * 0.5); // 공격력의 50%만큼의 대미지
@@ -69,6 +70,15 @@ function spawnFireBall(scene, radius, angleOffset) {
         // 몬스터가 죽었는지 살았는지 감지
         monsterDead(monster, scene);
     });
+
+    // 오브젝트(상자)에 닿았을때
+    scene.physics.add.overlap(fireBallEff, scene.chests, (fireball, chest) => {
+
+        if(chest.isHit == true) return;
+
+        chest.hp -= scene.player.damage * 0.5;   
+        objectsHitDamageBase(chest, knockback, scene);
+    })
 
     // 매개변수로 받은 각도
     let currentAngle = angleOffset;

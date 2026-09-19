@@ -46,6 +46,10 @@ class ProfileView(APIView):
             )
             # DB에서 profile_image_url 추출
             profile_image = user.get("user_metadata", {}).get("profile_image_url")
+            
+            # 성별/나이 추출 - 선택 입력값이라 저장 안 되어 있으면 None으로 내려감
+            gender = user.get("user_metadata", {}).get("gender")
+            age = user.get("user_metadata", {}).get("age")
 
             supabase_url = os.getenv("SUPABASE_URL")
             headers = get_supabase_headers()
@@ -97,6 +101,8 @@ class ProfileView(APIView):
                 {
                     "email": email,
                     "name": user_name,
+                    "gender": gender,
+                    "age": age,
                     "coin": user_data.get("coin"),
                     "game_top_score": user_data.get("game_top_score"),
                     "profile_image": profile_image,
@@ -287,6 +293,13 @@ class AttendanceView(APIView):
                         f"출석 기록 생성 실패: "
                         f"{attendance_create_response.text}"
                     )
+
+            # 리셋 없이 전체 출석 이력을 보관하는 로그 테이블에 오늘 날짜 기록
+            requests.post(
+                f"{supabase_url}/rest/v1/attendance_log",
+                headers=headers,
+                json={"user_id": user_id, "checked_date": str(today)},
+            )
 
             # 일차별 보상 계산
             reward = ATTENDANCE_REWARDS.get(current_day)

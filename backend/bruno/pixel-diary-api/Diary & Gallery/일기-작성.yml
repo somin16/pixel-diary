@@ -14,7 +14,8 @@ http:
     data: |-
       {
         "content": "",
-        "image_id": 0
+        "image_id": 0,
+        "emotion": ""
       }
   auth: inherit
 
@@ -23,18 +24,28 @@ settings:
   timeout: 0
   followRedirects: true
   maxRedirects: 5
+  forwardAuthorizationHeader: true
 
 docs: |-
   ### Body / Json
+
   - content: 작성할 일기 내용
   - image_id: 최종 결정한 이미지 아이디
-  ***
+  - emotion: 작성할 일기 감정 선택
+
+  ---
+
   ### Headers
+
   - Authorization: Bearer 로그인할 시 받는 access_token
-  ***
+
+  ---
+
   ### Status Code
+
   - 201 Created: 일기 작성 및 저장 성공
   - 400 Bad Request: 필수값 누락 (Authorization Bearer 헤더 access_token)
-  - 400 Bad Request: 필수값 누락 (content, image_id)
+  - 400 Bad Request: 필수값 누락 (content, image_id, emotion)
+  - 400 Bad Request: 감정 값 검증 (happy, calm, tired, sad, angry)
   - 401 Unauthorized: 유효하지 않은 access_token인 경우
   - 409 Conflict: 일기 중복 (백엔드에서 2차 방어)

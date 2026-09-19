@@ -1,0 +1,41 @@
+info:
+  name: 성별-나이-추가/수정
+  type: http
+  seq: 12
+
+http:
+  method: PATCH
+  url: http://127.0.0.1:8000/api/v1/auth/gender-age/
+  headers:
+    - name: Authorization
+      value: "Bearer "
+  body:
+    type: json
+    data: |-
+      {
+        "gender": "",
+        "age": ""
+      }
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: false
+
+docs: |-
+  ### Body / Json
+  - gender: 변경 및 추가하려는 사용자 성별
+  - age: 변경 및 추가하려는 사용자 나이
+  ***
+  ### Headers
+  - Authorization: Bearer 로그인할 시 받는 access_token
+  ***
+  ### Status Code
+  - 200 OK: 성별/나이 수정 성공
+  - 400 BAD Request: 필수값 누락 (Authorization Bearer 헤더 access_token)
+  - 400 Bad Request: 성별 값 검증 실패 (male, female만 허용)
+  - 400 Bad Request: 나이 값 검증 실패 (숫자이고 0보다 커야 함)
+  - 401 Unauthorized: 유효하지 않은 access_token인 경우

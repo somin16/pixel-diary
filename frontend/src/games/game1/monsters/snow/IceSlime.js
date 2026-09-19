@@ -24,7 +24,7 @@ export default class IceSlime extends Phaser.Physics.Arcade.Sprite {
         this.setScale(2);   // 이미지 크기조정
         this.play("ice_slime_animation", true);
 
-        // 레드슬라임 전용 bool
+        // 냉동 슬라임 전용 bool
         this.isDash = false;
     }
 
@@ -32,12 +32,12 @@ export default class IceSlime extends Phaser.Physics.Arcade.Sprite {
     // 굳이 slimeMove라고 안적어도 이미 클래스 선언에서 다 분리가 돼서 그냥 move라고 적었습니다
     move(player) { // 매게변수 플레이어
 
-        // 레드 슬라임은 딱 한번만 돌진하는 몬스터임으로 소환후 딱 한번만 실행
+        // 냉동 슬라임은 딱 한번만 돌진하는 몬스터임으로 소환후 딱 한번만 실행
         if (!this.isDash) {
 
             const angle = Phaser.Math.Angle.Between(this.x, this.y, player.x, player.y);
 
-            // 플레이어에게 300의 속도로 발사된다
+            // 플레이어에게 220의 속도로 발사된다
             this.scene.physics.velocityFromRotation(angle, 220 , this.body.velocity);
 
             // 몬스터가 바라보는 방향에 따라 위치 변경
@@ -48,7 +48,7 @@ export default class IceSlime extends Phaser.Physics.Arcade.Sprite {
             this.isDash = true;
         }
 
-        // 플레이어와 800이상의 거리가 벌어지면 삭제
+        // 플레이어와 1000이상의 거리가 벌어지면 삭제
         const distance = Phaser.Math.Distance.Between(this.x, this.y, player.x, player.y);
 
         if (distance > 1000) {

@@ -1,0 +1,45 @@
+info:
+  name: FCM-토큰-등록
+  type: http
+  seq: 14
+
+http:
+  method: POST
+  url: http://127.0.0.1:8000/api/v1/auth/fcm-token/
+  headers:
+    - name: Authorization
+      value: "Bearer "
+  body:
+    type: json
+    data: |-
+      {
+        "fcm_token": ""
+      }
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: false
+
+docs: |-
+  ### Body / Json
+
+  - fcm_token: 등록할 FCM 토큰 (TEXT 타입)
+
+  ---
+
+  ### Headers
+
+  - Authorization: Bearer 로그인할 시 받는 access_token
+
+  ---
+
+  ### Status Code
+
+  - **201 Created**: FCM 토큰 등록 성공
+  - **400 Bad Request**: Authorization 헤더에 Bearer 토큰 없음
+  - **400 Bad Request**: fcm_token 누락
+  - **401 Unauthorized**: 유효하지 않은 access_token인 경우

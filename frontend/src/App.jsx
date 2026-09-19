@@ -9,9 +9,12 @@ import { queryKeys } from "./utils/queryKeys"; // 캐시 key 모음
 import { storeApi } from "./api/storeApi";     
 import { inventoryApi } from "./api/inventoryApi"; 
 import { coinApi } from "./api/coinApi";         
+import { PushNotifications } from '@capacitor/push-notifications';  // 푸시 알림
 
 // ----------------- 컴포넌트 불러오기 ----------------------------------
 import AppShell from "./components/layout/AppShell"; // AppShell 불러오기
+import { LockGateRoute } from "./components/more/lock/LockGateRoute"; // 앱 잠금 레이아웃 라우트
+import useAppLockStore from "./stores/useAppLockStore"; // 로그인 직후 잠금 스킵 처리용
 import Home from "./pages/home/Home"; // 홈 화면
 // ----------------------- 게임 ---------------------------------------
 import Game1 from "./games/game1/Game1"; // 게임1 화면
@@ -35,6 +38,7 @@ import Inventory from "./pages/more/inventory/Inventory"; // 더보기 - 보관�
 import Account from "./pages/more/account/Account"; // 더보기 - 계정 설정 화면
 import Notification from "./pages/more/notification/Notification"; // 더보기 - 알림 설정 화면
 import Contact from "./pages/more/contact/Contact"; // 더보기 - 문의사항 화면
+import Lock from "./pages/more/lock/Lock"; // 더보기 - 앱 잠금 설정 화면
 // ---------------------- 더보기 (공지사항) -----------------------------
 import AnnouncementList from "./pages/more/announcement/AnnouncementList"; // 더보기 - 공지사항 목록 화면
 import AnnouncementDetail from "./pages/more/announcement/AnnouncementDetail"; // 더보기 - 공지사항 상세 조회 화면
@@ -48,6 +52,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { profileApi } from "./api/profileApi"; // 프로필 API
 import { attendanceApi } from "./api/attendanceApi"; // 출석 API
 import { useResetAttendanceIfExpired } from './hooks/queries/useAttendanceQueries';
+import { authApi } from "./api/authApi";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -92,18 +97,54 @@ function AppInner() {
   }
 
   useEffect(() => {
+    // 세션 확인이랑 동시에 잠금 상태 초기화도 미리 시작 (병렬 진행)
+    useAppLockStore.getState().init();
+
     // 현재 세션 가져오기 (앱 최초 실행 시)
     supabase.auth.getSession().then(async ({ data: { session } }) => {
       setSession(session);
+      setLoading(false); // 세션 확인되자마자 바로 렌더링 시작
       if (session) {
-        // 세션 확인되면 출석 만료 여부부터 확인 후, 병렬로 나머지 데이터 prefetch
-        await resetAttendanceIfExpired.mutateAsync().catch((err) => {
-          console.error("출석 초기화 확인 실패:", err); // 실패해도 앱 진입은 막지 않음
-        });
-        await prefetchCriticalData(queryClient);
+        (async () => {
+          // 세션 확인되면 화면부터 먼저 보여주고, 출석 만료 여부 확인
+          // 나머지 데이터 prefetch는 백그라운드에서 이어서 진행 (화면 렌더링을 막지 않음)
+          await resetAttendanceIfExpired.mutateAsync().catch((err) => {
+            console.error("출석 초기화 확인 실패:", err); // 실패해도 앱 진입은 막지 않음
+          });
+          await prefetchCriticalData(queryClient);
+          
+          // 토큰 발급 성공 시
+          PushNotifications.addListener('registration', async (token) => {
+            try {
+              await authApi.registerFcmToken(token.value);
+            } catch (err) {
+              console.error('FCM 토큰 등록 실패:', err); // 등록 실패해도 앱 진입은 막지 않음
+            }
+          });
+
+          // 토큰 발급 실패 시
+          PushNotifications.addListener('registrationError', (error) => {
+            console.error('FCM 등록 실패:', error);
+          });
+
+          async function registerPush() {
+            let permStatus = await PushNotifications.checkPermissions();
+            if (permStatus.receive === 'prompt') {
+              permStatus = await PushNotifications.requestPermissions();
+            }
+            if (permStatus.receive !== 'granted') {
+              console.log('푸시 알림 권한이 거부되었습니다.');
+              return;
+            }
+            await PushNotifications.register();
+          }
+
+          await registerPush();
+        })();
       }
-      setLoading(false);
     });
+
+    let hasHandledInitialAuth = false;
 
     // 로그인 상태 변화 감시 (로그아웃/재로그인 포함)
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
@@ -113,8 +154,12 @@ function AppInner() {
     }
 
     if (_event === 'SIGNED_IN' && session) {
+      if (hasHandledInitialAuth) {
+        useAppLockStore.getState().markFreshLogin(); // 방금 로그인했으면 이번엔 잠금화면 스킵
+      }
       prefetchCriticalData(queryClient); // 로그인마다 prefetch 재실행
     }
+    hasHandledInitialAuth = true;
     });
 
     return () => subscription.unsubscribe();
@@ -166,7 +211,7 @@ function AppInner() {
         </Route>
       ) : (
         /* 세션이 있을 때 (로그인 후) */
-        <>
+        <Route element={<LockGateRoute />}>
           {/* 주소가 /game1run 이면 미니게임1 화면을 보여줘 */}
           <Route path="/game1run" element={<Game1 />} />
 
@@ -236,10 +281,13 @@ function AppInner() {
             {/* 주소가 /more/contact-reply 이면 문의사항 답변 화면을 보여줘 (관리자 전용) */}
             <Route path="/more/contact-reply" element={<ContactReply />} />
 
+            {/* 주소가 /more/setting/lock 이면 앱 잠금 설정 화면을 보여줘 */}
+            <Route path="/more/setting/lock" element={<Lock />} />
+
             {/* ⚠️ 이상한 주소로 가도 홈으로 보내기 */}
             <Route path="*" element={<Navigate to="/" replace />} />
           </Route>
-        </>
+        </Route>
       )}
     </Routes>
   );

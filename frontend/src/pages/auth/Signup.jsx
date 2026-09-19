@@ -10,14 +10,19 @@ import AuthValidator from '../../utils/AuthValidator';
 import { useTheme } from "../../stores/useThemeStore";
 import useDebounce from '../../hooks/useDebounce';
 import { useSignup } from '../../hooks/mutations/useAuthMutations';
+import { useBackNavigate } from '../../hooks/useBackNavigate';
 
 // 5. 컴포넌트 불러오기
 import InputBox from '../../components/auth/InputBox';
 import SubmitButton from '../../components/auth/SubmitButton';
+import Dropdown from '../../components/common/Dropdown';
 
 export default function Signup() { // 회원가입 페이지 내보내기
   // 페이지 이동
   const navigate = useNavigate();
+
+  // 뒤로가기 버튼용
+  const { goBack } = useBackNavigate();
 
   // 현재 테마
   const currentTheme = useTheme((state) => state.currentTheme);
@@ -27,6 +32,15 @@ export default function Signup() { // 회원가입 페이지 내보내기
   const [user_email, setUser_email] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [gender, setGender] = useState(''); // '' | 'male' | 'female'
+  const [age, setAge] = useState(''); // 선택 입력 - 문자열로 관리, 제출 시 Number()로 변환
+ 
+  // 성별, 나이 드롭다운
+  const genderOptions = [
+    { value: '', label: '선택 안함' },
+    { value: 'male', label: '남성' },
+    { value: 'female', label: '여성' },
+  ];
 
   // 회원가입 뮤테이션 - loading은 signup.isPending으로 대체
   const signup = useSignup();
@@ -40,6 +54,7 @@ export default function Signup() { // 회원가입 페이지 내보내기
   const [userNameStatus, setUserNameStatus] = useState({ state: 'default', message: '' });
   const [passwordStatus, setPasswordStatus] = useState({ state: 'default', message: '' });
   const [confirmStatus, setConfirmStatus] = useState({ state: 'default', message: '' });
+  const [ageStatus, setAgeStatus] = useState({ state: 'default', message: '' });
 
   // 유효성 검사 이메일 : 두 번째 인자를 true로 전달해 로그인 페이지와는 달리 중복검사 가능하게함
   useEffect(() => {
@@ -73,6 +88,12 @@ export default function Signup() { // 회원가입 페이지 내보내기
     setConfirmStatus(AuthValidator.validateConfirmPassword(password, confirmPassword));
   }, [password, confirmPassword]);
 
+  // 나이 입력 처리
+  const handleAgeChange = (e) => {
+    const value = e.target.value;
+    setAge(value);
+    setAgeStatus(AuthValidator.validateAge(value));
+  };
 
   // 일반 회원가입 로직
   const onSignupSubmit = (e) => {
@@ -84,15 +105,23 @@ export default function Signup() { // 회원가입 페이지 내보내기
       passwordStatus.state === 'success' &&
       confirmStatus.state === 'success';
 
-    // 최종 확인 : 에러가 있거나 빈값이면 중단
-    if (!isAllValid) {
+    // 성별, 나이는 선택 항목 - 나이는 값이 있는데 형식이 틀렸을 때(error)만 제출을 막음
+    const isAgeValid = ageStatus.state !== 'error';
+
+    // 최종 확인 : 에러가 있거나 빈값이면 중단, 나이 형식이 잘못됐으면 중단
+    if (!isAllValid || !isAgeValid ) {
       alert("모든 항목을 올바르게 입력해주세요");
       return;
     }
 
+    // 선택값(gender, age)은 입력된 경우에만 payload에 포함
+    const payload = { user_email, user_name, password };
+    if (gender) payload.gender = gender;
+    if (age !== '') payload.age = Number(age);
+
     // authApi.signup 호출 -> 성공/실패 모두 auth-redirect로 이동해서 안내 (기존 로직과 동일)
     signup.mutate(
-      { user_email, user_name, password },
+      payload,
       {
         onSuccess: () => {
           navigate('/auth/auth-redirect?from=signup');
@@ -105,14 +134,34 @@ export default function Signup() { // 회원가입 페이지 내보내기
     );
   }
 
+  // 성별 선택 박스 스타일
+  const genderBoxStyle = {
+    backgroundImage: `url(${getAssetUrl(currentTheme, 'boxes', 'auth_info_input_box_x3')})`,
+    backgroundSize: '100% 100%',
+    aspectRatio: '261/72'
+  };
+
   return (
     // 전체 컨테이너
     <div className='w-full h-full items-center justify-center flex flex-col p-25'>
+      {/* 뒤로 가기 버튼 - Header 컴포넌트를 거치지 않고 이 페이지에서 직접 구현 */}
+      <button
+        type="button"
+        onClick={() => goBack()}
+        className="bg-transparent border-none cursor-pointer p-0 absolute left-8 top-10 outline-none"
+      >
+        <img
+          src={getAssetUrl(currentTheme, 'icons', 'back_icon_x3')}
+          alt="뒤로 가기"
+          className="w-auto h-9"
+        />
+      </button>
+
       {/* 회원가입 글씨 */}
       <h1 className='text-5xl font-bold text-center mt-10'>Pixel Diary</h1><br />
-      <h1 className='text-3xl font-bold text-center mb-10'>회원가입</h1>
-      {/* 회원가입 폼 (이메일, 비밀번호, 회원가입 버튼) */}
-      <form onSubmit={onSignupSubmit} noValidate className="w-full flex flex-col gap-2 mb-5">
+      <h1 className='text-3xl font-bold text-center mb-5'>회원가입</h1>
+      {/* 회원가입 폼 (이메일, 비밀번호, 성별, 나이, 회원가입 버튼) */}
+      <form onSubmit={onSignupSubmit} noValidate className="w-full flex flex-col gap-1.5 mb-5">
 
         {/* 닉네임 입력창 */}
         <InputBox // auth/InputBox 컴포넌트를 불러와서 사용
@@ -159,10 +208,63 @@ export default function Signup() { // 회원가입 페이지 내보내기
           currentTheme={currentTheme}
         />
 
+        {/* 성별 선택 (선택 입력) 드롭다운 */}
+        <div className="w-full flex flex-col">
+          <Dropdown
+            options={genderOptions}
+            value={gender}
+            onChange={setGender}
+            listClassName="bg-white border border-gray-300 rounded-lg shadow-lg overflow-hidden divide-y divide-gray-200"
+            renderTrigger={({ selectedLabel, isOpen, toggle }) => (
+              <div className="w-full relative flex items-center" style={genderBoxStyle}>
+                <span className="absolute -mt-[15%] ml-[5%] font-bold text-3xs">
+                  성별 (선택)
+                </span>
+ 
+                {/* 드롭다운 열고 닫는 버튼 - 선택된 값 + 화살표 아이콘 */}
+                <button
+                  type="button"
+                  onClick={toggle}
+                  className="w-full h-full flex items-center justify-center gap-1 text-2xs font-bold mt-[1%] -mb-[1%]"
+                >
+                  <span className={gender === '' ? 'text-gray-400' : ''}>{selectedLabel}</span>
+                  <span className={`text-3xs ${isOpen ? 'rotate-180' : ''}`}>
+                    ▼
+                  </span>
+                </button>
+              </div>
+            )}
+            renderOption={({ option, isSelected, select }) => (
+              <button
+                type="button"
+                onClick={select}
+                className={`w-full text-center text-2xs font-bold py-3 transition-colors ${
+                  isSelected ? 'bg-blue-900 text-white' : 'text-gray-800 hover:bg-gray-100'
+                }`}
+              >
+                {option.label}
+              </button>
+            )}
+          />
+          {/* 다른 입력창들과 높이를 맞추기 위한 메시지 영역 (성별은 항상 유효하므로 비워둠) */}
+          <div className="min-h-[1.5rem]" />
+        </div>
+ 
+        {/* 나이 입력창 (선택 입력) */}
+        <InputBox
+          label="나이 (선택)"
+          type="text"
+          placeholder="나이를 입력하세요"
+          value={age}
+          onChange={handleAgeChange}
+          status={ageStatus}
+          currentTheme={currentTheme}
+        />
+
         {/* 회원가입 버튼 */}
         <SubmitButton // auth/SubmitButton 컴포넌트 불러와서 사용
           loading={signup.isPending} // 뮤테이션 상태로 대체
-          disabled={signup.isPending || userNameStatus.state !== 'success' || emailStatus.state !== 'success' || passwordStatus.state !== 'success' || confirmStatus.state !== 'success'}
+          disabled={signup.isPending || userNameStatus.state !== 'success' || emailStatus.state !== 'success' || passwordStatus.state !== 'success' || confirmStatus.state !== 'success' || ageStatus.state === 'error'} // 나이를 입력했는데 형식이 잘못된 경우에만 막힘
           currentTheme={currentTheme}
           text="회원가입"
         />

@@ -1,6 +1,9 @@
 import Phaser from "phaser";
 import { monstersHitDamageBase } from "../monsters/Monsters";
-import { addDropItemMagnet } from "../object/Magnet";
+import { objectsHitDamageBase } from "../object/Objects";
+
+// 블레이드의 넉백수치
+const knockback = 150;
 
 export function autoAttackBlade(scene) {
 
@@ -22,20 +25,17 @@ function attackBlade(scene) {
     const bladeHitbox = (bladeSpriteEff) => {
 
       scene.physics.add.overlap(bladeSpriteEff, scene.monsters, (damage, monster) => {
-      // 이미 타격중인 몬스터는 무시함
-      if (monster.isHit) return;
+        // 이미 타격중인 몬스터는 무시함
+        if (monster.isHit) return;
 
-      // 블레이드의 넉백수치
-      const knockback = 150;
+        // 타격 처리 시작
+        monstersHitDamageBase(monster, knockback, scene); // 공통적으로 사용하는 몬스터가 받는 대미지 효과
 
-      // 타격 처리 시작
-      monstersHitDamageBase(monster, knockback, scene); // 공통적으로 사용하는 몬스터가 받는 대미지 효과
-
-      // 3레벨 이상이면 공격력의 200%만큼의 대미지
-      if(scene.player.bladeLevel >= 3) monster.hp -= scene.player.damage * 2;
-      
-      // 아니면 공격력의 150%만큼의 대미지
-      else monster.hp -= scene.player.damage * 1.5;                           
+        // 3레벨 이상이면 공격력의 200%만큼의 대미지
+        if(scene.player.bladeLevel >= 3) monster.hp -= scene.player.damage * 2;
+        
+        // 아니면 공격력의 150%만큼의 대미지
+        else monster.hp -= scene.player.damage * 1.5;                           
 
       });
 
@@ -81,32 +81,17 @@ function attackBlade(scene) {
       });
     }
 
-    // 오브젝트 공격 판정(몬스터 공격 판정과 같습니다.)
-    // 오브젝트 부분은 차후에 몬스터와 통합해줄 필요가 있어보임, 우선은 보류중
-    scene.physics.add.overlap(bladeEff, scene.chests, (damage, chest) => {
+    // 오브젝트(상자)에 닿았을때
+    scene.physics.add.overlap(bladeEff, scene.chests, (eff, chest) => {
 
-      if (chest.isHit) return;
+      if(chest.isHit == true) return;
 
-      chest.isHit = true;
-      chest.hp -= 1;
-      chest.setTintFill(0xffffff);
+      // 3레벨 이상이면 공격력의 200%만큼의 대미지
+      if(scene.player.bladeLevel >= 3) chest.hp -= scene.player.damage * 2;
+      // 아니면 공격력의 150%만큼의 대미지
+      else chest.hp -= scene.player.damage * 1.5;   
 
-      if (chest.hp <= 0) {
-        addDropItemMagnet(chest.x, chest.y, scene);
-        chest.destroy(); // 체력이 다 달면 없애기
-      }
-
-      else {
-
-        // 0.1초후에 무적판정 종료
-        // 상자는 어느정도의 연타를 허용해줘서 빠르게 부술 수 있도록 0.1초로 설정
-        scene.time.delayedCall(100, () => {
-          if (chest.active) {
-            chest.clearTint(); // 타격 이펙트 되돌리기
-            chest.isHit = false;
-          }
-        });
-      }
+      objectsHitDamageBase(chest, knockback, scene);
     });
 
     // animationcomplete: 애니메이션이 끝날때

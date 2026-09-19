@@ -20,6 +20,9 @@ export default class AuthValidator {
   // 비밀번호 정규표현식: 영문, 숫자, 특수문자(@$!%*#?&)가 최소 하나씩 포함되어야 함
   static PASSWORD_REGEX = /^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*#?&])[A-Za-z\d@$!%*#?&]{8,}$/;
 
+  // 나이 정규표현식: 숫자만 허용 (한글, 특수문자, 소수점 등 불가)
+  static AGE_REGEX = /^[0-9]+$/;
+
   // 이메일 중복(백엔드 연동) 또는 형식 유효성 검사 선택해서
   static async validateEmail(user_email, checkAvailable = true) {
 
@@ -101,6 +104,25 @@ export default class AuthValidator {
     //     return { state: 'error', message:'서버 연결 확인 불가'};
     // }
     return { state: 'success', message: '사용 가능한 닉네임입니다.' };
+  }
+
+  // 나이 형식 유효성 검사 - 선택 입력 필드라 빈 값은 에러가 아닌 default 상태로 통과
+  static validateAge(age) {
+    // 빈 문자열/null/undefined면 아직 입력 전(또는 선택 안 함) 상태
+    if (age === '' || age === null || age === undefined)
+      return { state: 'default', message: '' };
+ 
+    const ageStr = String(age);
+ 
+    // 숫자가 아닌 문자(한글, 특수문자, 소수점 등)가 하나라도 섞여있으면 에러
+    if (!this.AGE_REGEX.test(ageStr))
+      return { state: 'error', message: '숫자만 입력할 수 있어요' };
+ 
+    // 숫자이지만 0 이하이면 에러
+    if (Number(ageStr) <= 0)
+      return { state: 'error', message: '나이는 1 이상의 숫자로 입력해주세요' };
+ 
+    return { state: 'success', message: '' };
   }
 
 }
