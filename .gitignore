@@ -561,4 +561,7 @@ basic_memo.txt
 # Vite 캐시
 .vite/
 
+# Firebase 파일
+backend/firebase-service-account.json
+
 # End of https://www.toptal.com/developers/gitignore/api/node,react,python,django,pycharm,visualstudiocode
