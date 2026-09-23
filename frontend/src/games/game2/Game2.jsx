@@ -1,3 +1,6 @@
+import { Capacitor } from "@capacitor/core";
+import { ScreenOrientation } from "@capacitor/screen-orientation";
+
 import React, { useEffect, useRef } from "react";
 import Phaser from "phaser";
 import GameScene from "./scenes/GameScene";
@@ -6,54 +9,122 @@ const Game2 = () => {
   const gameContainer = useRef(null);
 
   useEffect(() => {
-    // 페이저 게임 환경 설정
-    const config = {
-      type: Phaser.AUTO,
-      pixelArt: true, // 업스케일링 해도 픽셀이 깨지지 않도록 설정
+    let cancelled = false;
+    let game = null;
+    let resizeObserver = null;
+    let resizeFrame = null;
 
-      scale: {
-        mode: Phaser.Scale.FIT, // 화면에 꽉 채워주게 줌인한다
-        autoCenter: Phaser.Scale.CENTER_BOTH,
-        parent: gameContainer.current, // 렌더링 기준 설정
-        width: 360,
-        height: 640,
-      },
+    const isNative = Capacitor.isNativePlatform();
 
-      physics: {
-        default: "arcade",
-        arcade: { gravity: { y: 0 } }, // 중력제거
-      },
-      
-      scene: [GameScene],
+    const orientationRequest = isNative
+      ? ScreenOrientation.lock({
+          orientation: "landscape",
+        }).catch((error) => {
+          console.error("가로 화면 전환 실패:", error);
+        })
+      : Promise.resolve();
+
+    const startGame = async () => {
+      await orientationRequest;
+
+      if (cancelled || !gameContainer.current) return;
+
+      const container = gameContainer.current;
+
+      game = new Phaser.Game({
+        type: Phaser.AUTO,
+        parent: container,
+        pixelArt: true,
+        roundPixels: true,
+        backgroundColor: "#223344",
+
+        scale: {
+          mode: Phaser.Scale.RESIZE,
+          autoCenter: Phaser.Scale.NO_CENTER,
+          width: container.clientWidth,
+          height: container.clientHeight,
+        },
+
+        physics: {
+          default: "arcade",
+          arcade: {
+            gravity: { y: 0 },
+          },
+        },
+
+        scene: [GameScene],
+      });
+
+      // 방향 잠금 요청이 끝난 후에도 WebView 크기는
+      // 조금 늦게 바뀔 수 있으므로 실제 영역 크기를 관찰
+      resizeObserver = new ResizeObserver(() => {
+        if (resizeFrame !== null) {
+          cancelAnimationFrame(resizeFrame);
+        }
+
+        resizeFrame = requestAnimationFrame(() => {
+          if (cancelled || !game) return;
+
+          const width = container.clientWidth;
+          const height = container.clientHeight;
+
+          if (width > 0 && height > 0) {
+            game.scale.resize(width, height);
+          }
+        });
+      });
+
+      resizeObserver.observe(container);
     };
 
-    // 게임 실행
-    const game = new Phaser.Game(config);
+    void startGame();
 
-    // 컴포넌트가 꺼질 때 게임 엔진도 같이 파괴 (메모리 누수 방지)
     return () => {
-      game.destroy(true);
+      cancelled = true;
+
+      resizeObserver?.disconnect();
+
+      if (resizeFrame !== null) {
+        cancelAnimationFrame(resizeFrame);
+      }
+
+      game?.destroy(true);
+      game = null;
+
+      if (isNative) {
+        void orientationRequest
+          .then(() =>
+            ScreenOrientation.lock({
+              orientation: "portrait",
+            })
+          )
+          .catch((error) => {
+            console.error("세로 화면 복구 실패:", error);
+          });
+      }
     };
   }, []);
 
   return (
     <div
       style={{
-
-        position: "fixed", // 독자적인 화면 구축
-        top: 0,
-        left: 0,
+        position: "fixed",
+        inset: 0,
         zIndex: 9999,
-
-        width: "100vw",
-        height: "100vh",
-        backgroundColor: "#111", // 화면 밖 검은색으로
         overflow: "hidden",
-
+        backgroundColor: "#111",
+        touchAction: "none",
         textAlign: "left",
       }}
     >
-      <div ref={gameContainer} style={{ width: "100%", height: "100%" }} />
+      <div
+        ref={gameContainer}
+        style={{
+          width: "100%",
+          height: "100%",
+          overflow: "hidden",
+        }}
+      />
     </div>
   );
 };
