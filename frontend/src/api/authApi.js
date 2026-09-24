@@ -81,6 +81,12 @@ export const authApi = {
       body: JSON.stringify(body),
     }),
 
+    // 회원탈퇴 인증번호 발송 (소셜 유저)
+  sendWithdrawalCode: () =>
+    authFetch(`${BASE_URL}/api/v1/auth/withdrawal/send-code/`, {
+      method: 'POST',
+    }),
+
   // 프로필 사진 변경
   updateProfileImage: (file) => {
     const formData = new FormData();

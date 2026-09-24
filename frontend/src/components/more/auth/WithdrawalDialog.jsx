@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useTheme } from '../../../stores/useThemeStore'; // useTheme 불러오기
 import { getAssetUrl } from "../../../utils/AssetHelper"; // 헬퍼 불러오기
 
@@ -10,38 +10,71 @@ import InputField from '../auth/InputField';
 /**
  * WithdrawalDialog (회원 탈퇴 다이얼로그)
  * 이메일 유저: 1단계(의사 확인) → 2단계(비밀번호 검증) 후 탈퇴 진행
- * 소셜 유저: 1단계(의사 확인) 후 바로 탈퇴 진행
- * @param {function} onConfirm - 탈퇴 확정 시 실행. 이메일 유저는 password 문자열, 소셜 유저는 null 전달
+ * 소셜 유저: 1단계(의사 확인) → 2단계(이메일 인증번호 검증) 후 탈퇴 진행
+ * @param {function} onConfirm - 탈퇴 확정 시 실행. 이메일 유저는 password 문자열, 소셜 유저는 인증번호 문자열 전달
+ * @param {function} onSendCode - 소셜 유저용 인증번호 발송 함수 (Promise, 실패 시 reject)
  * @param {function} onCancel - '취소하기' 클릭 시 팝업을 닫는 함수
  * @param {string} loginProvider - 로그인 수단 ('email' | 'google' | 'kakao' | 'naver')
  * @param {string} [width="100%"] - 다이얼로그의 가로 너비 (기본값: "100%")
  * @param {string} [maxWidth="320px"] - 다이얼로그의 최대 가로 너비 (기본값: "320px") -> 상한선 값이기 때문에 px로 유지
  */
 
-const WithdrawalDialog = ({ onConfirm, onCancel, loginProvider, width = "100%", maxWidth = "320px" }) => {
+const RESEND_COOLDOWN = 60; // Supabase OTP 재발송 60초에 1번으로 제한 
+
+const WithdrawalDialog = ({ onConfirm, onSendCode, onCancel, loginProvider, width = "100%", maxWidth = "320px" }) => {
   // 테마 전역 관리
   const currentTheme = useTheme((state) => state.currentTheme);
-  // 'confirm' (탈퇴 확인) 또는 'password' (비밀번호 입력) 상태 관리
+  // 'confirm' (탈퇴 확인) 또는 'password' (비밀번호 입력) 또는 'code' (인증번호 입력) 상태 관리
   const [step, setStep] = useState('confirm'); // 'confirm' | 'password'
   const [password, setPassword] = useState("");
+  const [code, setCode] = useState("");
 
   // 에러 메시지 상태 관리
   const [error, setError] = useState("");
+  // 인증번호 발송 중 여부
+  const [sending, setSending] = useState(false);
+  // 재발송 쿨다운 카운트 (초)
+  const [cooldown, setCooldown] = useState(0);
+  const timerRef = useRef(null);
 
-  // 입력값이 바뀔 때 에러를 초기화해주는 함수
-  const handleInputChange = (e) => {
-    setPassword(e.target.value);
-    if (error) setError("");
+  // 소셜 유저 여부
+  const isSocialUser = loginProvider !== 'email';
+
+  // 재발송 쿨다운 타이머 - cooldown이 0보다 크면 1초마다 감소
+  useEffect(() => {
+    if (cooldown <= 0) return;
+    timerRef.current = setTimeout(() => setCooldown((c) => c - 1), 1000);
+    return () => clearTimeout(timerRef.current);
+  }, [cooldown]);
+
+  // 인증번호 발송 함수 - 쿨다운 및 발송 중 상태 관리
+  const handleSendCode = async () => {
+    if (sending || cooldown > 0) return;
+    try {
+      setSending(true);
+      setError("");
+      await onSendCode();
+      setCooldown(RESEND_COOLDOWN); // 발송 성공 시 쿨다운 시작
+    } catch (errMessage) {
+      setError(typeof errMessage === 'string' ? errMessage : '인증번호 발송에 실패했습니다.');
+    } finally {
+      setSending(false);
+    }
   };
 
-  // 2단계 최종 확인 버튼 클릭 시 실행할 함수
-  const handleSubmit = async () => {
+  // code 단계 진입 시 자동으로 1차 발송
+  useEffect(() => {
+    if (step === 'code') handleSendCode();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [step]);
+
+  // 2단계 최종 확인 버튼 클릭 시 실행할 함수 (일반 회원가입 유저)
+  const handlePasswordSubmit = async () => {
     // 조건 1: 비밀번호 미입력 시
     if (!password || !password.trim()) {
       setError("현재 비밀번호를 입력해주세요");
       return;
     }
-
     try {
       setError(""); // 에러 초기화
       await onConfirm(password);
@@ -51,8 +84,22 @@ const WithdrawalDialog = ({ onConfirm, onCancel, loginProvider, width = "100%", 
     }
   };
 
-  // 소셜 유저 여부
-  const isSocialUser = loginProvider !== 'email';
+  // 2단계 최종 확인 버튼 클릭 시 실행할 함수 (소셜 유저)
+  const handleCodeSubmit = async () => {
+    // 조건 1: 인증번호 미입력 시
+    if (!code || !code.trim()) {
+      setError("인증번호를 입력해주세요");
+      return;
+    }
+    try {
+      setError(""); // 에러 초기화
+      await onConfirm(code);
+    } catch (errMessage) {
+      // 조건 2: Account.jsx가 throw 해준 서버 에러 메시지를 화면에 표시
+      setError(errMessage);
+    }
+  };
+
   return (
     <>
       {/* 1단계 - 탈퇴 확인 */}
@@ -68,13 +115,7 @@ const WithdrawalDialog = ({ onConfirm, onCancel, loginProvider, width = "100%", 
             <ImageButton
               label="회원탈퇴"
               imageSrc={getAssetUrl(currentTheme, 'buttons', 'red_button_x3')}
-              onClick={() => {
-                if (isSocialUser) {
-                  onConfirm(null); // 소셜 유저 → 바로 탈퇴
-                } else {
-                  setStep('password'); // 이메일 유저 → 비밀번호 단계로
-                }
-              }}
+              onClick={() => setStep(isSocialUser ? 'code' : 'password')}
             />
             <ImageButton
               label="취소하기"
@@ -95,7 +136,7 @@ const WithdrawalDialog = ({ onConfirm, onCancel, loginProvider, width = "100%", 
             <InputField
               type="password"
               value={password}
-              onChange={(e) => setPassword(e.target.value)}
+              onChange={(e) => { setPassword(e.target.value); if (error) setError(""); }}
               placeholder="password"
               textAlign="center"
             />
@@ -118,7 +159,56 @@ const WithdrawalDialog = ({ onConfirm, onCancel, loginProvider, width = "100%", 
             <ImageButton
               label="확인"
               imageSrc={getAssetUrl(currentTheme, 'buttons', 'green_button_x3')}
-              onClick={handleSubmit}
+              onClick={handlePasswordSubmit}
+            />
+          </div>
+        </DialogBox>
+      )}
+
+      {/* 2단계 - 인증번호 입력 (소셜 유저만) */}
+      {step === 'code' && (
+        <DialogBox boxImageName="popup_message_box_x3" width={width} maxWidth={maxWidth}>
+          <p className="text-xs font-bold text-center m-0">이메일로 전송된 인증번호를 입력하세요</p>
+          
+          {/* 인증번호 입력창 */}
+          <div className="w-[90%] mb-[2%]">
+            <InputField
+              type="text"
+              value={code}
+              onChange={(e) => { setCode(e.target.value); if (error) setError(""); }}
+              placeholder="인증번호 8자리"
+              textAlign="center"
+            />
+          </div>
+
+          {/* 재발송 버튼 - 60초 쿨다운, 발송 중에는 비활성화 */}
+          <button
+            type="button"
+            onClick={handleSendCode}
+            disabled={sending || cooldown > 0}
+            className="text-2xs text-gray-500 underline disabled:opacity-50"
+          >
+            {cooldown > 0 ? `재발송 (${cooldown}초 후 가능)` : sending ? '발송 중...' : '인증번호 재발송'}
+          </button>
+
+          {/* 에러 메시지 표시 영역 */}
+          {error && (
+            <div className="flex items-center justify-center mt-[1%] mb-[1%]">
+              <p className="text-[#ef4444] text-3xs font-bold m-0">{error}</p>
+            </div>
+          )}
+
+          {/* 취소하기&확인 버튼 영역 */}
+          <div className="flex gap-[5%] justify-center w-full">
+            <ImageButton 
+              label="취소하기" 
+              imageSrc={getAssetUrl(currentTheme, 'buttons', 'blue_button_x3')} 
+              onClick={onCancel} 
+            />
+            <ImageButton 
+              label="확인" 
+              imageSrc={getAssetUrl(currentTheme, 'buttons', 'green_button_x3')} 
+              onClick={handleCodeSubmit} 
             />
           </div>
         </DialogBox>

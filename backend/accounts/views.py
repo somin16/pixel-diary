@@ -517,7 +517,7 @@ class WithdrawalView(APIView):
             provider = user_metadata_provider or app_metadata_provider
             is_social = provider in ["google", "kakao", "naver"]
 
-            # 5. 일반 유저만 비밀번호 검증 (소셜 유저는 스킵)
+            # 5. 일반 유저만 비밀번호 검증 (소셜 유저는 이메일 인증번호로 검증)
             if not is_social:                        
                 if not password:
                     return Response(
@@ -533,6 +533,26 @@ class WithdrawalView(APIView):
                 if login_check.status_code != 200:
                     return Response(
                         {"message": "비밀번호가 일치하지 않습니다."},
+                        status=status.HTTP_401_UNAUTHORIZED,
+                    )
+            else:
+                # 소셜 유저는 이메일 인증번호로 본인 확인
+                email_code = (request.data.get("email_code") or "").strip()
+                if not email_code:
+                    return Response(
+                        {"message": "본인 확인을 위해 인증번호가 필요합니다."},
+                        status=status.HTTP_400_BAD_REQUEST,
+                    )
+
+                verify_res = requests.post(
+                    f"{supabase_url}/auth/v1/verify",
+                    headers=get_supabase_anon_headers(),
+                    json={"email": user_email, "token": email_code, "type": "email"},
+                )
+
+                if verify_res.status_code != 200:
+                    return Response(
+                        {"message": "인증번호가 일치하지 않습니다."},
                         status=status.HTTP_401_UNAUTHORIZED,
                     )
 
@@ -1357,5 +1377,54 @@ class RegisterFCMTokenView(APIView):
             print(f"=== REGISTER FCM TOKEN ERROR ===\n{error}\n================================")
             return Response(
                 {"message": "FCM 토큰 등록 중 오류가 발생했습니다."},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
+            
+            
+class SendWithdrawalCodeView(APIView):
+    """회원탈퇴용 이메일 OTP 발송 API (소셜 유저 전용)"""
+
+    def post(self, request):
+        """
+        POST /api/v1/auth/withdrawal/send-code
+        - access_token으로 유저 이메일 확인 후 Supabase OTP 발송
+        """
+        access_token = extract_access_token(request)
+        if not access_token:
+            return Response(
+                {"message": "Authorization 헤더에 유효한 Bearer 토큰이 필요합니다."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        try:
+            supabase_url = os.getenv("SUPABASE_URL")
+
+            user_info_res = requests.get(
+                f"{supabase_url}/auth/v1/user",
+                headers={"apikey": os.getenv("SUPABASE_ANON_KEY"), "Authorization": f"Bearer {access_token}"}
+            )
+            if user_info_res.status_code != 200:
+                return Response({"message": "유효하지 않은 토큰입니다."}, status=status.HTTP_401_UNAUTHORIZED)
+
+            user_email = user_info_res.json().get("email")
+            if not user_email:
+                return Response({"message": "등록된 이메일이 없습니다."}, status=status.HTTP_400_BAD_REQUEST)
+
+            # create_user: False → 기존 유저에게만 발송, 신규 가입 방지
+            otp_res = requests.post(
+                f"{supabase_url}/auth/v1/otp",
+                headers=get_supabase_anon_headers(),
+                json={"email": user_email, "create_user": False},
+            )
+
+            if otp_res.status_code not in [200, 204]:
+                raise Exception(f"인증번호 발송 오류: {otp_res.text}")
+
+            return Response({"message": "인증번호가 발송되었습니다."}, status=status.HTTP_200_OK)
+
+        except Exception as error:
+            print(f"=== SEND WITHDRAWAL CODE ERROR ===\n{error}\n===========================")
+            return Response(
+                {"message": "인증번호 발송 중 오류가 발생했습니다."},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
