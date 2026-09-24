@@ -46,6 +46,12 @@ export function createJoystick(scene) {
     // 화면을 누를때
     const handlePointerDown = (pointer, currentlyOver) => {
 
+        // 없으면 null 할당하고 패스
+        if (!joystick?.touchCursor) {
+            activePointer = null;
+            return;
+        }   
+
         // 조작중이면 패스
         if (activePointer !== null) return;
 
@@ -64,6 +70,12 @@ export function createJoystick(scene) {
 
     // 조작을 중단했을때
     const handlePointerUp = (pointer) => {
+
+        // 없으면 null 할당하고 패스
+        if (!joystick?.touchCursor) {
+            activePointer = null;
+            return;
+        }   
 
         if (pointer !== activePointer) return;
 

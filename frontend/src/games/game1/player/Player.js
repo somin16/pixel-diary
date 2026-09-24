@@ -65,8 +65,8 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
 
         }
 
-            // 오른쪽
-            else if (cursors.right.isDown || wasd.D.isDown || joystickKeys?.right?.isDown) {
+        // 오른쪽
+        else if (cursors.right.isDown || wasd.D.isDown || joystickKeys?.right?.isDown) {
             isMove = true;
 
             this.setVelocityX(DEFAULT_SPEED + 15 * this.speed);
