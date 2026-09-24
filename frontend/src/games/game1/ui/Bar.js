@@ -1,5 +1,8 @@
 export function barUiSetting(scene) {
 
+    // 현재 화면의 가로 세로 크기 받기
+    const { width, height } = scene.cameras.main;
+
     // ======================HP=====================
 
     // 배경
@@ -7,6 +10,7 @@ export function barUiSetting(scene) {
     scene.hpBar.width = 20;
     scene.hpBar.setDepth(100); // 레이어 우선순위(높을수록 우선)
     scene.hpBar.setScale(2); // setScale: 해상도 조정, N배만큼 키워준다
+    scene.hpBar.setScrollFactor(0);
 
     // 실제 차오르는 체력
     scene.addHPValue = scene.add.nineslice(0, 0, 'hp_bar', 0, 8, 4, 1, 1, 1, 1);
@@ -14,13 +18,13 @@ export function barUiSetting(scene) {
     scene.addHPValue.setDepth(101);
     scene.addHPValue.setOrigin(0, 0.5);
     scene.addHPValue.setScale(2); // setScale: 해상도 조정, N배만큼 키워준다
-
+    scene.addHPValue.setScrollFactor(0);
 
     // ====================경험치====================
 
     // 경험치바 위치
-    const expBarPosX = scene.cameras.main.width / 2;
-    const expBarPosY = scene.cameras.main.height / 8;
+    const expBarPosX = width / 2;
+    const expBarPosY = height * 0.15;
 
     // 차오르는 경험치바 한정 위치
     const addExpPosX = expBarPosX - scene.scale.width / 2.5;
@@ -48,9 +52,16 @@ export function barUiSetting(scene) {
 // HP바 위치 조정
 export function hpBarPosSet(scene) {
 
-    // HP바 배경
-    scene.hpBar.setPosition(scene.player.x , scene.player.y + 25);
+    // 카메라 로직 변경으로 인해 HP바의 위치도 고정로직으로 변경
+    const { width, height } = scene.cameras.main;
 
-    // 채워지는 HP
-    scene.addHPValue.setPosition(scene.player.x - (scene.hpBar.width / 2 + 10), scene.player.y + 25);    
+    const x = Math.round(width / 2);
+    const y = Math.round(height / 2 + 25);
+
+    // 이제 해당 위치에 고정됩니다
+    scene.hpBar.setPosition(x, y);
+    scene.addHPValue.setPosition(
+        x - scene.hpBar.displayWidth / 2,
+        y
+    );  
 }

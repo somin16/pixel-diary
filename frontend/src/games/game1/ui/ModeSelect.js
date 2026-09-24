@@ -14,10 +14,9 @@ export async function createModeSelectUI(scene) {
 
     // 중앙 설정
     const centerX = width / 2;
-    const centerY = height / 2;
 
     // 상단 타이틀(게임 맵 선택)
-    scene.add.text(centerX, centerY - 250, '맵 선택', {
+    scene.add.text(centerX, height * 0.1, '맵 선택', {
         fontFamily: 'Mona',
         fontSize: '40px',
         fontStyle: 'bold',
@@ -25,7 +24,7 @@ export async function createModeSelectUI(scene) {
     }).setOrigin(0.5);
 
     // 일반 맵 버튼
-    createModeButton("basic", centerX - 85, centerY, () => {
+    createModeButton("basic", width * 0.35, height * 0.55, () => {
 
         // 티켓 사용 UI일 경우엔 클릭 x
         if (scene.isTicketSelect == true) return;
@@ -55,7 +54,7 @@ export async function createModeSelectUI(scene) {
 
         
     // 추가 맵 버튼
-    createModeButton("infinity", centerX + 85, centerY, () => {
+    createModeButton("infinity", width * 0.65, height * 0.55, () => {
 
         // 티켓 사용 UI일 경우엔 클릭 x
         if (scene.isTicketSelect == true) return;
@@ -88,7 +87,7 @@ export async function createModeSelectUI(scene) {
 export function createModeButton(modType, x, y, onClick, scene) {
 
     // 선택지 버튼 크기
-    const btnWidth = 150;
+    const btnWidth = 200;
     const btnHeight = 250;
 
     // UI 다 담아둘 컨테이너

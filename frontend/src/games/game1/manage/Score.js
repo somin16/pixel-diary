@@ -42,12 +42,12 @@ export function createScoreUI(scene) {
 
     // 스코어 텍스트 구성
     scene.scoreText = scene.add.text(
-      scene.cameras.main.width / 9.5,    // x좌표
-      scene.cameras.main.height / 6.85,  // y좌표
-      "SCORE: 0" , {  // 기본 텍스트
-      fontFamily: "Mona",
-      fontSize: "16px",
-      fill: "#000000",
+    scene.cameras.main.width * 0.1 + 10,    // x좌표
+    scene.cameras.main.height * 0.15 + 15,  // y좌표
+    "SCORE: 0" , {  // 기본 텍스트
+    fontFamily: "Mona",
+    fontSize: "16px",
+    fill: "#000000",
     })
     .setOrigin(0)       // UI를 좌측에 고정시킨다
     .setScrollFactor(0) // 카메라에 맞춰서 고정
@@ -58,6 +58,9 @@ export function createScoreUI(scene) {
 // async: 백그라운드에서 재생
 export async function gameClear(scene) {
 
+    // 현재 화면의 가로 세로 크기 받기
+    const { width, height } = scene.cameras.main;
+
     // 게임 종료 true
     scene.gameEnd = true;
 
@@ -66,7 +69,7 @@ export async function gameClear(scene) {
     scene.time.paused = true;
 
     // 조이스틱 파괴(단순 가시성을 위한것입니다)
-    scene.joyStick.destroy();
+    scene.joystick.destroy();
 
     // UI 그룹 및 위치조정
     scene.gameEndUI = scene.add.container(0, 0);
@@ -74,8 +77,8 @@ export async function gameClear(scene) {
     scene.gameEndUI.setDepth(500);
 
     // 가로세로 중앙
-    const centerX = scene.cameras.main.width / 2;
-    const centerY = scene.cameras.main.height / 2;
+    const centerX = width / 2;
+    const centerY = height / 2;
 
     // 코인 불러오기
     const myCoins = useGetCoinStore.getState().coin;
@@ -101,86 +104,106 @@ export async function gameClear(scene) {
 
     // 반투명 검은배경을 게임 전체에 깔기
     const backGround = scene.add.rectangle(
-      centerX,
-      centerY,
-      scene.cameras.main.width,
-      scene.cameras.main.height,
-      0x000000,
-      0.8
+    centerX,
+    centerY,
+    scene.cameras.main.width,
+    scene.cameras.main.height,
+    0x000000,
+    0.8
     );
 
     // 게임 클리어 텍스트
-    const gameOverText = scene.add.text(centerX, centerY / 3, "CLEAR!", {
-      fontFamily: "Mona",
-      fontSize: "48px",
-      fontStyle: "bold",
-      fill: "#24b400"
+    const gameOverText = scene.add.text(centerX, height * 0.1, "CLEAR!", {
+    fontFamily: "Mona",
+    fontSize: "48px",
+    fontStyle: "bold",
+    fill: "#24b400"
     }).setOrigin(0.5);
 
     // 점수 텍스트
-    const finalScoreText = scene.add.text(centerX, centerY - 50, "SCORE: " + finalScore, {
+    const finalScoreText = scene.add.text(centerX, height * 0.55, "SCORE: " + finalScore, {
         fontFamily: "Mona",
         fontSize: "24px",
         fill: "#ffef84"
     }).setOrigin(0.5);
 
+    // 코인 묶음
+    const coinRow = scene.add.container(centerX, height * 0.65);
+
     // 코인 이미지
-    const coinIcon = scene.add.image(centerX - 25, centerY / 0.95, "coin")
+    const coinIcon = scene.add.image(0, 0, "coin")
     .setOrigin(0.5).setScale(2);
 
     // 코인 텍스트
-    const coinText = scene.add.text(coinIcon.x + 25, centerY / 0.95, coin, {
+    const coinText = scene.add.text(0, 0, coin, {
         fontFamily: "Mona",
         fontSize: "32px",
         fill: "#ffd670"
     }).setOrigin(0, 0.5); // 왼쪽을 기준으로 중앙
 
+    // 코인 이미지와 텍스트 사이의 거리를 결정
+    const setCoinLayout = () => {
+
+        const gap = 3;
+        // 14는 코인 아이콘의 실제 크기
+        const width = 14 + gap + coinText.displayWidth;
+
+        coinIcon.setPosition(-width / 2, 0);
+        coinText.setPosition(-width / 2 + coinIcon.displayWidth + gap,0);
+    }
+
+    // 만들어둔걸 합치고
+    coinRow.add([coinIcon, coinText]);
+
+    // 정렬
+    setCoinLayout();
+
     // 추가되는 코인 텍스트
-    const addCoinText = scene.add.text(centerX, centerY / 0.9, "+" + Math.floor(addCoin), {
+    const addCoinText = scene.add.text(centerX, coinRow.y + 25, "+" + Math.floor(addCoin), {
         fontFamily: "Mona",
         fontSize: "24px",
         fill: "#ffef84"
     }).setOrigin(0, 0.5); // 왼쪽을 기준으로 왼쪽 끝
 
     // 보물상자 발견 이미지
-    const gameEndImage = scene.physics.add.sprite(centerX, centerY / 1.5, "game_end_image")
+    const gameEndImage = scene.physics.add.sprite(centerX, height * 0.3, "game_end_image")
     gameEndImage.setDepth(101);
     gameEndImage.setScrollFactor(0);
     gameEndImage.setScale(4);
     gameEndImage.play("game_end_image_animation", true);
 
     // 홈으로 돌아가기 버튼 배경
-    const returnHomeButton = scene.add.rectangle(centerX, centerY / 0.75, 250, 60, 0x44aa44)
-      .setScrollFactor(0) // 이거 안하면 이상한곳에서 스폰돼서 클릭이 안된다
-      .setInteractive()   // 이걸 넣어줘야 클릭이 가능
-      .on('pointerup', () => { // 누를때 작동
+    const returnHomeButton = scene.add.rectangle(width * 0.325, height * 0.85, 250, 60, 0x44aa44)
+    .setScrollFactor(0) // 이거 안하면 이상한곳에서 스폰돼서 클릭이 안된다
+    .setInteractive()   // 이걸 넣어줘야 클릭이 가능
+    .on('pointerup', () => { // 누를때 작동
 
         window.location.href = "/";
-      }).setVisible(false); // 처음엔 안보이게
+    }).setVisible(false); // 처음엔 안보이게
 
     // 홈으로 돌아가기 버튼 텍스트
-    const returnHomeButtonText = scene.add.text(centerX, centerY / 0.75, "메인 화면으로 이동!", {
-      fontFamily: "Mona",
-      fontSize: "24px",
-      fill: "#ffffff"
+    const returnHomeButtonText = scene.add.text(width * 0.325, height * 0.85, "메인 화면으로 이동!", {
+        fontFamily: "Mona",
+        fontSize: "24px",
+        fill: "#ffffff"
     }).setOrigin(0.5).setVisible(false); // 처음엔 안보이게
 
 
     // 재시작 버튼 배경
-    const restartGameButton = scene.add.rectangle(centerX, centerY / 0.65, 250, 60, 0x00AAFF)
-      .setScrollFactor(0) // 이거 안하면 이상한곳에서 스폰돼서 클릭이 안된다
-      .setInteractive()   // 이걸 넣어줘야 클릭이 가능
-      .on('pointerup', () => { // 누를때 작동
+    const restartGameButton = scene.add.rectangle(width * 0.675, height * 0.85, 250, 60, 0x00AAFF)
+    .setScrollFactor(0) // 이거 안하면 이상한곳에서 스폰돼서 클릭이 안된다
+    .setInteractive()   // 이걸 넣어줘야 클릭이 가능
+    .on('pointerup', () => { // 누를때 작동
 
         scene.gameEnd = false;
         scene.scene.start('ModeSelectScene'); // 생각해보니까 모드 선택 화면으로 보내는게 맞을거같아서 모드 선택화면으로 이동하는걸로 변경했습니다
-      }).setVisible(false); // 처음엔 안보이게
+    }).setVisible(false); // 처음엔 안보이게
 
     // 재시작 버튼 텍스트
-    const restartGameButtonText = scene.add.text(centerX, centerY / 0.65, "한번 더 플레이하기!", {
-      fontFamily: "Mona",
-      fontSize: "24px",
-      fill: "#ffffff"
+    const restartGameButtonText = scene.add.text(width * 0.675, height * 0.85, "한번 더 플레이하기!", {
+        fontFamily: "Mona",
+        fontSize: "24px",
+        fill: "#ffffff"
     }).setOrigin(0.5).setVisible(false); // 처음엔 안보이게
 
     // 이건 제가 만든 함수가 아니라 자바스크립트 자체기능입니다
@@ -231,6 +254,7 @@ export async function gameClear(scene) {
 
             // 최종코인 텍스트 갱신
             coinText.setText(Math.floor(coin));
+            setCoinLayout();
 
         }, tickRate); // tickRate의 속도로 반복
 
@@ -243,8 +267,7 @@ export async function gameClear(scene) {
         gameEndImage,
         gameOverText,
         finalScoreText,
-        coinIcon,
-        coinText,
+        coinRow,
         addCoinText,
         returnHomeButton,
         returnHomeButtonText,
