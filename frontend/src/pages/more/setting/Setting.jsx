@@ -9,8 +9,10 @@ import Header from "../../../components/common/Header";
 
 // 설정 메뉴 항목들 - 배열을 전역으로 선언
 const settingItems = [
-  { id: 'account', label: '계정 설정', path: '/more/setting/account' },
-  { id: 'lock', label: '잠금 설정', path: '/more/setting/lock' },
+  { id: 'account', label: '계정 설정', path: '/more/setting/account', icon:'people_icon_x3'},
+  { id: 'lock', label: '잠금 설정', path: '/more/setting/lock', icon:'lock_icon_x3' },
+  { id: 'notification', label: '알람 설정', path: '/more/setting/notification', icon:'alarm_icon_x3' },
+  { id: 'sound', label: '사운드 설정', path: 'more/setting/sound', icon:'sound_icon_x3' },
   { id: 'info', label: 'Pixel Diary 정보', path: '/more/setting/info' },
   { id: 'version', label: '앱 버전 1.0.0' },
 ];
@@ -53,11 +55,23 @@ const Setting = () => {
                 alt="메뉴 배경"
                 className="relative w-full h-auto block"
               />
-              <span
-                className={`absolute z-10 top-1/2 -translate-y-1/2 left-[6%] text-sm text-black`}
-              >
-                {item.label}
-              </span>
+              {/* 아이콘과 텍스트 영역 (기준 너비를 고정하여 텍스트 정렬 맞춤) */}
+              <div className="absolute z-10 inset-0 flex items-center pl-[6%] gap-3">
+                {item.icon ? (
+                  <div className={`w-[15%] flex items-center justify-center shrink-0 ${item.id === 'sound' ? 'translate-x-[4px]' : ''}`}>
+                    <img
+                      src={getAssetUrl(currentTheme, 'icons', item.icon)}
+                      alt=""
+                      className={`object-contain ${item.id === 'sound' ? 'scale-95' : 'max-w-full max-h-full'}`}
+                    />
+                  </div>
+                ) : (
+                  <div className=" shrink-0" />
+                )}
+                <span className="text-sm text-black">
+                  {item.label}
+                </span>
+              </div>
             </div>
           </li>
         ))}
