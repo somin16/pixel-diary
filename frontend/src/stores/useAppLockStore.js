@@ -2,7 +2,7 @@
 // LockGate, 설정 화면 등 여러 곳에서 같은 잠금 상태를 공유하는 zustand 스토어
 import { create } from 'zustand';
 import { App } from '@capacitor/app';
-import { NativeBiometric } from '@capgo/capacitor-native-biometric';
+import { BiometricAuth } from '@aparajita/capacitor-biometric-auth';
 import {
   isPinSet,
   savePin,
@@ -32,6 +32,7 @@ const useAppLockStore = create((set, get) => ({
   biometricEnabled: false,  // 사용자가 설정에서 생체인증을 켜뒀는지 여부
   biometricAvailable: false,  // 기기가 생체인증 하드웨어 자체를 지원하는지 여부
   lockedUntil: 0,  // PIN 재시도 가능 시각(ms epoch), 0이면 쿨다운 없음
+  isAuthenticating: false, // 지금 지문 인식 창이 떠 있는지 추적하는 변수
 
   // LockGate, App.jsx 등 여러 곳에서 불러도 안전
   // 상태(hasPin, isLocked 등)는 부를 때마다 매번 새로 읽어옴 (한 번만 실행으로 막아버리면, 재로그인처럼 값이 바뀐 상황을 못 따라감)
@@ -58,7 +59,7 @@ const useAppLockStore = create((set, get) => ({
       // 생체인증 하드웨어 지원 여부 확인, 예외 발생 시 미지원으로 간주
       let biometricAvailable = false;
       try {
-        const result = await NativeBiometric.isAvailable();
+        const result = await BiometricAuth.checkBiometry();
         biometricAvailable = !!result.isAvailable;
       } catch {
         biometricAvailable = false;
@@ -80,6 +81,9 @@ const useAppLockStore = create((set, get) => ({
       if (!appStateListenerAttached) {
         appStateListenerAttached = true;
         await App.addListener('appStateChange', ({ isActive }) => {
+          // 지문 인증 중일 때는 화면 밖으로 나간 것으로 치지 않고 무시함
+          if (get().isAuthenticating) return;
+
           if (!isActive) {
             backgroundedAt = Date.now();
             return;
@@ -95,12 +99,11 @@ const useAppLockStore = create((set, get) => ({
         });
       }
 
-      // 백그라운드에 있던 동안 지문/얼굴 등록이 바뀌었으면(추가/해제) 감지해서 반영
-      // (플러그인 공식 기능 - src/definitions.ts의 addListener('biometryChange', ...))
+      // (플러그인 공식 기능 - addResumeListener, 앱이 재개될 때 checkBiometry() 결과를 다시 전달해줌)
       if (!biometryListenerAttached) {
         biometryListenerAttached = true;
-        await NativeBiometric.addListener('biometryChange', (result) => {
-          set({ biometricAvailable: !!result.isAvailable });
+        await BiometricAuth.addResumeListener((info) => {
+          set({ biometricAvailable: !!info.isAvailable });
         });
       }
     })();
@@ -146,16 +149,29 @@ const useAppLockStore = create((set, get) => ({
 
   // OS 생체인증 프롬프트 호출, 성공하면 PIN 실패 기록도 함께 초기화
   unlockWithBiometric: async () => {
+    // 이미 인증 중이면 중복 실행 방지
+    if (get().isAuthenticating) return false;
+
     try {
-      await NativeBiometric.verifyIdentity({
+      // 상태를 true로 바꿔서 appStateChange가 무시하도록 만듦
+      set({ isAuthenticating: true });
+
+      await BiometricAuth.authenticate({
         reason: '일기를 보려면 인증이 필요해요',
-        title: '잠금 해제',
+        androidTitle: '잠금 해제',
+        cancelTitle: '취소',
       });
       await clearAttemptState();
       set({ lockedUntil: 0, isLocked: false });
       return true;
-    } catch {
-      return false; // 인증 실패 또는 사용자 취소
+    } catch (error) {
+      console.error("인증 실패 또는 취소:", error);
+      return false; 
+    } finally {
+      // 창이 완전히 닫히고 화면이 돌아올 시간을 주기 위해 0.5초 뒤에 해제
+      setTimeout(() => {
+        set({ isAuthenticating: false });
+      }, 500);
     }
   },
 
