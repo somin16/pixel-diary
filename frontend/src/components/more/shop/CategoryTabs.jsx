@@ -23,22 +23,27 @@ const CategoryTabs = ({ tabs, activeTab, setActiveTab, marginTop = "mt-[100px]",
           onClick={() => setActiveTab(tab)}
           className="relative flex-1 h-[38px] bg-transparent border-none flex items-center justify-center cursor-pointer"
         >
-          {/* 선택 여부와 type에 따라 배경 이미지 동적 변경 (on/off) */}
-          <img
-            src={getAssetUrl(currentTheme, 'boxes', activeTab === tab ? `${type}_filter_box_on_x2` : `${type}_filter_box_off_x2`)}
-            className="absolute inset-0 w-full h-full object-fill pointer-events-none"
-            alt=""
-          />
-          {/* 선택 여부에 따라 텍스트 색상 변경 */}
-          <span className={`relative z-10 text-xs font-bold flex items-center h-full gap-1 ${activeTab === tab ? 'text-black' : 'text-[#666666]'}`}>
-            {tab}
-            
-            {/* 탭 종류에 따른 조건부 색상 점 추가 */}
-            <span className={`mb-[4%] w-2 h-2 border border-white ${
-              tab === "스티커" ? 'bg-[#ff9b33]':
-              tab === "이모티콘" ? 'bg-[#ffca4d]' :
-              tab === "테마" ? 'bg-[#ff776e]' : 'hidden'
-              }`} />
+          {/* 선택 여부와 탭 종류에 따라 배경 이미지 동적 변경 (총 8개 조건 분기) */}
+            <img
+              src={getAssetUrl(
+                currentTheme, 
+                'boxes', 
+                activeTab === tab
+                  ? (tab === "스티커" ? `${type}_filter_sticker_box_on_x2` : 
+                     tab === "이모티콘" ? `${type}_filter_emoji_box_on_x2` : 
+                     tab === "테마" ? `${type}_filter_theme_box_on_x2` : 
+                     `${type}_filter_box_on_x2`)
+                  : (tab === "스티커" ? `${type}_filter_sticker_box_off_x2` : 
+                     tab === "이모티콘" ? `${type}_filter_emoji_box_off_x2` : 
+                     tab === "테마" ? `${type}_filter_theme_box_off_x2` : 
+                     `${type}_filter_box_off_x2`)
+              )}
+              className="absolute inset-0 w-full h-full object-fill pointer-events-none"
+              alt=""
+            />
+            {/* 선택 여부에 따라 텍스트 색상 변경 */}
+            <span className={`relative z-10 text-xs font-bold flex items-center h-full gap-1 ${activeTab === tab ? 'text-amber-950' : 'text-[#666666]'}`}>
+              {tab}
           </span>
         </button>
       ))}
