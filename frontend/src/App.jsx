@@ -241,8 +241,8 @@ function AppInner() {
             {/* 주소가 /more/announcement/edit/:announcement_id이면 공지사항 수정 화면을 보여줘 */}
             <Route path="/more/announcement/edit/:announcement_id" element={<AnnouncementForm />} />
 
-            {/* 주소가 /more/notification 이면 알림 설정 화면을 보여줘 */}
-            <Route path="/more/notification" element={<Notification />} />
+            {/* 주소가 /more/setting/notification 이면 알림 설정 화면을 보여줘 */}
+            <Route path="/more/setting/notification" element={<Notification />} />
 
             {/* 주소가 /more/contact 이면 문의사항 화면을 보여줘 */}
             <Route path="/more/contact" element={<Contact />} />

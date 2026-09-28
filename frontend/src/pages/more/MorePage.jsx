@@ -20,7 +20,6 @@ const menuItems = [
   { id: 'storage', label: '보관함', iconName: 'inventory_icon_x3', path: '/more/inventory' },
   { id: 'attendance', label: '출석', iconName: 'daily_icon_x3' },
   { id: 'notice', label: '공지사항', iconName: 'info_icon_x3', path: '/more/announcement/list' },
-  { id: 'notification', label: '알림 설정', iconName: 'alarm_icon_x3', path: '/more/notification' },
   { id: 'contact', label: '문의 하기', iconName: 'help_center_icon_x3', path: '/more/contact' },
   { id: 'userlist', label: '유저 관리', iconName: 'setting_icon_x3', path: '/more/user-list' },
   { id: 'additem', label: '아이템 추가', iconName: 'setting_icon_x3', path: '/more/add-item' },
