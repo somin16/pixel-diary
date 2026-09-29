@@ -12,6 +12,8 @@ export const THEME_LIST = [
   'winter_light', // TODO : 아래로 새로운 테마 추가
   'yellow_light',
   'pink_light',
+  'halloween_light', 
+  'defalut_light',
 ];
 
 // 새로고침이나 앱 재시작 후에도 테마 설정이 유지됨
@@ -20,8 +22,8 @@ export const useTheme = create(
   persist(
     (set) => ({
       // 현재 적용된 테마
-      // 초기 테마 설정 (기본값: winter_light) 일단 다른 테마가 생기기 전까지는 펭귄테마가 기본입니다 나중에 변경예정
-      currentTheme: 'winter_light',
+      // 초기 테마 설정 (기본값: defalut_light)
+      currentTheme: 'defalut_light',
 
       // 테마 변경 메서드
       setTheme: (newTheme) => {
