@@ -32,25 +32,46 @@ const Game1 = () => {
 		// 게임 화면에서 나갈 때 세로 화면으로 복구
 		return () => {
 
-		// 진입 요청이 끝난 뒤 복구 요청 실행
-		void landscapeRequest
-			.then(() =>
-			ScreenOrientation.lock({
-				orientation: "portrait",
-			})
-			)
-			.catch((error) => {
-			console.error("세로 화면 복구 실패:", error);
-			});
+			// 진입 요청이 끝난 뒤 복구 요청 실행
+			void landscapeRequest
+				.then(() =>
+				ScreenOrientation.lock({
+					orientation: "portrait",
+				})
+				)
+				.catch((error) => {
+				console.error("세로 화면 복구 실패:", error);
+				});
 		};
-  }, []);
+  	}, []);
 
   useEffect(() => {
 
     // 게임 종료시 이벤트
-    const handleExitGame = () => {
-      navigate("/"); // 새로고침(메모리 초기화) 없이 부드럽게 홈으로 이동
-    };
+	const handleExitGame = async () => {
+
+		if (Capacitor.isNativePlatform()) {
+			try {
+				await ScreenOrientation.lock({
+					orientation: "portrait",
+				});
+
+				// 세로 화면 크기를 받을때까지 잠시 대기
+				await new Promise((resolve) => {
+
+					requestAnimationFrame(() => {
+						requestAnimationFrame(resolve);
+					});
+				});
+			} 
+			
+			catch (error) {
+				console.error("세로 화면 전환 실패:", error);
+			}
+		}
+
+		navigate("/", { replace: true });
+	};
 
     // 점수 저장 이벤트
     const handelSubmitScore = (event) => submitScore(event.detail);
@@ -65,9 +86,9 @@ const Game1 = () => {
     window.addEventListener("useTicket", handleRemoveTicket);
 
     const config = {
-      type: Phaser.AUTO,
-      pixelArt: true, // 업스케일링 해도 픽셀이 깨지지 않도록 설정
-      roundPixels: true, // 픽셀 찌그러짐 방지
+		type: Phaser.AUTO,
+		pixelArt: true, // 업스케일링 해도 픽셀이 깨지지 않도록 설정
+		roundPixels: true, // 픽셀 찌그러짐 방지
 
     scale: {
         mode: Phaser.Scale.RESIZE,
@@ -89,37 +110,77 @@ const Game1 = () => {
     // 게임 실행
     const game = new Phaser.Game(config);
 
+    const container = gameContainer.current;
+	let resizeFrame = null;
+
+	// 부모 크기가 바뀐 다음 프레임에 Phaser 갱신
+	const syncGameSize = () => {
+		if (resizeFrame !== null) {
+			cancelAnimationFrame(resizeFrame);
+		}
+
+	resizeFrame = requestAnimationFrame(() => {
+		resizeFrame = null;
+
+		if (!container || !game.isBooted) return;
+
+		if (container.clientWidth <= 0 || container.clientHeight <= 0) {
+		return;
+		}
+
+		// RESIZE 모드에서 부모 영역 크기와 캔버스 위치를 다시 측정
+		game.scale.refresh();
+	});
+	};
+
+	// WebView 회전뿐 아니라 부모 요소 크기 변경도 감지
+	const resizeObserver = new ResizeObserver(syncGameSize);
+
+	resizeObserver.observe(container);
+
+	window.addEventListener("resize", syncGameSize);
+	window.visualViewport?.addEventListener("resize", syncGameSize);
+
+	// 게임 부팅 완료 후에도 한 번 동기화
+	game.events.once("ready", syncGameSize);
+	syncGameSize();
+
     // 컴포넌트가 꺼질 때 게임 엔진도 같이 파괴 (메모리 누수 방지)
     return () => {
-      game.destroy(true);
-      // 이벤트 제거
-      window.removeEventListener("exitMiniGame", handleExitGame); 
-      window.removeEventListener("submitFinalScore", handelSubmitScore);
-      window.removeEventListener("useTicket", handleRemoveTicket);
+		resizeObserver.disconnect();
+
+		window.removeEventListener("resize", syncGameSize);
+		window.visualViewport?.removeEventListener("resize", syncGameSize);
+
+		game.events.off("ready", syncGameSize);
+
+		if (resizeFrame !== null) {
+			cancelAnimationFrame(resizeFrame);
+		}
+
+		game.destroy(true);
+
+		window.removeEventListener("exitMiniGame", handleExitGame);
+		window.removeEventListener("submitFinalScore", handelSubmitScore);
+		window.removeEventListener("useTicket", handleRemoveTicket);
     };
   }, [navigate]);
 
 return (
   <div
+    ref={gameContainer}
     style={{
       position: "fixed",
       inset: 0,
       zIndex: 9999,
 
+      margin: 0,
+      padding: 0,
       overflow: "hidden",
       backgroundColor: "#000000",
       touchAction: "none",
-      textAlign: "left",
     }}
-  >
-    <div
-      ref={gameContainer}
-      style={{
-        width: "100%",
-        height: "100%",
-      }}
-    />
-  </div>
+  />
 );
 };
 

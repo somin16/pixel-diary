@@ -82,7 +82,7 @@ export default class GameScene extends Phaser.Scene {
     this.player = new Player(this, 400, 300);
 
     // 카메라를 플레이어에 맞춰서 이동
-    this.cameras.main.startFollow(this.player, true, 0.05, 0.05);
+    this.cameras.main.startFollow(this.player, true, 1, 1);
 
     // 플레이어 체력 자연 회복 이벤트(player/Hp.js)
     addEventautoHeal(this);
@@ -93,7 +93,6 @@ export default class GameScene extends Phaser.Scene {
     // 화염구 그룹(버그 방지용)
     this.fireBallGroup = this.physics.add.group();
 
-    
     // ===================타일맵===================
 
     // 타일맵 깔기(background/Background.js)
@@ -104,9 +103,10 @@ export default class GameScene extends Phaser.Scene {
     // 타이머세팅(ui/Timer.js)
     TimerSetting(this);
 
+	// ===================UI세팅================
+
     // UI세팅(ui/Bar.js)
     barUiSetting(this);
-
 
     // =================오브젝트 아이템들===================
 
@@ -197,11 +197,11 @@ export default class GameScene extends Phaser.Scene {
     // 타일맵 위치 갱신(ui/Background.js)
     backGroundTileCameraSet(this);
 
-    // HP바 위치 갱신(ui/Bar.js)
-    hpBarPosSet(this);
-
     // Player.js에서 playerMove를 받아오고 사용
     this.player.playerMove(this.cursors, this.wasd, this);
+
+	// HP바 위치 갱신(ui/Bar.js)
+    hpBarPosSet(this);
 
     // 오브젝트- 자석효과
     magnetActive(this);
