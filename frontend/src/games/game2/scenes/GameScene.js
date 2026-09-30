@@ -1,54 +1,36 @@
 import Phaser from "phaser";
 
+import { loadAllSprite } from "../preload/Preload";
+import { createAllAnimations } from "../animations/Animations";
+import Player from "../player/Player";
+
 export default class GameScene extends Phaser.Scene {
-  constructor() {
-    super("GameScene");
-  }
 
-  preload() {
-    // 플레이어 스프라이트 시트 불러오기
-    this.load.spritesheet(
-      "player_sheet",
-      "/assets/game2/Player/player_sheet.png",
-      {
-        frameWidth: 224,
-        frameHeight: 192,
-      }
-    );
-  }
-
-  create() {
-    // 달리기 애니메이션 생성
-    if (!this.anims.exists("player_sheet_run")) {
-      this.anims.create({
-        key: "player_sheet_run",
-        frames: this.anims.generateFrameNumbers(
-          "player_sheet",
-          {
-            start: 0,
-            end: 7,
-          }
-        ),
-        frameRate: 12,
-        repeat: -1,
-      });
+    constructor() {
+        super("GameScene");
     }
 
-    // 플레이어 생성 — 기존 위치 유지
-    this.player = this.physics.add.sprite(
-      300,
-      500,
-      "player_sheet",
-      0
-    );
+    preload() {
+        loadAllSprite(this);
+    }
 
-    // 새 스프라이트에 맞춰 크기 조절
-    this.player.setScale(0.6);
+    create() {
 
-    // 지금은 달리기만 확인하므로 중력 적용하지 않기
-    this.player.body.setAllowGravity(false);
+        createAllAnimations(this);
 
-    // 달리기 애니메이션 실행
-    this.player.play("player_sheet_run");
-  }
+        // 현재 게임 화면 크기에 맞춰 플레이어 위치 지정
+        const startX = this.scale.width * 0.2;
+        const startY = this.scale.height * 0.7;
+
+        this.player = new Player(
+            this,
+            startX,
+            startY
+        );
+    }
+
+    update() {
+
+        this.player.playerMove();
+    }
 }
