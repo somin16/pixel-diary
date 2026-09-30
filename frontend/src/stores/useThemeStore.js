@@ -12,6 +12,7 @@ export const THEME_LIST = [
   'winter_light', // TODO : 아래로 새로운 테마 추가
   'yellow_light',
   'pink_light',
+  'halloween_light', 
 ];
 
 // 새로고침이나 앱 재시작 후에도 테마 설정이 유지됨
