@@ -75,9 +75,14 @@ const PasswordChangeDialog = ({ onConfirm, onCancel, width = "100%", maxWidth = 
       // 3. 검증 통과 시에만 다음 단계로 이동
       setStep('new');
     } catch (err) {
-      // 4. 현재 비밀번호가 틀렸다는 서버 에러 처리
-      const message =
-        err.response?.data?.message || err.data?.message || err.message || "현재 비밀번호가 올바르지 않습니다";
+      // 4. 현재 비밀번호 검증 실패 처리 (rate limit 초과와 비번 틀림을 구분)
+      let message;
+      if (err.response?.status === 429) {
+        message = "너무 많은 시도가 감지되었습니다. 잠시 후 다시 시도해주세요.";
+      } else {
+        message =
+          err.response?.data?.message || err.data?.message || err.message || "현재 비밀번호가 올바르지 않습니다";
+      }
       setError(message);
     } finally {
       setLoading(false);
