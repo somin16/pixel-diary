@@ -178,7 +178,9 @@ export async function gameClear(scene) {
     .setInteractive()   // 이걸 넣어줘야 클릭이 가능
     .on('pointerup', () => { // 누를때 작동
 
-        window.location.href = "/";
+        // 게임종료 이벤트 실행
+        window.dispatchEvent(new CustomEvent("exitMiniGame"));
+        
     }).setVisible(false); // 처음엔 안보이게
 
     // 홈으로 돌아가기 버튼 텍스트
