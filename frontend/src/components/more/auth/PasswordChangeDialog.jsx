@@ -3,6 +3,7 @@ import { useTheme } from '../../../stores/useThemeStore'; // useTheme 불러오�
 import { getAssetUrl } from "../../../utils/AssetHelper"; // 헬퍼 불러오기
 import AuthValidator from '../../../utils/AuthValidator';
 import { supabase } from "../../../utils/SupabaseClient"; // supabase 불러오기
+import { useVerifyCurrentPassword } from '../../../hooks/mutations/useAuthMutations'; // 현재 비밀번호 검증 뮤테이션 훅 추가
 
 // 컴포넌트 불러오기
 import DialogBox from '../../common/dialog/DialogBox';
@@ -12,6 +13,9 @@ import InputField from '../auth/InputField';
 const PasswordChangeDialog = ({ onConfirm, onCancel, width = "100%", maxWidth = "320px" }) => {
   const currentTheme = useTheme((state) => state.currentTheme);
 
+  // 현재 비밀번호 검증 뮤테이션 (1단계 "확인" 버튼에서 호출)
+  const verifyCurrentPassword = useVerifyCurrentPassword();
+  
   // 'current' (현재 비번 입력) -> 'new' (새 비번 입력) 상태 관리
   const [step, setStep] = useState('current');
 
@@ -54,13 +58,30 @@ const PasswordChangeDialog = ({ onConfirm, onCancel, width = "100%", maxWidth = 
   };
 
   // 1단계: 현재 비밀번호 확인 후 다음 단계로 넘어가기
-  const handleNextStep = () => {
+  const handleNextStep = async () => {
+    // 1. 미입력 검사
     if (!currentPw) {
       setError("현재 비밀번호를 입력해주세요");
       return;
     }
-    setError(""); // 성공 시 에러 초기화
-    setStep('new');
+
+    try {
+      setLoading(true);
+      setError("");
+
+      // 2. 백엔드에 현재 비밀번호가 맞는지 바로 검증 (여기서 틀리면 즉시 에러 표시)
+      await verifyCurrentPassword.mutateAsync({ current_password: currentPw });
+
+      // 3. 검증 통과 시에만 다음 단계로 이동
+      setStep('new');
+    } catch (err) {
+      // 4. 현재 비밀번호가 틀렸다는 서버 에러 처리
+      const message =
+        err.response?.data?.message || err.data?.message || err.message || "현재 비밀번호가 올바르지 않습니다";
+      setError(message);
+    } finally {
+      setLoading(false);
+    }
   };
 
   // 2단계: 최종 변경 확인
@@ -142,11 +163,13 @@ const PasswordChangeDialog = ({ onConfirm, onCancel, width = "100%", maxWidth = 
               label="취소하기"
               imageSrc={getAssetUrl(currentTheme, 'buttons', 'blue_button_x3')}
               onClick={onCancel}
+              disabled={loading}
             />
             <ImageButton
-              label="확인"
+              label={loading ? "확인 중..." : "확인"}
               imageSrc={getAssetUrl(currentTheme, 'buttons', 'green_button_x3')}
               onClick={handleNextStep}
+              disabled={loading}
             />
           </div>
         </DialogBox>
