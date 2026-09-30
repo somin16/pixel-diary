@@ -33,7 +33,7 @@ const ProfileBar = () => {
         <img
           src={getAssetUrl(currentTheme, 'boxes', 'profile_bar_box_x3')}
           alt="프로필 배경"
-          className="w-full h-auto block pointer-events-none"
+          className="w-[99%] h-auto block pointer-events-none"
           style={{ imageRendering: 'pixelated' }}
         />
 
@@ -41,7 +41,7 @@ const ProfileBar = () => {
         <img
           src={profileImage || getAssetUrl(currentTheme, 'icons', 'app_icon_32_x3')}
           alt="프로필 사진"
-          className="absolute left-[3.7%] top-[43.5%] -translate-y-1/2 w-[21.5%] aspect-square object-cover pointer-events-none"
+          className="absolute left-[3.5%] top-[43%] -translate-y-1/2 w-[22%] aspect-square object-cover pointer-events-none"
           // 이미지 로드 실패 시 (URL은 있지만 실제 이미지가 없을 때) 기본 아이콘으로 교체
           onError={(e) => {
             e.target.onerror = null; // 무한 루프 방지 (기본 아이콘도 실패할 경우 대비)
