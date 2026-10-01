@@ -35,7 +35,6 @@ const useMusicStore = create(
         audio.src = src
         audio.volume = isMuted ? 0 : volume
         audio.play().catch((err) => {
-          console.warn('[음악 재생 실패]', err.name, err.message)
           // 자동재생 정책에 막힌 경우만 초기화 (곡 전환 중 끊긴 AbortError는 무시)
           if (err.name === 'NotAllowedError') set({ currentTheme: '' })
         })
