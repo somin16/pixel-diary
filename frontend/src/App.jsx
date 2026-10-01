@@ -40,6 +40,7 @@ import Account from "./pages/more/account/Account"; // 더보기 - 계정 설정
 import Notification from "./pages/more/notification/Notification"; // 더보기 - 알림 설정 화면
 import Contact from "./pages/more/contact/Contact"; // 더보기 - 문의사항 화면
 import Lock from "./pages/more/lock/Lock"; // 더보기 - 앱 잠금 설정 화면
+import Sound from "./pages/more/sound/Sound"; // 더보기 - 사운드 설정 화면
 // ---------------------- 더보기 (공지사항) -----------------------------
 import AnnouncementList from "./pages/more/announcement/AnnouncementList"; // 더보기 - 공지사항 목록 화면
 import AnnouncementDetail from "./pages/more/announcement/AnnouncementDetail"; // 더보기 - 공지사항 상세 조회 화면
@@ -80,8 +81,6 @@ function AppInner() {
 
   const [session, setSession] = useState(null);
   const [loading, setLoading] = useState(true);
-
-  const { currentTheme } = useTheme();
 
   const resetAttendanceIfExpired = useResetAttendanceIfExpired(); // 앱 접속 시 만료된 출석 기록 초기화용 mutation
 
@@ -145,17 +144,16 @@ function AppInner() {
     if (!session) return; // 로그인 전에는 음악 재생 안 함
 
     const handleFirstInteraction = () => {
-      useMusicStore.getState().playForTheme(currentTheme);
-      window.removeEventListener('click', handleFirstInteraction);
-      window.removeEventListener('touchstart', handleFirstInteraction);
+      // 클릭 시점의 최신 테마로 재생 (effect 등록 시점 값이 아니라)
+      useMusicStore.getState().playForTheme(useTheme.getState().currentTheme);
+      window.removeEventListener('pointerup', handleFirstInteraction);
     };
 
-    window.addEventListener('click', handleFirstInteraction);
-    window.addEventListener('touchstart', handleFirstInteraction); // Capacitor 대응
+    // pointerup은 마우스 클릭과 터치 모두에서 재생 허용 조건을 만족함
+    window.addEventListener('pointerup', handleFirstInteraction);
 
     return () => {
-      window.removeEventListener('click', handleFirstInteraction);
-      window.removeEventListener('touchstart', handleFirstInteraction);
+      window.removeEventListener('pointerup', handleFirstInteraction);
     };
   }, [session]); // 세션 생기는 순간 이벤트 등록
 
@@ -261,6 +259,9 @@ function AppInner() {
 
             {/* 주소가 /more/setting/lock 이면 앱 잠금 설정 화면을 보여줘 */}
             <Route path="/more/setting/lock" element={<Lock />} />
+
+            {/* 주소가 /more/setting/sound 이면 사운드 설정 화면을 보여줘 */}
+            <Route path="/more/setting/sound" element={<Sound />} />
 
             {/* ⚠️ 이상한 주소로 가도 홈으로 보내기 */}
             <Route path="*" element={<Navigate to="/" replace />} />
