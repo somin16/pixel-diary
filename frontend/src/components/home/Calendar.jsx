@@ -14,7 +14,7 @@ import { getAssetUrl } from "../../utils/AssetHelper";
  * @param {CalendarProps} props
  */
 
-const Calendar = ({ onDateClick, onMonthChange, viewDate, currentTheme }) => {
+const Calendar = ({ onDateClick, onMonthChange, viewDate, currentTheme, emojiByDate }) => {
 
   // 날짜 데이터 계산 로직
   const year = viewDate.getFullYear();
@@ -107,19 +107,29 @@ const Calendar = ({ onDateClick, onMonthChange, viewDate, currentTheme }) => {
               item.day === todayDate &&
               year === todayYear &&
               month === todayMonth;
+
+            const dateString = `${year}-${String(month + 1).padStart(2, '0')}-${String(item.day).padStart(2, '0')}`;
+            const emoji = item.type === 'current' ? emojiByDate?.[dateString] : null; // 이번 달만 표시
+
             return (
               <div
                 key={`${item.type}-${item.day}-${i}`}
-                // 이번 달 날짜만 클릭 가능하도록 핸들러 제안 (조건문)
-                onClick={() => !isNotCurrent && onDateClick(`${year}-${String(month + 1).padStart(2, '0')}-${String(item.day).padStart(2, '0')}`)}
+                onClick={() => !isNotCurrent && onDateClick(dateString)}
                 className={`
-                                    aspect-[14/12] flex items-start pl-[5%] pt-[1%] justify-start text-xs
-                                    ${isNotCurrent ? 'opacity-50 grayscale' : 'cursor-pointer'} // 이번달 아니면 흐리게 처리
-                                    ${isSunday ? 'text-red-800' : isSaturday ? 'text-blue-800' : 'text-black'}
-                                    ${isToday ? 'bg-blue-200/50 rounded font-bold' : ''} // 오늘 날짜 강조
-                                `}
+                  relative aspect-[14/12] flex items-start pl-[5%] pt-[1%] justify-start text-xs
+                  ${isNotCurrent ? 'opacity-50 grayscale' : 'cursor-pointer'}
+                  ${isSunday ? 'text-red-800' : isSaturday ? 'text-blue-800' : 'text-black'}
+                  ${isToday ? 'bg-blue-200/50 rounded font-bold' : ''}
+                `}
               >
-                {item.day}
+                {emoji && (
+                  <img
+                    src={emoji}
+                    alt=""
+                    className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-full object-contain [image-rendering:pixelated] pointer-events-none"
+                  />
+                )}
+                <span className="relative z-10">{item.day}</span>
               </div>
             );
           })}

@@ -16,6 +16,7 @@ export function usePurchaseItem() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.items });
       queryClient.invalidateQueries({ queryKey: queryKeys.inventory });
+      queryClient.invalidateQueries({ queryKey: ['decoItems'] });
       // 구매하면 코인이 차감되니 코인 캐시도 무효화 
       queryClient.invalidateQueries({ queryKey: queryKeys.coins });
     },

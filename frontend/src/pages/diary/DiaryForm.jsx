@@ -49,6 +49,8 @@ export default function DiaryForm() {
   const diaryContent = location.state?.diaryContent ?? null; // 수정 중이라면 일기 내용을 받아옴
 
   // ── [상태 변수] 화면에서 바뀌는 모든 정보들을 저장하는 곳 ────────────────────────
+  // 넘겨 받은 감정으로 초기화 + 감정 없이 진입 차단
+  const initEmotion = location.state?.emotion ?? null;
   const [step, setStep] = useState(isEditMode ? 1 : 1); // 현재 몇 번째 단계인지 (수정은 1단계 부터)
   const [content, setContent] = useState(diaryContent ?? ''); // 일기 글 내용
   const [imageUrl, setImageUrl] = useState(''); // AI가 그려준 그림 주소
@@ -58,7 +60,7 @@ export default function DiaryForm() {
   const wsRef = useRef(null); // ComfyUI 웹소켓 참조 (언마운트 시 정리용)
   const [decoMode, setDecoMode] = useState(null); // 꾸미기 모드 (스티커/액자/이모지)
   const [isDecoOpen, setIsDecoOpen] = useState(false); // 꾸미기 창이 열렸는지 여부
-  const [tags, setTags] = useState([]); // AI 그림 옵션 태그들 (추가: 일반, 제거: '-' 접두사)
+  const [tags, setTags] = useState(initEmotion?.keyword ? [initEmotion.keyword] : []); // AI 그림 옵션 태그들 (추가: 일반, 제거: '-' 접두사)
   const [convertedPrompt, setConvertedPrompt] = useState({
     positive_prompt: '',
     negative_prompt: '',
@@ -66,14 +68,14 @@ export default function DiaryForm() {
   // ref: 비동기 함수 내에서도 항상 최신 prompt에 접근하기 위해 별도 유지
   const convertedPromptRef = useRef({ positive_prompt: '', negative_prompt: '' });
   const [savedDiaryId, setSavedDiaryId] = useState(diaryId); // 저장된 일기의 ID
-  const [selectedEmotion, setSelectedEmotion] = useState(null); // 'happy' | 'sad' | 'calm' | 'tired' | 'angry'
+  const [selectedEmotion, setSelectedEmotion] = useState(initEmotion?.keyword ?? null); // 'happy' | 'sad' | 'calm' | 'tired' | 'angry'
   const [stickers, setStickers] = useState([]); // 화면에 붙인 스티커 목록
   const [duplicateDateInfo, setDuplicateDateInfo] = useState(null); // 이미 작성된 일기가 있는지 확인하기위한 상태 
   const [savedImageId, setSavedImageId] = useState(null); // 백엔드 DiaryView.post()에서 image_id를 받아 ai_image.diary_id를 업데이트함
 
   // emoji: 서버 저장용 번호(ID)와 화면 표시용 이미지이름(Img)을 따로 관리
-  const [selectedEmojiId, setSelectedEmojiId] = useState(null);
-  const [selectedEmojiImg, setSelectedEmojiImg] = useState(null);
+  const [selectedEmojiId, setSelectedEmojiId] = useState(initEmotion?.item_id ?? null);
+  const [selectedEmojiImg, setSelectedEmojiImg] = useState(initEmotion?.img ?? null);
 
   // ── [기본 액자 설정 및 최근 사용한 액자 기억하기 로직 ] ────────────────
   const lastUsedFrameImg = localStorage.getItem('lastUsedFrame');
@@ -95,6 +97,7 @@ export default function DiaryForm() {
   const updateDiary = useUpdateDiary();
   const saveDeco = useSaveDeco();
 
+
   // ── [기능] 수정 모드일 때 기존에 썼던 일기 내용을 서버에서 가져와 폼 상태에 채워넣기 ────
   useEffect(() => {
     if (!isEditMode || !editData) return;
@@ -104,11 +107,11 @@ export default function DiaryForm() {
     setImageUrl(editData.image_url ?? "");
 
     // 감정 이모지 복원
-    if (editData.emotion_item?.item_id) {
-      setSelectedEmojiId(editData.emotion_item.item_id);
-      setSelectedEmojiImg(editData.emotion_item?.image_url ?? null);
-      setSelectedEmotion(editData.emotion_item?.name ?? null); // 백엔드가 내려주는 필드명에 맞춰 조정
+    if (editData.emoji_item?.item_id) {
+      setSelectedEmojiId(editData.emoji_item.item_id);
+      setSelectedEmojiImg(editData.emoji_item.image_url ?? null);
     }
+    setSelectedEmotion(editData.emotion ?? null);
     // 액자 복원
     if (editData.theme_item?.item_id) {
       setSelectedFrameId(editData.theme_item.item_id);
@@ -122,6 +125,8 @@ export default function DiaryForm() {
         instanceId: Date.now() + i, // 화면에서 구분하기 위한 고유 키
         x: s.pos_x ?? null,
         y: s.pos_y ?? null,
+        size: s.size ?? 20,
+        rotation: s.rotation ?? 0,
       })));
     }
   }, [isEditMode, editData, today]);
@@ -144,6 +149,11 @@ export default function DiaryForm() {
     return () => {
       wsRef.current?.close();
     };
+  }, []);
+
+  // 작성 모드인데 감정이 없으면 홈으로 (URL 직접 진입 방지)
+  useEffect(() => {
+    if (!isEditMode && !selectedEmojiId) navigate('/', { replace: true }); // 홈 경로에 맞게 수정
   }, []);
 
   // ── [기능] 단계별 화면 이동 처리 ───────────────────────────────────────────
@@ -316,20 +326,23 @@ export default function DiaryForm() {
         finalDiaryId = data.diary_id;
       } else {
         // 기존 일기 수정
-        await updateDiary.mutateAsync({ diaryId: finalDiaryId, content, emotion: selectedEmojiId });
+        await updateDiary.mutateAsync({ diaryId: finalDiaryId, content, emotion: selectedEmotion });
       }
 
       // 2. 그 다음 꾸미기 정보(액자, 이모지, 스티커 위치 등)를 저장합니다.
       await saveDeco.mutateAsync({
         diaryId: finalDiaryId,
-        emotion: selectedEmotion,
+        emoji_id: selectedEmojiId,
         diary_theme_id: selectedFrameId,
         sticker: stickers.map((s) => ({
-          item_id: s.id,   // stickers의 id를 item_id로
-          pos_x: Math.round(s.x || 0), // null 방지 및 정수화
-          pos_y: Math.round(s.y || 0)  // null 방지 및 정수화
+          item_id: s.id,
+          pos_x: Number((s.x ?? 40).toFixed(1)),
+          pos_y: Number((s.y ?? 40).toFixed(1)),
+          size: Number((s.size ?? 20).toFixed(1)),
+          rotation: Math.round(s.rotation ?? 0),
         })),
       });
+
       // createDiary/updateDiary/saveDeco의 onSuccess에서 diaries·diaryDetail 캐시가 자동으로 무효화됨
 
       // 3. 저장 완료 후 임시 이미지 삭제
@@ -410,9 +423,9 @@ export default function DiaryForm() {
   const handleSelectItem = (type, item) => {
     if (type === 'sticker') {
       // 스티커 추가: 기존 목록에 새 스티커를 더함
-      setStickers((prev) => [...prev, { ...item, id: item.item_id, instanceId: Date.now(), x: null, y: null }]);
+      setStickers((prev) => [...prev, { ...item, id: item.item_id, instanceId: Date.now(), x: null, y: null, size: 20 }]);
     } else if (type === 'emoji') {
-      setSelectedEmojiId(item.item_id);      // 화면 표시/인벤토리 참조용
+      setSelectedEmotion(item.item_id);      // 화면 표시/인벤토리 참조용
       setSelectedEmojiImg(item.img);         // 화면 표시용 이미지
       const keyword = extractEmotionKeyword(item); // 'happy' 등 문자열
       applyEmotionTag(keyword);              // 그림 옵션 태그에 반영

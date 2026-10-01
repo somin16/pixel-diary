@@ -1,10 +1,11 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom"; // 페이지 이동 훅
 import { getAssetUrl } from "../../utils/AssetHelper"; // 이미지 에셋 경로 유틸 함수
 import { useTheme } from "../../stores/useThemeStore"; // 테마 전역상태관리 커스텀 훅
 import FloatingActionButton from "../../components/home/FloatingActionButton"; // FAB 버튼 컴포넌트
 import Calendar from "../../components/home/Calendar"; // 달력 컴포넌트
 import { useDiaries } from "../../hooks/queries/useDiaryQueries";
+import EmotionSelectDialog from "../../components/home/EmotionSelectDialog"; // 오늘의 감정 선택 다이얼로그
 
 // 출석 관련 모듈 및 Zustand 스토어 임포트
 import Attendance from "../../components/more/attendance/AttendanceDialog";
@@ -13,14 +14,30 @@ import { useAttendanceStore } from "../../stores/useAttendanceStore";
 // 리액트 쿼리
 import { useAttendance } from "../../hooks/queries/useAttendanceQueries";
 import ResultDialog from "../../components/common/dialog/ResultDialog";
+import { useQueryClient } from "@tanstack/react-query";
+import { decoItemsQuery } from "../../hooks/queries/useDecoItems";
 
 export default function Home() {
   const navigate = useNavigate();
   const currentTheme = useTheme((state) => state.currentTheme);
+  const queryClient = useQueryClient();
+
+  // 감정 선택 상태 확인
+  const [isEmotionOpen, setIsEmotionOpen] = useState(false);
 
   // 달력에서 날짜 클릭 시 해당 날짜 일기 존재 여부를 확인하는 데 사용
   const { data: diariesData, isError: isDiariesError, error: diariesError } = useDiaries();
   const [isDiaryNotfound, setisDiaryNotfound] = useState(false);
+
+  // 달력 날짜별 이모지 맵
+  const emojiByDate = useMemo(() => {
+  const map = {};
+  (diariesData?.diaries ?? []).forEach((d) => {
+    const date = d.created_at?.split("T")[0];
+    if (date && d.emoji_image_url) map[date] = d.emoji_image_url;
+  });
+  return map;
+}, [diariesData]);
 
   // 일기 목록 로드 실패 시 처리 (추후 alert/toast 추가 예정)
   useEffect(() => {
@@ -56,6 +73,10 @@ export default function Home() {
       setLastPromptedDate(today); 
     }
   }, [isAttendanceSuccess, attendanceData, lastPromptedDate, setLastPromptedDate]);
+
+  useEffect(() => {
+    queryClient.prefetchQuery(decoItemsQuery);
+  }, [queryClient]);
 
   // 달력의 기준이 되는 날짜 상태 (오늘 날짜로 초기화)
   // 이 값이 바뀌면 달력이 해당 월로 이동함
@@ -98,13 +119,18 @@ export default function Home() {
     }
   };
 
-  // ── FAB 버튼 핸들러 ─────────────────────────────────────────────────────
+  // ── FAB 버튼 핸들러 ──────────────────────────────────────────────
   // 우측 하단 플로팅 버튼 클릭 시 오늘 날짜로 바로 작성 페이지 이동
   // toLocaleDateString('en-CA'): 로컬 시간 기준 "YYYY-MM-DD" 형식 반환
   // (toISOString() 대신 쓰는 이유: toISOString()은 UTC 기준이라 한국에서 전날 날짜가 나올 수 있음)
-  const handleFabClick = () => {
-    const today = new Date().toLocaleDateString('en-CA');
-    navigate(`/diary/write/${today}`);
+  const handleFabClick = () => setIsEmotionOpen(true);
+
+  // ────── 감정 선택 핸들러 ───────────────────────────────────────
+
+  const handleEmotionConfirm = (emotion) => {
+  setIsEmotionOpen(false);
+  const today = new Date().toLocaleDateString('en-CA');
+  navigate(`/diary/write/${today}`, { state: { emotion } });
   };
 
   return (
@@ -122,6 +148,7 @@ export default function Home() {
           currentTheme={currentTheme}
           onMonthChange={handleMonthChange}
           onDateClick={handleDateClick}
+          emojiByDate={emojiByDate}
         />
       </div>
 
@@ -141,6 +168,14 @@ export default function Home() {
         maxwidth="320px"
         message={<>해당 날짜에는 작성한 일기가<br/>존재하지 않습니다.</>}
         onConfirm={() => setisDiaryNotfound(false)}/>
+      )}
+
+      {isEmotionOpen && (
+        <EmotionSelectDialog
+          currentTheme={currentTheme}
+          onConfirm={handleEmotionConfirm}
+          onClose={() => setIsEmotionOpen(false)}
+        />
       )}
     </div>
   );
