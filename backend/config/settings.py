@@ -48,6 +48,13 @@ INSTALLED_APPS = [
     "ai_generate",      # AI 그림 생성 관련 앱
 ]
 
+# Django REST Framework 설정
+REST_FRAMEWORK = {
+    'DEFAULT_THROTTLE_RATES': {
+        'password_verify': '5/min',  # 현재 비밀번호 검증 API 요청 제한 (브루트포스 방지)
+    },
+}
+
 MIDDLEWARE = [
     "corsheaders.middleware.CorsMiddleware",    # CORS 처리 (최상단에 위치해야 함)
     "django.middleware.security.SecurityMiddleware",
