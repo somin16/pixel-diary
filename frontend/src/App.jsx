@@ -1,5 +1,5 @@
 // src/App.jsx
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate, Outlet } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { supabase } from "./utils/SupabaseClient";
 import { useAndroidBackButton } from "./hooks/useAndroidBackButtons"; // 모바일에서 뒤로가기 훅
@@ -10,6 +10,7 @@ import { storeApi } from "./api/storeApi";
 import { inventoryApi } from "./api/inventoryApi"; 
 import { coinApi } from "./api/coinApi";         
 import { initPush } from './utils/pushHelper';
+import useSoundEffectStore from './stores/useSoundEffectStore'; // 앱 효과음 설정
 
 // ----------------- 컴포넌트 불러오기 ----------------------------------
 import AppShell from "./components/layout/AppShell"; // AppShell 불러오기
@@ -40,6 +41,7 @@ import Account from "./pages/more/account/Account"; // 더보기 - 계정 설정
 import Notification from "./pages/more/notification/Notification"; // 더보기 - 알림 설정 화면
 import Contact from "./pages/more/contact/Contact"; // 더보기 - 문의사항 화면
 import Lock from "./pages/more/lock/Lock"; // 더보기 - 앱 잠금 설정 화면
+import Sound from "./pages/more/sound/Sound"; // 더보기 - 사운드 설정 화면
 // ---------------------- 더보기 (공지사항) -----------------------------
 import AnnouncementList from "./pages/more/announcement/AnnouncementList"; // 더보기 - 공지사항 목록 화면
 import AnnouncementDetail from "./pages/more/announcement/AnnouncementDetail"; // 더보기 - 공지사항 상세 조회 화면
@@ -74,14 +76,22 @@ const queryClient = new QueryClient({
   },
 });
 
+// 이 안에 있는 화면은 클릭 효과음을 내지 않음 (게임은 게임 쪽에서 사운드 별도 관리)
+// className="contents"라서 div가 레이아웃에 영향을 주지 않음
+function NoClickSoundRoute() {
+  return (
+    <div data-no-click-sound className="contents">
+      <Outlet />
+    </div>
+  );
+}
+
 // BrowserRouter 안에서 훅을 호출하는 내부 컴포넌트
 function AppInner() {
   useAndroidBackButton(); // BrowserRouter 안에서 호출
 
   const [session, setSession] = useState(null);
   const [loading, setLoading] = useState(true);
-
-  const { currentTheme } = useTheme();
 
   const resetAttendanceIfExpired = useResetAttendanceIfExpired(); // 앱 접속 시 만료된 출석 기록 초기화용 mutation
 
@@ -145,19 +155,35 @@ function AppInner() {
     if (!session) return; // 로그인 전에는 음악 재생 안 함
 
     const handleFirstInteraction = () => {
-      useMusicStore.getState().playForTheme(currentTheme);
-      window.removeEventListener('click', handleFirstInteraction);
-      window.removeEventListener('touchstart', handleFirstInteraction);
+      // 클릭 시점의 최신 테마로 재생 (effect 등록 시점 값이 아니라)
+      useMusicStore.getState().playForTheme(useTheme.getState().currentTheme);
+      window.removeEventListener('pointerup', handleFirstInteraction);
     };
 
-    window.addEventListener('click', handleFirstInteraction);
-    window.addEventListener('touchstart', handleFirstInteraction); // Capacitor 대응
+    // pointerup은 마우스 클릭과 터치 모두에서 재생 허용 조건을 만족함
+    window.addEventListener('pointerup', handleFirstInteraction);
 
     return () => {
-      window.removeEventListener('click', handleFirstInteraction);
-      window.removeEventListener('touchstart', handleFirstInteraction);
+      window.removeEventListener('pointerup', handleFirstInteraction);
     };
   }, [session]); // 세션 생기는 순간 이벤트 등록
+
+  // 버튼/링크 클릭 시 효과음 자동 재생
+  useEffect(() => {
+    const handleClickSound = (e) => {
+      // 효과음 제외 영역(게임 등)이면 재생 안 함
+      if (e.target.closest('[data-no-click-sound]')) return;
+
+      // 클릭한 요소가 버튼, 링크, 또는 클릭 가능한 요소 안에 있는지 확인
+      const clickable = e.target.closest('button, a, [role="button"], .cursor-pointer');
+      if (clickable) {
+        useSoundEffectStore.getState().play('click');
+      }
+    };
+
+    window.addEventListener('click', handleClickSound);
+    return () => window.removeEventListener('click', handleClickSound);
+  }, []);
 
   if (loading) return null; // 로딩 중에는 아무것도 안 보여주거나 로딩바 노출
 
@@ -187,14 +213,17 @@ function AppInner() {
       ) : (
         /* 세션이 있을 때 (로그인 후) */
         <Route element={<LockGateRoute />}>
-          {/* 주소가 /minigamehub 이면 미니게임허브 화면을 보여줘 */}
-          <Route path="/minigamehub" element={<MinigameHub />} />
+          {/* 게임 화면: 앱 클릭 효과음 제외 */}
+          <Route element={<NoClickSoundRoute />}>
+            {/* 주소가 /minigamehub 이면 미니게임허브 화면을 보여줘 */}
+            <Route path="/minigamehub" element={<MinigameHub />} />
 
-          {/* 주소가 /game1run 이면 미니게임1 화면을 보여줘 */}
-          <Route path="/game1run" element={<Game1 />} />
+            {/* 주소가 /game1run 이면 미니게임1 화면을 보여줘 */}
+            <Route path="/game1run" element={<Game1 />} />
 
-          {/* 주소가 /game2run 이면 미니게임2 화면을 보여줘 */}
-          <Route path="/game2run" element={<Game2 />} />
+            {/* 주소가 /game2run 이면 미니게임2 화면을 보여줘 */}
+            <Route path="/game2run" element={<Game2 />} />
+          </Route>
 
           <Route element={<AppShell />}>
 
@@ -264,6 +293,9 @@ function AppInner() {
 
             {/* 주소가 /stats 이면 사용자 통계 화면을 보여줘 */}
             <Route path="/stats" element={<div className="p-4">통계 (준비 중)</div>} /> 
+
+            {/* 주소가 /more/setting/sound 이면 사운드 설정 화면을 보여줘 */}
+            <Route path="/more/setting/sound" element={<Sound />} />
 
             {/* ⚠️ 이상한 주소로 가도 홈으로 보내기 */}
             <Route path="*" element={<Navigate to="/" replace />} />

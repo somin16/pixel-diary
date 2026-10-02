@@ -12,7 +12,7 @@ const settingItems = [
   { id: 'account', label: '계정 설정', path: '/more/setting/account', icon:'people_icon_x3'},
   { id: 'lock', label: '잠금 설정', path: '/more/setting/lock', icon:'lock_icon_x3' },
   { id: 'notification', label: '알람 설정', path: '/more/setting/notification', icon:'alarm_icon_x3' },
-  { id: 'sound', label: '사운드 설정', path: 'more/setting/sound', icon:'sound_icon_x3' },
+  { id: 'sound', label: '사운드 설정', path: '/more/setting/sound', icon:'sound_icon_x3' },
   { id: 'info', label: 'Pixel Diary 정보', path: '/more/setting/info' },
   { id: 'version', label: '앱 버전 1.0.0' },
 ];
