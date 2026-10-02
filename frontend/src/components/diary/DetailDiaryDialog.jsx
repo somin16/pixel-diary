@@ -10,6 +10,9 @@ import DuplicateDateDialog from "./dialog/DuplicateDateDialog";
 import SaveErrorDialog from "./dialog/SaveErrorDialog";
 import toast from "react-hot-toast";
 import { useBackNavigate } from "../../hooks/useBackNavigate";
+import html2canvas from 'html2canvas';
+import { Filesystem, Directory } from '@capacitor/filesystem';
+import { Share } from '@capacitor/share';
 
 /**
  * @typedef {Object} StickerItem
@@ -286,9 +289,92 @@ const DetailDiaryDialog = ({
     );
   }
 
-  // 공유 (TODO: 구현)
-  function handleShare() {
+  /**
+   * [공유 전용] html2canvas가 CSS aspect-ratio를 잘못 재계산해 비율이 찌그러지는 문제 대응
+   * - aspect-ratio를 쓰는 요소(클래스 또는 인라인)를 찾아, 캡처 직전 실측 px로 강제 고정
+   * - aspect-ratio 자체도 제거해서 html2canvas가 참고할 값을 없앰
+   * - restore() 호출 시 원래 클래스/스타일로 복구 (화면 레이아웃엔 영향 없음)
+   */
+  function lockAspectRatios(root) {
+    const targets = [root, ...root.querySelectorAll('*')];
+    const originals = [];
+
+    targets.forEach((el) => {
+      const aspectClasses = Array.from(el.classList).filter((c) => c.startsWith('aspect-'));
+      const hasInlineAspectRatio = !!el.style.aspectRatio; // 스티커처럼 인라인 style로 지정된 경우 대응
+
+      if (aspectClasses.length > 0 || hasInlineAspectRatio) {
+        const rect = el.getBoundingClientRect();
+        originals.push({
+          el,
+          classes: aspectClasses,
+          width: el.style.width,
+          height: el.style.height,
+          inlineAspectRatio: el.style.aspectRatio,
+        });
+        if (aspectClasses.length > 0) el.classList.remove(...aspectClasses);
+        el.style.aspectRatio = ''; // 인라인 aspect-ratio 제거
+        el.style.width = `${rect.width}px`;
+        el.style.height = `${rect.height}px`;
+      }
+    });
+
+    return function restore() {
+      originals.forEach(({ el, classes, width, height, inlineAspectRatio }) => {
+        if (classes.length > 0) el.classList.add(...classes);
+        el.style.aspectRatio = inlineAspectRatio;
+        el.style.width = width;
+        el.style.height = height;
+      });
+    };
+  }
+
+  // 공유: 일기장 화면을 이미지로 캡처해서 기기의 공유 시트(카카오톡, SNS 등) 호출
+  async function handleShare() {
     setIsMenuOpen(false);
+
+    let restore = null;
+
+    try {
+      // 메뉴가 닫히는 리렌더가 반영될 시간을 살짝 확보
+      await new Promise((resolve) => setTimeout(resolve, 100));
+
+      const node = containerRef.current;
+
+      // aspect-ratio를 쓰는 모든 요소(일기장 본체, 그림 칸, 이모지, 스티커 등)를
+      // 캡처 직전 실측 px로 고정 → html2canvas의 aspect-ratio 재계산 오류 방지
+      restore = lockAspectRatios(node);
+
+      const canvas = await html2canvas(node, {
+        backgroundColor: '#ffffff',
+        scale: 2,
+        useCORS: true,
+        ignoreElements: (el) => el.dataset?.noCapture === 'true',
+      });
+
+      restore();
+      restore = null;
+
+      const base64Data = canvas.toDataURL('image/png').split(',')[1];
+
+      const savedFile = await Filesystem.writeFile({
+        path: `diary-${diaryDate}.png`,
+        data: base64Data,
+        directory: Directory.Cache,
+      });
+
+      await Share.share({
+        title: '내 일기 공유하기',
+        url: savedFile.uri,
+        dialogTitle: '공유할 앱을 선택하세요',
+      });
+    } catch (error) {
+      console.error('[일기 공유 실패]', error);
+      toast('공유 중 오류가 발생했습니다');
+    } finally {
+      // 캡처 도중 예외가 나도 스타일이 원상 복구되도록 보장
+      if (restore) restore();
+    }
   }
 
 
@@ -336,21 +422,29 @@ const DetailDiaryDialog = ({
                         - 문자 이모지 대신 이미지 파일로 렌더링하여 디자인 일관성 유지
                         - selectedEmoji 있음: getDecoAssetUrl('emojis', selectedEmoji) 경로 사용
                         - 없음: 테마 기본 이모지 이미지 사용
-                        - onError: 이미지 로드 실패 시 숨김 처리 (레이아웃 깨짐 방지)
+                        - <img> 대신 background-image로 렌더링: html2canvas가 <img>의 object-contain을
+                          비동기 로딩 타이밍과 맞물려 불안정하게 캡처하는 문제가 있어, 더 안정적인
+                          background-image 방식으로 교체 (공유 캡처 시 비율 깨짐 방지)
                     */}
-          <div className="absolute h-full w-[19%] aspect-square right-[1%] pr-[5%] pointer-events-none">
-            <img
-              src={emojiImageSrc}
-              alt="emoji"
-              className="w-full h-full object-contain"
-              onError={(e) => { e.currentTarget.style.display = 'none'; }}
+          <div className="absolute h-full w-[19%] right-[1%] pr-[5%] pointer-events-none">
+            <div
+              role="img"
+              aria-label="emoji"
+              className="w-full h-full"
+              style={{
+                backgroundImage: `url("${emojiImageSrc}")`,
+                backgroundSize: 'contain',
+                backgroundPosition: 'center',
+                backgroundRepeat: 'no-repeat',
+              }}
             />
           </div>
         </div>
 
         {/* ── 수정/삭제/공유 드롭다운 (view 모드 전용, z-60) ──────────── */}
+        {/* data-no-capture="true": 공유 시 캡처되는 이미지에 이 메뉴 버튼이 찍히지 않도록 html2canvas의 ignoreElements에서 제외 처리됨 */}
         {isView && (
-          <div className="absolute w-full flex justify-center pl-[80%] pt-[6%] text-sm z-70">
+          <div data-no-capture="true" className="absolute w-full flex justify-center pl-[80%] pt-[6%] text-sm z-70">
             <button
               onClick={() => setIsMenuOpen(!isMenuOpen)}
               className="outline-none"
@@ -396,7 +490,10 @@ const DetailDiaryDialog = ({
         {/* ── 레이어 1: 일기 그림 이미지 (z-20, 가장 아래) ──────────── */}
         <div className="absolute w-[77%] mt-[13%] aspect-[10/9] flex justify-center z-20">
           {imageUrl ? (
-            <img src={imageUrl} alt="일기 그림" className="w-full h-full object-cover" />
+            <img src={imageUrl}
+            alt="일기 그림"
+            crossOrigin="anonymous"   // 외부 이미지(Supabase Storage) 캡처 허용
+            className="w-full h-full object-cover" />
           ) : (
             // 이미지 없을 때: 흰색 배경 + 현재 단계에 맞는 안내 문구
             <div className="w-full h-full bg-white flex items-center justify-center">
@@ -471,6 +568,7 @@ const DetailDiaryDialog = ({
                 src={sticker.img}
                 alt={sticker.id}
                 draggable="false"       // 브라우저 기본 이미지 드래그 비활성화
+                crossOrigin="anonymous"   // 외부 이미지(Supabase Storage) 캡처 허용
                 className="w-full h-full object-contain pointer-events-none"
               />
             </div>
