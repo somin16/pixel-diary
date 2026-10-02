@@ -291,6 +291,9 @@ function AppInner() {
             {/* 주소가 /more/setting/lock 이면 앱 잠금 설정 화면을 보여줘 */}
             <Route path="/more/setting/lock" element={<Lock />} />
 
+            {/* 주소가 /stats 이면 사용자 통계 화면을 보여줘 */}
+            <Route path="/stats" element={<div className="p-4">통계 (준비 중)</div>} /> 
+
             {/* 주소가 /more/setting/sound 이면 사운드 설정 화면을 보여줘 */}
             <Route path="/more/setting/sound" element={<Sound />} />
 
