@@ -399,18 +399,26 @@ class VerifyCurrentPasswordView(APIView):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        current_password = request.data.get("current_password", "").strip()
+        current_password = (request.data.get("current_password") or "").strip()
         if not current_password:
             return Response(
                 {"message": "현재 비밀번호는 필수입니다."},
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        ok, _, _, error_response = verify_current_password(access_token, current_password)
-        if not ok:
-            return error_response
+        try:
+            ok, _, _, error_response = verify_current_password(access_token, current_password)
+            if not ok:
+                return error_response
 
-        return Response({"message": "현재 비밀번호가 확인되었습니다."}, status=status.HTTP_200_OK)        
+            return Response({"message": "현재 비밀번호가 확인되었습니다."}, status=status.HTTP_200_OK)
+
+        except Exception as error:
+            print(f"=== VERIFY CURRENT PASSWORD ERROR ===\n{error}\n=====================================")
+            return Response(
+                {"message": "비밀번호 확인 중 오류가 발생했습니다."},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )      
         
 class ChangePasswordView(APIView):
     """비밀번호 변경 API"""
