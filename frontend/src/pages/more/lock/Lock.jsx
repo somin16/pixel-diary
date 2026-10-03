@@ -1,6 +1,7 @@
 // pages/more/lock/Lock.jsx
 // "잠금 설정" 페이지 - 앱 잠금/생체인증 켜고 끄기, PIN 설정/변경
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 import { useTheme } from '../../../stores/useThemeStore';
 import { getAssetUrl } from '../../../utils/AssetHelper';
 import useAppLockStore from '../../../stores/useAppLockStore';
@@ -14,6 +15,7 @@ const PIN_LENGTH = 4;
 
 function Lock() {
   const currentTheme = useTheme((state) => state.currentTheme);
+  const location = useLocation();
 
   // zustand - 필요한 상태/액션만 각각 구독 (LockGate도 같은 스토어를 구독해 값 동기화됨)
   const isReady = useAppLockStore((s) => s.isReady); // 초기 로딩 끝났는지
@@ -27,12 +29,21 @@ function Lock() {
 
   // PIN 설정/변경 입력 흐름 상태
   // step: null(설정 중 아님) / 'enter'(새 PIN 입력) / 'confirm'(새 PIN 재입력)
-  const [step, setStep] = useState(null);
+  const [step, setStep] = useState(() => (location.state?.promptSetup ? 'enter' : null)); // location.state.promptSetup이 있으면(PIN 재설정 직후 넘어온 경우) 처음부터 'enter' 단계로 시작
   const [pin, setPin] = useState(''); // 지금 입력 중인 PIN
   const [firstPin, setFirstPin] = useState(''); // 'enter' 단계에서 입력한 값 (confirm 단계와 비교용)
   const [mismatch, setMismatch] = useState(false); // enter/confirm 두 값이 서로 달랐는지 여부
 
   if (!isReady) return null; // 초기 로딩 끝나기 전엔 아무것도 안 그림 (flash 방지)
+
+  // 이미 이 페이지에 떠 있던 상태에서 나중에 promptSetup이 도착하는 경우(위 useState 초기값 트릭이 못 잡는 경우 대비)
+  // location.state가 바뀔 때마다 한 번 더 확인
+  useEffect(() => {
+    if (location.state?.promptSetup && step === null) {
+      startSetup();
+      navigate(location.pathname, { replace: true, state: {} }); // 한 번 쓴 신호는 바로 지움
+    }
+  }, [location.state])
 
   // PIN 설정/변경 시작 - 상태 초기화하고 'enter' 단계로 진입
   const startSetup = () => {

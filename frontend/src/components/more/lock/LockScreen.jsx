@@ -2,7 +2,12 @@
 // 앱이 잠긴 상태일 때 화면 전체를 덮는 풀스크린 잠금 해제 화면
 // PIN 입력 + (설정되어 있으면) 생체인증을 함께 제공
 import { useState, useCallback, useEffect, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { authApi } from '../../../api/authApi';
+import { supabase } from '../../../utils/SupabaseClient';
+import useAppLockStore from '../../../stores/useAppLockStore';
 import { PinPad } from './PinPad';
+import PinResetDialog from './PinResetDialog';
 import { useTheme } from '../../../stores/useThemeStore';
 import { getAssetUrl } from '../../../utils/AssetHelper';
 
@@ -20,11 +25,14 @@ export function LockScreen({
   biometricEnabled,
   lockedUntil, // useAppLockStore가 내려주는 재시도 가능 시각(ms epoch), 0이면 쿨다운 없음
 }) {
+  const navigate = useNavigate();
+
   const [pin, setPin] = useState(''); // 지금까지 입력된 PIN 자릿수
   const [error, setError] = useState(false); // 틀렸을 때 PinPad에 흔들림 등 에러 표시용 플래그
   const [wrongAttempt, setWrongAttempt] = useState(false); // "PIN이 일치하지 않습니다" 표시 여부
   const [localLockedUntil, setLocalLockedUntil] = useState(lockedUntil || 0); // 화면 자체적으로 들고 있는 쿨다운 종료 시각
   const [remaining, setRemaining] = useState(secondsLeft(lockedUntil || 0)); // 쿨다운 카운트다운 표시용 남은 초
+  const [showResetDialog, setShowResetDialog] = useState(false); // "PIN을 잊어버리셨나요?" 다이얼로그 노출 여부
 
   const currentTheme = useTheme((state) => state.currentTheme);
   const appIconUrl = getAssetUrl(currentTheme, 'icons', 'app_icon_32_x3');
@@ -104,6 +112,25 @@ export function LockScreen({
 
   const handleDelete = () => setPin((p) => p.slice(0, -1));
 
+  // PIN 재설정 - 인증번호 발송 (백엔드가 access_token으로 이메일 검증 후 발송)
+  const handleSendPinResetCode = async () => {
+    await authApi.sendPinResetCode();
+  };
+
+  // PIN 재설정 - 인증번호 검증 → 성공하면 PIN 초기화하고 재설정 화면으로 이동
+  const handleVerifyPinResetCode = async (code) => {
+    const { data: sessionData } = await supabase.auth.getSession();
+    const email = sessionData?.session?.user?.email;
+    if (!email) throw '세션을 확인할 수 없어요. 다시 로그인해주세요.';
+
+    const { error: verifyError } = await supabase.auth.verifyOtp({ email, token: code, type: 'email' });
+    if (verifyError) throw '인증코드가 올바르지 않아요. 다시 시도해주세요.';
+
+    await useAppLockStore.getState().disableLock();
+    setShowResetDialog(false);
+    navigate('/more/setting/lock', { state: { promptSetup: true } });
+  };
+
   // 화면 상단 안내 문구 - 쿨다운 > 단순 불일치 > 기본 안내 순으로 우선순위
   const message = isLockedOut
     ? `잘못된 입력으로 잠금 해제하지 못했습니다.\n${remaining}초 후에 다시 시도하세요.`
@@ -148,6 +175,23 @@ export function LockScreen({
         >
           생체 인증 사용하기
         </button>
+      )}
+
+      <button
+        type="button"
+        onClick={() => setShowResetDialog(true)}
+        className="mt-1 text-xs text-neutral-400 underline underline-offset-2"
+      >
+        PIN을 잊어버리셨나요?
+      </button>
+
+      {showResetDialog && (
+        <PinResetDialog
+          onSendCode={handleSendPinResetCode}
+          onConfirm={handleVerifyPinResetCode}
+          onCancel={() => setShowResetDialog(false)}
+          maxWidth="320px"
+        />
       )}
     </div>
   );
