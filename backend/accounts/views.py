@@ -438,9 +438,9 @@ class ChangePasswordView(APIView):
                 status=status.HTTP_400_BAD_REQUEST,
             )
  
-        # 요청 Body에서 필수값 추출 (앞뒤 공백 제거)
-        current_password = request.data.get("current_password", "").strip()
-        new_password = request.data.get("new_password", "").strip()
+        # 요청 Body에서 필수값 추출 (null이 와도 빈 문자열로 처리, 앞뒤 공백 제거)
+        current_password = (request.data.get("current_password") or "").strip()
+        new_password = (request.data.get("new_password") or "").strip()
  
         # 필수값 누락 시 400 반환
         if not all([current_password, new_password]):
