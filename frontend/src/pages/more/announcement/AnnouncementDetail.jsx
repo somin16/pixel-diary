@@ -24,7 +24,7 @@ export default function AnnouncementDetail() {
   const [isAdmin, setIsAdmin] = useState(false);
    useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
-      const role = session?.user?.user_metadata?.role;
+      const role = session?.user?.app_metadata?.role;
       setIsAdmin(role === 'admin');
     });
   }, []);
