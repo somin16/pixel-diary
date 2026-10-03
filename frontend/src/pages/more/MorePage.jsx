@@ -61,7 +61,7 @@ const MorePage = () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (!isMounted) return; // ← 언마운트됐으면 상태 업데이트 중단
 
-      const role = session?.user?.user_metadata?.role;
+      const role = session?.user?.app_metadata?.role;
       setIsAdmin(role === 'admin');
 
       if (session?.user) {

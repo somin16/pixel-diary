@@ -399,18 +399,26 @@ class VerifyCurrentPasswordView(APIView):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        current_password = request.data.get("current_password", "").strip()
+        current_password = (request.data.get("current_password") or "").strip()
         if not current_password:
             return Response(
                 {"message": "현재 비밀번호는 필수입니다."},
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        ok, _, _, error_response = verify_current_password(access_token, current_password)
-        if not ok:
-            return error_response
+        try:
+            ok, _, _, error_response = verify_current_password(access_token, current_password)
+            if not ok:
+                return error_response
 
-        return Response({"message": "현재 비밀번호가 확인되었습니다."}, status=status.HTTP_200_OK)        
+            return Response({"message": "현재 비밀번호가 확인되었습니다."}, status=status.HTTP_200_OK)
+
+        except Exception as error:
+            print(f"=== VERIFY CURRENT PASSWORD ERROR ===\n{error}\n=====================================")
+            return Response(
+                {"message": "비밀번호 확인 중 오류가 발생했습니다."},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )      
         
 class ChangePasswordView(APIView):
     """비밀번호 변경 API"""
@@ -430,9 +438,9 @@ class ChangePasswordView(APIView):
                 status=status.HTTP_400_BAD_REQUEST,
             )
  
-        # 요청 Body에서 필수값 추출 (앞뒤 공백 제거)
-        current_password = request.data.get("current_password", "").strip()
-        new_password = request.data.get("new_password", "").strip()
+        # 요청 Body에서 필수값 추출 (null이 와도 빈 문자열로 처리, 앞뒤 공백 제거)
+        current_password = (request.data.get("current_password") or "").strip()
+        new_password = (request.data.get("new_password") or "").strip()
  
         # 필수값 누락 시 400 반환
         if not all([current_password, new_password]):
