@@ -4,6 +4,7 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
 
     constructor(scene, x, y) {
 
+        // player 스프라이트 시트의 7번 프레임 사용
         super(scene, x, y, "player", 7);
 
         scene.add.existing(this);
@@ -12,13 +13,13 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
         this.scene = scene;
 
         // 플레이어 크기
-        this.setScale(0.7);
+        this.setScale(0.5);
 
         // 자동 달리기 속도
         this.runSpeed = 150;
 
         // 점프 힘
-        this.jumpPower = -450;
+        this.jumpPower = -400;
 
         // 플레이어 중력
         this.setGravityY(800);
@@ -40,19 +41,20 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
             Phaser.Input.Keyboard.KeyCodes.SPACE
         );
 
-        // 화면 밖으로 나가지 않도록
-        this.setCollideWorldBounds(true);
+        // 월드 경계 충돌은 사용하지 않음
+        // → 천장 판정 제거
     }
 
 
-    // -------------------------
+    // =========================
     // 매 프레임 플레이어 처리
-    // -------------------------
+    // =========================
 
     updatePlayer() {
 
-        // 자동 달리기
-        this.setVelocityX(this.runSpeed);
+        // 플레이어는 직접 이동하지 않음
+        // 쿠키런 스타일이므로 플레이어 X 위치 고정
+        this.setVelocityX(0);
 
 
         // 착지 여부
@@ -67,10 +69,10 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
         }
 
 
-        // -------------------------
-        // 키보드 점프
+        // =========================
+        // 점프
         // ↑ / Space
-        // -------------------------
+        // =========================
 
         const jumpPressed =
             Phaser.Input.Keyboard.JustDown(this.cursors.up) ||
@@ -81,10 +83,10 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
         }
 
 
-        // -------------------------
-        // 키보드 슬라이드
+        // =========================
+        // 슬라이드
         // ↓
-        // -------------------------
+        // =========================
 
         const slidePressed =
             Phaser.Input.Keyboard.JustDown(this.cursors.down);
@@ -94,9 +96,9 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
         }
 
 
-        // -------------------------
+        // =========================
         // 애니메이션
-        // -------------------------
+        // =========================
 
         // 슬라이드 중
         if (this.isSliding) {
@@ -117,12 +119,16 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
 
             this.play("player_run", true);
         }
+
+
+        // 오른쪽 바라보기
+        this.setFlipX(false);
     }
 
 
-    // -------------------------
+    // =========================
     // 점프
-    // -------------------------
+    // =========================
 
     jump() {
 
@@ -131,10 +137,12 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
             return;
         }
 
+
         // 최대 2단 점프
         if (this.jumpCount >= this.maxJumpCount) {
             return;
         }
+
 
         this.jumpCount++;
 
@@ -145,9 +153,9 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
     }
 
 
-    // -------------------------
+    // =========================
     // 슬라이드
-    // -------------------------
+    // =========================
 
     slide() {
 
@@ -155,6 +163,7 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
         if (this.isSliding) {
             return;
         }
+
 
         // 공중에서는 슬라이드 불가능
         const isGrounded =
@@ -165,10 +174,12 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
             return;
         }
 
+
         this.isSliding = true;
 
         // 슬라이드 애니메이션
         this.play("player_slide", true);
+
 
         // 0.5초 후 슬라이드 종료
         this.scene.time.delayedCall(500, () => {
