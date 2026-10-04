@@ -46,13 +46,13 @@ export default class GameScene extends Phaser.Scene {
         // 바닥
         // =========================
 
-        const groundHeight = 100;
+        this.groundHeight = 100;
 
         const ground = this.add.rectangle(
             this.scale.width / 2,
-            this.scale.height - groundHeight / 2,
+            this.scale.height - this.groundHeight / 2,
             this.scale.width,
-            groundHeight,
+            this.groundHeight,
             0x444444
         );
 
@@ -79,7 +79,7 @@ export default class GameScene extends Phaser.Scene {
 
         this.player.y =
             ground.y -
-            groundHeight / 2 -
+            this.groundHeight / 2 -
             this.player.body.height / 2;
 
 
@@ -91,6 +91,48 @@ export default class GameScene extends Phaser.Scene {
             this.player,
             this.ground
         );
+
+
+        // =========================
+        // 화면 크기가 바뀌면 바닥도 맞추기
+        // (가로 전환 등)
+        // =========================
+
+        this.scale.on("resize", this.resizeGround, this);
+
+        // 씬이 끝나면 이벤트 해제
+        this.events.once("shutdown", () => {
+            this.scale.off("resize", this.resizeGround, this);
+        });
+
+
+        // 시작할 때도 한 번 맞춰줌
+        this.resizeGround(this.scale.gameSize);
+    }
+
+
+    // =========================
+    // 바닥 크기/위치 다시 맞추기
+    // =========================
+
+    resizeGround(gameSize) {
+
+        if (!this.ground || !this.ground.body) {
+            return;
+        }
+
+        const w = gameSize.width;
+        const h = gameSize.height;
+
+        this.ground.setPosition(
+            w / 2,
+            h - this.groundHeight / 2
+        );
+
+        this.ground.setSize(w, this.groundHeight);
+
+        // 물리 바디도 새 크기로 갱신
+        this.ground.body.updateFromGameObject();
     }
 
 
