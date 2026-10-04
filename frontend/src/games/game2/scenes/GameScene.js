@@ -3,6 +3,7 @@ import Phaser from "phaser";
 import { loadAllSprite } from "../preload/Preload";
 import { createAllAnimations } from "../animations/Animations";
 import Player from "../player/Player";
+import GameControls from "../ui/GameControls";
 
 export default class GameScene extends Phaser.Scene {
 
@@ -94,15 +95,30 @@ export default class GameScene extends Phaser.Scene {
 
 
         // =========================
+        // 점프 / 슬라이드 버튼
+        // =========================
+
+        this.controls = new GameControls(
+            this,
+            this.player
+        );
+
+
+        // =========================
         // 화면 크기가 바뀌면 바닥도 맞추기
         // (가로 전환 등)
         // =========================
 
         this.scale.on("resize", this.resizeGround, this);
 
-        // 씬이 끝나면 이벤트 해제
+        // 씬이 끝나면 이벤트 해제 + 버튼 정리
         this.events.once("shutdown", () => {
+
             this.scale.off("resize", this.resizeGround, this);
+
+            this.controls?.destroy();
+            this.controls = null;
+
         });
 
 
