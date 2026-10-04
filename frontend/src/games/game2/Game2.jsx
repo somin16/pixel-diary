@@ -3,7 +3,12 @@ import { ScreenOrientation } from "@capacitor/screen-orientation";
 
 import React, { useEffect, useRef } from "react";
 import Phaser from "phaser";
+
+import ModeSelectScene from "./scenes/ModeSelectScene";
 import GameScene from "./scenes/GameScene";
+import CharacterSelectScene from "./scenes/CharacterSelectScene";
+import SettingsScene from "./scenes/SettingsScene";
+
 
 const Game2 = () => {
     const gameContainer = useRef(null);
@@ -65,7 +70,13 @@ const Game2 = () => {
                     },
                 },
 
-                scene: [GameScene],
+                // 맨 앞의 씬이 가장 먼저 시작됨
+                scene: [
+                    ModeSelectScene,
+                    GameScene,
+                    CharacterSelectScene,
+                    SettingsScene,
+                ],
             });
 
             // 화면 크기가 변경되면 Phaser도 같이 변경

@@ -4,6 +4,7 @@ import { loadAllSprite } from "../preload/Preload";
 import { createAllAnimations } from "../animations/Animations";
 import Player from "../player/Player";
 import GameControls from "../ui/GameControls";
+import PauseMenu from "../ui/PauseMenu";
 
 export default class GameScene extends Phaser.Scene {
 
@@ -18,7 +19,7 @@ export default class GameScene extends Phaser.Scene {
 
     init(data) {
 
-        this.gameMode = data.gameMode;
+        this.gameMode = data?.gameMode;
 
     }
 
@@ -105,6 +106,17 @@ export default class GameScene extends Phaser.Scene {
 
 
         // =========================
+        // 일시정지 메뉴 (돌아가기 / 게임종료)
+        // 게임종료를 누르면 모드 선택 화면으로 이동
+        // =========================
+
+        this.pauseMenu = new PauseMenu(
+            this,
+            () => this.scene.start("ModeSelectScene")
+        );
+
+
+        // =========================
         // 화면 크기가 바뀌면 바닥도 맞추기
         // (가로 전환 등)
         // =========================
@@ -118,6 +130,9 @@ export default class GameScene extends Phaser.Scene {
 
             this.controls?.destroy();
             this.controls = null;
+
+            this.pauseMenu?.destroy();
+            this.pauseMenu = null;
 
         });
 
@@ -159,6 +174,11 @@ export default class GameScene extends Phaser.Scene {
     update() {
 
         if (!this.player) {
+            return;
+        }
+
+        // 일시정지 중에는 키보드 입력도 막음
+        if (this.pauseMenu?.isPaused) {
             return;
         }
 
