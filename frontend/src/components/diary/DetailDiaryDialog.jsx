@@ -10,6 +10,9 @@ import DuplicateDateDialog from "./dialog/DuplicateDateDialog";
 import SaveErrorDialog from "./dialog/SaveErrorDialog";
 import toast from "react-hot-toast";
 import { useBackNavigate } from "../../hooks/useBackNavigate";
+import html2canvas from 'html2canvas';
+import { Filesystem, Directory } from '@capacitor/filesystem';
+import { Share } from '@capacitor/share';
 
 /**
  * @typedef {Object} StickerItem
@@ -343,9 +346,92 @@ const handleStickerRemove = (e, instanceId) => {
     );
   }
 
-  // 공유 (TODO: 구현)
-  function handleShare() {
+  /**
+   * [공유 전용] html2canvas가 CSS aspect-ratio를 잘못 재계산해 비율이 찌그러지는 문제 대응
+   * - aspect-ratio를 쓰는 요소(클래스 또는 인라인)를 찾아, 캡처 직전 실측 px로 강제 고정
+   * - aspect-ratio 자체도 제거해서 html2canvas가 참고할 값을 없앰
+   * - restore() 호출 시 원래 클래스/스타일로 복구 (화면 레이아웃엔 영향 없음)
+   */
+  function lockAspectRatios(root) {
+    const targets = [root, ...root.querySelectorAll('*')];
+    const originals = [];
+
+    targets.forEach((el) => {
+      const aspectClasses = Array.from(el.classList).filter((c) => c.startsWith('aspect-'));
+      const hasInlineAspectRatio = !!el.style.aspectRatio; // 스티커처럼 인라인 style로 지정된 경우 대응
+
+      if (aspectClasses.length > 0 || hasInlineAspectRatio) {
+        const rect = el.getBoundingClientRect();
+        originals.push({
+          el,
+          classes: aspectClasses,
+          width: el.style.width,
+          height: el.style.height,
+          inlineAspectRatio: el.style.aspectRatio,
+        });
+        if (aspectClasses.length > 0) el.classList.remove(...aspectClasses);
+        el.style.aspectRatio = ''; // 인라인 aspect-ratio 제거
+        el.style.width = `${rect.width}px`;
+        el.style.height = `${rect.height}px`;
+      }
+    });
+
+    return function restore() {
+      originals.forEach(({ el, classes, width, height, inlineAspectRatio }) => {
+        if (classes.length > 0) el.classList.add(...classes);
+        el.style.aspectRatio = inlineAspectRatio;
+        el.style.width = width;
+        el.style.height = height;
+      });
+    };
+  }
+
+  // 공유: 일기장 화면을 이미지로 캡처해서 기기의 공유 시트(카카오톡, SNS 등) 호출
+  async function handleShare() {
     setIsMenuOpen(false);
+
+    let restore = null;
+
+    try {
+      // 메뉴가 닫히는 리렌더가 반영될 시간을 살짝 확보
+      await new Promise((resolve) => setTimeout(resolve, 100));
+
+      const node = containerRef.current;
+
+      // aspect-ratio를 쓰는 모든 요소(일기장 본체, 그림 칸, 이모지, 스티커 등)를
+      // 캡처 직전 실측 px로 고정 → html2canvas의 aspect-ratio 재계산 오류 방지
+      restore = lockAspectRatios(node);
+
+      const canvas = await html2canvas(node, {
+        backgroundColor: '#ffffff',
+        scale: 2,
+        useCORS: true,
+        ignoreElements: (el) => el.dataset?.noCapture === 'true',
+      });
+
+      restore();
+      restore = null;
+
+      const base64Data = canvas.toDataURL('image/png').split(',')[1];
+
+      const savedFile = await Filesystem.writeFile({
+        path: `diary-${diaryDate}.png`,
+        data: base64Data,
+        directory: Directory.Cache,
+      });
+
+      await Share.share({
+        title: '내 일기 공유하기',
+        url: savedFile.uri,
+        dialogTitle: '공유할 앱을 선택하세요',
+      });
+    } catch (error) {
+      console.error('[일기 공유 실패]', error);
+      toast('공유 중 오류가 발생했습니다');
+    } finally {
+      // 캡처 도중 예외가 나도 스타일이 원상 복구되도록 보장
+      if (restore) restore();
+    }
   }
 
 
@@ -483,21 +569,29 @@ const handleStickerRemove = (e, instanceId) => {
                         - 문자 이모지 대신 이미지 파일로 렌더링하여 디자인 일관성 유지
                         - selectedEmoji 있음: getDecoAssetUrl('emojis', selectedEmoji) 경로 사용
                         - 없음: 테마 기본 이모지 이미지 사용
-                        - onError: 이미지 로드 실패 시 숨김 처리 (레이아웃 깨짐 방지)
+                        - <img> 대신 background-image로 렌더링: html2canvas가 <img>의 object-contain을
+                          비동기 로딩 타이밍과 맞물려 불안정하게 캡처하는 문제가 있어, 더 안정적인
+                          background-image 방식으로 교체 (공유 캡처 시 비율 깨짐 방지)
                     */}
-          <div className="absolute right-[1%] top-0 w-[26%] aspect-square pointer-events-none">
-            <img
-              src={emojiImageSrc}
-              alt="emoji"
-              className="w-auto h-[88%] object-contain [image-rendering:pixelated]"
-              onError={(e) => { e.currentTarget.style.display = 'none'; }}
+          <div className="absolute h-full w-[19%] right-[1%] pr-[5%] pointer-events-none">
+            <div
+              role="img"
+              aria-label="emoji"
+              className="w-full h-full"
+              style={{
+                backgroundImage: `url("${emojiImageSrc}")`,
+                backgroundSize: 'contain',
+                backgroundPosition: 'center',
+                backgroundRepeat: 'no-repeat',
+              }}
             />
           </div>
         </div>
 
         {/* ── 수정/삭제/공유 드롭다운 (view 모드 전용, z-60) ──────────── */}
+        {/* data-no-capture="true": 공유 시 캡처되는 이미지에 이 메뉴 버튼이 찍히지 않도록 html2canvas의 ignoreElements에서 제외 처리됨 */}
         {isView && (
-          <div className="absolute w-full flex justify-center pl-[80%] pt-[6%] text-sm z-70">
+          <div data-no-capture="true" className="absolute w-full flex justify-center pl-[80%] pt-[6%] text-sm z-70">
             <button
               onClick={() => setIsMenuOpen(!isMenuOpen)}
               className="outline-none"
@@ -543,7 +637,10 @@ const handleStickerRemove = (e, instanceId) => {
         {/* ── 레이어 1: 일기 그림 이미지 (z-20, 가장 아래) ──────────── */}
         <div className="absolute w-[77%] mt-[13%] aspect-[10/9] flex justify-center z-20">
           {imageUrl ? (
-            <img src={imageUrl} alt="일기 그림" className="w-full h-full object-cover" />
+            <img src={imageUrl}
+            alt="일기 그림"
+            crossOrigin="anonymous"   // 외부 이미지(Supabase Storage) 캡처 허용
+            className="w-full h-full object-cover" />
           ) : (
             // 이미지 없을 때: 흰색 배경 + 현재 단계에 맞는 안내 문구
             <div className="w-full h-full bg-white flex items-center justify-center">
@@ -571,7 +668,60 @@ const handleStickerRemove = (e, instanceId) => {
           }}
         />
 
-        
+        {/*
+                    ── 레이어 3: 스티커 (z-60) ──────────────────────────────────
+                    
+                    [핵심] 래퍼 div에 pointer-events-none 적용
+                    → 래퍼 자체는 클릭을 통과시킴
+                    → 개별 스티커 div만 decorate 모드에서 pointer-events-auto로 드래그 수신
+                    → 스티커가 없는 영역(텍스트 칸 포함)은 클릭이 아래 레이어로 정상 통과
+                    
+                    [드래그 구현: Pointer Events API]
+                    - 터치와 마우스를 단일 이벤트로 처리 (별도 touch 핸들러 불필요)
+                    - onPointerDown  → draggingRef에 instanceId 기록 + pointer capture 등록
+                    - onPointerMove  → 컨테이너 기준 % 계산 → onStickersChange로 부모 상태 갱신
+                    - onPointerUp    → draggingRef 초기화
+                    - onPointerCancel→ 전화 수신 등 강제 해제 시에도 드래그 정상 종료
+                    
+                    [나중에 추가할 기능]
+                    - 스티커 삭제: 롱프레스 or 더블탭 시 삭제 버튼 노출
+                    - 스티커 크기 조절: 핀치 제스처 or 리사이즈 핸들
+                    - 스티커 회전: 두 손가락 회전 제스처
+                */}
+        <div className="absolute inset-0 z-60 pointer-events-none">
+          {stickers.map((sticker) => (
+            <div
+              key={sticker.instanceId}
+              className={`absolute select-none ${
+                // decorate 모드: 스티커 개별 div만 pointer-events-auto로 드래그 수신
+                // 그 외 모드: pointer-events-none 유지 (래퍼 상속)
+                isDecorate ? 'pointer-events-auto cursor-grab active:cursor-grabbing' : ''
+                }`}
+              style={{
+                // sticker.x, sticker.y 미설정 시 기본값 40% (중앙 근처)
+                // 드래그 후에는 handleStickerPointerMove에서 계산된 값으로 업데이트
+                left: `${sticker.x ?? 40}%`,
+                top: `${sticker.y ?? 40}%`,
+                width: '20%',
+                aspectRatio: '1 / 1',
+                touchAction: 'none', // 브라우저 기본 스크롤/줌 동작 차단
+              }}
+              onPointerDown={(e) => handleStickerPointerDown(e, sticker.instanceId)}
+              onPointerMove={handleStickerPointerMove}
+              onPointerUp={handleStickerPointerUp}
+              onPointerCancel={handleStickerPointerUp}
+            >
+              <img
+                src={sticker.img}
+                alt={sticker.id}
+                draggable="false"       // 브라우저 기본 이미지 드래그 비활성화
+                crossOrigin="anonymous"   // 외부 이미지(Supabase Storage) 캡처 허용
+                className="w-full h-full object-contain pointer-events-none"
+              />
+            </div>
+          ))}
+        </div>
+
         {/*
                     ── 레이어 4: 본문 텍스트 (z-50) ────────────────────────────
                     - 스티커 레이어(z-40)보다 위에 배치하여 텍스트 영역 클릭 항상 보장
