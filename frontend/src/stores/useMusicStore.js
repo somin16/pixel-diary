@@ -1,4 +1,4 @@
-// stores/musicStore.js
+// stores/useMusicStore.js
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'  // 볼륨/뮤트 설정 영구 저장
 
@@ -18,7 +18,7 @@ const useMusicStore = create(
     (set, get) => ({
       // --- 상태 ---
       isMuted: false,   // 뮤트 여부
-      volume: 0.0,      // 볼륨 (0.0 ~ 1.0)
+      volume: 0.3,      // 볼륨 (0.0 ~ 1.0)
       currentTheme: '', // 현재 재생 중인 테마
 
       // --- 액션 ---
@@ -34,7 +34,10 @@ const useMusicStore = create(
         audio.pause()
         audio.src = src
         audio.volume = isMuted ? 0 : volume
-        audio.play().catch(() => {}) // 브라우저 자동재생 정책 대응
+        audio.play().catch((err) => {
+          // 자동재생 정책에 막힌 경우만 초기화 (곡 전환 중 끊긴 AbortError는 무시)
+          if (err.name === 'NotAllowedError') set({ currentTheme: '' })
+        })
         set({ currentTheme: theme })
       },
 

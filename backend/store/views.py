@@ -92,7 +92,7 @@ class ItemPurchaseView(APIView):
                     )
 
             # 관리자 권한 확인
-            role = user.get("user_metadata", {}).get("role", "")
+            role = user.get("app_metadata", {}).get("role", "")
             is_admin = role == "admin"
 
             if not is_admin:

@@ -42,6 +42,13 @@ export const authApi = {
       body: JSON.stringify({ refresh_token: refreshToken }),
     }),
 
+  // 현재 비밀번호 검증 (변경 1단계에서 호출)
+  verifyCurrentPassword: ({ current_password }) =>
+    authFetch(`${BASE_URL}/api/v1/auth/password/verify/`, {
+      method: 'POST',
+      body: JSON.stringify({ current_password }),
+    }),  
+
   // 비밀번호 변경 (로그인 상태에서) - 성공 시 새 토큰도 함께 응답으로 옴
   changePassword: ({ current_password, new_password }) =>
     authFetch(`${BASE_URL}/api/v1/auth/password/`, {
@@ -108,6 +115,12 @@ export const authApi = {
     authFetch(`${BASE_URL}/api/v1/auth/fcm-token/`, {
       method: "POST",
       body: JSON.stringify({ fcm_token: fcmToken }),
+    }),
+
+  // 잠금화면 PIN 재설정 인증번호 발송
+  sendPinResetCode: () =>
+    authFetch(`${BASE_URL}/api/v1/auth/pin/send-code/`, {
+      method: 'POST',
     }),
 };
 

@@ -110,12 +110,22 @@ const DetailDiaryDialog = ({
   const length = (content || '').length
 
   // ── 스티커 드래그용 ref ───────────────────────────────────────────────────
-  // containerRef: 일기장 컨테이너 DOM 참조 → 드래그 위치를 % 로 계산할 때 기준점
   // draggingRef:  현재 드래그 중인 스티커의 instanceId 보관
   //               → state 대신 ref를 쓰는 이유: 값이 바뀌어도 리렌더를 일으키지 않아서
   //                 pointermove 이벤트 핸들러가 매 프레임 호출될 때 성능 저하 없이 참조 가능
-  const containerRef = useRef(null);
-  const draggingRef = useRef(null);
+
+  const rootRef = useRef(null);
+  const rotatingRef = useRef(null);
+  const draggingRef = useRef(null);   // { id, dx, dy }
+  const resizingRef = useRef(null);   // instanceId
+  const [selectedStickerId, setSelectedStickerId] = useState(null);
+
+  const DEFAULT_SIZE = 20, MIN_SIZE = 8, MAX_SIZE = 60;
+  const clamp = (v, min, max) => Math.min(Math.max(v, min), max);
+  const getRect = () => rootRef.current.getBoundingClientRect();
+
+  const updateSticker = (instanceId, patch) =>
+  onStickersChange?.(stickers.map(s => s.instanceId === instanceId ? { ...s, ...patch } : s));
 
   // ── 프레임 이미지 경로 ──────────────────────────────────────────────────
   // 우선순위: DecoPanel에서 선택한 프레임 > 테마 기본 프레임
@@ -148,6 +158,33 @@ const DetailDiaryDialog = ({
 
   // ── 스티커 드래그 핸들러 ────────────────────────────────────────────────
 
+  // 스티커 중심 좌표(px) 계산
+  const getCenter = (sticker) => {
+    const rect = getRect();
+    const w = sticker.size ?? DEFAULT_SIZE;
+    const h = w * (rect.width / rect.height);
+    return {
+      cx: rect.left + ((sticker.x ?? 40) + w / 2) / 100 * rect.width,
+      cy: rect.top + ((sticker.y ?? 40) + h / 2) / 100 * rect.height,
+    };
+  };
+
+  const handleRotateDown = (e, sticker) => {
+    e.stopPropagation();
+    e.preventDefault();
+    rotatingRef.current = sticker.instanceId;
+    e.currentTarget.setPointerCapture(e.pointerId);
+  };
+  const handleRotateMove = (e, sticker) => {
+    if (rotatingRef.current !== sticker.instanceId) return;
+    const { cx, cy } = getCenter(sticker);
+    // 핸들이 위쪽(-90°)에 있으므로 +90 보정
+    const raw = Math.atan2(e.clientY - cy, e.clientX - cx) * 180 / Math.PI + 90;
+    const deg = (Math.round(raw) % 360 + 360) % 360; // 0 ~ 359로 정규화
+    updateSticker(sticker.instanceId, { rotation: deg });
+  };
+  const handleRotateUp = () => { rotatingRef.current = null; };
+
   /**
    * [드래그 시작] onPointerDown
    * - 꾸미기 모드에서만 동작
@@ -156,16 +193,20 @@ const DetailDiaryDialog = ({
    * @param {React.PointerEvent} e
    * @param {number} instanceId - 드래그를 시작한 스티커의 instanceId
    */
-  const handleStickerPointerDown = useCallback((e, instanceId) => {
+    // 드래그 시작: 포인터와 스티커 좌상단의 오프셋을 저장 (잡은 위치 그대로 이동)
+  const handleStickerPointerDown = (e, sticker) => {
     if (!isDecorate) return;
-
     e.preventDefault();
-    e.stopPropagation(); // 아래 레이어(그림 칸 클릭 등)로 이벤트 전파 차단
-
-    draggingRef.current = instanceId;
+    e.stopPropagation();// 아래 레이어(그림 칸 클릭 등)로 이벤트 전파 차단
+    const rect = getRect();
+    draggingRef.current = {
+      id: sticker.instanceId,
+      dx: ((e.clientX - rect.left) / rect.width) * 100 - (sticker.x ?? 40),
+      dy: ((e.clientY - rect.top) / rect.height) * 100 - (sticker.y ?? 40),
+    };
+    setSelectedStickerId(sticker.instanceId);
     e.currentTarget.setPointerCapture(e.pointerId);
-  }, [isDecorate]);
-
+  };
   /**
    * [드래그 이동] onPointerMove
    * - 포인터 위치를 일기장 컨테이너 기준 %로 변환
@@ -175,40 +216,56 @@ const DetailDiaryDialog = ({
    *
    * @param {React.PointerEvent} e
    */
-  const handleStickerPointerMove = useCallback((e) => {
-    if (draggingRef.current === null) return;
-    if (!containerRef.current) return;
-
-    // 일기장 컨테이너의 화면상 크기와 위치
-    const rect = containerRef.current.getBoundingClientRect();
-
-    // 포인터 좌표 → 컨테이너 기준 % 변환 (스티커 중앙이 포인터에 오도록 -10% 보정)
-    const x = ((e.clientX - rect.left) / rect.width) * 100 - 10;
-    const y = ((e.clientY - rect.top) / rect.height) * 100 - 10;
-
-    // 범위 제한: 스티커가 컨테이너 밖으로 벗어나지 않도록
-    const clampedX = Math.min(Math.max(x, 0), 80);
-    const clampedY = Math.min(Math.max(y, 0), 80);
-
-    // 드래그 중인 스티커만 x, y 업데이트 → 부모(DiaryForm) 상태에 반영
-    onStickersChange?.(
-      stickers.map((s) =>
-        s.instanceId === draggingRef.current
-          ? { ...s, x: clampedX, y: clampedY }
-          : s
-      )
-    );
-  }, [stickers, onStickersChange]);
+  // 드래그 이동: 화면 전체 범위 (스티커가 화면 밖으로만 안 나가게)
+  const handleStickerPointerMove = (e) => {
+    const d = draggingRef.current;
+    if (!d) return;
+    const s = stickers.find(v => v.instanceId === d.id);
+    if (!s) return;
+    const rect = getRect();
+    const w = s.size ?? DEFAULT_SIZE;
+    const h = w * (rect.width / rect.height); // 정사각형 스티커의 세로 %
+    const px = ((e.clientX - rect.left) / rect.width) * 100;
+    const py = ((e.clientY - rect.top) / rect.height) * 100;
+    updateSticker(d.id, {
+      x: clamp(px - d.dx, 0, 100 - w),
+      y: clamp(py - d.dy, 0, 100 - h),
+    });
+  };
 
   /**
    * [드래그 종료] onPointerUp / onPointerCancel
    * - draggingRef를 null로 초기화하여 다음 드래그 준비
    * - onPointerCancel: 전화 수신 등으로 포인터가 예기치 않게 해제될 때도 정상 종료
    */
-  const handleStickerPointerUp = useCallback(() => {
-    draggingRef.current = null;
-  }, []);
+  const handleStickerPointerUp = () => { draggingRef.current = null; };
 
+  // 크기 조절: 우하단 핸들을 끌면 (포인터 x - 스티커 left)가 새 너비
+const handleResizeDown = (e, sticker) => {
+  e.stopPropagation();
+  e.preventDefault();
+  resizingRef.current = sticker.instanceId;
+  e.currentTarget.setPointerCapture(e.pointerId);
+};
+const handleResizeMove = (e, sticker) => {
+  if (resizingRef.current !== sticker.instanceId) return;
+  const rect = getRect();
+  const { cx, cy } = getCenter(sticker);
+  const dist = Math.hypot(e.clientX - cx, e.clientY - cy);   // 중심 → 우하단 모서리
+  const widthPx = dist * Math.SQRT2;                          // 정사각형이라 대각선 절반 × √2 = 한 변
+  updateSticker(sticker.instanceId, {
+    size: clamp((widthPx / rect.width) * 100, MIN_SIZE, MAX_SIZE),
+  });
+};
+
+const handleResizeUp = () => { resizingRef.current = null; };
+
+// 삭제
+const handleStickerRemove = (e, instanceId) => {
+  e.stopPropagation();
+  onStickersChange?.(stickers.filter(s => s.instanceId !== instanceId));
+  setSelectedStickerId(null);
+};
 
   // ── 상세보기 전용 핸들러 ────────────────────────────────────────────────
 
@@ -390,7 +447,99 @@ const DetailDiaryDialog = ({
 
   // ── 렌더링 ──────────────────────────────────────────────────────────────
   return (
-    <div className="relative w-full h-full flex flex-col items-center justify-between">
+    <div
+      ref={rootRef}
+      onPointerDown={() => setSelectedStickerId(null)}
+      className="relative w-full h-full flex flex-col items-center justify-between"
+    >
+      {/*
+                    ── 레이어 3: 스티커 (z-60) ──────────────────────────────────
+                    
+                    [핵심] 래퍼 div에 pointer-events-none 적용
+                    → 래퍼 자체는 클릭을 통과시킴
+                    → 개별 스티커 div만 decorate 모드에서 pointer-events-auto로 드래그 수신
+                    → 스티커가 없는 영역(텍스트 칸 포함)은 클릭이 아래 레이어로 정상 통과
+                    
+                    [드래그 구현: Pointer Events API]
+                    - 터치와 마우스를 단일 이벤트로 처리 (별도 touch 핸들러 불필요)
+                    - onPointerDown  → draggingRef에 instanceId 기록 + pointer capture 등록
+                    - onPointerMove  → 컨테이너 기준 % 계산 → onStickersChange로 부모 상태 갱신
+                    - onPointerUp    → draggingRef 초기화
+                    - onPointerCancel→ 전화 수신 등 강제 해제 시에도 드래그 정상 종료
+                    
+                    [나중에 추가할 기능]
+                    - 스티커 삭제: 롱프레스 or 더블탭 시 삭제 버튼 노출
+                    - 스티커 크기 조절: 핀치 제스처 or 리사이즈 핸들
+                    - 스티커 회전: 두 손가락 회전 제스처
+                */}
+        <div className="absolute inset-0 z-60 pointer-events-none overflow-hidden">
+          {stickers.map((sticker) => {
+            const selected = isDecorate && selectedStickerId === sticker.instanceId;
+            return (
+              <div
+                key={sticker.instanceId}
+                className={`absolute select-none ${isDecorate ? 'pointer-events-auto cursor-grab active:cursor-grabbing' : ''} ${selected ? 'outline-2 outline-dashed outline-white/90' : ''}`}
+                style={{
+                  left: `${sticker.x ?? 40}%`,
+                  top: `${sticker.y ?? 40}%`,
+                  width: `${sticker.size ?? DEFAULT_SIZE}%`,
+                  aspectRatio: '1 / 1',
+                  transform: `rotate(${sticker.rotation ?? 0}deg)`,
+                  touchAction: 'none',
+                }}
+                onPointerDown={(e) => handleStickerPointerDown(e, sticker)}
+                onPointerMove={handleStickerPointerMove}
+                onPointerUp={handleStickerPointerUp}
+                onPointerCancel={handleStickerPointerUp}
+              >
+                <img src={sticker.img} alt={sticker.id} draggable="false" className="w-full h-full object-contain pointer-events-none" />
+
+                {selected && (
+                  <>
+                    {/* X 버튼 (우상단) */}
+                    <button
+                      className="absolute -top-3 -right-3 w-6 h-6 rounded-full bg-red-500 text-white text-xs flex items-center justify-center"
+                      onPointerDown={(e) => e.stopPropagation()}
+                      onClick={(e) => handleStickerRemove(e, sticker.instanceId)}
+                      aria-label="스티커 삭제"
+                    >✕</button>
+
+                    {/* 크기 조절 핸들 (우하단) */}
+                    <div
+                      className="absolute -bottom-3 -right-3 w-6 h-6 rounded-full bg-sky-500 border-2 border-white touch-none"
+                      onPointerDown={(e) => handleResizeDown(e, sticker)}
+                      onPointerMove={(e) => handleResizeMove(e, sticker)}
+                      onPointerUp={handleResizeUp}
+                      onPointerCancel={handleResizeUp}
+                    />
+
+                    {/* 회전 핸들 (상단 중앙) */}
+                    <div
+                      className="absolute -top-9 left-1/2 -translate-x-1/2 w-7 h-7 rounded-full bg-white/90 shadow flex items-center justify-center touch-none cursor-grab active:cursor-grabbing"
+                      onPointerDown={(e) => handleRotateDown(e, sticker)}
+                      onPointerMove={(e) => handleRotateMove(e, sticker)}
+                      onPointerUp={handleRotateUp}
+                      onPointerCancel={handleRotateUp}
+                    >
+                      <svg
+                        viewBox="0 0 24 24"
+                        className="w-4 h-4 text-emerald-600 pointer-events-none"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2.5"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      >
+                        <path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8" />
+                        <path d="M21 3v5h-5" />
+                      </svg>
+                    </div>
+                  </>
+                )}
+              </div>
+            );
+          })}
+        </div>
 
       {/* ── 닫기 버튼 ── */}
       <div className="absolute w-full h-full z-40 pointer-events-none">
@@ -398,9 +547,7 @@ const DetailDiaryDialog = ({
       </div>
 
       {/* ── 일기장 본체: 모든 레이어의 기준 컨테이너 ──────────────────── */}
-      {/* containerRef: 스티커 드래그 위치 % 계산의 기준점으로 사용 */}
       <div
-        ref={containerRef}
         className="relative w-[85%] h-fit flex justify-center top-5/10 -translate-y-1/2 aspect-[312/522]"
       >
 
