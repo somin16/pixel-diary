@@ -6,14 +6,19 @@ set VENV_PYTHON="%~dp0venv_ai\Scripts\python.exe"
 :: 2. cloudflared.exe 경로 (배치 파일과 같은 폴더에 있다고 가정)
 set CLOUDFLARED="%~dp0cloudflared.exe"
 
-:: 3. ComfyUI를 별도 창에서 먼저 실행합니다.
 start "ComfyUI" cmd /k "cd /d "%~dp0ComfyUI" && %VENV_PYTHON% main.py --listen 0.0.0.0 --port 8188"
 
-:: 4. ComfyUI가 완전히 뜰 때까지 5초 기다립니다.
-echo ComfyUI 시작 중... 5초 대기
-timeout /t 15 /nobreak
+echo ComfyUI 준비될 때까지 대기 중...
+:WAIT_LOOP
+timeout /t 3 /nobreak >nul
+curl -s -o nul -w "%%{http_code}" http://127.0.0.1:8188/system_stats > "%TEMP%\comfy_status.txt"
+set /p STATUS=<"%TEMP%\comfy_status.txt"
+if not "%STATUS%"=="200" (
+    echo 아직 준비 안 됨... 다시 확인
+    goto WAIT_LOOP
+)
 
-:: 5. Cloudflare 터널을 별도 창에서 실행합니다.
+echo ComfyUI 준비 완료!
 start "Cloudflare Tunnel" cmd /k "%CLOUDFLARED% tunnel --url http://localhost:8188"
 
 echo.

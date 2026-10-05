@@ -220,17 +220,48 @@ class DiaryView(APIView):
                 params={
                     "user_id": f"eq.{user_id}",
                     "order": "created_at.desc",
-                    "select": "id,content,created_at,ai_image!diaries_image_id_fkey(image_url)", # 외래키를 사용하라고 supabase에게 명시적으로 알려줌
+                    "select": "id,content,emotion,created_at,ai_image!diaries_image_id_fkey(image_url)",   # emotion 추가 # 외래키를 사용하라고 supabase에게 명시적으로 알려줌
                 },
             )
 
             if response.status_code != 200:
                 raise Exception(f"Supabase API 오류: {response.text}")
 
+            diary_list = response.json()
+            diary_ids = [d.get("id") for d in diary_list]
+
+            # 일기별 이모지 이미지 URL (쿼리 2번으로 일괄 조회)
+            emoji_by_diary = {}
+            if diary_ids:
+                deco_res = requests.get(
+                    f"{SUPABASE_URL}/rest/v1/diary_deco",
+                    headers=headers,
+                    params={
+                        "diary_id": f"in.({','.join(map(str, diary_ids))})",
+                        "select": "diary_id,emoji_id",
+                    },
+                )
+                decos = deco_res.json()
+                emoji_ids = {d.get("emoji_id") for d in decos if d.get("emoji_id")}
+
+                url_map = {}
+                if emoji_ids:
+                    item_res = requests.get(
+                        f"{SUPABASE_URL}/rest/v1/items",
+                        headers=headers,
+                        params={
+                            "item_id": f"in.({','.join(map(str, emoji_ids))})",
+                            "select": "item_id,item_image_url",
+                        },
+                    )
+                    url_map = {i.get("item_id"): i.get("item_image_url") for i in item_res.json()}
+
+                emoji_by_diary = {d.get("diary_id"): url_map.get(d.get("emoji_id")) for d in decos}
+
             # 날짜 포맷 변환 및 응답 데이터 구성
             kst = timezone(timedelta(hours=9))
             diaries = []
-            for diary in response.json():
+            for diary in diary_list:
                 created_at_str = diary.get("created_at")
                 created_at = datetime.fromisoformat(created_at_str.replace("Z", "+00:00"))
                 created_at_kst = created_at.astimezone(kst).strftime("%Y-%m-%dT%H:%M:%S+09:00")
@@ -238,6 +269,8 @@ class DiaryView(APIView):
                 diaries.append({
                     "diary_id": diary.get("id"),
                     "content": diary.get("content"),
+                    "emotion": diary.get("emotion"),                              
+                    "emoji_image_url": emoji_by_diary.get(diary.get("id")),       
                     "created_at": created_at_kst,
                     "image_url": (diary.get("ai_image") or {}).get("image_url"),
                 })
@@ -579,6 +612,8 @@ class DiaryDetailView(APIView):
                                 "item_id": s.get("item_id"),
                                 "pos_x": s.get("pos_x"),
                                 "pos_y": s.get("pos_y"),
+                                "size": s.get("size"),
+                                "rotation": s.get("rotation"),
                                 "image_url": item.get("item_image_url"),
                             })
 
@@ -715,6 +750,15 @@ class DiaryDecoView(APIView):
                             {"message": f"스티커 아이템이 아닙니다. (item_id: {item.get('item_id')})"},
                             status=status.HTTP_400_BAD_REQUEST,
                         )
+
+                # 범위 검증
+                for sticker in sticker_list:
+                  size = sticker.get("size")
+                  if size is not None and not (isinstance(size, (int, float)) and 5 <= size <= 60):
+                      return Response(
+                          {"message": "sticker size 값이 올바르지 않습니다."},
+                          status=status.HTTP_400_BAD_REQUEST,
+                      )    
 
             # diary_deco 테이블에 저장 (기존 꾸미기가 있으면 수정, 없으면 새로 생성)
             existing_deco = requests.get(

@@ -1,8 +1,8 @@
-import { useState, useEffect, useRef } from 'react';
-import { authFetch } from '../../utils/AuthHelper';
+import { useRef, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { getAssetUrl } from '../../utils/AssetHelper';
 import ImageButton from '../common/ImageButton';
+import { useDecoItems } from '../../hooks/queries/useDecoItems';
 
 const DecoPanel = ({ currentTheme, mode, isOpen, onSelectMode, onSelectItem }) => {
   const dragStartY = useRef(null);
@@ -12,71 +12,12 @@ const DecoPanel = ({ currentTheme, mode, isOpen, onSelectMode, onSelectItem }) =
   // 목표 y값 계산
   const targetY = isHidden ? "100%" : (isOpen ? "0%" : "88%");
 
-  // 상태 관리
-  // 전체 아이템 목록 (표시용) - item_type별로 분류해서 저장
-  const [allItems, setAllItems] = useState({
-    frame: [],   // diary_theme 타입
-    emoji: [],   // emoji 타입
-    sticker: [], // sticker 타입
-  });
   // 보유한 아이템 ID Set (잠금 판별용, O(1) 조회)
-  const [ownedItemIds, setOwnedItemIds] = useState(new Set());
-
-  useEffect(() => {
-    fetchAllData();
-  }, []);
-
-  // API 호출 - 전체 아이템 목록 + 보유 아이템 판별
-  // sessionStorage 캐시 전략:
-  //   - deco_all_items: 전체 아이템 목록 (앱 배포 때만 바뀌므로 무효화 불필요)
-  //   - deco_owned_ids: 보유 아이템 ID 목록 (아이템 구매 시 무효화)
-  const fetchAllData = async () => {
-    try {
-      // ✅ 캐시 확인 먼저 - 있으면 API 호출 없이 바로 사용
-      const cachedAll = sessionStorage.getItem('deco_all_items');
-      const cachedOwned = sessionStorage.getItem('deco_owned_ids');
-
-      if (cachedAll && cachedOwned) {
-        setAllItems(JSON.parse(cachedAll));
-        setOwnedItemIds(new Set(JSON.parse(cachedOwned)));
-        return;
-      }
-
-      // 캐시 없을 때만 두 API를 병렬 호출해서 속도 최적화
-      const [allItemsData, ownedData] = await Promise.all([
-        authFetch(`${import.meta.env.VITE_BACKEND_URL}/api/v1/items/`),
-        authFetch(`${import.meta.env.VITE_BACKEND_URL}/api/v1/users/deco-item/`),
-      ]);
-
-      // 전체 아이템을 item_type별로 분류
-      const items = allItemsData.items ?? [];
-      const categorized = {
-        frame: items.filter(i => i.item_type === 'diary_theme'),
-        emoji: items.filter(i => i.item_type === 'emoji'),
-        sticker: items.filter(i => i.item_type === 'sticker'),
-      };
-
-      // 보유 아이템 ID를 배열로 추출 후 Set으로 변환
-      const ownedIds = [
-        ...(ownedData.emojis ?? []),
-        ...(ownedData.diary_themes ?? []),
-        ...(ownedData.stickers ?? []),
-      ].map(i => i.item_id);
-
-      // sessionStorage에 캐시 저장
-      sessionStorage.setItem('deco_all_items', JSON.stringify(categorized));
-      sessionStorage.setItem('deco_owned_ids', JSON.stringify(ownedIds));
-
-      setAllItems(categorized);
-      setOwnedItemIds(new Set(ownedIds));
-
-    } catch (error) {
-      console.error('아이템 데이터 로드 실패:', error);
-    }
-  };
+  const { data } = useDecoItems();
+  const ownedItemIds = useMemo(() => new Set(data?.ownedIds ?? []), [data]);
 
   // 모드에 맞는 리스트 가져오기 (프레임, 스티커, 이모지)
-  const currentList = allItems[mode] ?? [];
+  const currentList = { frame: data?.frames, emoji: data?.emojis, sticker: data?.stickers }[mode] ?? [];
 
   // 버튼 클릭 핸들러: 같은 모드면 끄고(null), 다른 모드면 교체
   const handleModeClick = (selectedMode) => {
@@ -182,7 +123,7 @@ const DecoPanel = ({ currentTheme, mode, isOpen, onSelectMode, onSelectItem }) =
                   className="w-full h-full overflow-y-auto no-scrollbar"
                   onPointerDown={(e) => e.stopPropagation()}
                 >
-                  <div className="grid grid-cols-4 gap-[3%]">
+                  <div className="grid grid-cols-4 gap-[1%]">
                     {currentList.map((item) => {
                       // Set.has()로 O(1) 보유 여부 조회
                       const isOwned = ownedItemIds.has(item.item_id);
@@ -198,6 +139,7 @@ const DecoPanel = ({ currentTheme, mode, isOpen, onSelectMode, onSelectItem }) =
                               onSelectItem(mode, {
                                 item_id: item.item_id,
                                 img: item.item_image_url,
+                                name: item.item_name,
                               });
                             }
                           }}

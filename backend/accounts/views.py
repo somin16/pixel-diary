@@ -6,6 +6,7 @@ from rest_framework.response import Response
 from rest_framework import status
 from utils import extract_access_token, get_supabase_headers, get_supabase_anon_headers, get_user_from_token
 from datetime import datetime, timedelta, timezone
+from rest_framework.throttling import ScopedRateThrottle # API 요청 횟수 제한(rate limit)을 위한 DRF 내장 클래스
 
 SUPABASE_URL = os.getenv("SUPABASE_URL")
 
@@ -336,6 +337,88 @@ class LogoutView(APIView):
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
         
+def verify_current_password(access_token, current_password):
+    """
+    access_token으로 유저 확인 후 current_password가 맞는지 검증.
+    성공 시 (True, user_email, user_id, None) 반환, 실패 시 (False, None, None, error_response) 반환
+    """
+    supabase_url = os.getenv("SUPABASE_URL")
+
+    user_headers = {
+        "apikey": os.getenv("SUPABASE_ANON_KEY"),
+        "Authorization": f"Bearer {access_token}",
+        "Content-Type": "application/json",
+    }
+    user_response = requests.get(f"{supabase_url}/auth/v1/user", headers=user_headers)
+
+    if user_response.status_code != 200:
+        return False, None, None, Response(
+            {"message": "유효하지 않은 토큰입니다."},
+            status=status.HTTP_401_UNAUTHORIZED,
+        )
+
+    user_data = user_response.json()
+    user_email = user_data.get("email")
+    user_id = user_data.get("id")
+
+    verify_headers = {
+        "apikey": os.getenv("SUPABASE_ANON_KEY"),
+        "Content-Type": "application/json",
+    }
+    verify_response = requests.post(
+        f"{supabase_url}/auth/v1/token?grant_type=password",
+        headers=verify_headers,
+        json={"email": user_email, "password": current_password},
+    )
+
+    if verify_response.status_code != 200:
+        return False, None, None, Response(
+            {"message": "현재 비밀번호가 올바르지 않습니다."},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+    return True, user_email, user_id, None
+
+
+class VerifyCurrentPasswordView(APIView):
+    """현재 비밀번호 검증 전용 API (비밀번호 변경 1단계에서 호출)"""
+
+    throttle_classes = [ScopedRateThrottle]
+    throttle_scope = 'password_verify'
+
+    def post(self, request):
+        """
+        POST /api/v1/auth/password/verify
+        - Authorization 헤더의 access_token으로 현재 유저 확인
+        - current_password가 실제 현재 비밀번호와 일치하는지만 검증
+        """
+        access_token = extract_access_token(request)
+        if not access_token:
+            return Response(
+                {"message": "Authorization 헤더에 유효한 Bearer 토큰이 필요합니다."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        current_password = (request.data.get("current_password") or "").strip()
+        if not current_password:
+            return Response(
+                {"message": "현재 비밀번호는 필수입니다."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        try:
+            ok, _, _, error_response = verify_current_password(access_token, current_password)
+            if not ok:
+                return error_response
+
+            return Response({"message": "현재 비밀번호가 확인되었습니다."}, status=status.HTTP_200_OK)
+
+        except Exception as error:
+            print(f"=== VERIFY CURRENT PASSWORD ERROR ===\n{error}\n=====================================")
+            return Response(
+                {"message": "비밀번호 확인 중 오류가 발생했습니다."},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )      
         
 class ChangePasswordView(APIView):
     """비밀번호 변경 API"""
@@ -355,9 +438,9 @@ class ChangePasswordView(APIView):
                 status=status.HTTP_400_BAD_REQUEST,
             )
  
-        # 요청 Body에서 필수값 추출 (앞뒤 공백 제거)
-        current_password = request.data.get("current_password", "").strip()
-        new_password = request.data.get("new_password", "").strip()
+        # 요청 Body에서 필수값 추출 (null이 와도 빈 문자열로 처리, 앞뒤 공백 제거)
+        current_password = (request.data.get("current_password") or "").strip()
+        new_password = (request.data.get("new_password") or "").strip()
  
         # 필수값 누락 시 400 반환
         if not all([current_password, new_password]):
@@ -383,47 +466,12 @@ class ChangePasswordView(APIView):
         try:
             supabase_url = os.getenv("SUPABASE_URL")
  
-            # access_token으로 현재 유저 정보 조회
-            user_headers = {
-                "apikey": os.getenv("SUPABASE_ANON_KEY"),
-                "Authorization": f"Bearer {access_token}",
-                "Content-Type": "application/json",
-            }
-            user_response = requests.get(
-                f"{supabase_url}/auth/v1/user",
-                headers=user_headers,
-            )
- 
-            if user_response.status_code != 200:
-                return Response(
-                    {"message": "유효하지 않은 토큰입니다."},
-                    status=status.HTTP_401_UNAUTHORIZED,
-                )
- 
-            # 현재 유저 이메일 추출
-            user_email = user_response.json().get("email")
- 
-            # 현재 비밀번호 검증 (로그인 시도로 확인)
-            verify_headers = {
-                "apikey": os.getenv("SUPABASE_ANON_KEY"),
-                "Content-Type": "application/json",
-            }
-            verify_response = requests.post(
-                f"{supabase_url}/auth/v1/token?grant_type=password",
-                headers=verify_headers,
-                json={"email": user_email, "password": current_password},
-            )
- 
-            # 현재 비밀번호가 틀린 경우 401 반환
-            if verify_response.status_code != 200:
-                return Response(
-                    {"message": "현재 비밀번호가 올바르지 않습니다."},
-                    status=status.HTTP_401_UNAUTHORIZED,
-                )
+            ok, user_email, user_id, error_response = verify_current_password(access_token, current_password)
+            if not ok:
+                return error_response
  
             # Supabase Admin API로 비밀번호 변경
             admin_headers = get_supabase_headers()
-            user_id = user_response.json().get("id")
             change_response = requests.put(
                 f"{supabase_url}/auth/v1/admin/users/{user_id}",
                 headers=admin_headers,
@@ -435,9 +483,13 @@ class ChangePasswordView(APIView):
                 raise Exception(f"Supabase API 오류: {change_response.text}")
  
             # 새 비밀번호로 다시 로그인하여 새 토큰 발급
+            new_token_headers = {
+                "apikey": os.getenv("SUPABASE_ANON_KEY"),
+                "Content-Type": "application/json",
+            }
             new_token_response = requests.post(
                 f"{supabase_url}/auth/v1/token?grant_type=password",
-                headers=verify_headers,
+                headers=new_token_headers,
                 json={"email": user_email, "password": new_password},
             )
  
@@ -517,7 +569,7 @@ class WithdrawalView(APIView):
             provider = user_metadata_provider or app_metadata_provider
             is_social = provider in ["google", "kakao", "naver"]
 
-            # 5. 일반 유저만 비밀번호 검증 (소셜 유저는 스킵)
+            # 5. 일반 유저만 비밀번호 검증 (소셜 유저는 이메일 인증번호로 검증)
             if not is_social:                        
                 if not password:
                     return Response(
@@ -533,6 +585,26 @@ class WithdrawalView(APIView):
                 if login_check.status_code != 200:
                     return Response(
                         {"message": "비밀번호가 일치하지 않습니다."},
+                        status=status.HTTP_401_UNAUTHORIZED,
+                    )
+            else:
+                # 소셜 유저는 이메일 인증번호로 본인 확인
+                email_code = (request.data.get("email_code") or "").strip()
+                if not email_code:
+                    return Response(
+                        {"message": "본인 확인을 위해 인증번호가 필요합니다."},
+                        status=status.HTTP_400_BAD_REQUEST,
+                    )
+
+                verify_res = requests.post(
+                    f"{supabase_url}/auth/v1/verify",
+                    headers=get_supabase_anon_headers(),
+                    json={"email": user_email, "token": email_code, "type": "email"},
+                )
+
+                if verify_res.status_code != 200:
+                    return Response(
+                        {"message": "인증번호가 일치하지 않습니다."},
                         status=status.HTTP_401_UNAUTHORIZED,
                     )
 
@@ -1357,5 +1429,102 @@ class RegisterFCMTokenView(APIView):
             print(f"=== REGISTER FCM TOKEN ERROR ===\n{error}\n================================")
             return Response(
                 {"message": "FCM 토큰 등록 중 오류가 발생했습니다."},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
+            
+            
+class SendWithdrawalCodeView(APIView):
+    """회원탈퇴용 이메일 OTP 발송 API (소셜 유저 전용)"""
+
+    def post(self, request):
+        """
+        POST /api/v1/auth/withdrawal/send-code
+        - access_token으로 유저 이메일 확인 후 Supabase OTP 발송
+        """
+        access_token = extract_access_token(request)
+        if not access_token:
+            return Response(
+                {"message": "Authorization 헤더에 유효한 Bearer 토큰이 필요합니다."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        try:
+            supabase_url = os.getenv("SUPABASE_URL")
+
+            user_info_res = requests.get(
+                f"{supabase_url}/auth/v1/user",
+                headers={"apikey": os.getenv("SUPABASE_ANON_KEY"), "Authorization": f"Bearer {access_token}"}
+            )
+            if user_info_res.status_code != 200:
+                return Response({"message": "유효하지 않은 토큰입니다."}, status=status.HTTP_401_UNAUTHORIZED)
+
+            user_email = user_info_res.json().get("email")
+            if not user_email:
+                return Response({"message": "등록된 이메일이 없습니다."}, status=status.HTTP_400_BAD_REQUEST)
+
+            # create_user: False → 기존 유저에게만 발송, 신규 가입 방지
+            otp_res = requests.post(
+                f"{supabase_url}/auth/v1/otp",
+                headers=get_supabase_anon_headers(),
+                json={"email": user_email, "create_user": False},
+            )
+
+            if otp_res.status_code not in [200, 204]:
+                raise Exception(f"인증번호 발송 오류: {otp_res.text}")
+
+            return Response({"message": "인증번호가 발송되었습니다."}, status=status.HTTP_200_OK)
+
+        except Exception as error:
+            print(f"=== SEND WITHDRAWAL CODE ERROR ===\n{error}\n===========================")
+            return Response(
+                {"message": "인증번호 발송 중 오류가 발생했습니다."},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
+            
+            
+class SendPinResetCodeView(APIView):
+    """잠금화면 PIN 재설정 이메일 OTP 발송 API"""
+
+    def post(self, request):
+        """
+        POST /api/v1/auth/pin/send-code/
+        - access_token으로 유저 이메일 확인 후 Supabase OTP 발송
+        """
+        access_token = extract_access_token(request)
+        if not access_token:
+            return Response(
+                {"message": "Authorization 헤더에 유효한 Bearer 토큰이 필요합니다."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        try:
+            supabase_url = os.getenv("SUPABASE_URL")
+
+            user_info_res = requests.get(
+                f"{supabase_url}/auth/v1/user",
+                headers={"apikey": os.getenv("SUPABASE_ANON_KEY"), "Authorization": f"Bearer {access_token}"}
+            )
+            if user_info_res.status_code != 200:
+                return Response({"message": "유효하지 않은 토큰입니다."}, status=status.HTTP_401_UNAUTHORIZED)
+
+            user_email = user_info_res.json().get("email")
+            if not user_email:
+                return Response({"message": "등록된 이메일이 없습니다."}, status=status.HTTP_400_BAD_REQUEST)
+
+            otp_res = requests.post(
+                f"{supabase_url}/auth/v1/otp",
+                headers=get_supabase_anon_headers(),
+                json={"email": user_email, "create_user": False},
+            )
+
+            if otp_res.status_code not in [200, 204]:
+                raise Exception(f"인증번호 발송 오류: {otp_res.text}")
+
+            return Response({"message": "인증번호가 발송되었습니다."}, status=status.HTTP_200_OK)
+
+        except Exception as error:
+            print(f"=== SEND PIN RESET CODE ERROR ===\n{error}\n===========================")
+            return Response(
+                {"message": "인증번호 발송 중 오류가 발생했습니다."},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )

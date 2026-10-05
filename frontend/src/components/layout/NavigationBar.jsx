@@ -26,9 +26,16 @@ export default function NavigationBar() {
       iconInactive: getAssetUrl(currentTheme, 'icons', 'gallery_icon_x3'),
     },
     {
+      id: 'stats',                       
+      label: '통계',
+      path: '/stats',                   
+      iconActive: getAssetUrl(currentTheme, 'icons', 'bar_graph_icon_x3'), 
+      iconInactive: getAssetUrl(currentTheme, 'icons', 'bar_graph_icon_x3'),
+    },
+    {
       id: 'game',
       label: '게임',
-      path: '/game1run',
+      path: '/minigamehub',
       iconActive: getAssetUrl(currentTheme, 'icons', 'game_icon_x3'),
       iconInactive: getAssetUrl(currentTheme, 'icons', 'game_icon_x3'),
     },
@@ -69,7 +76,7 @@ export default function NavigationBar() {
     ────────────────────────────────────────────────────────────────────── */
 
     <div
-      className="absolute bottom-0 left-0 w-full z-50 grid grid-cols-4 items-center"
+      className="absolute bottom-0 left-0 w-full z-50 grid grid-cols-5 items-center"
       style={{
         /* 1. 네비게이션바 배경 이미지 불러오기 */
         backgroundImage: `url(${getAssetUrl(currentTheme, 'boxes', 'nav_bar_box_x3')})`,

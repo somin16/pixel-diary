@@ -5,6 +5,7 @@ import { useTheme } from '../../../stores/useThemeStore'; // useTheme 불러오�
 import { getAssetUrl } from "../../../utils/AssetHelper"; // 헬퍼 불러오기
 import { supabase } from "../../../utils/SupabaseClient"; // supabase 불러오기
 import { useLogout, useWithdraw, useChangePassword } from '../../../hooks/mutations/useAuthMutations'; // 인증 관련 뮤테이션 훅
+import { authApi } from '../../../api/authApi'; // 인증 관련 API 함수
 
 // 컴포넌트 불러오기
 import LogoutDialog from '../../../components/more/auth/LogoutDialog';
@@ -100,8 +101,8 @@ const Account = () => {
     }
   }
 
-  // 회원탈퇴 확인 - 소셜 유저는 password 없이 요청
-  const handleWithdrawal = async (password) => {
+  // 회원탈퇴 확인
+  const handleWithdrawal = async (inputValue) => {
     // 현재 세션에서 토큰들 가져오기
     const { data: { session } } = await supabase.auth.getSession();
 
@@ -111,13 +112,12 @@ const Account = () => {
     }
 
     const body = loginProvider === 'email'
-      ? { password }          // 이메일 유저만 비밀번호 전송
-      : {};                   // 소셜 유저는 빈 바디
+      ? { password: inputValue }          // 이메일 유저: 비밀번호 전송
+      : { email_code: inputValue };       // 소셜 유저: 인증번호
 
     try {
       // useWithdraw 훅이 백엔드 탈퇴 요청 + 로컬 세션/캐시 정리를 담당
       await withdraw.mutateAsync(body);
-
       setDialog(null);
       setResultDialog('withdrawal');
     } catch (error) {
@@ -131,6 +131,11 @@ const Account = () => {
       }
       throw message;
     }
+  };
+
+  // 인증번호 발송 핸들러 추가
+  const handleSendWithdrawalCode = async () => {
+    await authApi.sendWithdrawalCode();
   };
 
   // 비밀번호 변경 - useChangePassword 훅이 백엔드 요청 + 새 토큰으로 Supabase 세션 갱신까지 담당
@@ -274,6 +279,7 @@ const Account = () => {
         <WithdrawalDialog
           loginProvider={loginProvider}
           onConfirm={handleWithdrawal}
+          onSendCode={handleSendWithdrawalCode}
           onCancel={() => setDialog(null)}
           maxWidth="320px"
         />

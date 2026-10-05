@@ -116,7 +116,7 @@ const Inventory = () => {
         </h1>
       </div>
 
-      <div className="absolute top-[15%] right-[2%] flex flex-col items-end z-10 gap-3">
+      <div className="absolute top-[15%] right-[2%] flex flex-col items-end z-10">
         <button
           onClick={() => navigate('/more/shop')}
           className="bg-transparent border-none p-0 cursor-pointer outline-none"

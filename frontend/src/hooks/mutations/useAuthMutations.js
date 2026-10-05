@@ -50,6 +50,13 @@ export function useLogout() {
   });
 }
 
+// 현재 비밀번호 검증 - 비밀번호 변경 1단계(현재 비번 확인)에서 호출
+export function useVerifyCurrentPassword() {
+  return useMutation({
+    mutationFn: authApi.verifyCurrentPassword,
+  });
+}
+
 // 비밀번호 변경 - 성공 시 새 토큰으로 Supabase 세션 동기화
 export function useChangePassword() {
   return useMutation({

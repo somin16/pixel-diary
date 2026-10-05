@@ -12,16 +12,19 @@ export function gameOver(scene) {
     scene.time.paused = true;
 
     // 조이스틱 파괴(단순 가시성을 위한것입니다)
-    scene.joyStick.destroy();
+    scene.joystick.destroy();
 
     // UI 그룹 및 위치조정
     scene.gameOverUI = scene.add.container(0, 0);
     scene.gameOverUI.setScrollFactor(0);
     scene.gameOverUI.setDepth(500);
 
+    // 현재 화면의 가로 세로 크기 받기
+    const { width, height } = scene.cameras.main;
+
     // 가로세로 중앙
-    const centerX = scene.cameras.main.width / 2;
-    const centerY = scene.cameras.main.height / 2;
+    const centerX = width / 2;
+    const centerY = height / 2;
 
     // 반투명 검은배경을 게임 전체에 깔기
     const backGround = scene.add.rectangle(
@@ -34,7 +37,7 @@ export function gameOver(scene) {
     );
 
     // 게임오버 텍스트
-    const gameOverText = scene.add.text(centerX, centerY - 150, "GAME OVER", {
+    const gameOverText = scene.add.text(centerX, height * 0.35, "GAME OVER", {
       fontFamily: "Mona",
       fontSize: "48px",
       fontStyle: "bold",
@@ -42,7 +45,7 @@ export function gameOver(scene) {
     }).setOrigin(0.5);
 
     // 재시작 버튼 위치
-    const restartButtonPosY = centerY + 30;
+    const restartButtonPosY = gameOverText.y + 100;
 
     // 재시작 버튼 배경
     const restartButtonBackground = scene.add.rectangle(centerX, restartButtonPosY, 250, 60, 0x44aa44)

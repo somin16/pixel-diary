@@ -27,16 +27,18 @@ export default function DiaryDetail() {
     content: data?.content ?? "",
     imageUrl: data?.image_url ?? "",
 
-    selectedEmoji: data?.emotion_item?.image_url ?? null,
+    selectedEmoji: data?.emoji_item?.image_url ?? null,
     selectedFrame: data?.theme_item?.image_url ?? null,
 
     // 스티커들은 여러 개일 수 있으니 목록을 하나씩 돌면서 변환합니다.
     stickers: (data?.sticker ?? []).map((s, i) => ({
       id: s.item_id,
       img: s.image_url ?? '',
-      instanceId: `${s.item_id}-${i}`,    // 화면에서 구분하기 위한 고유 키 (렌더 중 Date.now() 호출 금지라 결정론적 값 사용)
-      x: s.pos_x ?? null,                 // 저장된 가로 위치
-      y: s.pos_y ?? null,                 // 저장된 세로 위치
+      instanceId: `${s.item_id}-${i}`,
+      x: s.pos_x ?? null,
+      y: s.pos_y ?? null,
+      size: s.size ?? 20,          // 추가 (DiaryForm의 기본값과 같은 숫자로)
+      rotation: s.rotation ?? 0,   // 추가
     })),
   };
 

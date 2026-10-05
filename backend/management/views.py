@@ -84,8 +84,8 @@ class AdminItemView(APIView):
                     status=status.HTTP_401_UNAUTHORIZED,
                 )
 
-            # 관리자 권한 확인 (user_metadata의 role이 admin인 경우만 허용)
-            role = user.get("user_metadata", {}).get("role", "")
+            # 관리자 권한 확인 (app_metadata의 role이 admin인 경우만 허용)
+            role = user.get("app_metadata", {}).get("role", "")
             if role != "admin":
                 return Response(
                     {"message": "관리자 권한이 필요합니다."},
@@ -177,8 +177,8 @@ class AdminAnnouncementView(APIView):
                     status=status.HTTP_401_UNAUTHORIZED,
                 )
 
-            # 관리자 권한 확인 (user_metadata의 role이 admin인 경우만 허용)
-            role = user.get("user_metadata", {}).get("role", "")
+            # 관리자 권한 확인 (app_metadata의 role이 admin인 경우만 허용)
+            role = user.get("app_metadata", {}).get("role", "")
             if role != "admin":
                 return Response(
                     {"message": "관리자 권한이 필요합니다."},
@@ -251,8 +251,8 @@ class AdminAnnouncementView(APIView):
                     status=status.HTTP_401_UNAUTHORIZED,
                 )
 
-            # 관리자 권한 확인 (user_metadata의 role이 admin인 경우만 허용)
-            role = user.get("user_metadata", {}).get("role", "")
+            # 관리자 권한 확인 (app_metadata의 role이 admin인 경우만 허용)
+            role = user.get("app_metadata", {}).get("role", "")
             if role != "admin":
                 return Response(
                     {"message": "관리자 권한이 필요합니다."},
@@ -333,8 +333,8 @@ class AdminAnnouncementView(APIView):
                     status=status.HTTP_401_UNAUTHORIZED,
                 )
 
-            # 관리자 권한 확인 (user_metadata의 role이 admin인 경우만 허용)
-            role = user.get("user_metadata", {}).get("role", "")
+            # 관리자 권한 확인 (app_metadata의 role이 admin인 경우만 허용)
+            role = user.get("app_metadata", {}).get("role", "")
             if role != "admin":
                 return Response(
                     {"message": "관리자 권한이 필요합니다."},
@@ -426,7 +426,7 @@ class AdminUserView(APIView):
                     status=status.HTTP_401_UNAUTHORIZED,
                 )
 
-            role = user.get("user_metadata", {}).get("role", "")
+            role = user.get("app_metadata", {}).get("role", "")
             if role != "admin":
                 return Response(
                     {"message": "관리자 권한이 필요합니다."},
@@ -513,7 +513,7 @@ class AdminUserView(APIView):
                     status=status.HTTP_401_UNAUTHORIZED,
                 )
 
-            role = user.get("user_metadata", {}).get("role", "")
+            role = user.get("app_metadata", {}).get("role", "")
             if role != "admin":
                 return Response(
                     {"message": "관리자 권한이 필요합니다."},

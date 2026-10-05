@@ -14,13 +14,13 @@ export const diaryApi = {
   // 일기 작성
   create: (payload) => authFetch(`${BASE_URL}/api/v1/diaries/`, {
     method: 'POST',
-    body: JSON.stringify(payload), // { image_id, content }
+    body: JSON.stringify(payload), // { image_id, content, emotion }
   }),
 
   // 일기 수정 (본문)
   update: (diaryId, payload) => authFetch(`${BASE_URL}/api/v1/diaries/${diaryId}/`, {
     method: 'PATCH',
-    body: JSON.stringify(payload), // { content }
+    body: JSON.stringify(payload), // { content, emotion }
   }),
 
   // 일기 삭제
@@ -31,7 +31,7 @@ export const diaryApi = {
   // 꾸미기 저장 (이모지 / 액자 / 스티커)
   saveDeco: (diaryId, payload) => authFetch(`${BASE_URL}/api/v1/diaries/${diaryId}/deco/`, {
     method: 'POST',
-    body: JSON.stringify(payload), // { emoji_id, diary_theme_id, sticker }
+    body: JSON.stringify(payload), // { emoji_id, diary_theme_id, sticker: [{ item_id, pos_x, pos_y, size }] }
   }),
 
   // 꾸미기 초기화
