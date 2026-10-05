@@ -5,13 +5,14 @@ import React, { useState } from "react";
  * @property {Object} item - 문의사항 개별 데이터 객체 (users 조인 데이터 포함)
  * @property {Boolean} isExpanded - 현재 카드가 열려있는지 여부
  * @property {Function} onToggle - 아코디언 토글 함수
- * @property {Function} onSave - 답변 저장 부모 핸들러
- * @property {Function} onDelete - 답변 삭제 부모 핸들러
+ * @property {Function} onSave - (contactId, text) => Promise<boolean> 답변 저장, 성공 여부 반환
+ * @property {Function} onDelete - (contactId, onDone) => void 답변 삭제, 성공 시 onDone 호출됨
  */
 export default function ContactAdminCard({ item, isExpanded, onToggle, onSave, onDelete }) {
   const [replyText, setReplyText] = useState(item.reply || "");
   const [isEditing, setIsEditing] = useState(!item.reply);
   const [error, setError] = useState("");
+  const [isSaving, setIsSaving] = useState(false);
 
   // 내부 토글 핸들러 (닫힐 때 상태 리셋)
   const handleLocalToggle = () => {
@@ -24,13 +25,23 @@ export default function ContactAdminCard({ item, isExpanded, onToggle, onSave, o
   };
 
   // 내부 저장 핸들러 (부모에게 데이터를 넘기기 전 먼저 검증)
-  const handleLocalSave = () => {
+  const handleLocalSave = async () => {
+    if (isSaving) return;
     if (!replyText.trim()) {
       setError("답변 내용을 입력해주세요");
       return;
     }
     setError("");
-    onSave(item.contact_id, replyText, setIsEditing);
+    setIsSaving(true);
+    const ok = await onSave(item.contact_id, replyText);
+    setIsSaving(false);
+    if (ok) setIsEditing(false);
+  };
+ 
+  // 삭제 성공 시 부모가 호출: 입력창 비우고 바로 새 답변을 쓸 수 있게 편집 모드로
+  const handleDeleted = () => {
+    setReplyText("");
+    setIsEditing(true);
   };
 
   return (
@@ -69,6 +80,8 @@ export default function ContactAdminCard({ item, isExpanded, onToggle, onSave, o
                   value={replyText}
                   onChange={(e) => setReplyText(e.target.value)}
                   placeholder="여기에 답변 내용을 입력하세요..."
+                  maxLength={1000}
+                  disabled={isSaving}
                   className="w-full p-[2.5%] text-2xs border border-gray-300 rounded-lg bg-white text-gray-800 outline-none focus:border-blue-400 resize-none h-[80px]"
                 />
 
@@ -83,6 +96,7 @@ export default function ContactAdminCard({ item, isExpanded, onToggle, onSave, o
                   {item.reply && (
                     <button
                       onClick={() => { setIsEditing(false); setReplyText(item.reply); }}
+                      disabled={isSaving}
                       className="px-[3%] py-[1.5%] bg-gray-400 text-white rounded-sm font-bold border-none cursor-pointer text-3xs"
                     >
                       취소
@@ -91,9 +105,10 @@ export default function ContactAdminCard({ item, isExpanded, onToggle, onSave, o
 
                   <button
                     onClick={handleLocalSave}
-                    className="px-[4%] py-[1.5%] bg-blue-600 text-white rounded-sm font-bold border-none cursor-pointer text-3xs"
+                    disabled={isSaving}
+                    className={`px-[4%] py-[1.5%] bg-blue-600 text-white rounded-sm font-bold border-none cursor-pointer text-3xs ${isSaving ? "opacity-50" : ""}`}
                   >
-                    {item.reply ? "수정 완료" : "답변 등록"}
+                    {isSaving ? "저장 중..." : item.reply ? "수정 완료" : "답변 등록"}
                   </button>
                 </div>
               </div>
@@ -102,7 +117,7 @@ export default function ContactAdminCard({ item, isExpanded, onToggle, onSave, o
                 <p className="text-gray-700 m-[0%] whitespace-pre-wrap break-all leading-relaxed">{item.reply}</p>
                 <div className="flex gap-[2%] justify-end pt-[1%] border-t border-blue-100/50">
                   <button
-                    onClick={() => onDelete(item.contact_id, setReplyText, setIsEditing)}
+                    onClick={() => onDelete(item.contact_id, handleDeleted)}
                     className="px-[2.5%] py-[1%] bg-red-500 text-white rounded-sm font-bold border-none cursor-pointer text-3xs"
                   >
                     삭제
