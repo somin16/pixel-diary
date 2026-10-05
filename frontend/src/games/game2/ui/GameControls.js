@@ -51,6 +51,7 @@ export default class GameControls {
             0,
             "JUMP",
             {
+                fontFamily: "Mona",
                 fontSize: "22px",
                 color: "#ffffff",
                 fontStyle: "bold"
@@ -89,6 +90,7 @@ export default class GameControls {
             0,
             "SLIDE",
             {
+                fontFamily: "Mona",
                 fontSize: "22px",
                 color: "#ffffff",
                 fontStyle: "bold"
