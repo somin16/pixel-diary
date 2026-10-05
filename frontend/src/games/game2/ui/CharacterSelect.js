@@ -11,8 +11,8 @@ export function createCharacterSelectUI(scene) {
     const boxSize = Math.min(180, width * 0.22, height * 0.36);
     const boxY = height * 0.42;
 
-    // 선택 버튼
-    const buttonW = Math.min(180, width * 0.22);
+    // 선택 버튼 (가운데 박스와 같은 너비)
+    const buttonW = boxSize;
     const buttonH = Math.min(70, height * 0.16);
     const buttonY = height * 0.82;
 
@@ -30,6 +30,7 @@ export function createCharacterSelectUI(scene) {
         height * 0.12,
         "캐릭터 변경",
         {
+            fontFamily: "Mona",
             fontSize: `${titleSize}px`,
             color: "#ffffff"
         }
@@ -66,6 +67,7 @@ export function createCharacterSelectUI(scene) {
         buttonY,
         "선택",
         {
+            fontFamily: "Mona",
             fontSize: `${buttonFont}px`,
             color: "#777777"
         }
@@ -85,6 +87,7 @@ export function createCharacterSelectUI(scene) {
         25,
         "<",
         {
+            fontFamily: "Mona",
             fontSize: "42px",
             color: "#ffffff",
             fontStyle: "bold"
@@ -133,6 +136,7 @@ function createCharacterBox(scene, x, y, size, characterName) {
         y - size * 0.14,
         characterName,
         {
+            fontFamily: "Mona",
             fontSize: `${nameFont}px`,
             color: "#ffffff"
         }
@@ -146,6 +150,7 @@ function createCharacterBox(scene, x, y, size, characterName) {
         y + size * 0.14,
         "준비중",
         {
+            fontFamily: "Mona",
             fontSize: `${subFont}px`,
             color: "#aaaaaa"
         }

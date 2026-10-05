@@ -18,6 +18,8 @@ export default class PauseMenu {
         // 화면 크기가 바뀌면 위치 다시 맞추기
         scene.scale.on(Phaser.Scale.Events.RESIZE, this.layout, this);
 
+        // 키보드 ESC (웹 테스트용)
+        scene.input.keyboard.on("keydown-ESC", this.toggle, this);
     }
 
 
@@ -89,7 +91,7 @@ export default class PauseMenu {
             0,
             0,
             300,
-            340,
+            170,
             0x5f5f5f
         );
 
@@ -131,6 +133,7 @@ export default class PauseMenu {
             0,
             label,
             {
+                fontFamily: "Mona",
                 fontSize: "22px",
                 color: "#ffffff",
                 fontStyle: "bold"
@@ -159,8 +162,9 @@ export default class PauseMenu {
         const h = this.scene.scale.height;
 
         // 메뉴 버튼: 오른쪽 위
-        const bx = w - 44;
-        const by = 44;
+        // 여백 25px (JUMP / SLIDE 버튼과 같은 여백)
+        const bx = w - 25 - 28;
+        const by = 25 + 28;
 
         this.menuButton.setPosition(bx, by);
 
@@ -172,9 +176,15 @@ export default class PauseMenu {
         this.dim.setPosition(0, 0);
         this.dim.setSize(w, h);
 
-        // 패널: 화면 가운데 (화면이 작으면 같이 작아짐)
-        const panelW = Math.min(300, w * 0.8);
-        const panelH = Math.min(340, h * 0.85);
+        // 버튼 두 개를 가운데에 모으고,
+        // 패널은 버튼 크기에 맞춰서 만듦
+        const buttonW = Math.min(220, w * 0.6);
+        const buttonH = 48;
+        const gap = 16;      // 버튼 사이 간격
+        const padding = 28;  // 패널 안쪽 여백
+
+        const panelW = buttonW + padding * 2;
+        const panelH = buttonH * 2 + gap + padding * 2;
 
         const cx = w / 2;
         const cy = h / 2;
@@ -182,23 +192,18 @@ export default class PauseMenu {
         this.panel.setPosition(cx, cy);
         this.panel.setSize(panelW, panelH);
 
-        const buttonW = panelW * 0.75;
+        // 돌아가기 (위) / 게임종료 (아래): 가운데 기준으로 대칭
+        const offset = (buttonH + gap) / 2;
 
-        const panelTop = cy - panelH / 2;
-        const panelBottom = cy + panelH / 2;
-
-        // 돌아가기: 패널 위쪽
-        const resumeY = panelTop + panelH * 0.28;
+        const resumeY = cy - offset;
+        const exitY = cy + offset;
 
         this.resumeButton.box.setPosition(cx, resumeY);
-        this.resumeButton.box.setSize(buttonW, 48);
+        this.resumeButton.box.setSize(buttonW, buttonH);
         this.resumeButton.text.setPosition(cx, resumeY);
 
-        // 게임종료: 패널 아래쪽
-        const exitY = panelBottom - 40;
-
         this.exitButton.box.setPosition(cx, exitY);
-        this.exitButton.box.setSize(buttonW, 48);
+        this.exitButton.box.setSize(buttonW, buttonH);
         this.exitButton.text.setPosition(cx, exitY);
 
         // 크기가 바뀌었으니 터치 영역도 새로 맞춤

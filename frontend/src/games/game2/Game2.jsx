@@ -32,6 +32,7 @@ const Game2 = () => {
 
         const startGame = async () => {
             await orientationRequest;
+            await document.fonts.load('16px "Mona"');
 
             if (cancelled || !gameContainer.current) {
                 return;

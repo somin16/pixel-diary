@@ -19,6 +19,7 @@ export function createSettingsUI(scene) {
         height * 0.12,
         "설정",
         {
+            fontFamily: "Mona",
             fontSize: `${titleSize}px`,
             color: "#ffffff"
         }
@@ -58,6 +59,7 @@ export function createSettingsUI(scene) {
         25,
         "<",
         {
+            fontFamily: "Mona",
             fontSize: "42px",
             color: "#ffffff",
             fontStyle: "bold"
@@ -99,10 +101,17 @@ function createSoundSetting(scene, x, y, title) {
     const titleFont = Math.max(14, Math.min(22, boxH * 0.25));
     const buttonFont = Math.max(12, Math.min(18, boxH * 0.2));
 
-    // 박스 안쪽 위치 (박스 너비 기준)
-    const titleX = x - boxW * 0.28;
-    const onX = x + boxW * 0.17;
-    const offX = x + boxW * 0.39;
+    // 박스 안쪽 여백과 ON / OFF 사이 간격
+    const pad = boxW * 0.06;
+    const buttonGap = buttonW * 0.2;
+
+    // 박스 왼쪽 / 오른쪽 끝
+    const left = x - boxW / 2;
+    const right = x + boxW / 2;
+
+    // OFF는 오른쪽 끝에서 여백만큼 안쪽, ON은 OFF 왼쪽
+    const offX = right - pad - buttonW / 2;
+    const onX = offX - buttonW - buttonGap;
 
 
     // 설정 박스
@@ -118,17 +127,18 @@ function createSoundSetting(scene, x, y, title) {
     box.setStrokeStyle(2, 0xffffff);
 
 
-    // 설정 이름
+    // 설정 이름 (왼쪽 여백에 맞춰 왼쪽 정렬)
 
     scene.add.text(
-        titleX,
+        left + pad,
         y,
         title,
         {
+            fontFamily: "Mona",
             fontSize: `${titleFont}px`,
             color: "#ffffff"
         }
-    ).setOrigin(0.5);
+    ).setOrigin(0, 0.5);
 
 
     // ON 버튼
@@ -149,6 +159,7 @@ function createSoundSetting(scene, x, y, title) {
         y,
         "ON",
         {
+            fontFamily: "Mona",
             fontSize: `${buttonFont}px`,
             color: "#ffffff"
         }
@@ -173,6 +184,7 @@ function createSoundSetting(scene, x, y, title) {
         y,
         "OFF",
         {
+            fontFamily: "Mona",
             fontSize: `${buttonFont}px`,
             color: "#ffffff"
         }

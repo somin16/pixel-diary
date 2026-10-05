@@ -10,19 +10,17 @@ export function createModeSelectUI(scene) {
     // 모드 버튼 (데일리 / 무한)
     const modeW = Math.min(220, width * 0.28);
     const modeH = Math.min(150, height * 0.38);
-    const modeGap = width * 0.04;
-
-    const modeLeftX = width / 2 - modeGap / 2 - modeW / 2;
-    const modeRightX = width / 2 + modeGap / 2 + modeW / 2;
-    const modeY = height * 0.48;
+    const gap = width * 0.04;
 
     // 하단 버튼 (캐릭터 변경 / 설정)
-    const menuW = Math.min(180, width * 0.22);
+    // 위쪽 버튼과 너비, 간격을 똑같이 맞춰서 좌우 끝선이 일치
+    const menuW = modeW;
     const menuH = Math.min(70, height * 0.16);
-    const menuGap = width * 0.03;
 
-    const menuLeftX = width / 2 - menuGap / 2 - menuW / 2;
-    const menuRightX = width / 2 + menuGap / 2 + menuW / 2;
+    const leftX = width / 2 - gap / 2 - modeW / 2;
+    const rightX = width / 2 + gap / 2 + modeW / 2;
+
+    const modeY = height * 0.48;
     const menuY = height * 0.80;
 
     // 글자 크기
@@ -40,6 +38,7 @@ export function createModeSelectUI(scene) {
         height * 0.12,
         "미니게임 2",
         {
+            fontFamily: "Mona",
             fontSize: `${titleSize}px`,
             color: "#ffffff"
         }
@@ -52,7 +51,7 @@ export function createModeSelectUI(scene) {
 
     createButton(
         scene,
-        modeLeftX,
+        leftX,
         modeY,
         modeW,
         modeH,
@@ -74,7 +73,7 @@ export function createModeSelectUI(scene) {
 
     createButton(
         scene,
-        modeRightX,
+        rightX,
         modeY,
         modeW,
         modeH,
@@ -96,7 +95,7 @@ export function createModeSelectUI(scene) {
 
     createButton(
         scene,
-        menuLeftX,
+        leftX,
         menuY,
         menuW,
         menuH,
@@ -116,7 +115,7 @@ export function createModeSelectUI(scene) {
 
     createButton(
         scene,
-        menuRightX,
+        rightX,
         menuY,
         menuW,
         menuH,
@@ -140,6 +139,7 @@ export function createModeSelectUI(scene) {
         25,
         "<",
         {
+            fontFamily: "Mona",
             fontSize: "42px",
             color: "#ffffff",
             fontStyle: "bold"
@@ -188,6 +188,7 @@ function createButton(
         y,
         label,
         {
+            fontFamily: "Mona",
             fontSize: `${fontSize}px`,
             color: "#ffffff"
         }
