@@ -115,6 +115,7 @@ const DetailDiaryDialog = ({
   //                 pointermove 이벤트 핸들러가 매 프레임 호출될 때 성능 저하 없이 참조 가능
 
   const rootRef = useRef(null);
+  const containerRef = useRef(null);
   const rotatingRef = useRef(null);
   const draggingRef = useRef(null);   // { id, dx, dy }
   const resizingRef = useRef(null);   // instanceId
@@ -361,7 +362,7 @@ const handleStickerRemove = (e, instanceId) => {
       const hasInlineAspectRatio = !!el.style.aspectRatio; // 스티커처럼 인라인 style로 지정된 경우 대응
 
       if (aspectClasses.length > 0 || hasInlineAspectRatio) {
-        const rect = el.getBoundingClientRect();
+        const rect = { width: el.offsetWidth, height: el.offsetHeight };
         originals.push({
           el,
           classes: aspectClasses,
@@ -389,6 +390,7 @@ const handleStickerRemove = (e, instanceId) => {
   // 공유: 일기장 화면을 이미지로 캡처해서 기기의 공유 시트(카카오톡, SNS 등) 호출
   async function handleShare() {
     setIsMenuOpen(false);
+    setSelectedStickerId(null);
 
     let restore = null;
 
@@ -396,14 +398,17 @@ const handleStickerRemove = (e, instanceId) => {
       // 메뉴가 닫히는 리렌더가 반영될 시간을 살짝 확보
       await new Promise((resolve) => setTimeout(resolve, 100));
 
-      const node = containerRef.current;
+      const root = rootRef.current;
+      const diary = containerRef.current;
 
-      // aspect-ratio를 쓰는 모든 요소(일기장 본체, 그림 칸, 이모지, 스티커 등)를
-      // 캡처 직전 실측 px로 고정 → html2canvas의 aspect-ratio 재계산 오류 방지
-      restore = lockAspectRatios(node);
+      restore = lockAspectRatios(root);
 
-      const canvas = await html2canvas(node, {
-        backgroundColor: '#ffffff',
+      // 크롭 영역: 일기장 본체의 root 기준 위치/크기 (px)
+      const rootRect = root.getBoundingClientRect();
+      const diaryRect = diary.getBoundingClientRect();
+
+      const canvas = await html2canvas(root, {
+        backgroundColor: null,
         scale: 2,
         useCORS: true,
         ignoreElements: (el) => el.dataset?.noCapture === 'true',
@@ -412,7 +417,19 @@ const handleStickerRemove = (e, instanceId) => {
       restore();
       restore = null;
 
-      const base64Data = canvas.toDataURL('image/png').split(',')[1];
+      // 일기장 영역만 잘라내기 (일기장 밖으로 나간 스티커는 여기서 잘림)
+      const ratio = canvas.width / rootRect.width;
+      const sx = (diaryRect.left - rootRect.left) * ratio;
+      const sy = (diaryRect.top - rootRect.top) * ratio;
+      const sw = diaryRect.width * ratio;
+      const sh = diaryRect.height * ratio;
+
+      const cropped = document.createElement('canvas');
+      cropped.width = Math.round(sw);
+      cropped.height = Math.round(sh);
+      cropped.getContext('2d').drawImage(canvas, sx, sy, sw, sh, 0, 0, cropped.width, cropped.height);
+
+      const base64Data = cropped.toDataURL('image/png').split(',')[1];
 
       const savedFile = await Filesystem.writeFile({
         path: `diary-${diaryDate}.png`,
@@ -453,7 +470,7 @@ const handleStickerRemove = (e, instanceId) => {
       className="relative w-full h-full flex flex-col items-center justify-between"
     >
       {/*
-                    ── 레이어 3: 스티커 (z-60) ──────────────────────────────────
+                    ── 스티커 전용 레이어  
                     
                     [핵심] 래퍼 div에 pointer-events-none 적용
                     → 래퍼 자체는 클릭을 통과시킴
@@ -492,7 +509,13 @@ const handleStickerRemove = (e, instanceId) => {
                 onPointerUp={handleStickerPointerUp}
                 onPointerCancel={handleStickerPointerUp}
               >
-                <img src={sticker.img} alt={sticker.id} draggable="false" className="w-full h-full object-contain pointer-events-none" />
+                <img
+                  src={sticker.img}
+                  alt={sticker.id}
+                  draggable="false"
+                  crossOrigin="anonymous"
+                  className="w-full h-full object-contain pointer-events-none"
+                />
 
                 {selected && (
                   <>
@@ -542,12 +565,13 @@ const handleStickerRemove = (e, instanceId) => {
         </div>
 
       {/* ── 닫기 버튼 ── */}
-      <div className="absolute w-full h-full z-40 pointer-events-none">
+      <div data-no-capture="true" className="absolute w-full h-full z-40 pointer-events-none">
         <CloseButton onClose={onClose} className="left-[5%] top-[5%] pointer-events-auto" />
       </div>
 
       {/* ── 일기장 본체: 모든 레이어의 기준 컨테이너 ──────────────────── */}
       <div
+        ref={containerRef}
         className="relative w-[85%] h-fit flex justify-center top-5/10 -translate-y-1/2 aspect-[312/522]"
       >
 
@@ -669,61 +693,7 @@ const handleStickerRemove = (e, instanceId) => {
         />
 
         {/*
-                    ── 레이어 3: 스티커 (z-60) ──────────────────────────────────
-                    
-                    [핵심] 래퍼 div에 pointer-events-none 적용
-                    → 래퍼 자체는 클릭을 통과시킴
-                    → 개별 스티커 div만 decorate 모드에서 pointer-events-auto로 드래그 수신
-                    → 스티커가 없는 영역(텍스트 칸 포함)은 클릭이 아래 레이어로 정상 통과
-                    
-                    [드래그 구현: Pointer Events API]
-                    - 터치와 마우스를 단일 이벤트로 처리 (별도 touch 핸들러 불필요)
-                    - onPointerDown  → draggingRef에 instanceId 기록 + pointer capture 등록
-                    - onPointerMove  → 컨테이너 기준 % 계산 → onStickersChange로 부모 상태 갱신
-                    - onPointerUp    → draggingRef 초기화
-                    - onPointerCancel→ 전화 수신 등 강제 해제 시에도 드래그 정상 종료
-                    
-                    [나중에 추가할 기능]
-                    - 스티커 삭제: 롱프레스 or 더블탭 시 삭제 버튼 노출
-                    - 스티커 크기 조절: 핀치 제스처 or 리사이즈 핸들
-                    - 스티커 회전: 두 손가락 회전 제스처
-                */}
-        <div className="absolute inset-0 z-60 pointer-events-none">
-          {stickers.map((sticker) => (
-            <div
-              key={sticker.instanceId}
-              className={`absolute select-none ${
-                // decorate 모드: 스티커 개별 div만 pointer-events-auto로 드래그 수신
-                // 그 외 모드: pointer-events-none 유지 (래퍼 상속)
-                isDecorate ? 'pointer-events-auto cursor-grab active:cursor-grabbing' : ''
-                }`}
-              style={{
-                // sticker.x, sticker.y 미설정 시 기본값 40% (중앙 근처)
-                // 드래그 후에는 handleStickerPointerMove에서 계산된 값으로 업데이트
-                left: `${sticker.x ?? 40}%`,
-                top: `${sticker.y ?? 40}%`,
-                width: '20%',
-                aspectRatio: '1 / 1',
-                touchAction: 'none', // 브라우저 기본 스크롤/줌 동작 차단
-              }}
-              onPointerDown={(e) => handleStickerPointerDown(e, sticker.instanceId)}
-              onPointerMove={handleStickerPointerMove}
-              onPointerUp={handleStickerPointerUp}
-              onPointerCancel={handleStickerPointerUp}
-            >
-              <img
-                src={sticker.img}
-                alt={sticker.id}
-                draggable="false"       // 브라우저 기본 이미지 드래그 비활성화
-                crossOrigin="anonymous"   // 외부 이미지(Supabase Storage) 캡처 허용
-                className="w-full h-full object-contain pointer-events-none"
-              />
-            </div>
-          ))}
-        </div>
-
-        {/*
-                    ── 레이어 4: 본문 텍스트 (z-50) ────────────────────────────
+                    ── 레이어 3: 본문 텍스트 (z-50) ────────────────────────────
                     - 스티커 레이어(z-40)보다 위에 배치하여 텍스트 영역 클릭 항상 보장
                     - 프레임 영역 전체를 커버하되, 텍스트 칸 위치(pt-[88%])에서 시작
                     - isTextEditable: create/edit + step1 → textarea, 그 외 → <p> 읽기 전용
@@ -760,7 +730,7 @@ const handleStickerRemove = (e, instanceId) => {
       </div>
 
       {/* ── 하단 버튼 슬롯 (부모에서 주입) ── */}
-      <div className="w-full h-[20%] flex justify-center z-30">
+      <div data-no-capture="true" className="w-full h-[20%] flex justify-center z-30">
         {footer}
       </div>
 
