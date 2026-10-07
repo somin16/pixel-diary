@@ -56,6 +56,7 @@ import { profileApi } from "./api/profileApi"; // 프로필 API
 import { attendanceApi } from "./api/attendanceApi"; // 출석 API
 import { useResetAttendanceIfExpired } from './hooks/queries/useAttendanceQueries';
 import { useContactRealtime } from "./hooks/queries/useContactQueries"; // 문의하기 실시간 구독
+import { contactApi } from "./api/contactApi"; // 문의하기 API (빨간 점 prefetch용)
 
 
 const queryClient = new QueryClient({
@@ -107,6 +108,7 @@ function AppInner() {
       queryClient.prefetchQuery({ queryKey: queryKeys.items, queryFn: storeApi.getItem }),
       queryClient.prefetchQuery({ queryKey: queryKeys.inventory, queryFn: inventoryApi.getItem }),
       queryClient.prefetchQuery({ queryKey: queryKeys.attendance, queryFn: attendanceApi.getAttendance }),
+      queryClient.prefetchQuery({ queryKey: queryKeys.contactBadge, queryFn: contactApi.getBadge }),
     ]);
   }
 

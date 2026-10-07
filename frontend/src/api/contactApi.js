@@ -67,32 +67,34 @@ export const contactApi = {
   },
 
   // [유저 + 관리자] 더보기 빨간 점
-  // 데이터 없이 개수만 받음 (head: true) → 존재 여부만 필요하므로 가벼움
+  // 1개만 조회해서 있는지 없는지만 확인 (개수는 세지 않음)
   getBadge: async () => {
     const user = await getCurrentUser();
     const isAdmin = user.app_metadata?.role === "admin";
 
     const [unread, pending] = await Promise.all([
-      // 답변 완료됐는데 안 읽은 내 문의
+      // 답변 완료됐는데 안 읽은 내 문의가 하나라도 있는지
       supabase
         .from("contact")
-        .select("contact_id", { count: "exact", head: true })
+        .select("contact_id")
         .eq("user_id", user.id)
         .eq("status", "resolved")
-        .eq("is_read", false),
+        .eq("is_read", false)
+        .limit(1), // 존재 여부만 필요하므로 1개만 확인 (지우면 전체 조회됨)
 
-      // (관리자만) 답변 대기 중인 문의
+      // (관리자만) 답변 대기 중인 문의가 하나라도 있는지
       isAdmin
         ? supabase
             .from("contact")
-            .select("contact_id", { count: "exact", head: true })
+            .select("contact_id")
             .eq("status", "pending")
-        : Promise.resolve({ count: 0, error: null }),
+            .limit(1)
+        : Promise.resolve({ data: [], error: null }),
     ]);
 
     return {
-      hasUnreadReply: (unwrap(unread).count ?? 0) > 0,
-      hasNewContact: (unwrap(pending).count ?? 0) > 0,
+      hasUnreadReply: (unwrap(unread).data?.length ?? 0) > 0,
+      hasNewContact: (unwrap(pending).data?.length ?? 0) > 0,
     };
   },
 
