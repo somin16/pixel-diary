@@ -8,7 +8,7 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 from utils import extract_access_token, get_user_from_token, get_supabase_headers
-from workflows.pixel_art import PIXEL_ART_WORKFLOW  # comfyUI 워크플로우
+from workflows.pixel_art import PIXEL_ART_WORKFLOW, PIXEL_ART_IMG2IMG_WORKFLOW  # comfyUI 워크플로우
 from config.settings import COMFYUI_URLS, SUPABASE_URL
 
 # 신규: POST(큐잉)와 GET(결과조회) 양쪽에서 쓰는 "결과 저장" 로직을 공용함수로 분리
@@ -306,5 +306,98 @@ class AIGenerateResultView(APIView):
             print(f"=== AI GENERATE RESULT ERROR ===\n{error}\n===============================")
             return Response(
                 {"message": "이미지 결과 조회 중 오류가 발생했습니다."},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
+
+
+class AIImg2ImgView(APIView):
+    """사진 → 픽셀아트 변환 API (img2img)"""
+
+    STORAGE_BUCKET = "diary-images"
+
+    def post(self, request):
+        """
+        POST /api/v1/ai-generate/img2img/
+        - 이미지 파일(image) + positive_prompt + negative_prompt 받아서 ComfyUI img2img 큐잉
+        - 결과 조회는 기존 GET /api/v1/ai-generate/{prompt_id}/result/ 재사용
+        """
+        access_token = extract_access_token(request)
+        if not access_token:
+            return Response(
+                {"message": "Authorization 헤더에 유효한 Bearer 토큰이 필요합니다."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        user = get_user_from_token(access_token)
+        if not user:
+            return Response(
+                {"message": "유효하지 않은 토큰입니다."},
+                status=status.HTTP_401_UNAUTHORIZED,
+            )
+
+        image_file = request.FILES.get("image")
+        positive_prompt = request.data.get("positive_prompt", "pixel art style, cute character").strip()
+        negative_prompt = request.data.get("negative_prompt", "").strip()
+
+        if not image_file:
+            return Response(
+                {"message": "image 파일이 필요합니다."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        try:
+            comfyui_url = random.choice(COMFYUI_URLS)
+
+            # 1. ComfyUI /upload/image 에 이미지 업로드 → 파일명 확보
+            upload_response = requests.post(
+                f"{comfyui_url}/upload/image",
+                files={"image": (image_file.name, image_file.read(), image_file.content_type)},
+            )
+            if upload_response.status_code != 200:
+                raise Exception(f"ComfyUI 이미지 업로드 실패: {upload_response.text}")
+
+            uploaded_filename = upload_response.json().get("name")
+            if not uploaded_filename:
+                raise Exception("ComfyUI 업로드 응답에서 파일명을 찾을 수 없습니다.")
+
+            # 2. img2img 워크플로우에 프롬프트 + 파일명 삽입
+            workflow = copy.deepcopy(PIXEL_ART_IMG2IMG_WORKFLOW)
+            workflow["6"]["inputs"]["text"] = positive_prompt
+            workflow["7"]["inputs"]["text"] = negative_prompt
+            workflow["19"]["inputs"]["image"] = uploaded_filename
+
+            seed = random.randint(0, 2 ** 32 - 1)
+            print(f"[ComfyUI img2img] seed: {seed}, image: {uploaded_filename}")
+            workflow["3"]["inputs"]["seed"] = seed
+
+            client_id = str(uuid.uuid4())
+
+            prompt_response = requests.post(
+                f"{comfyui_url}/prompt",
+                json={"prompt": workflow, "client_id": client_id}
+            )
+            if prompt_response.status_code != 200:
+                raise Exception(f"ComfyUI 오류: {prompt_response.text}")
+
+            prompt_id = prompt_response.json().get("prompt_id")
+
+            return Response(
+                {
+                    "client_id": client_id,
+                    "prompt_id": prompt_id,
+                    "comfyui_url": comfyui_url,
+                },
+                status=status.HTTP_202_ACCEPTED,
+            )
+
+        except requests.exceptions.ConnectionError:
+            return Response(
+                {"message": f"ComfyUI 서버({comfyui_url})에 연결할 수 없습니다."},
+                status=status.HTTP_503_SERVICE_UNAVAILABLE,
+            )
+        except Exception as error:
+            print(f"=== AI IMG2IMG ERROR ===\n{error}\n=======================")
+            return Response(
+                {"message": "이미지 변환 요청 중 오류가 발생했습니다."},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             ) 
