@@ -1,3 +1,11 @@
+import { MAPS } from "../manage/MapConfig";
+import { showToast } from "./Toast";
+
+// =====================================================
+// 모드 선택 화면의 버튼들을 만드는 파일
+// (데일리 모드 / 무한 모드 / 캐릭터 변경 / 설정 / 뒤로가기)
+// =====================================================
+
 export function createModeSelectUI(scene) {
 
     const { width, height } = scene.scale;
@@ -47,6 +55,8 @@ export function createModeSelectUI(scene) {
 
     // =========================
     // 데일리 모드
+    // 오늘 일기를 쓴 경우에만 시작할 수 있고,
+    // 일기에 쓴 감정의 맵으로 시작합니다.
     // =========================
 
     createButton(
@@ -60,8 +70,26 @@ export function createModeSelectUI(scene) {
         "데일리 모드",
         modeFont,
         () => {
+
+            // Game2.jsx에서 넣어둔 일기 정보 꺼내기
+            const info = scene.registry.get("diaryInfo");
+
+            // 오늘 쓴 일기가 없으면 안내만 하고 끝
+            if (!info?.todayEmotion) {
+                showToast(scene, "오늘 일기를 먼저 작성해 주세요");
+                return;
+            }
+
+            // 그 감정의 맵이 아직 없으면(예: 피곤) 안내만 하고 끝
+            if (!MAPS[info.todayEmotion]) {
+                showToast(scene, "아직 준비 중인 맵이에요");
+                return;
+            }
+
+            // 게임 시작 (모드와 감정을 함께 넘김)
             scene.scene.start("GameScene", {
-                gameMode: "daily"
+                gameMode: "daily",
+                emotion: info.todayEmotion
             });
         }
     );
@@ -69,6 +97,8 @@ export function createModeSelectUI(scene) {
 
     // =========================
     // 무한 모드
+    // 데일리 모드로 한 번이라도 열린 맵이 있어야 들어갈 수 있고,
+    // 들어가면 맵을 고르는 화면이 나옵니다.
     // =========================
 
     createButton(
@@ -82,9 +112,17 @@ export function createModeSelectUI(scene) {
         "무한 모드",
         modeFont,
         () => {
-            scene.scene.start("GameScene", {
-                gameMode: "infinity"
-            });
+
+            const info = scene.registry.get("diaryInfo");
+
+            // 열린 맵이 하나도 없으면 안내만 하고 끝
+            if (!info || info.unlockedEmotions.length === 0) {
+                showToast(scene, "일기를 써서 맵을 먼저 열어 주세요");
+                return;
+            }
+
+            // 맵 선택 화면으로 이동
+            scene.scene.start("InfinityMenuScene");
         }
     );
 
@@ -151,7 +189,7 @@ export function createModeSelectUI(scene) {
     });
 
     backButton.on("pointerdown", () => {
-        window.location.href = "/minigamehub";
+    window.history.back();
     });
 }
 

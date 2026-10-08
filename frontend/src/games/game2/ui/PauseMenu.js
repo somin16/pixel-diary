@@ -1,7 +1,15 @@
 import Phaser from "phaser";
 
+// =====================================================
+// 일시정지 메뉴
+// 오른쪽 위 ≡ 버튼을 누르면 게임이 멈추고
+// [돌아가기] [게임종료] 버튼이 있는 창이 나옵니다.
+// =====================================================
+
 export default class PauseMenu {
 
+    // scene  : 게임 화면
+    // onExit : [게임종료]를 눌렀을 때 실행할 일 (보통 모드 선택 화면으로 이동)
     constructor(scene, onExit) {
 
         this.scene = scene;
@@ -113,6 +121,7 @@ export default class PauseMenu {
     }
 
 
+    // 패널 안의 버튼 하나 만들기
     createPanelButton(label, onClick) {
 
         const box = this.scene.add.rectangle(
@@ -146,14 +155,17 @@ export default class PauseMenu {
 
         box.on("pointerover", () => box.setFillStyle(0xa6adae));
         box.on("pointerout", () => box.setFillStyle(0x8f9596));
-        box.on("pointerdown", onClick);
+
+        box.on("pointerdown", () => {
+            onClick();
+        });
 
         return { box, text };
     }
 
 
     // -------------------------
-    // 위치 맞추기
+    // 위치 맞추기 (현재 화면 크기 기준)
     // -------------------------
 
     layout() {
@@ -258,6 +270,10 @@ export default class PauseMenu {
         }
 
         this.isPaused = true;
+
+        // ★ 추가: 메뉴를 열기 직전에 위치를 현재 화면 크기에 다시 맞춤
+        // (화면 크기가 바뀐 뒤 패널이 엉뚱한 곳에 뜨는 문제 방지)
+        this.layout();
 
         this.scene.physics.pause();
         this.scene.time.paused = true;

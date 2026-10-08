@@ -13,7 +13,7 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
         this.scene = scene;
 
         // 플레이어 크기
-        this.setScale(0.5);
+        this.setScale(1.5);
 
         // 자동 달리기 속도
         this.runSpeed = 150;

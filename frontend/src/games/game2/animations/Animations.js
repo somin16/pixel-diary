@@ -8,11 +8,11 @@ export function createAllAnimations(scene) {
     }
 
 
-    // -------------------------
+    // =========================
     // 달리기
-    // 이미지 기준 1~9번
-    // Phaser frame 기준 0~8
-    // -------------------------
+    // 이미지 기준 1~4번
+    // Phaser frame 기준 0~3
+    // =========================
 
     scene.anims.create({
         key: "player_run",
@@ -22,11 +22,6 @@ export function createAllAnimations(scene) {
             { key: "player", frame: 1 },
             { key: "player", frame: 2 },
             { key: "player", frame: 3 },
-            { key: "player", frame: 4 },
-            { key: "player", frame: 5 },
-            { key: "player", frame: 6 },
-            { key: "player", frame: 7 },
-            { key: "player", frame: 8 }
         ],
 
         frameRate: 10,
@@ -34,25 +29,20 @@ export function createAllAnimations(scene) {
     });
 
 
-    // -------------------------
+    // =========================
     // 점프
-    // 이미지 기준 12번부터
-    // Phaser frame 기준 11~19
-    // -------------------------
+    // 이미지 기준 5~8번
+    // Phaser frame 기준 4~7
+    // =========================
 
     scene.anims.create({
         key: "player_jump",
 
         frames: [
-            { key: "player", frame: 11 },
-            { key: "player", frame: 12 },
-            { key: "player", frame: 13 },
-            { key: "player", frame: 14 },
-            { key: "player", frame: 15 },
-            { key: "player", frame: 16 },
-            { key: "player", frame: 17 },
-            { key: "player", frame: 18 },
-            { key: "player", frame: 19 }
+            { key: "player", frame: 4 },
+            { key: "player", frame: 5 },
+            { key: "player", frame: 6 },
+            { key: "player", frame: 7 },
         ],
 
         frameRate: 10,
@@ -60,21 +50,19 @@ export function createAllAnimations(scene) {
     });
 
 
-    // -------------------------
+    // =========================
     // 슬라이드
-    // 이미지 기준 21~25번
-    // Phaser frame 기준 20~24
-    // -------------------------
+    // 이미지 기준 9~11번
+    // Phaser frame 기준 8~10
+    // =========================
 
     scene.anims.create({
         key: "player_slide",
 
         frames: [
-            { key: "player", frame: 20 },
-            { key: "player", frame: 21 },
-            { key: "player", frame: 22 },
-            { key: "player", frame: 23 },
-            { key: "player", frame: 24 }
+            { key: "player", frame: 8 },
+            { key: "player", frame: 9 },
+            { key: "player", frame: 10 },
         ],
 
         frameRate: 10,
