@@ -78,6 +78,9 @@ export const useAddCoinStore = create((set) => ({
 
       // 차후에 프론트쪽에서 에러를 토스트로 나오게 할수도 있으니깐 error에 set
       set({ error: error.message });
+
+      // 게임에서의 에러처리를 위해 추가
+      throw error;
     }
   },
 

@@ -215,4 +215,11 @@ export function loadAllSprite(scene) {
 
     // 코인
     scene.load.image("coin", "/assets/game1/object/drop_item/coin.png");
+
+    // ========로딩화면==============
+    // 로딩화면
+    scene.load.spritesheet("loading_screen", "/assets/game1/ui/loading/loading.png", {
+        frameWidth: 32,
+        frameHeight: 32
+    });
 }
