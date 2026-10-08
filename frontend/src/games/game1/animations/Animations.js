@@ -242,4 +242,18 @@ export function createAllAnimations(scene) {
       	repeat: 0,
     });
 
+	// ========================================
+
+	// 로딩화면
+	scene.anims.create({
+
+		key: "loading_screen_animation",
+        frames: scene.anims.generateFrameNumbers("loading_screen", {
+        start: 0,
+        end: 7,
+      	}),
+      	
+		duration: 1000,
+      	repeat: -1
+	});
 }

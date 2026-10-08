@@ -19,6 +19,8 @@ export const useCheckAttendance = () => {
     onSuccess: () => {
       // 출석 성공 시 queryKeys.attendance 캐시 폐기 및 재조회
       queryClient.invalidateQueries({ queryKey: queryKeys.attendance });
+      // 통계(총 출석일, 연속 출석일)도 낡음 처리 → /stats 진입 시 최신 값으로 갱신
+      queryClient.invalidateQueries({ queryKey: queryKeys.statistics });
     },
   });
 };

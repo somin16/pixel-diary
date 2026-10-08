@@ -57,6 +57,8 @@ import { attendanceApi } from "./api/attendanceApi"; // 출석 API
 import { useResetAttendanceIfExpired } from './hooks/queries/useAttendanceQueries';
 import { useContactRealtime } from "./hooks/queries/useContactQueries"; // 문의하기 실시간 구독
 import { contactApi } from "./api/contactApi"; // 문의하기 API (빨간 점 prefetch용)
+// ----------------------------- 통계 ------------------------------
+import StatisticsPage from "./pages/statistics/StatisticsPage"; // 사용자 전용 통계 페이지 
 
 
 const queryClient = new QueryClient({
@@ -304,7 +306,7 @@ function AppInner() {
             <Route path="/more/setting/lock" element={<Lock />} />
 
             {/* 주소가 /stats 이면 사용자 통계 화면을 보여줘 */}
-            <Route path="/stats" element={<div className="p-4">통계 (준비 중)</div>} /> 
+            <Route path="/stats" element={<StatisticsPage />} /> 
 
             {/* 주소가 /more/setting/sound 이면 사운드 설정 화면을 보여줘 */}
             <Route path="/more/setting/sound" element={<Sound />} />

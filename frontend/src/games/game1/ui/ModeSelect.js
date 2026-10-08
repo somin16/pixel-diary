@@ -1,13 +1,8 @@
-import { getGameTicket } from "../../TicketApiManage";
 import { ticketUseUI } from "./Ticket";
 
-export async function createModeSelectUI(scene) {
+export async function createModeSelectUI(scene, ticketCount) {
 
-    // API로 티켓 갯수를 받아온다
-    const myTicketCount = await getGameTicket();
-
-    // 연동받은 값을 할당
-    scene.ticketCount = myTicketCount;
+    scene.ticketCount = ticketCount;
 
     // 현재 화면의 가로 세로 크기 받기
     const { width, height } = scene.cameras.main;
@@ -128,8 +123,8 @@ export function createModeButton(modType, x, y, onClick, scene) {
         modInfo.setText("기본적인 맵입니다!");
 
         // 모드 설명 이미지
-        modImageView.setTexture("slime_move1");
-        modImageView.play("slime_animation", true);
+        modImageView.setTexture("phalanx_move1");
+        modImageView.play("phalanx_animation", true);
     }
 
     // 아니면..(무한모드)
@@ -142,8 +137,8 @@ export function createModeButton(modType, x, y, onClick, scene) {
         modInfo.setText("어려운 난이도의 맵을 구현중..");
 
         // 모드 설명 이미지
-        modImageView.setTexture("phalanx_move1");
-        modImageView.play("phalanx_animation", true);
+        modImageView.setTexture("x_mas_slime");
+        modImageView.play("x_mas_slime_move_animation", true);
     }
 
     // 만든거 다 넣기

@@ -42,4 +42,8 @@ export const queryKeys = {
   myContacts: ['contacts', 'mine'],           // 내 문의 목록
   adminContacts: ['contacts', 'admin'],       // 전체 문의 목록 (관리자 전용)
   contactBadge: ['contacts', 'badge'],        // 더보기 빨간 점 (답변 확인 / 답변 대기 여부)
+  // ------------------------ 사용자 통계 -------------------------------ㅣ
+      // 통계 (목록 키 = 무효화용, 상세 키 = year/month별 캐시)
+  statistics: ['statistics'],
+  statisticsDetail: ({ year, month }) => ['statistics', year, month ?? 'year'],
 };

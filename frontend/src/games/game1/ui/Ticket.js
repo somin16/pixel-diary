@@ -1,3 +1,7 @@
+import { useGameTicket } from "../../common/GameAPI";
+import { errorMessageSpawn } from "../windowSpawn/ErrorMessages";
+import { loadingWindowSpawn } from "../windowSpawn/Loading";
+
 // 티켓 사용여부 UI 생성
 export function ticketUseUI(scene, selectMapType) {
 
@@ -66,11 +70,51 @@ export function ticketUseUI(scene, selectMapType) {
             if (isProcessing) return; // 이미 눌렀으면 안눌리게
             isProcessing = true;
 
-            // 티켓 사용 API
-            window.dispatchEvent(new CustomEvent("useTicket"));
+            // 티켓시 나올 로딩
+            const loadingWindow = loadingWindowSpawn(scene,"게임을 시작하는 중");
 
-            // 게임 시작 로직
-            startGame(scene, selectMapType, true); // 쓴다고 했으니 true로
+            // 처리도중에 종료 등의 이유로 중단시
+            let cancle = false;
+            const onShotDown = () => {
+                cancle = true;
+            };
+
+            // 종료시 이벤트
+            scene.events.once("shutdown", onShotDown);
+
+            try {
+
+                // 티켓 사용 API
+                await useGameTicket();
+
+                // 중단했으면 리턴
+                if(cancle) return;
+
+                // 게임 시작 로직
+                startGame(scene, selectMapType, true); // 쓴다고 했으니 true로
+            }
+
+            catch(error) {
+
+                if(cancle) return;
+
+                console.error("에러코드: ", error);
+                errorMessageSpawn(scene, "티켓 사용에 실패했습니다.\n다시 시도 해주세요.\n" + error)
+                
+                // 실패 시 다시 선택할 수 있도록 해제
+                isProcessing = false;
+            }
+
+            // 다 끝나면 제거
+            finally {
+
+                if (loadingWindow.active) {
+
+                    loadingWindow.destroy();
+                }
+
+                scene.events.off("shutdown", onShotDown);
+            }
         }
     );
 
@@ -87,6 +131,10 @@ export function ticketUseUI(scene, selectMapType) {
         .setScrollFactor(0) // 이거 안하면 이상한곳에서 스폰돼서 클릭이 안된다
         .setInteractive()   // 이걸 넣어줘야 클릭이 가능
         .on('pointerdown', () => { // 누를때 작동
+
+            // 로딩도중에 누를수도 있어서 에러방지로 넣어줬습니다
+            if (isProcessing) return;
+            isProcessing = true;
 
             // 게임 시작 로직
             startGame(scene, selectMapType, false); // 안쓴다고 했으니 false로
