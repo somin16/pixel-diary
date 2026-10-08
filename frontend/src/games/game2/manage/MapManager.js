@@ -1,12 +1,22 @@
+import Phaser from "phaser";
 import { MAPS } from "./MapConfig";
 
 // =====================================================
 // 맵 관리자
 // 배경 이미지를 겹쳐서 깔고, 게임 속도에 맞춰 왼쪽으로 흘려보내는 역할입니다.
+//
+// 픽셀 게임이라 확대 배율은 항상 "정수"(1, 2, 3...)로만 씁니다.
+// 소수점 배율을 쓰면 픽셀이 뭉개져서 저화질 그림처럼 보입니다.
 // =====================================================
 
 // 맵 이미지 한 장의 원래 세로 크기 (240 x 135 이미지)
-const IMAGE_HEIGHT = 135;
+export const ART_HEIGHT = 135;
+
+// 화면 높이에 맞는 "정수" 확대 배율
+// 배경, 캐릭터, 장애물이 전부 이 배율을 같이 써서 픽셀 크기가 똑같아집니다.
+export function getPixelScale(screenHeight) {
+    return Math.max(1, Math.round(screenHeight / ART_HEIGHT));
+}
 
 export default class MapManager {
 
@@ -30,9 +40,41 @@ export default class MapManager {
         return this.config.stages.length;
     }
 
-    // 이미지를 화면 높이에 딱 맞추기 위한 확대 비율
+    // 정수 확대 배율
     get tileScale() {
-        return this.scene.scale.height / IMAGE_HEIGHT;
+        return getPixelScale(this.scene.scale.height);
+    }
+
+    // 도로(바닥) 두께 (그림 픽셀 단위)
+    get groundUnits() {
+        return this.config.ground ?? 24;
+    }
+
+    // 지금 단계의 글자색 설정
+    get hudStyle() {
+        return this.config.stages[this.stageIndex].hud;
+    }
+
+    // ---------------------------------------------------
+    // 이미지 오른쪽에 투명한 빈 공간을 붙인 새 이미지를 만든다
+    // → 같은 물체(화산, 배)가 늦게 반복되게 하려는 용도
+    // ---------------------------------------------------
+    getPaddedKey(key, gap) {
+        const padKey = `${key}_gap${gap}`;
+
+        if (!this.scene.textures.exists(padKey)) {
+            const src = this.scene.textures.get(key).getSourceImage();
+            const pad = this.scene.textures.createCanvas(
+                padKey,
+                src.width + gap,
+                src.height
+            );
+
+            pad.draw(0, 0, src);
+            pad.setFilter(Phaser.Textures.FilterMode.NEAREST);   // 픽셀 뭉개짐 방지
+        }
+
+        return padKey;
     }
 
     // ---------------------------------------------------
@@ -46,21 +88,36 @@ export default class MapManager {
         this.layers = [];
         this.stageIndex = index;
 
+        const stage = this.config.stages[index];
         const { width, height } = this.scene.scale;
         const scale = this.tileScale;
+        const artH = ART_HEIGHT * scale;   // 그림 한 장의 화면 높이
 
-        this.config.stages[index].layers.forEach((info, i) => {
+        // 그림 위쪽이 남으면 하늘색으로 채우고, 글자색도 이 단계에 맞춘다
+        this.scene.cameras.main.setBackgroundColor(stage.sky ?? "#000000");
+        this.scene.hud?.applyStyle(stage.hud);
 
-            // tileSprite = 좌우로 계속 이어 붙는 이미지
-            const tile = this.scene.add.tileSprite(0, 0, width, height, info.key)
+        stage.layers.forEach((info, i) => {
+
+            // gap 숫자는 "최소 간격". 화면 폭보다 좁으면 화면 폭만큼으로 자동 확장한다
+            // → 화면에 같은 물체가 한 번에 한 개만 보이게 함
+            const texKey = info.gap
+                ? this.getPaddedKey(info.key, Math.max(info.gap, Math.ceil(width / scale)))
+                : info.key;
+
+            // 화면 "아래"에 붙여서 깐다 (세로로 반복되지 않게 높이는 그림 한 장만큼)
+            // 깊이(depth): 숫자가 작을수록 뒤에 그려짐
+            // front가 true면 캐릭터 앞(50), 아니면 맨 뒤쪽(-100부터)
+            const tile = this.scene.add.tileSprite(0, height - artH, width, artH, texKey)
                 .setOrigin(0)
                 .setTileScale(scale, scale)
-                // 깊이(depth): 숫자가 작을수록 뒤에 그려짐
-                // front가 true면 캐릭터 앞(50), 아니면 맨 뒤쪽(-100부터)
                 .setDepth(info.front ? 50 : -100 + i);
 
             // 이 이미지가 얼마나 빨리 움직일지 기억해 둔다
             tile.speedRate = info.speed;
+
+            // 소수점까지 포함한 실제 이동량 (화면에는 정수로 반올림해서 보여줌)
+            tile.offsetX = 0;
 
             // 전환할 때는 투명 → 불투명으로 서서히 나타나게 한다
             if (fade) {
@@ -97,24 +154,28 @@ export default class MapManager {
     // ---------------------------------------------------
     // 매 프레임 호출: 이미지를 왼쪽으로 흘려보낸다
     // delta       : 지난 프레임 이후 흐른 시간(밀리초)
-    // scrollSpeed : 지금 게임 속도
+    // scrollSpeed : 지금 화면에서 움직이는 속도(px/초)
     // ---------------------------------------------------
     update(delta, scrollSpeed) {
         const scale = this.tileScale;
 
         this.layers.forEach((tile) => {
             // (속도 × 이미지별 비율 × 시간) 만큼 이미지를 옆으로 민다
-            tile.tilePositionX +=
-                (scrollSpeed * tile.speedRate * delta) / 1000 / scale;
+            tile.offsetX += (scrollSpeed * tile.speedRate * delta) / 1000 / scale;
+
+            // 그림 픽셀 "정수" 단위로만 움직여서 픽셀이 흔들리지 않게 한다
+            tile.tilePositionX = Math.round(tile.offsetX);
         });
     }
 
     // 화면 크기가 바뀌었을 때 이미지 크기 다시 맞추기
     onResize(gameSize) {
-        const scale = gameSize.height / IMAGE_HEIGHT;
+        const scale = getPixelScale(gameSize.height);
+        const artH = ART_HEIGHT * scale;
 
         this.layers.forEach((tile) => {
-            tile.setSize(gameSize.width, gameSize.height);
+            tile.setSize(gameSize.width, artH);
+            tile.setY(gameSize.height - artH);
             tile.setTileScale(scale, scale);
         });
     }

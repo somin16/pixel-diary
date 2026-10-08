@@ -4,22 +4,25 @@ import Phaser from "phaser";
 // 장애물 관리자
 // 장애물을 일정 간격으로 만들고, 왼쪽으로 움직이고, 플레이어와 닿았는지 확인합니다.
 // 지금은 장애물이 "회색 사각형"입니다. (나중에 이미지로 교체 예정)
+//
+// 크기 숫자는 "그림 픽셀" 단위입니다. 실제 크기 = 숫자 × 픽셀 배율(scene.pixel)
+// → 배경, 캐릭터와 픽셀 크기가 항상 똑같아집니다.
 // =====================================================
 
 
 // ---------- 숫자만 바꿔서 난이도를 조절하는 곳 ----------
 
 // 장애물 크기 (작을수록 피하기 쉬움)
-const OBSTACLE_MIN_W = 24;
-const OBSTACLE_MAX_W = 34;
-const OBSTACLE_MIN_H = 30;
-const OBSTACLE_MAX_H = 45;
+const OBSTACLE_MIN_W = 9;
+const OBSTACLE_MAX_W = 13;
+const OBSTACLE_MIN_H = 11;
+const OBSTACLE_MAX_H = 17;
 
 // 플레이어 피격 판정을 몸보다 작게 만드는 값
 // (캐릭터 그림에는 투명한 여백이 있어서, 몸 전체로 판정하면 억울하게 맞음)
 const HIT_SIDE_SHRINK = 0.25;   // 몸의 좌우를 25%씩 뺌 (클수록 판정이 작아짐)
 const HIT_TOP_SHRINK = 0.1;     // 머리 쪽을 10% 뺌
-const HIT_FEET_RAISE = 8;       // 발바닥 쪽을 8px 올림 (클수록 점프 때 잘 피함)
+const HIT_FEET_RAISE = 3;       // 발바닥 쪽을 3 그림픽셀 올림 (클수록 점프 때 잘 피함)
 
 
 export default class ObstacleManager {
@@ -68,7 +71,7 @@ export default class ObstacleManager {
         const left = body.x + body.width * HIT_SIDE_SHRINK;
         const right = body.right - body.width * HIT_SIDE_SHRINK;
         const top = body.y + body.height * HIT_TOP_SHRINK;
-        const bottom = body.bottom - HIT_FEET_RAISE;
+        const bottom = body.bottom - HIT_FEET_RAISE * this.scene.pixel;
 
         // 두 사각형이 겹치는지 확인
         return (
@@ -104,10 +107,11 @@ export default class ObstacleManager {
     // ---------------------------------------------------
     spawn() {
         const scene = this.scene;
+        const P = scene.pixel;   // 픽셀 배율
 
-        // 장애물 크기는 랜덤
-        const w = Phaser.Math.Between(OBSTACLE_MIN_W, OBSTACLE_MAX_W);
-        const h = Phaser.Math.Between(OBSTACLE_MIN_H, OBSTACLE_MAX_H);
+        // 장애물 크기는 랜덤 (그림 픽셀 × 배율)
+        const w = Phaser.Math.Between(OBSTACLE_MIN_W, OBSTACLE_MAX_W) * P;
+        const h = Phaser.Math.Between(OBSTACLE_MIN_H, OBSTACLE_MAX_H) * P;
 
         // 바닥 윗면의 y 좌표
         const groundTop = scene.groundTopY;
@@ -121,7 +125,7 @@ export default class ObstacleManager {
             0x333333                  // 색: 진한 회색
         );
 
-        rect.setStrokeStyle(2, 0xffffff);   // 흰 테두리
+        rect.setStrokeStyle(P, 0xffffff);   // 흰 테두리 (그림 픽셀 1칸 두께)
 
         // 그룹에 넣으면 물리 효과가 붙는다
         this.group.add(rect);
@@ -133,7 +137,7 @@ export default class ObstacleManager {
     // 매 프레임: 장애물을 왼쪽으로 움직이고, 화면 밖으로 나가면 지운다
     // ---------------------------------------------------
     update() {
-        const speed = this.scene.scrollSpeed;
+        const speed = this.scene.worldSpeed ?? this.scene.scrollSpeed;
 
         this.group.getChildren().forEach((obstacle) => {
             obstacle.body.setVelocityX(-speed);   // 왼쪽으로 이동

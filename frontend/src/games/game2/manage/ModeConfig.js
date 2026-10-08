@@ -28,9 +28,9 @@ export const MODE_CONFIG = {
         maxHp: 0,
         hitScore: -50,        // 부딪히면 점수 -50
 
-        baseSpeed: 300,
-        speedUpPerSec: 4,     // 1초마다 속도 +4
-        maxSpeed: 700,
+        baseSpeed: 280,
+        speedUpPerSec: 2,     // 1초마다 속도 +4
+        maxSpeed: 460,
 
         stageSeconds: 90,     // 90초 뒤 night → day
         clearSeconds: 0       // 0 = 클리어 없음 (계속 진행)

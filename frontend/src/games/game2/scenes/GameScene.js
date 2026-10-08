@@ -8,23 +8,26 @@ import PauseMenu from "../ui/PauseMenu";
 import GameHud from "../ui/GameHud";
 import { showResultPanel } from "../ui/ResultPanel";
 import ObstacleManager from "../manage/ObstacleManager";
-import MapManager from "../manage/MapManager";
+import MapManager, { getPixelScale } from "../manage/MapManager";
 import { MODE_CONFIG } from "../manage/ModeConfig";
 
 // 모드 선택 화면의 이름표
 // ※ scenes/ModeSelectScene.js 안의 super("...") 글자와 똑같아야 합니다.
 const MODE_SELECT_KEY = "ModeSelectScene";
 
-// 바닥(도로) 윗면 높이 = 화면 높이의 몇 %인지
-// 캐릭터가 도로 위로 떠 보이면 숫자를 "키우고" (예: 0.22),
-// 도로 속에 파묻혀 보이면 숫자를 "줄이세요" (예: 0.15)
-const GROUND_RATIO = 0.18;
+// 화면 배율이 달라도 "그림 기준" 속도가 같아지게 하는 기준 배율
+const SPEED_REF_PIXEL = 3;
+
+// 플레이어의 가로 위치 = 화면 폭의 몇 %인지
+// JUMP 버튼과 겹치면 숫자를 "키우세요" (예: 0.35)
+const PLAYER_X_RATIO = 0.3;
 
 // 바닥 판정을 화면 아래쪽으로 더 두껍게 늘리는 값 (뚫림 방지)
 // 눈에 안 보이는 부분이라 크게 잡아도 괜찮습니다.
 const GROUND_EXTRA = 300;
 
 // 바닥 판정 영역(회색 띠)을 눈으로 볼지 여부 (true = 보임 / false = 안 보임)
+// 바닥 높이는 맵마다 MapConfig.js 의 ground 숫자로 조절합니다.
 // 위치를 맞출 때는 true로 두고 확인하세요.
 const SHOW_GROUND = false;
 
@@ -47,6 +50,9 @@ export default class GameScene extends Phaser.Scene {
     init(data) {
         this.gameMode = data?.gameMode ?? "daily";   // "daily"(데일리) 또는 "infinity"(무한)
         this.emotion = data?.emotion ?? "happy";     // "happy", "calm", "sad", "angry"
+
+        // 지난 게임에서 남은(이미 지워진) 글자 UI를 비워둔다
+        this.hud = null;
 
         // 이 모드의 규칙표 (ModeConfig.js)
         this.modeConfig = MODE_CONFIG[this.gameMode] ?? MODE_CONFIG.daily;
@@ -77,14 +83,17 @@ export default class GameScene extends Phaser.Scene {
 
         createAllAnimations(this);   // 달리기/점프/슬라이드 애니메이션 등록
 
+        // 픽셀 배율 (정수). 배경, 캐릭터, 장애물이 모두 이 값을 같이 씁니다.
+        this.pixel = getPixelScale(this.scale.height);
+
         // ---------- 맵(배경) ----------
         this.map = new MapManager(this, this.emotion);
 
 
         // ---------- 바닥 (플레이어가 밟는 판정 영역) ----------
-        // groundHeight : 눈에 보이는 도로 두께 (화면 높이에 비례)
+        // groundHeight : 눈에 보이는 도로 두께 (맵마다 다름 × 픽셀 배율)
         // groundTopY   : 바닥 윗면의 y 좌표 (캐릭터와 장애물이 서는 높이)
-        this.groundHeight = Math.round(this.scale.height * GROUND_RATIO);
+        this.groundHeight = this.map.groundUnits * this.pixel;
         this.groundTopY = this.scale.height - this.groundHeight;
 
         // 판정 영역은 윗면에서 아래로 (두께 + 여분) 만큼 두껍게
@@ -101,7 +110,13 @@ export default class GameScene extends Phaser.Scene {
 
 
         // ---------- 플레이어 ----------
-        this.player = new Player(this, 150, 100);
+        // 가로 위치를 오른쪽으로 옮겨서 JUMP 버튼과 안 겹치게 함
+        this.player = new Player(
+            this,
+            Math.round(this.scale.width * PLAYER_X_RATIO),
+            100,
+            this.pixel
+        );
 
         // 플레이어를 바닥 위에 올려놓기
         this.player.y = this.groundTopY - this.player.body.height / 2;
@@ -112,6 +127,7 @@ export default class GameScene extends Phaser.Scene {
 
         // ---------- 점수 / 체력 / 시간 글자 ----------
         this.hud = new GameHud(this, this.modeConfig);
+        this.hud.applyStyle(this.map.hudStyle);   // 맵에 맞는 글자색 + 외곽선
 
         this.score = 0;
         this.maxHp = this.modeConfig.maxHp;
@@ -282,7 +298,8 @@ export default class GameScene extends Phaser.Scene {
         const oldTop = this.groundTopY;
 
         // 새 화면 크기에 맞춰 다시 계산
-        this.groundHeight = Math.round(gameSize.height * GROUND_RATIO);
+        this.pixel = getPixelScale(gameSize.height);
+        this.groundHeight = this.map.groundUnits * this.pixel;
         this.groundTopY = gameSize.height - this.groundHeight;
 
         // 바닥 판정 영역을 새 위치/크기로
@@ -294,9 +311,11 @@ export default class GameScene extends Phaser.Scene {
         this.ground.setSize(gameSize.width, this.groundHeight + GROUND_EXTRA);
         this.ground.body.updateFromGameObject();
 
-        // 바닥이 움직인 만큼 플레이어도 같이 옮기기
+        // 바닥이 움직인 만큼 플레이어도 같이 옮기고, 크기도 새 배율로
         if (this.player) {
             this.player.y += this.groundTopY - oldTop;
+            this.player.x = Math.round(gameSize.width * PLAYER_X_RATIO);
+            this.player.setPixelScale(this.pixel);
         }
     }
 
@@ -363,7 +382,9 @@ export default class GameScene extends Phaser.Scene {
         this.map.setStage(Math.min(stage, this.map.stageCount - 1));
 
         // ---------- 맵과 장애물 움직이기 ----------
-        this.map.update(delta, this.scrollSpeed);
+        // 화면에 실제로 움직이는 속도 = 게임 속도 × (현재 배율 ÷ 기준 배율)
+        this.worldSpeed = this.scrollSpeed * this.pixel / SPEED_REF_PIXEL;
+        this.map.update(delta, this.worldSpeed);
         this.obstacles.update();
     }
 }

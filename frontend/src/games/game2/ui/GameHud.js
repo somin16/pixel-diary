@@ -33,6 +33,21 @@ export default class GameHud {
             .setOrigin(0.5, 0);                                    // 위쪽 가운데: 시간
     }
 
+    // 맵 단계가 바뀔 때마다 글자색/외곽선을 맞춘다
+    applyStyle(style) {
+        if (!style) {
+            return;
+        }
+
+        [this.scoreText, this.timeText].forEach((t) => {
+            t.setColor(style.text);
+            t.setStroke(style.outline, 5);
+        });
+
+        this.hpText.setColor(style.hp);
+        this.hpText.setStroke(style.outline, 5);
+    }
+
     // 점수 글자 바꾸기
     setScore(score) {
         this.scoreText.setText(`SCORE : ${score}`);
