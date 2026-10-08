@@ -36,4 +36,9 @@ export const queryKeys = {
 
   // ---------------------- 2학기 신규: 캐릭터 육성 ----------------------
   character: ['character'],             // 캐릭터 상태 조회 (API 확정되면 endpoint 맞춰 조정)
+
+  // ------------------------ 사용자 통계 -------------------------------ㅣ
+      // 통계 (목록 키 = 무효화용, 상세 키 = year/month별 캐시)
+  statistics: ['statistics'],
+  statisticsDetail: ({ year, month }) => ['statistics', year, month ?? 'year'],
 };

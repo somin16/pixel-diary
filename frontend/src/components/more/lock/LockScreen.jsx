@@ -139,7 +139,7 @@ export function LockScreen({
     : 'PIN을 입력해주세요.';
 
   return (
-    <div className="fixed inset-0 z-[999] flex flex-col items-center justify-start gap-3 bg-white px-6 pt-10 font-mono text-neutral-900">
+    <div className="fixed inset-0 z-[999] flex flex-col items-center justify-center pb-[10%] gap-3 bg-white px-6 pt-10 font-mono text-neutral-900">
       {/* 앱 아이콘 + 타이틀 */}
       <img src={appIconUrl} alt="Pixel Diary" className="h-30 w-30 mb-1 [image-rendering:pixelated]" />
         <div className="text-xl font-black tracking-[4px]" style={{ WebkitTextStroke: '0.5px currentColor' }}>
