@@ -4,9 +4,12 @@ import { create } from 'zustand'
 import { persist } from 'zustand/middleware' // 효과음 on/off 설정 영구 저장
 
 // 효과음 파일 매핑 (파일 위치: public/sound-effects/)
+// 현재 클릭음은 App.jsx에서 자동 재생됨
+// TODO: 효과음 추가 시 public/sound_effects/에 파일(sound.mp3) 넣고 아래에 등록
+//       호출: useSoundEffectStore.getState().play('이름')
 const SOUND_EFFECTS = {
   click: '/sound_effects/click_sound.mp3',
-  // 효과음 추가 시 여기만 수정
+  // 여기에 추가
 }
 
 const useSoundEffectStore = create(

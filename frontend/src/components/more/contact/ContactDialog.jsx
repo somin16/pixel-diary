@@ -1,24 +1,30 @@
 import React, { useState } from "react";
 import { useTheme } from "../../../stores/useThemeStore";
 import { getAssetUrl } from "../../../utils/AssetHelper";
-import { supabase } from "../../../utils/SupabaseClient";
+import { useCreateContact } from "../../../hooks/queries/useContactQueries"; // 문의 작성 mutation
 
 // 컴포넌트 불러오기
 import DialogBox from "../../common/dialog/DialogBox";
 import ImageButton from "../../common/ImageButton";
 
+// 카테고리 기본값 / 직접입력 옵션 값
+const DEFAULT_CATEGORY = "AI 그림 생성 오류";
+const CUSTOM_CATEGORY = "기타 (직접입력)";
+
 const ContactDialog = ({ onCancel, onResult, width = "100%", maxWidth = "320px" }) => {
   const currentTheme = useTheme((state) => state.currentTheme);
+  // 문의 작성 요청 훅 (전송 상태 관리 + 성공 시 목록 자동 갱신)
+  const createContact = useCreateContact();
 
   // 상태 관리
-  const [content, setContent] = useState("");
+  const [content, setContent] = useState(""); // 문의 내용
   const [error, setError] = useState(""); // 에러 상태 추가
+  const [category, setCategory] = useState(DEFAULT_CATEGORY); // 선택한 카테고리
+  const [customCategory, setCustomCategory] = useState("");  // 직접입력 카테고리
 
-  const [category, setCategory] = useState("AI 그림 생성 오류");
-  const [customCategory, setCustomCategory] = useState("");
-
-  // 중복 전송 방지를 위한 로딩 상태 추가
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  // 중복 전송 방지: mutation의 진행 상태를 그대로 사용
+  // (성공/실패 모두 자동으로 false가 되므로 finally에서 직접 해제할 필요 없음)
+  const isSubmitting = createContact.isPending;
 
   // 문의하기 보내기 버튼 클릭 시 실행되는 비동기 함수
   const handleSend = async () => {
@@ -32,64 +38,38 @@ const ContactDialog = ({ onCancel, onResult, width = "100%", maxWidth = "320px" 
     }
 
     // 기타(직접입력) 선택 시 빈칸 검사 추가
-    if (category === "기타 (직접입력)" && !customCategory.trim()) {
+    if (category === CUSTOM_CATEGORY && !customCategory.trim()) {
       setError("카테고리를 입력해주세요");
       return;
     }
 
     // 전송 시도를 시작할 때, 기존에 떠있던 빨간 에러 메시지 지우기
     setError("");
-    setIsSubmitting(true); // 전송 시작 시 로딩 상태 활성화
-
+    // 최종 저장할 카테고리 (직접입력이면 입력한 값, 아니면 선택한 값)
+    const finalCategory = category === CUSTOM_CATEGORY ? customCategory.trim() : category;
+ 
     try {
-      // 현재 요청을 보내는 유저가 누구인지(세션) 확인
-      const { data: { user }, error: authError } = await supabase.auth.getUser();
-
-      // 유저 정보가 없거나 에러가 났다면 (오래 켜둬서 로그인이 풀린 경우 등)
-      if (authError || !user) {
-        setError("로그인 세션이 만료되었습니다.");
-        return;
-      }
-
-      // 'users' 테이블에서 현재 로그인한 유저의 정보 조회 (이름 및 서비스용 ID 가져오기)
-      const { data: userData, error: userError } = await supabase
-        .from('users')
-        .select('user_id, user_name')
-        .eq('user_id', user.id)
-        .single();
-
-      if (userError || !userData) {
-        setError("유저 프로필 정보를 찾을 수 없습니다.");
-        return;
-      }
-
-      // 최종 저장할 카테고리 값 가공
-      const finalCategory = category === "기타 (직접입력)" ? customCategory.trim() : category;
-
-      // Supabase의 'contact' 테이블에 데이터 삽입 (INSERT)
-      const { error: insertError } = await supabase
-        .from('contact')
-        .insert({
-          user_id: userData.user_id,   // users 테이블의 고유 ID를 삽입
-          message: content.trim(),   // 사용자가 작성한 문의 내용 - 앞뒤 공백 제거 후 저장
-          category: finalCategory, // 문의사항 카테고리
-        });
-
-      // DB 삽입 중 RLS 권한 문제나 네트워크 에러가 발생하면 catch 블록으로 던짐
-      if (insertError) throw insertError;
-
+      // user_id, status 등은 보내지 않음 → DB 트리거가 자동으로 채움
+      await createContact.mutateAsync({
+        message: content.trim(),
+        category: finalCategory,
+      });
+ 
       // 성공 처리 및 폼 초기화
       onResult(true);
       setContent("");
-      setCategory("AI 그림 생성 오류");
+      setCategory(DEFAULT_CATEGORY);
       setCustomCategory("");
-
-    } catch (error) {
-      // 에러 예외 처리
-      console.error('문의하기 전송 에러:', error);
-      setError("서버 통신 중 오류가 발생했습니다. 다시 시도해 주세요.");
-    } finally {
-      setIsSubmitting(false); // 성공하든 실패하든 로딩 상태 해제
+    } catch (err) {
+      console.error('문의하기 전송 에러:', err);
+ 
+      if (err.status === 401) {
+        setError("로그인 세션이 만료되었습니다");
+      } else if (err.code === 'P0001') {
+        setError(err.message); // 트리거의 도배 방지: "잠시 후 다시 시도해주세요"
+      } else {
+        setError("서버 통신 중 오류가 발생했습니다");
+      }
     }
   };
 
@@ -118,12 +98,12 @@ const ContactDialog = ({ onCancel, onResult, width = "100%", maxWidth = "320px" 
             <option value="계정 및 로그인">계정 및 로그인</option>
             <option value="제안 및 건의사항">제안 및 건의사항</option>
             <option value="기타 버그">기타 버그</option>
-            <option value="기타 (직접입력)">기타 (직접입력)</option>
+            <option value={CUSTOM_CATEGORY}>{CUSTOM_CATEGORY}</option>
           </select>
         </div>
 
         {/* '기타 (직접입력)' 선택 시에만 활성화되는 텍스트 입력창 */}
-        {category === "기타 (직접입력)" && (
+        {category === CUSTOM_CATEGORY && (
           <div className="w-[90%] mt-[2%]">
             <input
               type="text"
@@ -163,7 +143,7 @@ const ContactDialog = ({ onCancel, onResult, width = "100%", maxWidth = "320px" 
         {/* 에러 메시지 출력 (에러 있을 때만 렌더링) */}
         <div className="h-[8%] flex items-center justify-center mt-[2%] mb-[1%]">
           {error && (
-            <p className="text-[#ef4444] text-xs font-bold m-0">{error}</p>
+            <p className="text-[#ef4444] text-2xs font-bold m-0">{error}</p>
           )}
         </div>
 

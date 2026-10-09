@@ -2,11 +2,13 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'  // 볼륨/뮤트 설정 영구 저장
 
-// 테마별 음악 파일 매핑
+// 테마별 음악 파일 매핑 (파일 위치: public/music/)
+// TODO: 테마별 음악 추가 시 (현재 모든 테마가 winter_light.mp3로 대체 재생됨)
+//       public/music/에 테마이름.mp3 넣고 아래에 등록
 const THEME_MUSIC = {
   default:        '/music/winter_light.mp3',
   winter_light:   '/music/winter_light.mp3',
-  // ...테마 추가 시 여기만 수정
+  // 여기에 추가
 }
 
 // 스토어 밖 싱글톤 Audio 객체 (컴포넌트 리렌더에 영향 없음)

@@ -55,6 +55,8 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { profileApi } from "./api/profileApi"; // 프로필 API
 import { attendanceApi } from "./api/attendanceApi"; // 출석 API
 import { useResetAttendanceIfExpired } from './hooks/queries/useAttendanceQueries';
+import { useContactRealtime } from "./hooks/queries/useContactQueries"; // 문의하기 실시간 구독
+import { contactApi } from "./api/contactApi"; // 문의하기 API (빨간 점 prefetch용)
 // ----------------------------- 통계 ------------------------------
 import StatisticsPage from "./pages/statistics/StatisticsPage"; // 사용자 전용 통계 페이지 
 
@@ -95,6 +97,8 @@ function AppInner() {
   const [session, setSession] = useState(null);
   const [loading, setLoading] = useState(true);
 
+  useContactRealtime(session); // 문의하기 실시간 갱신 (빨간 점, 목록)
+
   const resetAttendanceIfExpired = useResetAttendanceIfExpired(); // 앱 접속 시 만료된 출석 기록 초기화용 mutation
 
   async function prefetchCriticalData(queryClient) {
@@ -106,6 +110,7 @@ function AppInner() {
       queryClient.prefetchQuery({ queryKey: queryKeys.items, queryFn: storeApi.getItem }),
       queryClient.prefetchQuery({ queryKey: queryKeys.inventory, queryFn: inventoryApi.getItem }),
       queryClient.prefetchQuery({ queryKey: queryKeys.attendance, queryFn: attendanceApi.getAttendance }),
+      queryClient.prefetchQuery({ queryKey: queryKeys.contactBadge, queryFn: contactApi.getBadge }),
     ]);
   }
 
@@ -131,22 +136,29 @@ function AppInner() {
     });
 
     let hasHandledInitialAuth = false;
+    let currentUserId = null; // 직전 세션의 유저 ID (실제 로그인인지 판별용)
 
     // 로그인 상태 변화 감시 (로그아웃/재로그인 포함)
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setSession(session);
-      if (_event === 'SIGNED_OUT') {
-      queryClient.clear(); // 이전 계정 캐시 제거 (다른 유저 데이터 노출 방지)
-    }
+      const newUserId = session?.user?.id ?? null;
 
-    if (_event === 'SIGNED_IN' && session) {
-      if (hasHandledInitialAuth) {
-        useAppLockStore.getState().markFreshLogin(); // 방금 로그인했으면 이번엔 잠금화면 스킵
+      if (_event === 'SIGNED_OUT') {
+        queryClient.clear(); // 이전 계정 캐시 제거 (다른 유저 데이터 노출 방지)
       }
-      initPush();
-      prefetchCriticalData(queryClient); // 로그인마다 prefetch 재실행
-    }
-    hasHandledInitialAuth = true;
+
+      // 같은 유저의 SIGNED_IN(토큰 갱신, 탭 복귀 등)은 무시하고, 실제 로그인일 때만 처리
+      const isRealLogin = _event === 'SIGNED_IN' && newUserId && newUserId !== currentUserId;
+      if (isRealLogin) {
+        if (hasHandledInitialAuth) {
+          useAppLockStore.getState().markFreshLogin(); // 방금 로그인했으면 이번엔 잠금화면 스킵
+        }
+        initPush();
+        prefetchCriticalData(queryClient); // 로그인마다 prefetch 재실행
+      }
+
+      currentUserId = newUserId;
+      hasHandledInitialAuth = true;
     });
 
     return () => subscription.unsubscribe();
