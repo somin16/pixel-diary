@@ -83,7 +83,7 @@ export default function Contact() {
       </div>
 
       {/* 플로팅액션버튼 컴포넌트 - 문의작성버튼 */}
-      <div className="fixed bottom-[5%] right-[5%] z-40">
+      <div className='absolute right-[5%] bottom-[5%]'>
         <FloatingActionButton
           currentTheme={currentTheme}
           ariaLabel="문의작성버튼"
