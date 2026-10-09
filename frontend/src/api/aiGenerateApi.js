@@ -10,6 +10,12 @@ export const aiGenerateApi = {
     body: JSON.stringify(payload), // { positive_prompt, negative_prompt }
   }),
 
+  // 1단계 (img2img): 사진 첨부 시 FormData로 전송
+  startImg2Img: (formData) => authFetch(`${BASE_URL}/api/v1/ai-generate/img2img/`, {
+    method: 'POST',
+    body: formData, // FormData: image 파일 + positive_prompt + negative_prompt
+  }),
+
   // 3단계: 완료 후 결과 이미지 조회
   getResult: (promptId, comfyuiUrl) => authFetch(
     `${BASE_URL}/api/v1/ai-generate/${promptId}/result/?comfyui_url=${encodeURIComponent(comfyuiUrl)}`
