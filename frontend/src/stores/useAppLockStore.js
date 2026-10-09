@@ -18,11 +18,27 @@ import {
 const MAX_ATTEMPTS = 5; // 연속 실패 허용 횟수
 const LOCKOUT_MS = 30 * 1000; // 잠금(쿨다운) 지속 시간
 
+// 방금 로그인 직후엔 잠금화면을 안 띄우기 위한 표시
+// - 소셜 로그인처럼 외부 페이지를 다녀와 페이지가 새로 로드돼도 유지되도록 sessionStorage에 로그인 시각 저장
+// - init()이 앱 시작 시 + LockGate 마운트 시 여러 번 불려도 같은 결과가 나오도록, 지우지 않고 시간으로 만료시킴
+// - 백그라운드 복귀 시 재잠금 유예 시간(LockStorage의 gracePeriodMs)과는 별개
+const FRESH_LOGIN_KEY = 'freshLoginAt';
+const FRESH_LOGIN_GRACE_MS = 60 * 1000; // 로그인 후 1분 동안 잠금 스킵
+
+// 로그인 후 FRESH_LOGIN_GRACE_MS 이내인지 확인
+function isFreshLogin() {
+  try {
+    const loggedInAt = Number(sessionStorage.getItem(FRESH_LOGIN_KEY));
+    return loggedInAt > 0 && Date.now() - loggedInAt < FRESH_LOGIN_GRACE_MS;
+  } catch {
+    return false; // sessionStorage를 못 쓰는 환경이면 스킵하지 않음 (정상적으로 잠금)
+  }
+}
+
 // 모듈 스코프 변수 - 여러 컴포넌트가 이 스토어를 구독해도 초기화/리스너 등록은 한 번만 실행
 let backgroundedAt = null;  // 마지막으로 백그라운드로 넘어간 시각
 let appStateListenerAttached = false;  // appStateChange 리스너 중복 등록 방지
 let biometryListenerAttached = false;  // biometryChange 리스너 중복 등록 방지
-let skipNextLockCheck = false;  // 방금 로그인 직후엔 잠금화면을 안 띄우기 위한 1회성 플래그
 let initPromise = null;  // 진행 중인 init() 호출 - 동시에 여러 곳에서 불러도 실행은 한 번만 되게 공유
 
 const useAppLockStore = create((set, get) => ({
@@ -70,12 +86,11 @@ const useAppLockStore = create((set, get) => ({
       set({
         hasPin: pinSet,
         biometricEnabled: settings.biometricEnabled,
-        isLocked: skipNextLockCheck ? false : pinSet && settings.lockEnabled,
+        isLocked: isFreshLogin() ? false : pinSet && settings.lockEnabled,
         lockedUntil,
         biometricAvailable,
         isReady: true,
       });
-      skipNextLockCheck = false;  // 한 번 썼으면 리셋
 
       // 백그라운드 → 포그라운드 복귀 감지, 잠금 설정이 켜져 있으면 재잠금
       if (!appStateListenerAttached) {
@@ -204,9 +219,14 @@ const useAppLockStore = create((set, get) => ({
     set({ biometricEnabled: enabled });
   },
 
-  // 외부(App.jsx의 SIGNED_IN 이벤트)에서 "방금 로그인했다"고 알려줄 때 호출
+  // 외부(Login.jsx에서 로그인 시작 시)에서 "방금 로그인했다"고 알려줄 때 호출
   markFreshLogin: () => {
-    skipNextLockCheck = true;
+    // 로그인 시각을 sessionStorage에 저장 (페이지가 새로 로드돼도 유지)
+    try {
+      sessionStorage.setItem(FRESH_LOGIN_KEY, String(Date.now()));
+    } catch {
+      // sessionStorage를 못 쓰는 환경이면 잠금 스킵만 안 될 뿐 기능에는 문제 없음
+    }
   },
 
   // 외부에서 강제로 즉시 잠금 상태로 전환할 때 사용 (예: "지금 잠그기" 버튼)
