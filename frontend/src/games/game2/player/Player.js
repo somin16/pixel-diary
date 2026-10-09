@@ -1,8 +1,14 @@
 import Phaser from "phaser";
 
+// ---------- 점프 느낌 조절 (그림 픽셀 단위) ----------
+// 실제 값 = 숫자 × 픽셀 배율. 배율이 달라져도 점프 높이 느낌이 같아집니다.
+const JUMP_UNITS = 210;      // 점프 힘 (클수록 높이 뜸)
+const GRAVITY_UNITS = 600;   // 중력 (클수록 빨리 떨어져서 덜 붕 뜸. 예전 800보다 훨씬 강함)
+
 export default class Player extends Phaser.Physics.Arcade.Sprite {
 
-    constructor(scene, x, y) {
+    // pixel : 정수 픽셀 배율 (배경, 장애물과 같은 값)
+    constructor(scene, x, y, pixel = 3) {
 
         // player 스프라이트 시트의 7번 프레임 사용
         super(scene, x, y, "player", 7);
@@ -12,17 +18,11 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
 
         this.scene = scene;
 
-        // 플레이어 크기
-        this.setScale(0.5);
+        // 플레이어 크기, 점프 힘, 중력을 픽셀 배율에 맞춰 설정
+        this.setPixelScale(pixel);
 
         // 자동 달리기 속도
         this.runSpeed = 150;
-
-        // 점프 힘
-        this.jumpPower = -400;
-
-        // 플레이어 중력
-        this.setGravityY(800);
 
         // 최대 점프 횟수
         this.maxJumpCount = 2;
@@ -43,6 +43,21 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
 
         // 월드 경계 충돌은 사용하지 않음
         // → 천장 판정 제거
+    }
+
+
+    // =========================
+    // 픽셀 배율 적용 (크기, 점프 힘, 중력)
+    // 화면 크기가 바뀌어 배율이 달라질 때도 다시 호출됩니다.
+    // =========================
+
+    setPixelScale(pixel) {
+        this.setScale(pixel);
+        this.jumpPower = -JUMP_UNITS * pixel;
+        this.setGravityY(GRAVITY_UNITS * pixel);
+
+        // 크기가 바뀐 만큼 충돌 영역도 바로 갱신
+        this.body?.updateFromGameObject();
     }
 
 
