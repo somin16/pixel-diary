@@ -7,13 +7,22 @@ import Phaser from "phaser";
 import GameScene from "./scenes/GameScene";
 import ModeSelectScene from "./scenes/ModeSelectScene";
 import { useRemoveTicket, useSubmitFinalScore } from "../../hooks/queries/useGameQueries";
+import { useTicket } from "../../hooks/queries/useTicketQueries";
+import { useCoin, useUpdateCoin } from "../../hooks/queries/useCoinQueries";
 
 const Game1 = () => {
+
+	// 티켓 번호
+	const TICKET_ITEM_ID = 40;
+
 	const gameContainer = useRef(null);
 	const navigate = useNavigate();
 	const { mutate: submitScore } = useSubmitFinalScore(1); // 미니게임1에서 사용하기에 1
 															// 차후에 미니게임2에서 사용 할때는 2로 입력하시면 됩니다.
 	const { mutate: removeTicket } = useRemoveTicket();
+	const { refetch: getTicket } = useTicket(TICKET_ITEM_ID);
+	const { refetch: getCoin } = useCoin();
+	const { mutate: addCoin } = useUpdateCoin();
 
 	// ================= 화면 방향 관리 =================
   	useEffect(() => {
@@ -74,16 +83,89 @@ const Game1 = () => {
 	};
 
     // 점수 저장 이벤트
-    const handelSubmitScore = (event) => submitScore(event.detail);
+	const handelSubmitScore = (event) => {
+		const { finalScore, onError, onSettled } = event.detail;
+
+		submitScore(finalScore, {
+			onError: (error) => {
+				onError?.(error);
+			},
+			onSettled: () => {
+				onSettled?.();
+			},
+		});
+	};
+	
+	// 코인 조회 이벤트
+	const handleGetCoin = async (event) => {
+
+		const { resolve, reject } = event.detail;
+
+		try {
+			const { data } = await getCoin({ throwOnError: true });
+
+			// 코인 갯수 리턴
+			resolve(data.coin);
+		}
+
+		catch (error) {
+			reject(error);
+		}
+	};
+
+	// 코인 추가 이벤트
+	const handleAddCoin = (event) => {
+
+		const { finalScore, resolve, reject } = event.detail;
+
+		addCoin({
+			payload: {
+				game_score: finalScore,
+			},
+		}, {
+
+			onSuccess: (data) => resolve(data),
+			onError: (error) => reject(error),
+		}
+		);
+	}
 
     // 티켓 사용 이벤트
-    const handleRemoveTicket = () => removeTicket();
+    const handleRemoveTicket = (event) =>{
+
+		const { resolve, reject } = event.detail;
+
+		removeTicket(undefined, {
+			onSuccess: (data) => resolve(data),
+			onError: (error) => reject(error),
+		});
+	};
+
+	// 티켓 조회 이벤트
+	const handleGetTicket = async (event) => {
+
+		const { resolve, reject } = event.detail;
+
+		try {
+			const { data } = await getTicket({ throwOnError: true });
+
+			// 티켓수 리턴
+			resolve(data.count);
+		}
+
+		catch (error) {
+			reject(error);
+		}
+	};
 
     // 이벤트 설정
     // 이제 함수식으로 불러올 수 있습니다
     window.addEventListener("exitMiniGame", handleExitGame);
     window.addEventListener("submitFinalScore", handelSubmitScore);
     window.addEventListener("useTicket", handleRemoveTicket);
+	window.addEventListener("getTicket", handleGetTicket);
+	window.addEventListener("getCoin", handleGetCoin);
+	window.addEventListener("addCoin", handleAddCoin);
 
     const config = {
 		type: Phaser.AUTO,
@@ -160,9 +242,13 @@ const Game1 = () => {
 
 		game.destroy(true);
 
+		// 모든 이벤트 지우기
 		window.removeEventListener("exitMiniGame", handleExitGame);
 		window.removeEventListener("submitFinalScore", handelSubmitScore);
 		window.removeEventListener("useTicket", handleRemoveTicket);
+		window.removeEventListener("getTicket", handleGetTicket);
+		window.removeEventListener("getCoin", handleGetCoin);
+		window.removeEventListener("addCoin", handleAddCoin);
     };
   }, [navigate]);
 

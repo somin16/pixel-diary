@@ -1,8 +1,8 @@
 import Phaser, { Scale } from 'phaser';
 
-// zuStand 함수 불러오기
-import { useGetCoinStore } from "../../../stores/useCoinStore";
-import { useAddCoinStore } from "../../../stores/useCoinStore";
+// 에러 메세지 불러오기
+import { errorMessageSpawn } from '../windowSpawn/ErrorMessages';
+import { addGameCoin } from '../../common/GameAPI';
 
 // 게임 시작시 스코어 초기화
 // 사실 이건 그냥 GameScene.js에 넣어도 되는 부분입니다만, 그래도 한번에 보는게 편하니까 여기에 뒀습니다
@@ -81,7 +81,7 @@ export async function gameClear(scene) {
     const centerY = height / 2;
 
     // 코인 불러오기
-    const myCoins = useGetCoinStore.getState().coin;
+    const myCoins = scene.registry.get("coinCount");
 
     // 플레이어가 보유중인 재화
     let coin = myCoins; // 값을 coin으로 옮겨두고 연산
@@ -99,8 +99,13 @@ export async function gameClear(scene) {
     // 최종 연산이 완료된 수치(연출을 위해)
     let resultCoin = coin + addCoin;
 
-    // 코인 추가하기(API, 연산은 API안에서 끝나니 연산이 되지않은 점수를 넣는다)
-    useAddCoinStore.getState().addCoinGame(finalScore);
+    // 현재 결과 화면(혹시 중간에 나갈것을 대비)
+    const resultWindow = scene.gameEndUI;
+
+    // 코인추가 연출이 끝나는것과 API 종료 연출을 따로 계산(실패도 요청 완료로 처리)
+    let isCoinAnimationDone = false;
+    let isCoinRequestDone = false;
+    let isScoreRequestDone = false;
 
     // 반투명 검은배경을 게임 전체에 깔기
     const backGround = scene.add.rectangle(
@@ -175,8 +180,10 @@ export async function gameClear(scene) {
     // 홈으로 돌아가기 버튼 배경
     const returnHomeButton = scene.add.rectangle(width * 0.325, height * 0.85, 250, 60, 0x44aa44)
     .setScrollFactor(0) // 이거 안하면 이상한곳에서 스폰돼서 클릭이 안된다
-    .setInteractive()   // 이걸 넣어줘야 클릭이 가능
     .on('pointerup', () => { // 누를때 작동
+
+        // 아직 연출이 안끝났으면 리턴
+        if (!canShowResultButtons()) return;
 
         // 게임종료 이벤트 실행
         window.dispatchEvent(new CustomEvent("exitMiniGame"));
@@ -194,8 +201,9 @@ export async function gameClear(scene) {
     // 재시작 버튼 배경
     const restartGameButton = scene.add.rectangle(width * 0.675, height * 0.85, 250, 60, 0x00AAFF)
     .setScrollFactor(0) // 이거 안하면 이상한곳에서 스폰돼서 클릭이 안된다
-    .setInteractive()   // 이걸 넣어줘야 클릭이 가능
     .on('pointerup', () => { // 누를때 작동
+
+        if (!canShowResultButtons()) return;
 
         scene.gameEnd = false;
         scene.scene.start('ModeSelectScene'); // 생각해보니까 모드 선택 화면으로 보내는게 맞을거같아서 모드 선택화면으로 이동하는걸로 변경했습니다
@@ -208,21 +216,55 @@ export async function gameClear(scene) {
         fill: "#ffffff"
     }).setOrigin(0.5).setVisible(false); // 처음엔 안보이게
 
+    // 버튼이 보여지기 위한 여부(bool 값으로 진행)
+    function canShowResultButtons() {
+        return resultWindow.active && isCoinAnimationDone &&
+            isCoinRequestDone && isScoreRequestDone;
+    }
+
+    // 정산후 버튼 보여주기
+    function showResultButtonsIfReady() {
+
+        // 연출이 안끝났으면 리턴
+        if (!canShowResultButtons()) return;
+
+        returnHomeButton.setVisible(true).setInteractive();
+        returnHomeButtonText.setVisible(true);
+        restartGameButton.setVisible(true).setInteractive();
+        restartGameButtonText.setVisible(true);
+    }
+
+    // 재화 추가 API 실행
+    addGameCoin(finalScore).catch((error) => {
+        if (!resultWindow.active) return;
+
+        errorMessageSpawn(scene, "코인 추가 도중 에러가 발생했습니다.\n" + error);
+    })
+    // 다 끝났으면 버튼 보여주기
+    .finally(() => {
+        isCoinRequestDone = true;
+        showResultButtonsIfReady();
+    });
+
     // 이건 제가 만든 함수가 아니라 자바스크립트 자체기능입니다
     // setTimeout: n밀리초(ms)뒤에 작동(맨아래로 내리면 수치가 있습니다)
     // 페이저 기능 냅두고 갑자기 이걸 쓰는 이유는 퍼즈로 인해 게임이 멈춘 상태여서 페이저 기능을 사용을 못합니다
     // 그래서 대신 자바스크립트 함수를 사용했습니다
-    setTimeout(() => {
+    let countTimer = null;
+    const animationDelay = setTimeout(() => {
+        if (!resultWindow.active) return;
 
         const duration = 1000; // 1초동안 코인이 상승
         const tickRate = 20;   // 20ms마다 코인이 증가
         const upTime = duration / tickRate;
 
-        // 코인이 20ms당 얼마나 오를것인가? 를 계산
-        const coinTick = addCoin / upTime;
+        // 누적 덧셈 오차 없이 정해진 횟수만큼 연출한다.
+        const initialCoin = coin;
+        const totalAddCoin = addCoin;
+        let elapsedTicks = 0;
 
         // setInterval: 정해진 시간(틱)마다 반복
-        const countTimer = setInterval(() => {
+        countTimer = setInterval(() => {
 
             // 게임이 재시작 됐을때, 오류방지용 조건문
             if (!addCoinText.active || !coinText.active) {
@@ -231,36 +273,41 @@ export async function gameClear(scene) {
                 return; 
             }
 
-            // 20ms마다 coinTick만큼 코인이 증가하고
-            // 증가한만큼 부여되는 코인이 줄어드는 연출
-            coin += coinTick;
-            addCoin -= coinTick;
+            // 진행률에 맞춰 보유 코인은 늘리고, 받을 코인은 줄인다.
+            elapsedTicks++;
+            const progress = Math.min(elapsedTicks / upTime, 1);
+            coin = initialCoin + totalAddCoin * progress;
+            addCoin = totalAddCoin * (1 - progress);
 
             // 증가되는 코인 텍스트 갱신
             addCoinText.setText("+" + Math.floor(addCoin));
 
-            // 모든 코인을 처음에 미리 계산해둔 최종수치만큼(resultCoin) 다 넣었다면?
-            if (coin >= resultCoin) {
+            // 정해진 연출 시간이 끝나면 최종 수치로 맞춘다.
+            if (progress === 1) {
 
                 // 값을 맞춰주기 위해 코인을 최종수치로 고정해줍니다
                 coin = resultCoin;
                 addCoinText.destroy();      // 0개가 되면 지워줍니다
                 clearInterval(countTimer);  // 메모리누수를 막기위해 countTimer를 지워줍니다
 
-                // 정산이 끝나면 홈, 다시시작 버튼을 보여주기
-                returnHomeButton.setVisible(true);
-                returnHomeButtonText.setVisible(true);
-                restartGameButton.setVisible(true);
-                restartGameButtonText.setVisible(true);
+                // 정산끝
+                isCoinAnimationDone = true;
             }
 
             // 최종코인 텍스트 갱신
             coinText.setText(Math.floor(coin));
             setCoinLayout();
+            showResultButtonsIfReady();
 
         }, tickRate); // tickRate의 속도로 반복
 
     }, 1000); // 1초뒤에 작동
+
+    // 해당 씬에서 나가면 타임아웃과 인터벌을 지운다
+    resultWindow.once("destroy", () => {
+        clearTimeout(animationDelay);
+        clearInterval(countTimer);
+    });
 
     // 만든걸 모두 gameEndUI에 넣기
     scene.gameEndUI.add([
@@ -278,5 +325,25 @@ export async function gameClear(scene) {
     ]);
 
     // API연동 이벤트 실행(연산이 모두 끝난 최종점수를 보내준다)
-    window.dispatchEvent(new CustomEvent("submitFinalScore", { detail: finalScore }))
+    window.dispatchEvent(
+        new CustomEvent("submitFinalScore", {
+            detail: {
+                finalScore,
+
+                // 저장 성공/실패 어느 쪽이든 요청이 끝나면 확인
+                onSettled: () => {
+                    isScoreRequestDone = true;
+                    showResultButtonsIfReady();
+                },
+
+                // 에러 발생시
+                onError: (error) => {
+                    // 결과 화면에서 나갔다면 표시하지 않음
+                    if (!resultWindow.active) return;
+
+                    errorMessageSpawn(scene,"점수 저장에 실패했습니다.\n" + error);
+                },
+            },
+        })
+    );
 }

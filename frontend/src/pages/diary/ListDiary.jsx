@@ -30,7 +30,7 @@ export default function ListDiary() {
       <div className='flex-1 overflow-y-auto no-scrollbar pb-[120%]'>
         {isLoading ? (
           // 로딩 중: 바운스 애니메이션 텍스트 표시
-          <div className="flex justify-center mt-[50%] text-3xl text-[#4A4A4A] font-bold animate-bounce">
+          <div className="flex justify-center mt-[50%] text-2xl text-[#4A4A4A] font-bold animate-bounce">
             일기를 불러오는 중...
           </div>
         ) : isError ? (

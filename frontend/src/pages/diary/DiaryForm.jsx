@@ -72,6 +72,9 @@ export default function DiaryForm() {
   const [stickers, setStickers] = useState([]); // 화면에 붙인 스티커 목록
   const [duplicateDateInfo, setDuplicateDateInfo] = useState(null); // 이미 작성된 일기가 있는지 확인하기위한 상태 
   const [savedImageId, setSavedImageId] = useState(null); // 백엔드 DiaryView.post()에서 image_id를 받아 ai_image.diary_id를 업데이트함
+  const [attachedPhoto, setAttachedPhoto] = useState(null); // 사진 첨부 파일 (img2img용)
+  const [photoPreviewUrl, setPhotoPreviewUrl] = useState(''); // 첨부 사진 미리보기 URL
+  const fileInputRef = useRef(null); // 파일 선택 input 참조
 
   // emoji: 서버 저장용 번호(ID)와 화면 표시용 이미지이름(Img)을 따로 관리
   const [selectedEmojiId, setSelectedEmojiId] = useState(initEmotion?.item_id ?? null);
@@ -180,7 +183,7 @@ export default function DiaryForm() {
   setStep(4);
   try {
     const promptData = await promptApi.convert(content);
-    await _generateImage(promptData.positive_prompt, promptData.negative_prompt);
+    await _generateImage(promptData.positive_prompt, promptData.negative_prompt, attachedPhoto);
   } catch (error) {
     console.error('이미지 생성 실패:', error);
     setSaveError('generate_fail'); // 에러 다이얼로그 띄우기
@@ -227,7 +230,7 @@ export default function DiaryForm() {
       setConvertedPrompt(next);
     }
 
-    await _generateImage(convertedPromptRef.current.positive_prompt, convertedPromptRef.current.negative_prompt);
+    await _generateImage(convertedPromptRef.current.positive_prompt, convertedPromptRef.current.negative_prompt, attachedPhoto);
   } catch (error) {
     console.error('이미지 생성 실패:', error);
     setSaveError('generate_fail');//에러 다이얼로그 띄우기
@@ -238,17 +241,27 @@ export default function DiaryForm() {
 }
 
   // 실제 ai-generate API 호출 (내부 공통 함수)
-  async function _generateImage(positivePrompt, negativePrompt) {
+  async function _generateImage(positivePrompt, negativePrompt, photoFile = null) {
     console.log("---------------------------------------------------------") // 나중에 배포전에 지울거에요
     console.log("긍정프롬프트:",positivePrompt);
     console.log("부정프롬프트:",negativePrompt);
+    console.log("사진첨부:", photoFile ? photoFile.name : '없음');
     console.log("----------------------------------------------------------")
 
-    // 1단계: 큐잉만 하고 즉시 응답 받음
-      const queueData = await aiGenerateApi.start({
+    // 1단계: 큐잉만 하고 즉시 응답 받음 (사진 있으면 img2img, 없으면 txt2img)
+    let queueData;
+    if (photoFile) {
+      const formData = new FormData();
+      formData.append('image', photoFile);
+      formData.append('positive_prompt', positivePrompt || content);
+      formData.append('negative_prompt', negativePrompt || '');
+      queueData = await aiGenerateApi.startImg2Img(formData);
+    } else {
+      queueData = await aiGenerateApi.start({
         positive_prompt: positivePrompt || content,
         negative_prompt: negativePrompt || '',
       });
+    }
 
       // 2단계(진행률 구독) + 3단계(완료 후 결과 조회)를 함께 처리
       const { image_id, image_url } = await _waitForGeneration(queueData);
@@ -301,6 +314,21 @@ export default function DiaryForm() {
         };
       });
     }
+
+  function handlePhotoAttach(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+    if (photoPreviewUrl) URL.revokeObjectURL(photoPreviewUrl);
+    setAttachedPhoto(file);
+    setPhotoPreviewUrl(URL.createObjectURL(file));
+  }
+
+  function handleChangePhoto() {
+    if (photoPreviewUrl) URL.revokeObjectURL(photoPreviewUrl);
+    setAttachedPhoto(null);
+    setPhotoPreviewUrl('');
+    setStep(2);
+  }
 
   function handleRegenerateImage() {
     setTags([]); // 이전 태그 초기화
@@ -540,11 +568,13 @@ export default function DiaryForm() {
 
       {/* 2단계: 그림 그리기 전 선택 팝업 */}
       {step === 2 && (
-        <ImageZoomOverlay onClose={handleCloseOverlay} imageUrl={imageUrl}
+        <ImageZoomOverlay onClose={handleCloseOverlay} imageUrl={imageUrl || photoPreviewUrl}
           footer={
-            <div className="w-full h-full flex flex-col justify-end items-center gap-[8%]">
+            <div className="w-full h-full flex flex-col justify-end items-center gap-[6%]">
+              <input type="file" accept="image/*" ref={fileInputRef} className="hidden" onChange={handlePhotoAttach} />
               <ImageButton label="그냥 그리기" onClick={handleDrawWithoutOption} className="w-[60%] aspect-[237/72]" imageSrc={getAssetUrl(currentTheme, 'buttons', 'babypink_button_x3')} textOption="text-2xl text-[#FF7396]" />
               <ImageButton label="옵션 적용하기" onClick={handleSelectOption} className="w-[60%] aspect-[237/72]" imageSrc={getAssetUrl(currentTheme, 'buttons', 'skyblue_button_x3')} textOption="text-2xl text-[#4C8AE8]" />
+              <ImageButton label="사진 첨부하기" onClick={() => fileInputRef.current?.click()} className="w-[60%] aspect-[237/72]" imageSrc={getAssetUrl(currentTheme, 'buttons', 'babypink_button_x3')} textOption="text-2xl text-[#FF7396]" />
             </div>
           }
         />
@@ -562,7 +592,11 @@ export default function DiaryForm() {
       {/* AI 로딩 화면 (그림 그리는 중...) */}
       {isGenerating && (
         <div className="absolute inset-0 z-[100] flex items-center justify-center bg-white">
-            <img src="/assets/theme/winter_light/animation/generating.gif" alt="AI Drawing" className="h-full " />
+            <img 
+              src={`/assets/theme/${currentTheme}/animation/generating.gif`} 
+              alt="AI Drawing" 
+              className="h-full" 
+            />
             <div className="absolute bottom-[23%] w-[50%] h-[4%] p-[1%] pt-[1.2%] bg-white rounded-lg overflow-hidden">
               <div
                 className="h-full bg-blue-900 rounded-lg transition-all duration-200"
@@ -589,8 +623,19 @@ export default function DiaryForm() {
         <ImageZoomOverlay onClose={handleCloseOverlay} imageUrl={imageUrl}
           footer={
             <div className="w-full h-full flex flex-col justify-end items-center mb-[10%] gap-[8%]">
-              <ImageButton label="다시 그리기" onClick={handleRegenerateImage} className="w-[60%] aspect-[237/72]" imageSrc={getAssetUrl(currentTheme, 'buttons', 'babypink_button_x3')} textOption="text-2xl text-[#FF7396]" />
-              <ImageButton label="꾸미기" onClick={handleDecorate} className="w-[60%] aspect-[237/72]" imageSrc={getAssetUrl(currentTheme, 'buttons', 'skyblue_button_x3')} textOption="text-2xl text-[#4C8AE8]" />
+              {attachedPhoto ? (
+                // img2img 모드: 사진 변경 or 다시 그리기
+                <>
+                  <ImageButton label="다른 사진 사용하기" onClick={handleChangePhoto} className="w-[60%] aspect-[237/72]" imageSrc={getAssetUrl(currentTheme, 'buttons', 'babypink_button_x3')} textOption="text-2xl text-[#FF7396]" />
+                  <ImageButton label="다시 그리기" onClick={handleRegenerateImage} className="w-[60%] aspect-[237/72]" imageSrc={getAssetUrl(currentTheme, 'buttons', 'skyblue_button_x3')} textOption="text-2xl text-[#4C8AE8]" />
+                </>
+              ) : (
+                // txt2img 모드: 기존 버튼
+                <>
+                  <ImageButton label="다시 그리기" onClick={handleRegenerateImage} className="w-[60%] aspect-[237/72]" imageSrc={getAssetUrl(currentTheme, 'buttons', 'babypink_button_x3')} textOption="text-2xl text-[#FF7396]" />
+                  <ImageButton label="꾸미기" onClick={handleDecorate} className="w-[60%] aspect-[237/72]" imageSrc={getAssetUrl(currentTheme, 'buttons', 'skyblue_button_x3')} textOption="text-2xl text-[#4C8AE8]" />
+                </>
+              )}
             </div>
           }
         />

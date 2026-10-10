@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from "react";
+import toast from "react-hot-toast";
 import { useTheme } from '../../../stores/useThemeStore'; // useTheme 불러오기
 import { getAssetUrl } from "../../../utils/AssetHelper"; // 헬퍼 불러오기
+import { authApi } from "../../../api/authApi"; // 알림 설정 API
 
 // 컴포넌트 불러오기
 import Header from "../../../components/common/Header";
@@ -9,49 +11,98 @@ import NotificationCard from "../../../components/more/notification/Notification
 import TimePickerDialog from "../../../components/more/notification/TimePickerDialog";
 
 // 알림 항목 배열
+// enabledKey / timeKey: 백엔드(notification_settings)의 컬럼명과 매핑
 const NOTIFICATION_LIST = [
-  { id: 'diary', label: '오늘 일기 채우기', time: '21:00' },
-  { id: 'notice', label: '공지사항, 이벤트 및 혜택 알림', time: null },
+  { id: 'diary', label: '오늘 일기 채우기', time: '21:00', enabledKey: 'diary_enabled', timeKey: 'diary_time' },
+  { id: 'attendance', label: '출석 체크 알림', time: '20:00', enabledKey: 'attendance_enabled', timeKey: 'attendance_time' },
+  { id: 'notice', label: '공지사항, 이벤트 및 혜택 알림', time: null, enabledKey: 'notice_enabled', timeKey: null },
 ];
+
+// 서버 설정값을 화면용 항목 배열로 변환
+const applySettings = (settings) =>
+  NOTIFICATION_LIST.map((item) => ({
+    ...item,
+    isOn: settings?.[item.enabledKey] ?? false,
+    time: item.timeKey ? (settings?.[item.timeKey] ?? item.time) : null,
+  }));
+
+// 화면용 항목 배열을 서버 PATCH body로 변환 (보낼 키만 골라서 사용)
+const toPayload = (items, ids) => {
+  const payload = {};
+  items
+    .filter((item) => ids.includes(item.id))
+    .forEach((item) => {
+      payload[item.enabledKey] = item.isOn;
+      if (item.timeKey) payload[item.timeKey] = item.time;
+    });
+  return payload;
+};
 
 const Notification = () => {
   const currentTheme = useTheme((state) => state.currentTheme);
 
   // 알림 활성화 여부 및 설정 시간 상태 관리
-  const [notifications, setNotifications] = useState(() => {
-    return NOTIFICATION_LIST.map((item) => ({
-      ...item,
-      isOn: false, // 초기 토글 상태 추가
-    }));
-  });
+  const [notifications, setNotifications] = useState(() => applySettings(null));
+  const [isLoaded, setIsLoaded] = useState(false); // 서버 설정을 불러오기 전에는 저장하지 않도록 방어
 
   // 다이얼로그 팝업 제어용 상태(State)
   const [isPickerOpen, setIsPickerOpen] = useState(false);
   const [activeCardId, setActiveCardId] = useState(null);
   const [pickerCurrentTime, setPickerCurrentTime] = useState("00:00");
 
+  // 화면 진입 시 저장된 알림 설정 불러오기
+  useEffect(() => {
+    let cancelled = false;
+
+    authApi.getNotificationSettings()
+      .then((settings) => {
+        if (cancelled) return;
+        setNotifications(applySettings(settings));
+        setIsLoaded(true);
+      })
+      .catch((err) => {
+        console.error("알림 설정 불러오기 실패:", err);
+        if (!cancelled) toast("알림 설정을 불러오지 못했습니다");
+      });
+
+    return () => { cancelled = true; };
+  }, []);
+
+  // 변경 사항을 서버에 저장하고, 실패하면 이전 상태로 되돌림
+  const saveChanges = async (next, changedIds, prev) => {
+    setNotifications(next); // 화면은 먼저 반영 (낙관적 업데이트)
+    try {
+      await authApi.updateNotificationSettings(toPayload(next, changedIds));
+    } catch (err) {
+      console.error("알림 설정 저장 실패:", err);
+      setNotifications(prev);
+      toast("알림 설정 저장에 실패했습니다");
+    }
+  };
+
   // 전체 알림 켜짐 여부 판별(모든 항목의 isOn이 true인지 검사)
   const isAllOn = notifications.length > 0 && notifications.every(item => item.isOn === true);
 
   // 전체 알림 토글 제어
   const handleAllToggle = () => {
+    if (!isLoaded) return;
     const nextState = !isAllOn;
-    setNotifications((prev) =>
-      prev.map((item) => ({ ...item, isOn: nextState }))
-    );
+    const next = notifications.map((item) => ({ ...item, isOn: nextState }));
+    saveChanges(next, notifications.map((item) => item.id), notifications);
   };
 
   // 개별 항목 토글 제어
   const handleItemToggle = (id) => {
-    setNotifications((prev) =>
-      prev.map((item) =>
-        item.id === id ? { ...item, isOn: !item.isOn } : item
-      )
+    if (!isLoaded) return;
+    const next = notifications.map((item) =>
+      item.id === id ? { ...item, isOn: !item.isOn } : item
     );
+    saveChanges(next, [id], notifications);
   };
 
   // 시간 설정 팝업창 핸들러
   const handleCardTimeClick = (id, time) => {
+    if (!isLoaded) return;
     setActiveCardId(id);
     setPickerCurrentTime(time);
     setIsPickerOpen(true);
@@ -59,11 +110,10 @@ const Notification = () => {
 
   // 확인 버튼 클릭 시 변경된 시간 반영
   const handleTimePickerConfirm = (newTime) => {
-    setNotifications((prev) =>
-      prev.map((item) =>
-        item.id === activeCardId ? { ...item, time: newTime } : item
-      )
+    const next = notifications.map((item) =>
+      item.id === activeCardId ? { ...item, time: newTime } : item
     );
+    saveChanges(next, [activeCardId], notifications);
     setIsPickerOpen(false); // 시간 반영 후 다이얼로그 닫기
   };
 
@@ -114,7 +164,10 @@ const Notification = () => {
           {notifications.map((item) => (
             <NotificationCard
               key={item.id}
-              {...item}
+              id={item.id}
+              label={item.label}
+              time={item.time}
+              isOn={item.isOn}
               onToggle={handleItemToggle}
               onTimeClick={handleCardTimeClick}
             />

@@ -6,6 +6,7 @@ import { supabase } from "../../utils/SupabaseClient";
 import { announcementApi } from "../../api/announcementApi"; // API 함수 목록
 import { useQueryClient } from "@tanstack/react-query";
 import { queryKeys } from "../../utils/queryKeys";
+import { useContactBadge } from "../../hooks/queries/useContactQueries"; // 문의 빨간 점
 
 // zuStand 함수 불러오기
 import { useGetCoinStore } from "../../stores/useCoinStore";
@@ -26,6 +27,9 @@ const menuItems = [
   { id: 'contactreply', label: '문의사항 답변', iconName: 'setting_icon_x3', path: '/more/contact-reply' },
 ];
 
+// 관리자에게만 보이는 메뉴
+const ADMIN_MENU_IDS = ['userlist', 'additem', 'contactreply'];
+
 const MorePage = () => {
   // navigate('/경로') 처럼 사용하여 원하는 주소로 화면을 전환
   const navigate = useNavigate();
@@ -42,77 +46,28 @@ const MorePage = () => {
   // 출석 다이얼로그 열림 상태를 관리하는 상태
   const [isAttendanceOpen, setIsAttendanceOpen] = useState(false);
 
-  // 관리자 권한 확인
+  // 관리자 메뉴 표시 여부 (화면 표시용, 실제 권한은 RLS가 검사)
   const [isAdmin, setIsAdmin] = useState(false);
 
-  // 알림 빨간 점 상태 관리
-  const [hasUnreadReply, setHasUnreadReply] = useState(false); // 일반 유저용 (답변 완료되었으나 안 읽음)
-  const [hasNewContact, setHasNewContact] = useState(false);   // 관리자용 (새로운 답변 대기 문의 존재)
+  // 빨간 점: React Query로 관리
+  // - 조회 결과로 한 번에 값이 정해지므로 false로 초기화했다가 다시 true로 바뀌는 깜빡임 없음
+  // - 앱 복귀(refetchOnWindowFocus), 로그아웃 시 캐시 삭제(queryClient.clear) 자동 적용
+  // - 상대방이 바꾼 내용은 App.jsx의 useContactRealtime이 이 쿼리를 무효화해서 갱신
+  const { data: badge } = useContactBadge();
+  const hasUnreadReply = badge?.hasUnreadReply ?? false; // 일반 유저용
+  const hasNewContact = badge?.hasNewContact ?? false;   // 관리자용
 
   useEffect(() => {
-    let isMounted = true; // 
-
-    // 세션에서 role 확인
-    const checkAdmin = async () => {
-      // 기존 코드 시작 전, 초기화 추가
-      setHasUnreadReply(false);
-      setHasNewContact(false);
-
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!isMounted) return; // ← 언마운트됐으면 상태 업데이트 중단
-
-      const role = session?.user?.app_metadata?.role;
-      setIsAdmin(role === 'admin');
-
-      if (session?.user) {
-        // 일반 유저: 답변 완료(resolved)되었고 안 읽은(is_read: false) contact가 있는지 체크
-        const { data: userData, error: userError } = await supabase
-          .from("contact")
-          .select("contact_id")
-          .eq("user_id", session.user.id)
-          .eq("status", "resolved")
-          .eq("is_read", false);
-
-        if (!isMounted) return; // ← 중간중간 체크
-        if (!userError && userData && userData.length > 0) {
-          setHasUnreadReply(true);
-        }
-
-        if (role === 'admin') {
-          // 관리자: 답변 대기(pending) 중인 contact가 있는지 체크
-          const { data: adminData, error: adminError } = await supabase
-            .from("contact")
-            .select("contact_id")
-            .eq("status", "pending");
-
-          if (!isMounted) return;
-          // 하나라도 존재하면(배열의 길이가 0보다 크면) true
-          if (!adminError && adminData && adminData.length > 0) {
-            setHasNewContact(true);
-          }
-        }
-      }
-    };
-    checkAdmin();
+    let isMounted = true;
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (!isMounted) return;
+      setIsAdmin(session?.user?.app_metadata?.role === 'admin');
+    });
+ 
     startGetCoin(); // 코인조회를 더보기 창에서 실행
-
-    // 포커스 이벤트 대신 Supabase Realtime 채널 구독
-    const contactChannel = supabase
-      .channel("realtime-contact-changes")
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "contact" },
-        () => {
-          if (isMounted) {
-            checkAdmin(); // DB에 새로운 문의(Insert)나 답변(Update)이 생기면 즉시 실행
-          }
-        }
-      )
-      .subscribe();
-
+ 
     return () => {
-      isMounted = false; // cleanup에서 false로 변경
-      supabase.removeChannel(contactChannel);
+      isMounted = false;
     };
   }, [startGetCoin]);
 
@@ -127,7 +82,7 @@ const MorePage = () => {
 
   // isAdmin 여부에 따라 메뉴 필터링
   const visibleMenuItems = menuItems.filter(
-    (item) => (item.id !== 'userlist' && item.id !== 'additem' && item.id !== 'contactreply') || isAdmin
+    (item) => !ADMIN_MENU_IDS.includes(item.id) || isAdmin
   );
 
   // 메뉴 클릭 핸들러 
@@ -202,7 +157,7 @@ const MorePage = () => {
         ))}
       </nav>
 
-      {/* 주소가 /more/daily 일 때만 출석 다이얼로그 렌더링. 닫기 누르면 이전 주소(/more)로 돌아감 */}
+      {/* 출석 버튼을 누르면 출석 다이얼로그 렌더링, 닫기 누르면 state만 false로 변경 */}
       {isAttendanceOpen && (
         <Attendance onClose={() => setIsAttendanceOpen(false)} />
       )}

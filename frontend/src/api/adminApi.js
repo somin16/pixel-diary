@@ -1,5 +1,6 @@
 // src/api/adminApi.js
 // 관리자 전용 API 호출 함수만 모아둔 파일 (React Query 코드 없음, 순수 fetch)
+// 문의사항 답변(관리자)은 Supabase 직접 연동이라 contactApi.js에 있음
 import { authFetch } from '../utils/AuthHelper';
 
 const BASE_URL = import.meta.env.VITE_BACKEND_URL;

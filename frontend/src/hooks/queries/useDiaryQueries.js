@@ -36,6 +36,8 @@ export function useCreateDiary() {
     mutationFn: diaryApi.create, // { image_id, content }
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.diaries, ...NO_IMMEDIATE_REFETCH });
+      // 통계 (/stats에 들어올 때 새로 불러옴)
+      queryClient.invalidateQueries({ queryKey: queryKeys.statistics, ...NO_IMMEDIATE_REFETCH });
     },
   });
 }
@@ -51,6 +53,8 @@ export function useUpdateDiary() {
     onSuccess: (_, { diaryId }) => {
       queryClient.invalidateQueries({ queryKey: queryKeys.diaries, ...NO_IMMEDIATE_REFETCH });
       queryClient.invalidateQueries({ queryKey: queryKeys.diaryDetail(diaryId), ...NO_IMMEDIATE_REFETCH });
+      // 통계 (/stats에 들어올 때 새로 불러옴)
+      queryClient.invalidateQueries({ queryKey: queryKeys.statistics, ...NO_IMMEDIATE_REFETCH });
     },
   });
 }
@@ -64,6 +68,8 @@ export function useDeleteDiary() {
     onSuccess: (_, { diaryId }) => {
       queryClient.invalidateQueries({ queryKey: queryKeys.diaries, ...NO_IMMEDIATE_REFETCH });
       queryClient.removeQueries({ queryKey: queryKeys.diaryDetail(diaryId) });
+      // 통계 (/stats에 들어올 때 새로 불러옴)
+      queryClient.invalidateQueries({ queryKey: queryKeys.statistics, ...NO_IMMEDIATE_REFETCH });
     },
   });
 }

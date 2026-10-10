@@ -1,6 +1,7 @@
 import os
 import re
 import requests
+import calendar as pycal # 월 일수 계산용 ( 응답 변수명 calendar와 충돌 방지로 별칭 사용)
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
@@ -1263,16 +1264,38 @@ class UpdateGenderAgeView(APIView):
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
 
+# ---------------- 사용자 통계 관련 -------------------------------------------------
+
+EMOTIONS = ["happy", "calm", "tired", "sad", "angry"]
+
+def calc_streaks(date_set, today):
+    """날짜 set → (현재 연속, 최장 연속). 오늘 안 썼어도 어제까지 이어졌으면 현재 연속 유지"""
+    if not date_set:
+        return 0, 0
+    ordered = sorted(date_set)
+    longest = run = 1
+    for prev, cur in zip(ordered, ordered[1:]):
+        run = run + 1 if (cur - prev).days == 1 else 1
+        longest = max(longest, run)
+
+    day = today if today in date_set else today - timedelta(days=1)
+    current = 0
+    while day in date_set:
+        current += 1
+        day -= timedelta(days=1)
+    return current, longest
+
+# ----------------------------------------------------------------------------
 
 class StatisticsView(APIView):
     """사용자 통계(일기, 출석) 조회 API"""
 
     def get(self, request):
         """
-        GET /api/v1/auth/statistics
-        - Authorization 헤더의 access_token으로 현재 유저 확인
-        - 일기: 오늘 작성 여부, 총 작성 횟수, 감정별 작성 개수
-        - 출석: 오늘 출석 여부, 총 출석 일수
+        GET /api/v1/auth/statistics/?year=2026&month=10
+        - month 생략 시 연 단위, 있으면 월 단위
+        - summary / yearly_counts / available_years 는 기간과 무관한 전체 기록
+        - 나머지는 선택한 기간(year, month) 기준
         """
         # Authorization 헤더에서 access_token 추출
         access_token = extract_access_token(request)
@@ -1281,11 +1304,25 @@ class StatisticsView(APIView):
                 {"message": "Authorization 헤더에 유효한 Bearer 토큰이 필요합니다."},
                 status=status.HTTP_400_BAD_REQUEST,
             )
+        kst = timezone(timedelta(hours=9))
+        today = datetime.now(kst).date()
+
+        # 쿼리 파라미터 검증
+        try:
+            year = int(request.query_params.get("year", today.year))
+            month_param = request.query_params.get("month")
+            month = int(month_param) if month_param else None
+            if not (2000 <= year <= 2100) or (month is not None and not 1 <= month <= 12):
+                raise ValueError
+        except ValueError:
+            return Response(
+                {"message": "year, month 값이 올바르지 않습니다."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
 
         try:
             # access_token으로 유저 정보 조회
             user = get_user_from_token(access_token)
-
             # 유효하지 않은 토큰인 경우 401 반환
             if not user:
                 return Response(
@@ -1295,41 +1332,36 @@ class StatisticsView(APIView):
 
             user_id = user.get("id")
             headers = get_supabase_headers()
-            kst = timezone(timedelta(hours=9))
-            today = datetime.now(kst).date()
 
-            # --- 일기 통계 ---
+            # --- 일기 조회 (전체) ---
             diary_response = requests.get(
                 f"{SUPABASE_URL}/rest/v1/diaries",
                 headers=headers,
                 params={"user_id": f"eq.{user_id}", "select": "created_at,emotion"},
             )
-
             if diary_response.status_code != 200:
                 raise Exception(f"Supabase API 오류: {diary_response.text}")
 
-            diaries = diary_response.json()
-            diary_total_count = len(diaries)
+            # KST 기준 (날짜, 감정) 목록으로 변환
+            diaries = []
+            for row in diary_response.json():
+                dt = datetime.fromisoformat(row["created_at"].replace("Z", "+00:00")).astimezone(kst)
+                diaries.append((dt.date(), row.get("emotion")))
 
-            diary_written_today = False
-            emotion_counts = {"happy": 0, "calm": 0, "tired": 0, "sad": 0, "angry": 0}
+            diary_dates = {d for d, _ in diaries}
+            diary_streak_current, diary_streak_longest = calc_streaks(diary_dates, today)
 
-            for row in diaries:
-                created_at = datetime.fromisoformat(row["created_at"].replace("Z", "+00:00")).astimezone(kst)
-                if created_at.date() == today:
-                    diary_written_today = True
+            # 연도별 작성 횟수 (전체 기간)
+            yearly_counts = {}
+            for d, _ in diaries:
+                yearly_counts[str(d.year)] = yearly_counts.get(str(d.year), 0) + 1
 
-                emotion = row.get("emotion")
-                if emotion in emotion_counts:
-                    emotion_counts[emotion] += 1
-
-            # --- 출석 통계 ---
+            # --- 출석 조회 (attendance_log: 리셋 없는 전체 이력) ---
             attendance_response = requests.get(
                 f"{SUPABASE_URL}/rest/v1/attendance_log",
                 headers=headers,
                 params={"user_id": f"eq.{user_id}", "select": "checked_date"},
             )
-
             if attendance_response.status_code != 200:
                 raise Exception(f"Supabase API 오류: {attendance_response.text}")
 
@@ -1337,21 +1369,79 @@ class StatisticsView(APIView):
                 datetime.strptime(row["checked_date"], "%Y-%m-%d").date()
                 for row in attendance_response.json()
             }
+            att_streak_current, att_streak_longest = calc_streaks(attendance_dates, today)
 
-            attendance_total_days = len(attendance_dates)
-            attendance_checked_today = today in attendance_dates
+            # --- 선택 기간 필터링 ---
+            period = [
+                (d, e) for d, e in diaries
+                if d.year == year and (month is None or d.month == month)
+            ]
+
+            emotion_counts = {e: 0 for e in EMOTIONS}
+            weekday_counts = [0] * 7                      # 월(0) ~ 일(6)
+            is_year_view = month is None
+            monthly_counts = [0] * 12 if is_year_view else None
+            monthly_emotions = [{e: 0 for e in EMOTIONS} for _ in range(12)] if is_year_view else None
+            calendar = {} if not is_year_view else None
+
+            for d, emotion in period:
+                valid_emotion = emotion in emotion_counts
+                if valid_emotion:
+                    emotion_counts[emotion] += 1
+                weekday_counts[d.weekday()] += 1
+
+                if is_year_view:
+                    monthly_counts[d.month - 1] += 1
+                    if valid_emotion:
+                        monthly_emotions[d.month - 1][emotion] += 1
+                elif valid_emotion:
+                    calendar[str(d)] = emotion            # 하루 여러 개면 마지막 값
+
+            emotion_total = sum(emotion_counts.values())
+            top_emotion = max(emotion_counts, key=emotion_counts.get) if emotion_total else None
+
+            # 월 단위: 작성률 (작성한 날 수 / 경과 일수)
+            write_rate = None
+            if not is_year_view:
+                written_days = len({d for d, _ in period})   # 하루 여러 개 써도 1일
+                if (year, month) == (today.year, today.month):
+                    elapsed_days = today.day
+                elif (year, month) < (today.year, today.month):
+                    elapsed_days = pycal.monthrange(year, month)[1]
+                else:
+                    elapsed_days = 0
+                write_rate = {"written_days": written_days, "elapsed_days": elapsed_days}
 
             return Response(
                 {
-                    "diary": {
-                        "written_today": diary_written_today,
-                        "total_count": diary_total_count,
-                        "emotion_counts": emotion_counts,
+                    "summary": {
+                        "diary_total": len(diaries),
+                        "diary_streak_current": diary_streak_current,
+                        "diary_streak_longest": diary_streak_longest,
+                        "attendance_total": len(attendance_dates),
+                        "attendance_streak_current": att_streak_current,
+                        "attendance_streak_longest": att_streak_longest,
+                        "written_today": today in diary_dates,
+                        "checked_today": today in attendance_dates,
                     },
-                    "attendance": {
-                        "checked_today": attendance_checked_today,
-                        "total_days": attendance_total_days,
+                    "period": {
+                        "type": "year" if is_year_view else "month",
+                        "year": year,
+                        "month": month,
                     },
+                    "emotion": {
+                        "counts": emotion_counts,
+                        "total": emotion_total,
+                        "top_emotion": top_emotion,
+                    },
+                    "diary_count": len(period),
+                    "weekday_counts": weekday_counts,
+                    "monthly_counts": monthly_counts,        # 연 단위만 (길이 12)
+                    "monthly_emotions": monthly_emotions,    # 연 단위만 (감정 추이 스택 바)
+                    "calendar": calendar,                    # 월 단위만 {날짜: 감정}
+                    "write_rate": write_rate,                # 월 단위만
+                    "yearly_counts": yearly_counts,          # 전체 {"2025": 12, "2026": 30}
+                    "available_years": sorted({d.year for d in diary_dates}),
                 },
                 status=status.HTTP_200_OK,
             )
@@ -1526,5 +1616,165 @@ class SendPinResetCodeView(APIView):
             print(f"=== SEND PIN RESET CODE ERROR ===\n{error}\n===========================")
             return Response(
                 {"message": "인증번호 발송 중 오류가 발생했습니다."},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
+
+
+# ---------------- 알림 설정 관련 -------------------------------------------------
+
+NOTIFICATION_TIME_REGEX = re.compile(r"^([01][0-9]|2[0-3]):[0-5][0-9]$")
+NOTIFICATION_BOOL_FIELDS = ["diary_enabled", "attendance_enabled", "notice_enabled"]
+NOTIFICATION_TIME_FIELDS = ["diary_time", "attendance_time"]
+
+# 설정 행이 아직 없는 유저에게 돌려줄 기본값 (notification_settings.sql 기본값과 동일하게 유지)
+DEFAULT_NOTIFICATION_SETTINGS = {
+    "diary_enabled": False,
+    "diary_time": "21:00",
+    "attendance_enabled": False,
+    "attendance_time": "20:00",
+    "notice_enabled": False,
+}
+
+# ----------------------------------------------------------------------------
+
+
+class NotificationSettingsView(APIView):
+    """알림 설정 조회/수정 API"""
+
+    def get(self, request):
+        """
+        GET /api/v1/auth/notification-settings/
+        - Authorization 헤더의 access_token으로 현재 유저 확인
+        - 저장된 설정이 없으면 기본값 반환
+        """
+        # Authorization 헤더에서 access_token 추출
+        access_token = extract_access_token(request)
+        if not access_token:
+            return Response(
+                {"message": "Authorization 헤더에 유효한 Bearer 토큰이 필요합니다."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        try:
+            # access_token으로 유저 정보 조회
+            user = get_user_from_token(access_token)
+
+            # 유효하지 않은 토큰인 경우 401 반환
+            if not user:
+                return Response(
+                    {"message": "유효하지 않은 토큰입니다."},
+                    status=status.HTTP_401_UNAUTHORIZED,
+                )
+
+            user_id = user.get("id")
+            response = requests.get(
+                f"{SUPABASE_URL}/rest/v1/notification_settings",
+                headers=get_supabase_headers(),
+                params={
+                    "user_id": f"eq.{user_id}",
+                    "select": ",".join(NOTIFICATION_BOOL_FIELDS + NOTIFICATION_TIME_FIELDS),
+                },
+            )
+            if response.status_code != 200:
+                raise Exception(f"Supabase API 오류: {response.text}")
+
+            rows = response.json()
+            settings = rows[0] if rows else DEFAULT_NOTIFICATION_SETTINGS
+
+            return Response(settings, status=status.HTTP_200_OK)
+
+        except Exception as error:
+            # 오류 발생 시 터미널에 출력 (장애 추적용으로 유지)
+            print(f"=== NOTIFICATION SETTINGS GET ERROR ===\n{error}\n=======================================")
+            return Response(
+                {"message": "알림 설정 조회 중 오류가 발생했습니다."},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
+
+    def patch(self, request):
+        """
+        PATCH /api/v1/auth/notification-settings/
+        - 요청에 포함된 필드만 변경 (보내지 않은 필드는 기존 값 유지)
+        - bool 필드: diary_enabled, attendance_enabled, notice_enabled
+        - 시각 필드: diary_time, attendance_time ("HH:MM", 24시간제, KST)
+        - 설정 행이 없으면 새로 생성 (upsert)
+        """
+        # Authorization 헤더에서 access_token 추출
+        access_token = extract_access_token(request)
+        if not access_token:
+            return Response(
+                {"message": "Authorization 헤더에 유효한 Bearer 토큰이 필요합니다."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        # 요청에 포함된 필드만 검증해서 payload로 구성
+        payload = {}
+
+        for field in NOTIFICATION_BOOL_FIELDS:
+            if field in request.data:
+                value = request.data.get(field)
+                if not isinstance(value, bool):
+                    return Response(
+                        {"message": f"{field}는 true 또는 false여야 합니다."},
+                        status=status.HTTP_400_BAD_REQUEST,
+                    )
+                payload[field] = value
+
+        for field in NOTIFICATION_TIME_FIELDS:
+            if field in request.data:
+                value = request.data.get(field)
+                if not isinstance(value, str) or not NOTIFICATION_TIME_REGEX.match(value):
+                    return Response(
+                        {"message": f"{field}는 HH:MM 형식(예: 21:00)이어야 합니다."},
+                        status=status.HTTP_400_BAD_REQUEST,
+                    )
+                payload[field] = value
+
+        # 변경할 필드가 하나도 없으면 400 반환
+        if not payload:
+            return Response(
+                {"message": "변경할 알림 설정을 하나 이상 입력해주세요."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        try:
+            # access_token으로 유저 정보 조회
+            user = get_user_from_token(access_token)
+
+            # 유효하지 않은 토큰인 경우 401 반환
+            if not user:
+                return Response(
+                    {"message": "유효하지 않은 토큰입니다."},
+                    status=status.HTTP_401_UNAUTHORIZED,
+                )
+
+            payload["user_id"] = user.get("id")
+
+            # upsert: user_id가 이미 있으면 보낸 컬럼만 갱신, 없으면 새로 생성
+            response = requests.post(
+                f"{SUPABASE_URL}/rest/v1/notification_settings?on_conflict=user_id",
+                headers={
+                    **get_supabase_headers(),
+                    "Prefer": "resolution=merge-duplicates,return=representation",
+                },
+                json=payload,
+            )
+            if response.status_code not in [200, 201]:
+                raise Exception(f"Supabase API 오류: {response.text}")
+
+            saved = response.json()[0]
+            return Response(
+                {
+                    **{f: saved.get(f) for f in NOTIFICATION_BOOL_FIELDS + NOTIFICATION_TIME_FIELDS},
+                    "message": "알림 설정이 저장되었습니다.",
+                },
+                status=status.HTTP_200_OK,
+            )
+
+        except Exception as error:
+            # 오류 발생 시 터미널에 출력 (장애 추적용으로 유지)
+            print(f"=== NOTIFICATION SETTINGS PATCH ERROR ===\n{error}\n=========================================")
+            return Response(
+                {"message": "알림 설정 저장 중 오류가 발생했습니다."},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )

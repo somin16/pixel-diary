@@ -15,7 +15,7 @@ import useSoundEffectStore from './stores/useSoundEffectStore'; // 앱 효과음
 // ----------------- 컴포넌트 불러오기 ----------------------------------
 import AppShell from "./components/layout/AppShell"; // AppShell 불러오기
 import { LockGateRoute } from "./components/more/lock/LockGateRoute"; // 앱 잠금 레이아웃 라우트
-import useAppLockStore from "./stores/useAppLockStore"; // 로그인 직후 잠금 스킵 처리용
+import useAppLockStore from "./stores/useAppLockStore"; // 앱 시작 시 잠금 상태 초기화용
 import Home from "./pages/home/Home"; // 홈 화면
 // ----------------------- 게임 ---------------------------------------
 import Game1 from "./games/game1/Game1"; // 게임1 화면
@@ -55,6 +55,10 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { profileApi } from "./api/profileApi"; // 프로필 API
 import { attendanceApi } from "./api/attendanceApi"; // 출석 API
 import { useResetAttendanceIfExpired } from './hooks/queries/useAttendanceQueries';
+import { useContactRealtime } from "./hooks/queries/useContactQueries"; // 문의하기 실시간 구독
+import { contactApi } from "./api/contactApi"; // 문의하기 API (빨간 점 prefetch용)
+// ----------------------------- 통계 ------------------------------
+import StatisticsPage from "./pages/statistics/StatisticsPage"; // 사용자 전용 통계 페이지 
 
 
 const queryClient = new QueryClient({
@@ -93,6 +97,8 @@ function AppInner() {
   const [session, setSession] = useState(null);
   const [loading, setLoading] = useState(true);
 
+  useContactRealtime(session); // 문의하기 실시간 갱신 (빨간 점, 목록)
+
   const resetAttendanceIfExpired = useResetAttendanceIfExpired(); // 앱 접속 시 만료된 출석 기록 초기화용 mutation
 
   async function prefetchCriticalData(queryClient) {
@@ -104,6 +110,7 @@ function AppInner() {
       queryClient.prefetchQuery({ queryKey: queryKeys.items, queryFn: storeApi.getItem }),
       queryClient.prefetchQuery({ queryKey: queryKeys.inventory, queryFn: inventoryApi.getItem }),
       queryClient.prefetchQuery({ queryKey: queryKeys.attendance, queryFn: attendanceApi.getAttendance }),
+      queryClient.prefetchQuery({ queryKey: queryKeys.contactBadge, queryFn: contactApi.getBadge }),
     ]);
   }
 
@@ -111,8 +118,11 @@ function AppInner() {
     // 세션 확인이랑 동시에 잠금 상태 초기화도 미리 시작 (병렬 진행)
     useAppLockStore.getState().init();
 
+    let currentUserId = null; // 직전 세션의 유저 ID (실제 로그인인지 판별용)
+
     // 현재 세션 가져오기 (앱 최초 실행 시)
     supabase.auth.getSession().then(async ({ data: { session } }) => {
+      currentUserId = session?.user?.id ?? null; // 앱 시작 시 복원된 유저 기록 → 이후 같은 유저의 SIGNED_IN은 무시됨
       setSession(session);
       setLoading(false); // 세션 확인되자마자 바로 렌더링 시작
       if (session) {
@@ -128,23 +138,25 @@ function AppInner() {
       }
     });
 
-    let hasHandledInitialAuth = false;
-
     // 로그인 상태 변화 감시 (로그아웃/재로그인 포함)
+    // 로그인 직후 잠금화면 스킵은 Login.jsx에서 markFreshLogin()으로 처리
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setSession(session);
-      if (_event === 'SIGNED_OUT') {
-      queryClient.clear(); // 이전 계정 캐시 제거 (다른 유저 데이터 노출 방지)
-    }
+      const newUserId = session?.user?.id ?? null;
 
-    if (_event === 'SIGNED_IN' && session) {
-      if (hasHandledInitialAuth) {
-        useAppLockStore.getState().markFreshLogin(); // 방금 로그인했으면 이번엔 잠금화면 스킵
+      if (_event === 'SIGNED_OUT') {
+        queryClient.clear(); // 이전 계정 캐시 제거 (다른 유저 데이터 노출 방지)
+        useMusicStore.getState().stop(); // 로그아웃 시 배경음악 정지
       }
-      initPush();
-      prefetchCriticalData(queryClient); // 로그인마다 prefetch 재실행
-    }
-    hasHandledInitialAuth = true;
+
+      // 같은 유저의 SIGNED_IN(토큰 갱신, 탭 복귀 등)은 무시하고, 유저가 바뀐 경우만 푸시 초기화와 prefetch 실행
+      const isRealLogin = _event === 'SIGNED_IN' && newUserId && newUserId !== currentUserId;
+      if (isRealLogin) {
+        initPush();
+        prefetchCriticalData(queryClient); // 로그인마다 prefetch 재실행
+      }
+
+      currentUserId = newUserId;
     });
 
     return () => subscription.unsubscribe();
@@ -153,6 +165,10 @@ function AppInner() {
   // 첫 터치/클릭 시 배경음악 시작 (자동재생 정책 대응)
   useEffect(() => {
     if (!session) return; // 로그인 전에는 음악 재생 안 함
+
+    // 이메일 로그인처럼 이미 사용자 클릭이 있었다면 바로 재생됨
+    // 자동재생 정책에 막히면 playForTheme이 currentTheme을 비우므로, 아래 첫 클릭 때 다시 재생됨
+    useMusicStore.getState().playForTheme(useTheme.getState().currentTheme);
 
     const handleFirstInteraction = () => {
       // 클릭 시점의 최신 테마로 재생 (effect 등록 시점 값이 아니라)
@@ -170,6 +186,8 @@ function AppInner() {
 
   // 버튼/링크 클릭 시 효과음 자동 재생
   useEffect(() => {
+    if (!session) return; // 로그인 전(로그아웃 후)에는 효과음 재생 안 함
+
     const handleClickSound = (e) => {
       // 효과음 제외 영역(게임 등)이면 재생 안 함
       if (e.target.closest('[data-no-click-sound]')) return;
@@ -183,7 +201,7 @@ function AppInner() {
 
     window.addEventListener('click', handleClickSound);
     return () => window.removeEventListener('click', handleClickSound);
-  }, []);
+  }, [session]); // 세션이 바뀔 때마다 등록/해제
 
   if (loading) return null; // 로딩 중에는 아무것도 안 보여주거나 로딩바 노출
 
@@ -292,7 +310,7 @@ function AppInner() {
             <Route path="/more/setting/lock" element={<Lock />} />
 
             {/* 주소가 /stats 이면 사용자 통계 화면을 보여줘 */}
-            <Route path="/stats" element={<div className="p-4">통계 (준비 중)</div>} /> 
+            <Route path="/stats" element={<StatisticsPage />} /> 
 
             {/* 주소가 /more/setting/sound 이면 사운드 설정 화면을 보여줘 */}
             <Route path="/more/setting/sound" element={<Sound />} />
