@@ -118,7 +118,7 @@ export default function DiaryForm() {
     // 액자 복원
     if (editData.theme_item?.item_id) {
       setSelectedFrameId(editData.theme_item.item_id);
-      setSelectedFrameImg(editData.theme_item?.image_url ?? defaultFrame.img);
+      setSelectedFrameImg(editData.theme_item?.image_url ?? null);
     }
     // 스티커 목록 복원
     if (editData.sticker?.length) {
@@ -453,11 +453,11 @@ export default function DiaryForm() {
       // 스티커 추가: 기존 목록에 새 스티커를 더함
       setStickers((prev) => [...prev, { ...item, id: item.item_id, instanceId: Date.now(), x: null, y: null, size: 20 }]);
     } else if (type === 'emoji') {
-      setSelectedEmotion(item.item_id);      // 화면 표시/인벤토리 참조용
-      setSelectedEmojiImg(item.img);         // 화면 표시용 이미지
-      const keyword = extractEmotionKeyword(item); // 'happy' 등 문자열
-      applyEmotionTag(keyword);              // 그림 옵션 태그에 반영
-      setSelectedEmotion(keyword);           // 저장 API용 문자열 보관
+      setSelectedEmojiId(item.item_id);
+      setSelectedEmojiImg(item.img);
+      const keyword = extractEmotionKeyword(item);
+      applyEmotionTag(keyword);
+      if (keyword) setSelectedEmotion(keyword);
     } else if (type === 'frame') {
       // 액자 교체 및 기억하기
       setSelectedFrameId(item.item_id);
@@ -488,20 +488,15 @@ export default function DiaryForm() {
 
   // 모든 데이터를 초기화하고 처음부터 다시 시작
   function handleRestartFromBeginning() {
-    setImageUrl('');
-    setStickers([]);
-    setSelectedEmojiId(null);
-    setSelectedEmojiImg(null);
-    setContent('');
-    setSavedDiaryId(null);
-    setSavedImageId(null);
-    setStep(1);
-
-    // 단순히 defaultFrame으로 돌리지 말고 localStorage 확인
-    const lastImg = localStorage.getItem('lastUsedFrame') ?? defaultFrame.img;
-    setSelectedFrameImg(lastImg);
-    setSelectedFrameId(defaultFrame.id);
-  }
+  setImageUrl('');
+  setStickers([]);
+  setContent('');
+  setSavedDiaryId(null);
+  setSavedImageId(null);
+  setStep(1);
+  setSelectedFrameImg(localStorage.getItem('lastUsedFrame') ?? null);
+  setSelectedFrameId(null);
+}
 
 
   // ── [화면] 실제 사용자에게 보여지는 부분 ─────────────────────────────────────
