@@ -570,7 +570,7 @@ export default function DiaryForm() {
       {step === 2 && (
         <ImageZoomOverlay onClose={handleCloseOverlay} imageUrl={imageUrl || photoPreviewUrl}
           footer={
-            <div className="w-full h-full flex flex-col justify-end items-center gap-[8%]">
+            <div className="w-full h-full flex flex-col justify-end items-center gap-[6%]">
               <input type="file" accept="image/*" ref={fileInputRef} className="hidden" onChange={handlePhotoAttach} />
               <ImageButton label="그냥 그리기" onClick={handleDrawWithoutOption} className="w-[60%] aspect-[237/72]" imageSrc={getAssetUrl(currentTheme, 'buttons', 'babypink_button_x3')} textOption="text-2xl text-[#FF7396]" />
               <ImageButton label="옵션 적용하기" onClick={handleSelectOption} className="w-[60%] aspect-[237/72]" imageSrc={getAssetUrl(currentTheme, 'buttons', 'skyblue_button_x3')} textOption="text-2xl text-[#4C8AE8]" />
