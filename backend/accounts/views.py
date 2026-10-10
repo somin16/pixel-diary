@@ -1618,3 +1618,163 @@ class SendPinResetCodeView(APIView):
                 {"message": "인증번호 발송 중 오류가 발생했습니다."},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
+
+
+# ---------------- 알림 설정 관련 -------------------------------------------------
+
+NOTIFICATION_TIME_REGEX = re.compile(r"^([01][0-9]|2[0-3]):[0-5][0-9]$")
+NOTIFICATION_BOOL_FIELDS = ["diary_enabled", "attendance_enabled", "notice_enabled"]
+NOTIFICATION_TIME_FIELDS = ["diary_time", "attendance_time"]
+
+# 설정 행이 아직 없는 유저에게 돌려줄 기본값 (notification_settings.sql 기본값과 동일하게 유지)
+DEFAULT_NOTIFICATION_SETTINGS = {
+    "diary_enabled": False,
+    "diary_time": "21:00",
+    "attendance_enabled": False,
+    "attendance_time": "20:00",
+    "notice_enabled": False,
+}
+
+# ----------------------------------------------------------------------------
+
+
+class NotificationSettingsView(APIView):
+    """알림 설정 조회/수정 API"""
+
+    def get(self, request):
+        """
+        GET /api/v1/auth/notification-settings/
+        - Authorization 헤더의 access_token으로 현재 유저 확인
+        - 저장된 설정이 없으면 기본값 반환
+        """
+        # Authorization 헤더에서 access_token 추출
+        access_token = extract_access_token(request)
+        if not access_token:
+            return Response(
+                {"message": "Authorization 헤더에 유효한 Bearer 토큰이 필요합니다."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        try:
+            # access_token으로 유저 정보 조회
+            user = get_user_from_token(access_token)
+
+            # 유효하지 않은 토큰인 경우 401 반환
+            if not user:
+                return Response(
+                    {"message": "유효하지 않은 토큰입니다."},
+                    status=status.HTTP_401_UNAUTHORIZED,
+                )
+
+            user_id = user.get("id")
+            response = requests.get(
+                f"{SUPABASE_URL}/rest/v1/notification_settings",
+                headers=get_supabase_headers(),
+                params={
+                    "user_id": f"eq.{user_id}",
+                    "select": ",".join(NOTIFICATION_BOOL_FIELDS + NOTIFICATION_TIME_FIELDS),
+                },
+            )
+            if response.status_code != 200:
+                raise Exception(f"Supabase API 오류: {response.text}")
+
+            rows = response.json()
+            settings = rows[0] if rows else DEFAULT_NOTIFICATION_SETTINGS
+
+            return Response(settings, status=status.HTTP_200_OK)
+
+        except Exception as error:
+            # 오류 발생 시 터미널에 출력 (장애 추적용으로 유지)
+            print(f"=== NOTIFICATION SETTINGS GET ERROR ===\n{error}\n=======================================")
+            return Response(
+                {"message": "알림 설정 조회 중 오류가 발생했습니다."},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
+
+    def patch(self, request):
+        """
+        PATCH /api/v1/auth/notification-settings/
+        - 요청에 포함된 필드만 변경 (보내지 않은 필드는 기존 값 유지)
+        - bool 필드: diary_enabled, attendance_enabled, notice_enabled
+        - 시각 필드: diary_time, attendance_time ("HH:MM", 24시간제, KST)
+        - 설정 행이 없으면 새로 생성 (upsert)
+        """
+        # Authorization 헤더에서 access_token 추출
+        access_token = extract_access_token(request)
+        if not access_token:
+            return Response(
+                {"message": "Authorization 헤더에 유효한 Bearer 토큰이 필요합니다."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        # 요청에 포함된 필드만 검증해서 payload로 구성
+        payload = {}
+
+        for field in NOTIFICATION_BOOL_FIELDS:
+            if field in request.data:
+                value = request.data.get(field)
+                if not isinstance(value, bool):
+                    return Response(
+                        {"message": f"{field}는 true 또는 false여야 합니다."},
+                        status=status.HTTP_400_BAD_REQUEST,
+                    )
+                payload[field] = value
+
+        for field in NOTIFICATION_TIME_FIELDS:
+            if field in request.data:
+                value = request.data.get(field)
+                if not isinstance(value, str) or not NOTIFICATION_TIME_REGEX.match(value):
+                    return Response(
+                        {"message": f"{field}는 HH:MM 형식(예: 21:00)이어야 합니다."},
+                        status=status.HTTP_400_BAD_REQUEST,
+                    )
+                payload[field] = value
+
+        # 변경할 필드가 하나도 없으면 400 반환
+        if not payload:
+            return Response(
+                {"message": "변경할 알림 설정을 하나 이상 입력해주세요."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        try:
+            # access_token으로 유저 정보 조회
+            user = get_user_from_token(access_token)
+
+            # 유효하지 않은 토큰인 경우 401 반환
+            if not user:
+                return Response(
+                    {"message": "유효하지 않은 토큰입니다."},
+                    status=status.HTTP_401_UNAUTHORIZED,
+                )
+
+            payload["user_id"] = user.get("id")
+
+            # upsert: user_id가 이미 있으면 보낸 컬럼만 갱신, 없으면 새로 생성
+            response = requests.post(
+                f"{SUPABASE_URL}/rest/v1/notification_settings?on_conflict=user_id",
+                headers={
+                    **get_supabase_headers(),
+                    "Prefer": "resolution=merge-duplicates,return=representation",
+                },
+                json=payload,
+            )
+            if response.status_code not in [200, 201]:
+                raise Exception(f"Supabase API 오류: {response.text}")
+
+            saved = response.json()[0]
+            return Response(
+                {
+                    **{f: saved.get(f) for f in NOTIFICATION_BOOL_FIELDS + NOTIFICATION_TIME_FIELDS},
+                    "message": "알림 설정이 저장되었습니다.",
+                },
+                status=status.HTTP_200_OK,
+            )
+
+        except Exception as error:
+            # 오류 발생 시 터미널에 출력 (장애 추적용으로 유지)
+            print(f"=== NOTIFICATION SETTINGS PATCH ERROR ===\n{error}\n=========================================")
+            return Response(
+                {"message": "알림 설정 저장 중 오류가 발생했습니다."},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )

@@ -1,5 +1,5 @@
 from django.urls import path
-from .views import CheckEmailView, SignupView, LoginView, LogoutView, VerifyCurrentPasswordView, ChangePasswordView, WithdrawalView, SendWithdrawalCodeView, SendPinResetCodeView, ChangeUsernameView, UserImageView, ResetPasswordView, TokenRefreshView, NaverLoginView, UpdateGenderAgeView, StatisticsView, RegisterFCMTokenView
+from .views import CheckEmailView, SignupView, LoginView, LogoutView, VerifyCurrentPasswordView, ChangePasswordView, WithdrawalView, SendWithdrawalCodeView, SendPinResetCodeView, ChangeUsernameView, UserImageView, ResetPasswordView, TokenRefreshView, NaverLoginView, UpdateGenderAgeView, StatisticsView, RegisterFCMTokenView, NotificationSettingsView
 
 # 인증 관련 URL 패턴
 # /api/v1/auth/ 하위 경로는 config/urls.py에서 include로 연결됨
@@ -21,4 +21,5 @@ urlpatterns = [
     path("gender-age/", UpdateGenderAgeView.as_view(), name="add-gender-age"),      # 성별/나이 추가 및 수정
     path("statistics/", StatisticsView.as_view(), name="user-statistics"),          # 사용자 통계 조회
     path("fcm-token/", RegisterFCMTokenView.as_view(), name="register-fcm-token"),  # FCM 토큰 등록
+    path('notification-settings/', NotificationSettingsView.as_view(), name='notification-settings'),   # 알림 설정 관련
 ]
