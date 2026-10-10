@@ -592,7 +592,11 @@ export default function DiaryForm() {
       {/* AI 로딩 화면 (그림 그리는 중...) */}
       {isGenerating && (
         <div className="absolute inset-0 z-[100] flex items-center justify-center bg-white">
-            <img src="/assets/theme/winter_light/animation/generating.gif" alt="AI Drawing" className="h-full " />
+            <img 
+              src={`/assets/theme/${currentTheme}/animation/generating.gif`} 
+              alt="AI Drawing" 
+              className="h-full" 
+            />
             <div className="absolute bottom-[23%] w-[50%] h-[4%] p-[1%] pt-[1.2%] bg-white rounded-lg overflow-hidden">
               <div
                 className="h-full bg-blue-900 rounded-lg transition-all duration-200"
