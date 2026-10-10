@@ -10,6 +10,7 @@ import AuthValidator from '../../utils/AuthValidator';
 import { useTheme } from '../../stores/useThemeStore';
 import useDebounce from '../../hooks/useDebounce';
 import { useLogin } from '../../hooks/mutations/useAuthMutations';
+import useAppLockStore from '../../stores/useAppLockStore'; // 로그인 직후 잠금화면 스킵용
 
 // 4. 슈파베이스 불러오기
 import { supabase } from "../../utils/SupabaseClient";
@@ -89,6 +90,9 @@ export default function Login() { // 로그인 페이지 내보내기
             provider: 'email'
           });
 
+          // 방금 로그인했다고 표시 → 로그인 직후 잠금화면 스킵
+          useAppLockStore.getState().markFreshLogin();
+
           // 세션 설정을 여기서 하지 않고, 정보를 담아 리다이렉트 페이지로 넘깁니다.
           navigate(`/auth/auth-redirect?${params.toString()}`);
         },
@@ -106,6 +110,9 @@ export default function Login() { // 로그인 페이지 내보내기
 
   // 소셜 로그인 실행 함수
   const handleSocialLogin = async (provider) => {
+    // 방금 로그인했다고 표시 → 외부 로그인 페이지를 다녀와 페이지가 새로 로드돼도 유지됨
+    useAppLockStore.getState().markFreshLogin();
+    
     // 네이버는 Supabase SDK가 지원하지 않아서 별도로 처리
     if (provider === 'naver') {
       const NAVER_CLIENT_ID = import.meta.env.VITE_NAVER_CLIENT_ID; // .env에서 네이버 Client ID 가져오기

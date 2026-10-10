@@ -108,10 +108,13 @@ export async function authFetch(url, options = {}) {
       // 새 토큰으로 재시도
       response = await doFetch(newToken);
     } else {
-      // 갱신 실패 → 로그인 페이지로 이동
+      // 갱신 실패 → 로그아웃 처리
+      // SIGNED_OUT 이벤트로 App.jsx가 세션을 비우면, 로그인 전 라우트가 자동으로 /auth/login으로 이동시킴
+      // (window.location.href로 페이지를 새로 로드하지 않아도 됨)
       await supabase.auth.signOut();
-      window.location.href = "/auth/login";
-      throw new Error("세션이 만료되었습니다. 다시 로그인해 주세요.");
+      const sessionError = new Error("세션이 만료되었습니다. 다시 로그인해 주세요.");
+      sessionError.status = 401; // React Query가 재시도하지 않도록 (App.jsx retry 설정)
+      throw sessionError;
     }
   }
 

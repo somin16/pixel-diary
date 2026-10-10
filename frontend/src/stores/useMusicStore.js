@@ -65,6 +65,14 @@ const useMusicStore = create(
         audio.volume = isMuted ? 0 : volume
         audio.play().catch(() => {})
       },
+
+      // 완전히 정지 (로그아웃 시 사용)
+      // currentTheme을 비워야 다시 로그인했을 때 playForTheme()이 같은 테마라도 처음부터 재생함
+      stop: () => {
+        audio.pause()
+        audio.currentTime = 0
+        set({ currentTheme: '' })
+      },
     }),
     {
       name: 'pixel-diary-music', // localStorage 키
