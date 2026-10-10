@@ -1,4 +1,5 @@
 import os
+import tempfile
 import requests
 from datetime import datetime, timedelta, timezone
 from apscheduler.schedulers.background import BackgroundScheduler
@@ -7,6 +8,11 @@ from .firebase_init import send_push_notification
 from utils import get_supabase_headers
 
 SUPABASE_URL = os.getenv("SUPABASE_URL")
+
+try:
+    import fcntl  # Linux/macOS 전용 (Windows 로컬 개발에서는 없으므로 잠금 없이 실행)
+except ImportError:
+    fcntl = None
 
 KST = timezone(timedelta(hours=9))
 CHUNK_SIZE = 50  # in.(...) 필터가 URL에 들어가므로 길이 제한을 피하기 위해 나눠서 조회
@@ -144,7 +150,35 @@ def send_attendance_reminder():
     )
 
 
+_lock_file = None  # 프로세스가 살아있는 동안 잠금을 유지하기 위해 모듈 변수에 보관
+
+
+def _acquire_scheduler_lock():
+    """
+    gunicorn worker가 여러 개여도 스케줄러는 한 프로세스에서만 돌도록 파일 잠금을 건다.
+    (잠금 없이 worker마다 스케줄러가 돌면 같은 알림이 worker 수만큼 중복 발송됨)
+    잠금을 얻으면 True, 다른 worker가 이미 쥐고 있으면 False
+    잠금을 쥔 프로세스가 종료되면 자동으로 풀리고, 새로 뜬 worker가 다시 얻는다.
+    """
+    global _lock_file
+    if fcntl is None:
+        return True
+
+    _lock_file = open(os.path.join(tempfile.gettempdir(), "pixel_diary_scheduler.lock"), "w")
+    try:
+        fcntl.flock(_lock_file, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        return True
+    except OSError:
+        _lock_file.close()
+        _lock_file = None
+        return False
+
+
 def start_scheduler():
+    if not _acquire_scheduler_lock():
+        print("=== APScheduler 건너뜀 (다른 worker에서 이미 실행 중) ===")
+        return
+
     scheduler = BackgroundScheduler(timezone="Asia/Seoul")
     # 유저마다 알림 시각이 다르므로 매분 실행해서 '지금 시각'이 설정 시각인 유저만 발송
     # coalesce: 지연되어 밀린 실행은 한 번으로 합침 / max_instances=1: 같은 잡 동시 실행 방지
