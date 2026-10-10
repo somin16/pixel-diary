@@ -92,7 +92,7 @@ function Section({ title, children }) {
 function SummaryCard({ label, value, unit }) {
   return (
     <NineSlicePanel variant="card">
-      <div className="opacity-70 text-base">{label}</div>
+      <div className="opacity-70 text-sm">{label}</div>
       <div className="mt-1 text-base font-bold" style={{ color: INK }}>
         {value}
         <span className="ml-1 text-xs font-normal">{unit}</span>
@@ -116,11 +116,11 @@ function BarChart({ items }) {
         const h = item.value === 0 ? 0 : Math.max(4, Math.round((item.value / max) * BAR_AREA));
         return (
           <div key={item.label} className="flex flex-1 flex-col items-center">
-            <span className="h-4 text-xs">{item.value || ""}</span>
+            <span className="h-4 text-3xs">{item.value || ""}</span>
             <div className="flex items-end" style={{ height: BAR_AREA }}>
               <div style={{ width: 14, height: h, background: "var(--stat-bar)" }} />
             </div>
-            <span className="mt-1 text-xs">{item.label}</span>
+            <span className="mt-1 text-3xs">{item.label}</span>
           </div>
         );
       })}
@@ -288,11 +288,11 @@ export default function StatisticsPage() {
         {/* 1행: 일기 (총 / 현재 연속 / 최장 연속) */}
         <SummaryCard label="총 일기" value={summary.diary_total} unit="편" />
         <SummaryCard label="현재 연속 작성" value={summary.diary_streak_current} unit="일" />
-        <SummaryCard label="최장 연속 작성" value={summary.diary_streak_longest} unit="일" />
+        <SummaryCard label="최고 연속 작성" value={summary.diary_streak_longest} unit="일" />
         {/* 2행: 출석 (총 / 현재 연속 / 최장 연속) */}
         <SummaryCard label="총 출석" value={summary.attendance_total} unit="일" />
         <SummaryCard label="현재 연속 출석" value={summary.attendance_streak_current} unit="일" />
-        <SummaryCard label="최장 연속 출석" value={summary.attendance_streak_longest} unit="일" />
+        <SummaryCard label="최고 연속 출석" value={summary.attendance_streak_longest} unit="일" />
       </div>
 
       {/* 2. 기간 선택 */}
@@ -395,12 +395,6 @@ export default function StatisticsPage() {
           <BarChart items={weekday_counts.map((value, i) => ({ label: WEEKDAY_LABELS[i], value }))} />
         </Section>
       </div>
-
-      {/* ⚠️ 개발 확인용: API 응답 원본 보기. 확인이 끝나면 이 블록을 통째로 삭제하세요. */}
-      <details className="mt-4 text-xs">
-        <summary>API 응답 보기 (개발용)</summary>
-        <pre className="overflow-x-auto whitespace-pre-wrap">{JSON.stringify(data, null, 2)}</pre>
-      </details>
     </div>
   );
 }
@@ -431,14 +425,14 @@ function MonthlyEmotionStack({ monthlyEmotions }) {
                   )}
                 </div>
               </div>
-              <span className="mt-1 text-[10px]">{i + 1}</span>
+              <span className="mt-1 text-3xs">{i + 1}</span>
             </div>
           );
         })}
       </div>
 
       {/* 색상 범례 */}
-      <div className="mt-3 flex flex-wrap gap-x-3 gap-y-1 text-xs">
+      <div className="mt-3 flex flex-wrap gap-x-3 gap-y-1 text-2xs">
         {EMOTIONS.map((e) => (
           <span key={e.key} className="flex items-center gap-1">
             <span className="inline-block h-3 w-3" style={{ background: e.color }} />
