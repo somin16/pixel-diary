@@ -65,7 +65,7 @@ const DayBox = ({ item, isAttended, onClick, currentTheme, coinReward }) => {
         )}
 
         {/* 일차 표시 */}
-        <span className="text-sm text-black mb-[1%] tracking-tighter relative z-20">
+        <span className="text-xs text-black mb-[1%] tracking-tighter relative z-20">
           day 0{item.day}
         </span>
       </div>

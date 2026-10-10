@@ -46,7 +46,7 @@ const OBSTACLE_SCALE_BASE = 3;
 
 // 판정 영역을 눈으로 볼지 여부 (true = 초록: 플레이어 / 빨강: 장애물)
 // 숫자를 조절할 때는 true로 두고 확인하세요. 커밋 전에는 false로!
-const SHOW_HITBOX = true;
+const SHOW_HITBOX = false;
 
 // 회전하는 공중 장애물 설정
 const AIR_SPIN_MS = 1000;     // 한 바퀴 도는 시간(밀리초). 작을수록 빨리 돎

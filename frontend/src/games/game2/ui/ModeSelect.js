@@ -7,7 +7,7 @@ import { PIXEL, drawBackground, createPixelBox, createPixelButton, createTopBar 
 // 왼쪽: 데일리 모드(크게) / 오른쪽 위: 하드 모드 / 오른쪽 아래: 캐릭터 변경 + 설정
 // =====================================================
 
-const HARD_LABEL = "하드 모드";   // 무한 모드 버튼에 보일 이름 (와이어프레임 기준)
+const HARD_LABEL = "무한 모드";   // 무한 모드 버튼에 보일 이름 (와이어프레임 기준)
 const GAP = 16;                   // 버튼 사이 간격
 
 // 데일리 카드에 깔리는 밤→새벽→아침 색띠 [색, 끝 비율]
