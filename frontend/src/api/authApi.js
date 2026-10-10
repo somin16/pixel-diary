@@ -122,6 +122,19 @@ export const authApi = {
     authFetch(`${BASE_URL}/api/v1/auth/pin/send-code/`, {
       method: 'POST',
     }),
+
+  // 알림 설정 조회 - 저장된 설정이 없으면 백엔드가 기본값을 내려줌
+  getNotificationSettings: () =>
+    authFetch(`${BASE_URL}/api/v1/auth/notification-settings/`, {
+      method: 'GET',
+    }),
+
+  // 알림 설정 저장 - 바뀐 필드만 전달 (diary_enabled, diary_time, attendance_enabled, attendance_time, notice_enabled)
+  updateNotificationSettings: (settings) =>
+    authFetch(`${BASE_URL}/api/v1/auth/notification-settings/`, {
+      method: 'PATCH',
+      body: JSON.stringify(settings),
+    }),
 };
 
 // authFetch에는 이미 자체 에러 처리가 있으므로, 인증 불필요한 순수 fetch용 공통 응답 처리만 여기 둠

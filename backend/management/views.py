@@ -5,6 +5,7 @@ from rest_framework.response import Response
 from rest_framework import status
 from datetime import datetime, timezone
 from utils import extract_access_token, get_user_from_token, get_supabase_headers
+from notifications.notice import send_notice_push  # 공지 등록 시 수신 동의 유저에게 푸시 발송
 
 
 class AdminItemView(APIView):
@@ -204,6 +205,10 @@ class AdminAnnouncementView(APIView):
                 raise Exception(f"Supabase API 오류: {response.text}")
 
             announcement = response.json()[0]
+
+            # 공지 저장 성공 후 수신 동의(notice_enabled)한 유저에게 푸시 발송
+            # (별도 스레드에서 실행되며, 발송 실패해도 공지 등록 응답에는 영향 없음)
+            send_notice_push(title="새 공지사항", body=title)
 
             return Response(
                 {
