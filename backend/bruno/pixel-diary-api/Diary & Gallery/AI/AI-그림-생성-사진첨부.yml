@@ -1,0 +1,50 @@
+info:
+  name: AI-그림-생성-사진첨부
+  type: http
+  seq: 8
+
+http:
+  method: POST
+  url: http://127.0.0.1:8000/api/v1/ai-generate/img2img/
+  headers:
+    - name: Authorization
+      value: "Bearer "
+  body:
+    type: multipart-form
+    data:
+      - name: image
+        type: text
+        value: ""
+        contentType: "File "
+      - name: positive_prompt
+        type: text
+        value: ""
+      - name: negative_prompt
+        type: text
+        value: ""
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 360000
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: true
+
+docs: |
+  ### Body / Multipart Form
+  - image: 픽셀아트로 변환할 원본 사진 파일 (필수)
+  - positive_prompt: prompt/transform 응답의 positive_prompt 값
+  - negative_prompt: prompt/transform 응답의 negative_prompt 값
+  ***
+  ### Headers
+  - Authorization: Bearer 로그인 시 받은 access_token
+  ***
+  ### Status Code
+  - 202 Accepted: img2img 큐잉 성공 (client_id, prompt_id, comfyui_url 반환)
+  - 400 Bad Request: image 파일 누락
+  - 401 Unauthorized: 유효하지 않은 access_token
+  - 503 Service Unavailable: ComfyUI 서버 연결 실패
+  ***
+  ### 결과 조회
+  - GET /api/v1/ai-generate/{prompt_id}/result/?comfyui_url={comfyui_url}

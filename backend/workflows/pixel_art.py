@@ -69,3 +69,83 @@ PIXEL_ART_WORKFLOW = {
             "inputs": {"images": ["18", 0], "filename_prefix": "ComfyUI"}
         }
     }
+
+PIXEL_ART_IMG2IMG_WORKFLOW = {
+        "4": {
+            "class_type": "CheckpointLoaderSimple",
+            "inputs": {"ckpt_name": "sd_xl_base_1.0.safetensors"}
+        },
+        "12": {
+            "class_type": "LoraLoader",
+            "inputs": {
+                "model": ["4", 0],
+                "clip": ["4", 1],
+                "lora_name": "pixel-art-xl.safetensors",
+                "strength_model": 0.8,
+                "strength_clip": 1
+            }
+        },
+        "6": {
+            "class_type": "CLIPTextEncode",
+            "inputs": {"clip": ["12", 1], "text": ""}   # positive_prompt 삽입 위치
+        },
+        "7": {
+            "class_type": "CLIPTextEncode",
+            "inputs": {"clip": ["12", 1], "text": ""}   # negative_prompt 삽입 위치
+        },
+        "19": {
+            "class_type": "LoadImage",
+            "inputs": {"image": ""}  # 업로드된 이미지 파일명 삽입 위치
+        },
+        "21": {
+            "class_type": "ImageScale",
+            "inputs": {
+                "image": ["19", 0],
+                "upscale_method": "lanczos",
+                "width": 1024, "height": 1024, "crop": "center"
+            }
+        },
+        "20": {
+            "class_type": "VAEEncode",
+            "inputs": {"pixels": ["21", 0], "vae": ["4", 2]}
+        },
+        "3": {
+            "class_type": "KSampler",
+            "inputs": {
+                "model": ["12", 0],
+                "positive": ["6", 0],
+                "negative": ["7", 0],
+                "latent_image": ["20", 0],
+                "seed": 0,                              # 호출 시점에 랜덤값으로 교체됨
+                "steps": 25,
+                "cfg": 7,
+                "sampler_name": "dpmpp_2m",
+                "scheduler": "karras",
+                "denoise": 0.6
+            }
+        },
+        "8": {
+            "class_type": "VAEDecode",
+            "inputs": {"samples": ["3", 0], "vae": ["4", 2]}
+        },
+        "15": {
+            "class_type": "ImageScale",
+            "inputs": {
+                "image": ["8", 0],
+                "upscale_method": "nearest-exact",
+                "width": 512, "height": 512, "crop": "disabled"
+            }
+        },
+        "18": {
+            "class_type": "ImageScale",
+            "inputs": {
+                "image": ["15", 0],
+                "upscale_method": "nearest-exact",
+                "width": 1024, "height": 1024, "crop": "disabled"
+            }
+        },
+        "9": {
+            "class_type": "SaveImage",
+            "inputs": {"images": ["18", 0], "filename_prefix": "ComfyUI"}
+        }
+    }
