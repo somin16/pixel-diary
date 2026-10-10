@@ -13,9 +13,10 @@
 //   />
 // ─────────────────────────────────────────────────────────────
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
+import { ScreenOrientation } from '@capacitor/screen-orientation';
 
 // ── 색상 (한 곳에서 관리하려고 상수로 뺌) ──────────────────────
 // ink   : 글자·테두리 / paper : 패널 배경 / sun : 주요 버튼
@@ -56,19 +57,43 @@ const bandsOf = (tone) => {
 // Hooks
 // ═════════════════════════════════════════════════════════════
 
-// 화면 크기를 window.innerWidth/Height 로 직접 읽음.
-// 이유: Capacitor WebView 에서는 CSS dvh 단위가 불안정해서, 가로 고정 후 높이가 틀어질 수 있음.
+// 화면 크기를 visualViewport(지원 시) 또는 window.innerWidth/Height 로 읽음.
+// 이유: Capacitor WebView 에서는 CSS dvh 단위가 불안정하고,
+// 회전/키보드 전환 시 innerHeight 가 한 박자 늦게 갱신되는 경우가 있어
+// visualViewport 를 우선 사용하고 이벤트도 추가로 구독함.
 function useViewportSize() {
-  const read = () => ({ w: window.innerWidth, h: window.innerHeight });
+  const read = () => {
+    const vv = window.visualViewport;
+    return {
+      w: vv ? vv.width : window.innerWidth,
+      h: vv ? vv.height : window.innerHeight,
+    };
+  };
   const [size, setSize] = useState(read);
 
   useEffect(() => {
     const onChange = () => setSize(read());
+
+    // orientationchange는 레이아웃이 확정되기 전에 먼저 발생하는 경우가 많아서
+    // 즉시 한 번 + 약간 지연 후 한 번 더 재측정 (늦게 안정된 값을 다시 반영)
+    const onOrientationChange = () => {
+      onChange();
+      setTimeout(onChange, 100);
+      setTimeout(onChange, 300);
+      setTimeout(onChange, 600); // 느린 기기 대비 한 번 더
+    };
+
+    const vv = window.visualViewport;
+    if (vv) {
+      vv.addEventListener('resize', onChange);
+    }
     window.addEventListener('resize', onChange);
-    window.addEventListener('orientationchange', onChange);
+    window.addEventListener('orientationchange', onOrientationChange);
+
     return () => {
+      if (vv) vv.removeEventListener('resize', onChange);
       window.removeEventListener('resize', onChange);
-      window.removeEventListener('orientationchange', onChange);
+      window.removeEventListener('orientationchange', onOrientationChange);
     };
   }, []);
 
@@ -80,12 +105,20 @@ function useViewportSize() {
 // 이유: 게임 화면(Phaser)도 가로라서, 여기서 세로로 되돌리면 화면이 잠깐 휙 돌아가는 깜빡임이 생김.
 function useLandscapeLock(keepLandscapeRef) {
   useEffect(() => {
-    // 웹 브라우저(개발 중)에서는 lock 이 지원되지 않아 에러가 나므로 조용히 무시
-    ScreenOrientation.lock({ orientation: 'landscape' }).catch(() => {});
+    ScreenOrientation.lock({ orientation: 'landscape' })
+      .catch(() => {})
+      .finally(() => {
+        // lock 완료 후 실제 치수가 늦게 안정되는 경우 대비, resize 이벤트 강제 트리거
+        window.dispatchEvent(new Event('resize'));
+      });
 
     return () => {
       if (!keepLandscapeRef.current) {
-        ScreenOrientation.lock({ orientation: 'portrait' }).catch(() => {});
+        ScreenOrientation.lock({ orientation: 'portrait' })
+          .catch(() => {})
+          .finally(() => {
+            window.dispatchEvent(new Event('resize'));
+          });
       }
     };
   }, [keepLandscapeRef]);
@@ -170,15 +203,15 @@ function PixelSky({ tone, showStars }) {
 // ═════════════════════════════════════════════════════════════
 
 // 게임 카드 하나. 고른 카드는 그 자리에 가만히 있고, 반대쪽 카드는 위로 올라가며 사라짐 (와이어프레임 2번)
-function GameCard({ game, isSelected, onPick }) { // ✅ isRaised → isSelected
+function GameCard({ game, isSelected, onPick }) { 
   const reduce = useReducedMotion();
   return (
     <motion.div
-      className="absolute inset-x-0 top-[14%] h-[72%]" // ✅ 위치/높이 고정 (카드 자체는 더 이상 움직이지 않음)
-      initial={{ opacity: 0, y: reduce ? 0 : -24 }} // ✅ 다시 고르기로 돌아올 때 위에서 내려오며 나타남
-      animate={{ opacity: 1, y: 0 }} // ✅
-      exit={{ opacity: 0, y: reduce ? 0 : -40 }} // ✅ 반대쪽 카드: 위로 올라가며 사라짐
-      transition={{ duration: reduce ? 0 : 0.2, ease: 'easeOut' }} // ✅
+      className="absolute inset-x-0 top-[14%] h-[72%]" // 위치/높이 고정 (카드 자체는 더 이상 움직이지 않음)
+      initial={{ opacity: 0, y: reduce ? 0 : -24 }} // 다시 고르기로 돌아올 때 위에서 내려오며 나타남
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: reduce ? 0 : -40 }} // 반대쪽 카드: 위로 올라가며 사라짐
+      transition={{ duration: reduce ? 0 : 0.2, ease: 'easeOut' }} 
     >
       <button
         type="button"
@@ -233,15 +266,15 @@ function SelectScreen({ selectedId, onPick, onReselect, onStart, onExit }) {
       <div className="grid min-h-0 flex-1 grid-cols-2 gap-4">
         {GAMES.map((game) => {
           const isSelected = selectedId === game.id; // 내가 고른 칸 → 카드가 그 자리에 그대로 있음
-          const showsActions = selectedId !== null && !isSelected; // ✅ 반대쪽 칸 → 카드가 위로 사라지고 패널이 나옴
+          const showsActions = selectedId !== null && !isSelected; // 반대쪽 칸 → 카드가 위로 사라지고 패널이 나옴
 
           return (
             <div key={game.id} className="relative h-full">
               <AnimatePresence initial={false}>
-                {showsActions ? ( // ✅ isSelected → showsActions
-                  <ActionPanel key="actions" onStart={onStart} onReselect={onReselect} /> // ✅ game 전달 삭제
+                {showsActions ? (
+                  <ActionPanel key="actions" onStart={onStart} onReselect={onReselect} /> 
                 ) : (
-                  <GameCard key="card" game={game} isSelected={isSelected} onPick={() => onPick(game.id)} /> // ✅ isRaised → isSelected
+                  <GameCard key="card" game={game} isSelected={isSelected} onPick={() => onPick(game.id)} /> 
                 )}
               </AnimatePresence>
             </div>
@@ -253,78 +286,65 @@ function SelectScreen({ selectedId, onPick, onReselect, onStart, onExit }) {
 }
 
 // ═════════════════════════════════════════════════════════════
-// 화면 3: 미니게임2 시작 화면
-// ═════════════════════════════════════════════════════════════
-
-function Game2StartScreen({ onBack, onStartMode, onChangeCharacter, onOpenSettings }) {
-  return (
-    <ScreenShell>
-      {/* "<" 를 누르면 게임 선택 화면으로 이동 (와이어프레임 3번 ①②) */}
-      <TopBar title="감성 사이드 러너" onBack={onBack} backLabel="게임 선택 화면으로 이동" />
-
-      {/* 왼쪽: 데일리 모드(크게) / 오른쪽: 하드 모드(위) + 캐릭터 변경·설정(아래) */}
-      <div className="grid min-h-0 flex-1 grid-cols-[1.15fr_1fr] gap-4">
-        {/* 데일리 모드 — 밤→아침 색띠 위에 이름표를 올림 (글자가 배경색에 묻히지 않게) */}
-        <button
-          type="button"
-          onClick={() => onStartMode('daily')}
-          className={`${PIXEL_BOX} ${PIXEL_PRESS} ${FOCUS} flex items-end p-3 text-left`}
-          style={{ background: bandsOf('dusk') }}
-        >
-          <span className="border-4 border-[#231C4B] bg-[#F4EFFF] px-3 py-1 text-[22px] leading-tight">데일리 모드</span>
-        </button>
-
-        <div className="grid min-h-0 grid-rows-[1.1fr_1fr] gap-3">
-          <PixelButton tone="dawn" onClick={() => onStartMode('hard')} className="text-[22px] leading-tight">
-            하드 모드
-          </PixelButton>
-
-          <div className="grid min-h-0 grid-cols-[1.3fr_1fr] gap-3">
-            <PixelButton tone="paper" onClick={onChangeCharacter} className="text-[16px] leading-tight">
-              캐릭터 변경
-            </PixelButton>
-            <PixelButton tone="paper" onClick={onOpenSettings} className="text-[16px] leading-tight">
-              설정
-            </PixelButton>
-          </div>
-        </div>
-      </div>
-    </ScreenShell>
-  );
-}
-
-// ═════════════════════════════════════════════════════════════
 // 메인: 화면 상태 관리
 // ═════════════════════════════════════════════════════════════
 
 export default function MinigameHub() { // props 전부 삭제 (이동은 안에서 직접 처리)
-  const { w, h } = useViewportSize();
   const navigate = useNavigate(); // 페이지 이동 함수
 
   // 선택한 게임 id. null 이면 아직 아무것도 안 고른 상태(1번), 값이 있으면 2번 상태
   const [selectedId, setSelectedId] = useState(null);
-  // screen 상태, keepLandscapeRef, handleStartMode, backToSelect 는 전부 삭제
+
+  const keepLandscapeRef = useRef(false);
+  useLandscapeLock(keepLandscapeRef);
 
   // "시작하기" — 두 게임 모두 선택한 게임의 주소로 이동만 함
-  // GAMES 의 id 가 곧 주소: game1run → /game1run, game2run → /game2run
-  const handleStart = () => navigate(`/${selectedId}`); 
+  const handleStart = () => {
+    keepLandscapeRef.current = true;   // 게임 화면도 가로니까, 나갈 때 세로로 되돌리지 않음
+    navigate(`/${selectedId}`);
+};
+
+  const handleExit = () => {
+  keepLandscapeRef.current = false;
+
+  let done = false;
+  const proceed = () => {
+    if (done) return;
+    done = true;
+    window.removeEventListener('orientationchange', onRealChange);
+    navigate(-1);
+  };
+
+  const onRealChange = () => {
+    // 실제로 OS 회전이 끝난 뒤 발생하는 이벤트를 받고 나서야 이동
+    setTimeout(proceed, 50); // 이벤트 직후 레이아웃 한 틱 안정화 대기
+  };
+
+  window.addEventListener('orientationchange', onRealChange);
+
+  ScreenOrientation.lock({ orientation: 'portrait' }).catch(() => {});
+
+  // 혹시 이미 세로 상태라 orientationchange 이벤트 자체가 안 뜨는 기기 대비 + 무한 대기 방지
+  setTimeout(proceed, 500);
+};
+
 
   return (
     <div
-      className="fixed left-0 top-0 overflow-hidden"
+      className="fixed inset-0 overflow-hidden"
       style={{
-        width: w,
-        height: h,
+        width: '100dvw',
+        height: '100dvh',
         boxSizing: 'border-box',
         background: SKY,
         color: INK,
-        // 노치/둥근 모서리 기기에서 버튼이 잘리지 않도록 안전 영역만큼 여백 확보
         paddingTop: 'max(12px, env(safe-area-inset-top))',
         paddingBottom: 'max(12px, env(safe-area-inset-bottom))',
         paddingLeft: 'max(16px, env(safe-area-inset-left))',
         paddingRight: 'max(16px, env(safe-area-inset-right))',
       }}
     >
+
       {/* 태블릿처럼 너무 넓은 화면에서는 가운데로 모아서 카드가 과하게 늘어나지 않게 함 */}
       <div className="mx-auto h-full max-w-[920px]">
         <SelectScreen
@@ -332,7 +352,7 @@ export default function MinigameHub() { // props 전부 삭제 (이동은 안에
           onPick={setSelectedId}
           onReselect={() => setSelectedId(null)}
           onStart={handleStart}
-          onExit={() => navigate(-1)} // 하단 탭 '게임'으로 들어왔으니 원래 있던 화면으로 돌아감
+          onExit={handleExit}
         />
       </div>
     </div>

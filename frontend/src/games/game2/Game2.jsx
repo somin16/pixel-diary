@@ -1,5 +1,6 @@
 import { Capacitor } from "@capacitor/core";
 import { ScreenOrientation } from "@capacitor/screen-orientation";
+import { useNavigate } from "react-router-dom";
 
 import React, { useEffect, useRef } from "react";
 import Phaser from "phaser";
@@ -12,10 +13,22 @@ import InfinityMenuScene from "./scenes/InfinityMenuScene";
 
 import { buildDiaryInfo } from "./manage/DiaryInfo";
 
+import { supabase } from "../../utils/SupabaseClient";
 
-// 일기 목록을 가져오는 API 파일 
-import { diaryApi } from "../../api/diaryApi";
+// 관리자일 때 열어줄 전체 감정 목록 (행복→평온→피로→우울→화남 순서)
+const ALL_EMOTIONS = ["happy", "calm", "tired", "sad", "angry"];
 
+// 지금 로그인한 사람이 관리자인지 확인 (MorePage.jsx와 같은 조건)
+// 세션을 못 읽거나 오류가 나면 일반 유저로 처리해서 게임은 정상 실행됨
+const checkIsAdmin = async () => {
+    try {
+        const { data: { session } } = await supabase.auth.getSession();
+        return session?.user?.app_metadata?.role === "admin";
+    } catch (error) {
+        console.error("관리자 확인 실패:", error);
+        return false;
+    }
+};
 
 // 일기 없이 게임만 테스트하고 싶을 때 true로 바꾸세요.
 // (angry 맵 + 모든 맵 열림 상태로 시작합니다)
@@ -26,6 +39,10 @@ const DEV_TEST = false;
 const Game2 = () => {
     const gameContainer = useRef(null);
 
+    const navigate = useNavigate();
+
+    const keepLandscapeRef = useRef(false);
+    
     useEffect(() => {
         let cancelled = false;
         let game = null;
@@ -42,6 +59,31 @@ const Game2 = () => {
                 console.error("가로 화면 전환 실패:", error);
             })
             : Promise.resolve();
+
+    // 게임종료 → 홈(세로 화면)으로
+        const handleExitMiniGame = async () => {
+            keepLandscapeRef.current = false; // 세로로 복구해야 함
+            if (isNative) {
+                try {
+                    await ScreenOrientation.lock({ orientation: "portrait" });
+                    await new Promise((resolve) => {
+                        requestAnimationFrame(() => requestAnimationFrame(resolve));
+                    });
+                } catch (error) {
+                    console.error("세로 화면 전환 실패:", error);
+                }
+            }
+            navigate("/", { replace: true });
+        };
+
+        // 뒤로가기 → 미니게임 허브(가로 화면)로
+        const handleExitToHub = () => {
+            keepLandscapeRef.current = true;  // 가로 유지, 세로로 복구하지 않음
+            navigate("/minigamehub", { replace: true });
+        };
+
+        window.addEventListener("exitMiniGame", handleExitMiniGame);
+        window.addEventListener("exitToMinigameHub", handleExitToHub);
 
         const startGame = async () => {
             await orientationRequest;
@@ -63,6 +105,15 @@ const Game2 = () => {
             } catch (error) {
                 // 실패해도 게임은 켜지고, 데일리/무한만 막힙니다.
                 console.error("일기 정보 불러오기 실패:", error);
+            }
+
+            // 관리자는 일기를 안 써도 모든 맵을 열어서 시작 (테스트/검수용)
+            // todayEmotion은 그대로 둬서 데일리 모드는 평소 규칙을 따름
+            if (await checkIsAdmin()) { 
+                diaryInfo = {
+                    ...diaryInfo,
+                    unlockedEmotions: ALL_EMOTIONS,
+                };
             }
 
             // 테스트용: 일기 없이 모든 맵을 열어서 시작
@@ -157,38 +208,29 @@ const Game2 = () => {
         void startGame();
 
         return () => {
+            window.removeEventListener("exitMiniGame", handleExitMiniGame);
+            window.removeEventListener("exitToMinigameHub", handleExitToHub);
 
             cancelled = true;
-
             resizeObserver?.disconnect();
-
             if (resizeFrame !== null) {
                 cancelAnimationFrame(resizeFrame);
             }
-
             game?.destroy(true);
-
             game = null;
 
-            // Game2를 나가면 세로 화면으로 복구
-            if (isNative) {
-
+            // 허브로 가는 경우(keepLandscapeRef = true)는 가로 유지, 그 외(홈으로 나가기)만 세로로 복구
+            if (isNative && !keepLandscapeRef.current) {
                 void orientationRequest
-                    .then(() =>
-                        ScreenOrientation.lock({
-                            orientation: "portrait",
-                        })
-                    )
+                    .then(() => ScreenOrientation.lock({ orientation: "portrait" }))
                     .catch((error) => {
-                        console.error(
-                            "세로 화면 복구 실패:",
-                            error
-                        );
+                        console.error("세로 화면 복구 실패:", error);
                     });
             }
         };
 
-    }, []);
+
+    }, [navigate]);
 
     return (
         <div

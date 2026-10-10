@@ -66,7 +66,7 @@ export default class GameHud {
         this.timeText.setText(
             clear > 0
                 ? `남은 시간 ${formatTime(clear - seconds)}`
-                : `경과 ${formatTime(seconds)}`
+                : ` ${formatTime(seconds)}`
         );
 
         // 화면 크기가 바뀌어도 항상 가운데

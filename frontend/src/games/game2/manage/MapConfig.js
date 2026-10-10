@@ -14,39 +14,46 @@
 //   speed : 움직이는 빠르기. 1 = 바닥과 같은 속도, 작을수록 천천히
 //   front : true면 캐릭터보다 "앞"에 그려짐 (비, 나뭇잎 같은 것)
 //   gap   : 이미지 오른쪽에 붙일 빈 공간(그림 픽셀). 같은 물체가 너무 자주 반복될 때 사용
+//   offsetY : 위아래 위치 조절(그림 픽셀). +는 아래로, -는 위로. 기본 0
 // =====================================================
 
-function layer(key, speed, front = false, gap = 0) {
-    return { key, speed, front, gap };
+function layer(key, speed, front = false, gap = 0, offsetY = 0) {
+    return { key, speed, front, gap, offsetY };   
 }
 
 export const MAPS = {
 
     // ---------- 분노: 밤(화남) → 낮(화가 풀림) ----------
     angry: {
-        ground: 24,
+        ground: 20,
+        spinAir: true,
         stages: [
             {   // 1단계: night
-                sky: "#02012b",
-                hud: { text: "#ffffff", outline: "#1a1030", hp: "#ff8a8a" },
+                obstacles: { ground: "angry_night_obstacle_ground", air: "angry_night_obstacle_air" },
+                trailColors: ["#ff6b3d", "#ffb347"],  
+                playerSkin: "_night",
+                sky: "#120b38",
+                hud: { text: "#ffffff", outline: "#ff6060", hp: "#ffffff" },
                 layers: [
-                    layer("angry_night_background", 0.05),
-                    layer("angry_night_mountain", 0.3, false, 240),   // 화산 간격 넓힘
-                    layer("angry_night_road", 1)
+                    layer("angry_night_background", 0.05, false, 0, 0),
+                    layer("angry_night_mountain", 0.02, false, 240),   // 화산 간격 넓힘
+                    layer("angry_night_road", 1, false, 0, 0)
                 ]
             },
             {   // 2단계: day
+                obstacles: { ground: "angry_day_obstacle_ground", air: "angry_day_obstacle_air" },
+                trailColors: ["#4998cc", "#15166b"],    
                 sky: "#bfe6f7",
-                hud: { text: "#ffffff", outline: "#7a3a1a", hp: "#ff6b6b" },
+                hud: { text: "#ffffff", outline: "#15165f", hp: "#ffffff" },
                 layers: [
-                    layer("angry_day_background", 0.05),
-                    layer("angry_day_cloude_1", 0.10),
-                    layer("angry_day_cloude_2", 0.14),
-                    layer("angry_day_cloude_3", 0.18),
-                    layer("angry_day_cloude_4", 0.22),
-                    layer("angry_day_cloude_5", 0.26),
-                    layer("angry_day_mountain", 0.3),
-                    layer("angry_day_road", 1)
+                    layer("angry_day_background", 0.05, false, 0, 0),
+                    layer("angry_day_cloude_1", 0.06, false, 20, 0),
+                    layer("angry_day_cloude_2", 0.06, false, 40, 0),
+                    layer("angry_day_cloude_3", 0.06, false, 60, 0),
+                    layer("angry_day_cloude_4", 0.06, false, 80, 0),
+                    layer("angry_day_cloude_5", 0.06, false, 100, 0),
+                    layer("angry_day_mountain", 0.01, false, 240, 0),
+                    layer("angry_day_road", 1, false, 0, 0)
                 ]
             }
         ]
@@ -57,12 +64,14 @@ export const MAPS = {
         ground: 14,   // 평온맵은 풀이 얇아서 바닥을 낮춤 (떠 있으면 줄이고, 파묻히면 키우기)
         stages: [
             {
+                obstacles: { ground: "calm_obstacle_ground", air: "calm_obstacle_air" },
+                trailColors: ["#bed114", "#faad42"],    
                 sky: "#cdebe6",
-                hud: { text: "#ffffff", outline: "#2f5d3a", hp: "#ff6b81" },
+                hud: { text: "#003b1b", outline: "#95d6a4", hp: "#003b1b" },
                 layers: [
-                    layer("calm_background", 0.05),
-                    layer("calm_flower_grass", 0.6),
-                    layer("calm_grass_road", 1)
+                    layer("calm_background", 0.05, false, 0, 0),
+                    layer("calm_flower_grass", 0.6, false, 0, -40),
+                    layer("calm_grass_road", 1, false, 0, 0)
                 ]
             }
         ]
@@ -71,15 +80,18 @@ export const MAPS = {
     // ---------- 행복: 한 단계 ----------
     happy: {
         ground: 16,
+        spinAir: true,
         stages: [
             {
-                sky: "#fff3c4",
-                hud: { text: "#ffffff", outline: "#a8602a", hp: "#ff4d6d" },
+                obstacles: { ground: "happy_obstacle_ground", air: "happy_obstacle_air" },
+                trailColors: ["#ffbcb0", "#fff178"],    
+                sky: "#ffecaf",
+                hud: { text: "#003a05", outline: "#b6da86", hp: "#003a05" },
                 layers: [
-                    layer("happy_background", 0.05),
-                    layer("happy_tree_grass", 0.6),
-                    layer("happy_road", 1),
-                    layer("happy_leaves", 0.5, true)   // 나뭇잎은 캐릭터 앞으로
+                    layer("happy_background", 0.05, false, 0, 0),
+                    // layer("happy_tree_grass", 0.1, false, 0, 100),
+                    layer("happy_road", 1, false, 0, 0),
+                    layer("happy_leaves", 1.5, true)   // 나뭇잎은 캐릭터 앞으로
                 ]
             }
         ]
@@ -90,27 +102,90 @@ export const MAPS = {
         ground: 24,
         stages: [
             {   // 1단계: night (비가 내림)
-                sky: "#0b1230",
-                hud: { text: "#ffffff", outline: "#10203a", hp: "#ff8a8a" },
+                obstacles: { ground: "sad_night_obstacle_ground", air: "sad_night_obstacle_air" },
+                trailColors: ["#ff6b3d", "#ffb347"],    
+                playerSkin: "_night",
+                sky: "#1c263b",
+                hud: { text: "#ffffff", outline: "#3b5c92", hp: "#ffffff" },
                 layers: [
-                    layer("sad_night_background", 0.05),
-                    layer("sad_night_road", 1),
-                    layer("sad_night_rain", 0.3, true)   // 비는 캐릭터 앞으로
+                    layer("sad_night_background", 0.05, false, 0, 0),
+                    layer("sad_night_road", 1, false, 0, 0),
+                    layer("sad_night_rain", 1.5, true, 0, 0)   // 비는 캐릭터 앞으로
                 ]
             },
             {   // 2단계: day (배가 보임)
+                obstacles: { ground: "sad_day_obstacle_ground", air: "sad_day_obstacle_air" },
                 sky: "#c9ecfb",
-                hud: { text: "#ffffff", outline: "#1a4a7a", hp: "#ff6b6b" },
+                hud: { text: "#ffffff", outline: "#4c7fb3", hp: "#ffffff" },
                 layers: [
-                    layer("sad_day_background", 0.05),
-                    layer("sad_day_boat", 0.2, false, 240),   // 배 간격 넓힘
-                    layer("sad_day_road", 1)
+                    layer("sad_day_background", 0.05, false, 0, 0),
+                    layer("sad_day_boat", 0.01, false, 240),   // 배 간격 넓힘
+                    layer("sad_day_road", 1, false, 0, 0)
+                ]
+            }
+        ]
+    },
+
+    tired: {
+        ground: 6,   
+        spinAir: true,
+        stages: [
+            {   // 1단계: night
+                obstacles: { ground: "tired_night_obstacle_ground", air: "tired_night_obstacle_air" },
+                trailColors: ["#251915", "#6c6b80"],    
+                playerSkin: "_night",
+                sky: "#808fa3",
+                hud: { text: "#ffffff", outline: "#221f30", hp: "#ffffff" },
+                layers: [
+                    layer("tired_night_background", 0.03, false, 0, 0),
+                    layer("tired_night_building_1", 0.10, false, 0, 0),   // 가장 뒤
+                    layer("tired_night_building_2", 0.20, false, 0, 0),
+                    layer("tired_night_building_3", 0.35, false, 0, 0),
+                    layer("tired_night_building_4", 0.55, false, 0, 0),   // 가장 앞
+                    layer("tired_night_road", 1, false, 0, 0)
+                ]
+            },
+            {   // 2단계: day
+                obstacles: { ground: "tired_day_obstacle_ground", air: "tired_day_obstacle_air" },
+                trailColors: ["#ffaaa3", "#ffa8b6"],    
+                sky: "#ffc7bd",
+                hud: { text: "#ffffff", outline: "#8a3a4a", hp: "#ffffff" },
+                layers: [
+                    layer("tired_day_background", 0.03, false, 0, 0),
+                    layer("tired_day_building_1", 0.10, false, 0, 0),
+                    layer("tired_day_building_2", 0.20, false, 0, 0),
+                    layer("tired_day_building_3", 0.35, false, 0, 0),
+                    layer("tired_day_building_4", 0.55, false, 0, 0),
+                    layer("tired_day_road", 1, false, 0, 0)
                 ]
             }
         ]
     }
+};
 
-    // tired(피곤)는 에셋이 아직 없어서 여기에 없습니다.
+// =====================================================
+// 장애물별 크기/판정 조절표
+// - scale   : 그림 크기 배수. 반드시 "정수"(1, 2)만! 소수점은 픽셀이 뭉개짐
+// - hitSide : 좌우 판정을 몇 %씩 줄일지 (0~0.4). 클수록 판정이 좁아져서 잘 피함
+// - hitTop  : 위쪽 판정을 몇 % 줄일지 (0~0.4). 클수록 위로 점프할 때 잘 피함
+// =====================================================
+export const OBSTACLE_TUNING = {
+    angry_night_obstacle_ground: { scale: 3, hitSide: 0.34, hitTop: 0.1 },
+    angry_night_obstacle_air:    { scale: 3, hitSide: 0.15, hitTop: 0.1 },
+    angry_day_obstacle_ground:   { scale: 3, hitSide: 0.34, hitTop: 0.1 },
+    angry_day_obstacle_air:      { scale: 3, hitSide: 0.15, hitTop: 0.1 },
+    sad_night_obstacle_ground:   { scale: 2, hitSide: 0.2, hitTop: 0.1 },
+    sad_night_obstacle_air:      { scale: 2, hitSide: 0.15, hitTop: 0.1 },
+    sad_day_obstacle_ground:     { scale: 2, hitSide: 0.2, hitTop: 0.1 },
+    sad_day_obstacle_air:        { scale: 2, hitSide: 0.15, hitTop: 0.1 },
+    tired_night_obstacle_ground: { scale: 2, hitSide: 0.15, hitTop: 0.1 },
+    tired_night_obstacle_air:    { scale: 2, hitSide: 0.15, hitTop: 0.1 },
+    tired_day_obstacle_ground:   { scale: 2, hitSide: 0.15, hitTop: 0.1 },
+    tired_day_obstacle_air:      { scale: 2, hitSide: 0.15, hitTop: 0.1 },
+    calm_obstacle_ground:        { scale: 2, hitSide: 0.15, hitTop: 0.1 },
+    calm_obstacle_air:           { scale: 2, hitSide: 0.15, hitTop: 0.1 },
+    happy_obstacle_ground:       { scale: 3, hitSide: 0.15, hitTop: 0.1 },
+    happy_obstacle_air:          { scale: 2, hitSide: 0.15, hitTop: 0.1 }
 };
 
 // 화면에 보여줄 감정 이름 (영어 → 한글)

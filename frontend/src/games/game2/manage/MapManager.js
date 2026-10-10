@@ -55,26 +55,65 @@ export default class MapManager {
         return this.config.stages[this.stageIndex].hud;
     }
 
-    // ---------------------------------------------------
-    // 이미지 오른쪽에 투명한 빈 공간을 붙인 새 이미지를 만든다
-    // → 같은 물체(화산, 배)가 늦게 반복되게 하려는 용도
-    // ---------------------------------------------------
-    getPaddedKey(key, gap) {
-        const padKey = `${key}_gap${gap}`;
+    // 그림이 화면에서 시작하는 y (위쪽 가장자리)
+    // 화면이 그림보다 크면 남는 공간을 위아래로 똑같이 나눔 (정수로 내림해서 픽셀이 안 흔들림)
+    // 화면이 그림보다 작으면(위가 잘리는 경우) 지금처럼 아래에 붙임
+    get artTop() {
+        const h = this.scene.scale.height;
+        const artH = ART_HEIGHT * this.tileScale;
 
-        if (!this.scene.textures.exists(padKey)) {
+        return h >= artH ? Math.floor((h - artH) / 2) : h - artH;
+    }
+
+    // 그림이 끝나는 y (도로 아랫면). 바닥 높이는 이 값을 기준으로 계산함
+    get artBottom() {
+        return this.artTop + ART_HEIGHT * this.tileScale;
+    }
+
+    // 지금 단계의 장애물 이미지 { ground, air }
+    get obstacleKeys() {
+        return this.config.stages[this.stageIndex].obstacles;
+    }
+
+    // 지금 단계의 캐릭터 시트 이름표 ("" 또는 "_night")
+    get playerSkin() {
+        return this.config.stages[this.stageIndex].playerSkin ?? "";
+    }
+    
+    // 지금 단계의 운석 꼬리 색 목록 (없으면 undefined)
+    get trailColors() {
+        return this.config.stages[this.stageIndex].trailColors;
+    }
+
+        // 이 맵의 공중 장애물이 빙글빙글 도는가
+    get spinAir() {
+        return this.config.spinAir ?? false;
+    }
+
+    // ---------------------------------------------------
+    // 정수 배율로 미리 키운 텍스처를 만든다 (픽셀이 뭉개지지 않게 직접 확대)
+    // gap이 있으면 오른쪽에 투명한 빈 공간도 같이 붙인다
+    // ---------------------------------------------------
+    getScaledKey(key, gap, scale) {
+        const k = `${key}_g${gap}_x${scale}`;
+
+        if (!this.scene.textures.exists(k)) {
             const src = this.scene.textures.get(key).getSourceImage();
-            const pad = this.scene.textures.createCanvas(
-                padKey,
-                src.width + gap,
-                src.height
+            const tex = this.scene.textures.createCanvas(
+                k,
+                (src.width + gap) * scale,
+                src.height * scale
             );
 
-            pad.draw(0, 0, src);
-            pad.setFilter(Phaser.Textures.FilterMode.NEAREST);   // 픽셀 뭉개짐 방지
+            const ctx = tex.getContext();
+            ctx.imageSmoothingEnabled = false;   // 핵심: 뭉개지 않고 확대
+            ctx.drawImage(src, 0, 0, src.width * scale, src.height * scale);
+
+            tex.refresh();
+            tex.setFilter(Phaser.Textures.FilterMode.NEAREST);
         }
 
-        return padKey;
+        return k;
     }
 
     // ---------------------------------------------------
@@ -97,20 +136,24 @@ export default class MapManager {
         this.scene.cameras.main.setBackgroundColor(stage.sky ?? "#000000");
         this.scene.hud?.applyStyle(stage.hud);
 
+        // 밤/낮에 맞는 캐릭터 시트로 바꾼다 (맨 처음엔 캐릭터가 아직 없어서 ?. 로 건너뜀)
+        this.scene.player?.setSkin(stage.playerSkin ?? "");
         stage.layers.forEach((info, i) => {
 
-            // gap 숫자는 "최소 간격". 화면 폭보다 좁으면 화면 폭만큼으로 자동 확장한다
-            // → 화면에 같은 물체가 한 번에 한 개만 보이게 함
-            const texKey = info.gap
-                ? this.getPaddedKey(info.key, Math.max(info.gap, Math.ceil(width / scale)))
-                : info.key;
+            const gap = info.gap
+                ? Math.max(info.gap, Math.ceil(width / scale))
+                : 0;
+            const texKey = this.getScaledKey(info.key, gap, scale);
 
-            // 화면 "아래"에 붙여서 깐다 (세로로 반복되지 않게 높이는 그림 한 장만큼)
-            // 깊이(depth): 숫자가 작을수록 뒤에 그려짐
-            // front가 true면 캐릭터 앞(50), 아니면 맨 뒤쪽(-100부터)
-            const tile = this.scene.add.tileSprite(0, height - artH, width, artH, texKey)
+             //  화면 맨 아래 대신 계산한 그림 위치(artTop) 사용
+            const tile = this.scene.add.tileSprite(
+                0,
+                this.artTop,   // height - artH → this.artTop
+                width,
+                artH,
+                texKey
+            )
                 .setOrigin(0)
-                .setTileScale(scale, scale)
                 .setDepth(info.front ? 50 : -100 + i);
 
             // 이 이미지가 얼마나 빨리 움직일지 기억해 둔다
@@ -160,24 +203,14 @@ export default class MapManager {
         const scale = this.tileScale;
 
         this.layers.forEach((tile) => {
-            // (속도 × 이미지별 비율 × 시간) 만큼 이미지를 옆으로 민다
-            tile.offsetX += (scrollSpeed * tile.speedRate * delta) / 1000 / scale;
-
-            // 그림 픽셀 "정수" 단위로만 움직여서 픽셀이 흔들리지 않게 한다
-            tile.tilePositionX = Math.round(tile.offsetX);
-        });
+            tile.offsetX += (scrollSpeed * tile.speedRate * delta) / 1000;
+            tile.tilePositionX = Math.round(tile.offsetX / scale) * scale;
+            });
     }
 
-    // 화면 크기가 바뀌었을 때 이미지 크기 다시 맞추기
-    onResize(gameSize) {
-        const scale = getPixelScale(gameSize.height);
-        const artH = ART_HEIGHT * scale;
-
-        this.layers.forEach((tile) => {
-            tile.setSize(gameSize.width, artH);
-            tile.setY(gameSize.height - artH);
-            tile.setTileScale(scale, scale);
-        });
+    // 화면 크기가 바뀌면 새 배율로 단계를 다시 깐다
+    onResize() {
+        this.buildStage(this.stageIndex, false);
     }
 
     // 정리 (게임을 나갈 때 호출)

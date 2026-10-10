@@ -148,66 +148,66 @@ div[role='status'] {
    예) 캔버스 270px → --scale: 0.75 → text-base 16px → 12px
 ──────────────────────────────────────────────────────── */
 .app-root {
-  /* 기준 폰트 크기: 16px × scale */
-  font-size: calc(16px * var(--scale, 1)) !important;
+  /* 기준 폰트 크기: 16px → 20px 로 상향 (약 25% 증가) */
+  font-size: calc(20px * var(--scale, 1)) !important;
 }
 
 /* 기존보다 더 작은 폰트 단계 */
 .app-root .text-5xs {
-  font-size: calc(4px * var(--scale, 1)) !important;
-}
-
-.app-root .text-4xs {
   font-size: calc(6px * var(--scale, 1)) !important;
 }
 
-.app-root .text-3xs {
+.app-root .text-4xs {
   font-size: calc(8px * var(--scale, 1)) !important;
 }
 
-.app-root .text-2xs {
+.app-root .text-3xs {
   font-size: calc(10px * var(--scale, 1)) !important;
+}
+
+.app-root .text-2xs {
+  font-size: calc(13px * var(--scale, 1)) !important;
 }
 
 /* Tailwind 폰트 클래스들을 scale 기반으로 덮어씌우기 */
 .app-root .text-xs {
-  font-size: calc(12px * var(--scale, 1)) !important;
+  font-size: calc(15px * var(--scale, 1)) !important;
 }
 
 .app-root .text-sm {
-  font-size: calc(14px * var(--scale, 1)) !important;
+  font-size: calc(17px * var(--scale, 1)) !important;
 }
 
 .app-root .text-base {
-  font-size: calc(16px * var(--scale, 1)) !important;
-}
-
-.app-root .text-lg {
-  font-size: calc(18px * var(--scale, 1)) !important;
-}
-
-.app-root .text-xl {
   font-size: calc(20px * var(--scale, 1)) !important;
 }
 
-.app-root .text-2xl {
-  font-size: calc(24px * var(--scale, 1)) !important;
+.app-root .text-lg {
+  font-size: calc(23px * var(--scale, 1)) !important;
 }
 
-.app-root .text-3xl {
+.app-root .text-xl {
+  font-size: calc(25px * var(--scale, 1)) !important;
+}
+
+.app-root .text-2xl {
   font-size: calc(30px * var(--scale, 1)) !important;
 }
 
+.app-root .text-3xl {
+  font-size: calc(38px * var(--scale, 1)) !important;
+}
+
 .app-root .text-4xl {
-  font-size: calc(36px * var(--scale, 1)) !important;
+  font-size: calc(45px * var(--scale, 1)) !important;
 }
 
 .app-root .text-5xl {
-  font-size: calc(48px * var(--scale, 1)) !important;
+  font-size: calc(60px * var(--scale, 1)) !important;
 }
 
 .app-root .text-6xl {
-  font-size: calc(60px * var(--scale, 1)) !important;
+  font-size: calc(75px * var(--scale, 1)) !important;
 }
 
 /* text-[px] 인라인 스타일로 직접 쓴 경우는 위 방법으로 못 잡으니

@@ -1,4 +1,10 @@
 import Phaser from "phaser";
+import { PIXEL, createPixelButton } from "./PixelUI";
+
+// =====================================================
+// 게임 화면의 점프 / 슬라이드 버튼
+// 누르는 순간 바로 동작하도록 onPress를 씁니다. (손을 뗄 때까지 기다리면 반응이 느려서)
+// =====================================================
 
 export default class GameControls {
 
@@ -25,144 +31,34 @@ export default class GameControls {
 
     createButtons() {
 
-        // -------------------------
-        // 점프 버튼
-        // 왼쪽 아래
-        // -------------------------
+        // 점프 버튼 (왼쪽 아래)
+        this.jumpButton = createPixelButton(this.scene, {
+            x: 0,
+            y: 0,
+            w: 110,
+            h: 90,
+            label: "JUMP",
+            fill: PIXEL.sun,
+            fontSize: 22,
+            depth: 100,
+            onPress: () => this.player.jump()
+        });
 
-        this.jumpButton = this.scene.add.rectangle(
-            0,
-            0,
-            110,
-            90,
-            0x000000,
-            0.45
-        );
+        // 슬라이드 버튼 (오른쪽 아래)
+        this.slideButton = createPixelButton(this.scene, {
+            x: 0,
+            y: 0,
+            w: 110,
+            h: 90,
+            label: "SLIDE",
+            fill: PIXEL.mint,
+            fontSize: 22,
+            depth: 100,
+            onPress: () => this.player.slide()
+        });
 
-        this.jumpButton
-            .setStrokeStyle(3, 0xffffff, 0.8)
-            .setScrollFactor(0)
-            .setDepth(100)
-            .setInteractive();
-
-
-        this.jumpText = this.scene.add.text(
-            0,
-            0,
-            "JUMP",
-            {
-                fontFamily: "Mona",
-                fontSize: "22px",
-                color: "#ffffff",
-                fontStyle: "bold"
-            }
-        );
-
-        this.jumpText
-            .setOrigin(0.5)
-            .setScrollFactor(0)
-            .setDepth(101);
-
-
-        // -------------------------
-        // 슬라이드 버튼
-        // 오른쪽 아래
-        // -------------------------
-
-        this.slideButton = this.scene.add.rectangle(
-            0,
-            0,
-            110,
-            90,
-            0x000000,
-            0.45
-        );
-
-        this.slideButton
-            .setStrokeStyle(3, 0xffffff, 0.8)
-            .setScrollFactor(0)
-            .setDepth(100)
-            .setInteractive();
-
-
-        this.slideText = this.scene.add.text(
-            0,
-            0,
-            "SLIDE",
-            {
-                fontFamily: "Mona",
-                fontSize: "22px",
-                color: "#ffffff",
-                fontStyle: "bold"
-            }
-        );
-
-        this.slideText
-            .setOrigin(0.5)
-            .setScrollFactor(0)
-            .setDepth(101);
-
-
-        // -------------------------
-        // 점프 버튼
-        // -------------------------
-
-        this.jumpButton.on(
-            "pointerdown",
-            () => {
-
-                this.player.jump();
-
-                this.jumpButton.setAlpha(0.7);
-            }
-        );
-
-        this.jumpButton.on(
-            "pointerup",
-            () => {
-
-                this.jumpButton.setAlpha(1);
-            }
-        );
-
-        this.jumpButton.on(
-            "pointerout",
-            () => {
-
-                this.jumpButton.setAlpha(1);
-            }
-        );
-
-
-        // -------------------------
-        // 슬라이드 버튼
-        // -------------------------
-
-        this.slideButton.on(
-            "pointerdown",
-            () => {
-
-                this.player.slide();
-
-                this.slideButton.setAlpha(0.7);
-            }
-        );
-
-        this.slideButton.on(
-            "pointerup",
-            () => {
-
-                this.slideButton.setAlpha(1);
-            }
-        );
-
-        this.slideButton.on(
-            "pointerout",
-            () => {
-
-                this.slideButton.setAlpha(1);
-            }
-        );
+        this.jumpButton.setScrollFactor(0);
+        this.slideButton.setScrollFactor(0);
     }
 
 
@@ -177,43 +73,11 @@ export default class GameControls {
 
         const bottomMargin = 70;
 
+        // 점프: 왼쪽 아래
+        this.jumpButton.moveTo(80, height - bottomMargin);
 
-        // -------------------------
-        // 점프
-        // 왼쪽 아래
-        // -------------------------
-
-        const jumpX = 80;
-        const jumpY = height - bottomMargin;
-
-        this.jumpButton.setPosition(
-            jumpX,
-            jumpY
-        );
-
-        this.jumpText.setPosition(
-            jumpX,
-            jumpY
-        );
-
-
-        // -------------------------
-        // 슬라이드
-        // 오른쪽 아래
-        // -------------------------
-
-        const slideX = width - 80;
-        const slideY = height - bottomMargin;
-
-        this.slideButton.setPosition(
-            slideX,
-            slideY
-        );
-
-        this.slideText.setPosition(
-            slideX,
-            slideY
-        );
+        // 슬라이드: 오른쪽 아래
+        this.slideButton.moveTo(width - 80, height - bottomMargin);
     }
 
 
@@ -230,9 +94,6 @@ export default class GameControls {
         );
 
         this.jumpButton.destroy();
-        this.jumpText.destroy();
-
         this.slideButton.destroy();
-        this.slideText.destroy();
     }
 }

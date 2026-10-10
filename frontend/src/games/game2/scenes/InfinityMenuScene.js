@@ -1,14 +1,22 @@
 import Phaser from "phaser";
 import { MAPS, EMOTION_LABEL } from "../manage/MapConfig";
 import { showToast } from "../ui/Toast";
+import { restartOnResize } from "../ui/ResizeRestart";
+import { drawBackground, createTopBar, gridPositions, createLabelCard } from "../ui/PixelUI";
 
 // =====================================================
-// 무한 모드 맵 선택 화면
+// 무한 모드 맵 선택 화면 (와이어프레임 4번)
 // 감정 5개 중 "일기를 쓴 적 있는" 감정의 맵만 고를 수 있습니다.
 // =====================================================
 
-// 화면에 보여줄 감정 순서
+// 화면에 보여줄 감정 순서 (행복→평온→피로→우울→화남)
 const EMOTIONS = ["happy", "calm", "tired", "sad", "angry"];
+
+const COLUMNS = 3;   // 한 줄에 카드 몇 개
+const GAP = 16;      // 카드 사이 간격
+
+// "#rrggbb" 글자 색을 숫자 색으로 바꾸기
+const toColor = (hex) => Phaser.Display.Color.HexStringToColor(hex).color;
 
 export default class InfinityMenuScene extends Phaser.Scene {
 
@@ -22,87 +30,67 @@ export default class InfinityMenuScene extends Phaser.Scene {
         // Game2.jsx에서 넣어둔 일기 정보 꺼내기 (없으면 빈 값)
         const info = this.registry.get("diaryInfo") || { unlockedEmotions: [] };
 
-        // 제목
-        this.add.text(width / 2, height * 0.1, "무한 모드", {
-            fontFamily: "Mona",
-            fontSize: "28px",
-            color: "#ffffff"
-        }).setOrigin(0.5);
+        drawBackground(this);
 
-        // 버튼 배치 값 (한 줄에 3개씩)
-        const columns = 3;
-        const boxW = Math.min(180, width * 0.26);
-        const boxH = Math.min(90, height * 0.22);
-        const gap = 16;
+        const { margin, top } = createTopBar(this, "무한 모드", () => {
+            this.scene.start("ModeSelectScene");
+        });
 
-        // 감정마다 버튼 하나씩 만들기
-        EMOTIONS.forEach((emotion, i) => {
+        // 카드 배치
+        const areaW = Math.min(width - margin * 12, 920);
+        const areaH = height - top - margin;
+        const rows = Math.ceil(EMOTIONS.length / COLUMNS);
+        const cardH = Math.floor((areaH - GAP * (rows - 1)) / rows);
 
-            const col = i % columns;               // 몇 번째 칸인지
-            const row = Math.floor(i / columns);   // 몇 번째 줄인지
+        gridPositions({
+            count: EMOTIONS.length,
+            columns: COLUMNS,
+            width,
+            areaW,
+            top,
+            cardH,
+            gap: GAP
+        }).forEach((pos, i) => this.createMapCard(EMOTIONS[i], pos, info));
 
-            const x = width / 2 + (col - 1) * (boxW + gap);
-            const y = height * 0.36 + row * (boxH + gap);
+        // 화면 크기가 바뀌면 다시 그리기
+        restartOnResize(this);
+    }
 
-            // 이 감정의 맵이 만들어져 있는가 (tired는 아직 없음)
-            const exists = !!MAPS[emotion];
-            // 일기를 써서 열렸는가
-            const unlocked = exists && info.unlockedEmotions.includes(emotion);
+    // 맵 카드 하나 만들기
+    createMapCard(emotion, pos, info) {
+        const exists = !!MAPS[emotion];                                        // 맵이 만들어져 있는가
+        const unlocked = exists && info.unlockedEmotions.includes(emotion);    // 일기를 써서 열렸는가
 
-            // 버튼 네모 (열렸으면 밝게, 잠겼으면 어둡게)
-            const box = this.add.rectangle(
-                x, y, boxW, boxH,
-                unlocked ? 0x333333 : 0x1a1a1a
+        // 미리보기: 그 맵 1단계의 하늘색 + 아래쪽 땅색
+        const stage = MAPS[emotion]?.stages[0];
+
+        createLabelCard(this, {
+            ...pos,
+            label: EMOTION_LABEL[emotion],
+            skyColor: toColor(stage?.sky ?? "#333333"),
+            groundColor: toColor(stage?.hud.outline ?? "#222222"),
+            lockedText: unlocked ? null : (exists ? "잠김" : "준비 중"),
+            onClick: () => this.pickMap(emotion, exists, unlocked)
+        });
+    }
+
+    // 카드를 눌렀을 때
+    pickMap(emotion, exists, unlocked) {
+        if (!unlocked) {
+            // 못 여는 맵이면 안내 문구만 보여줌
+            showToast(
+                this,
+                exists
+                    ? "데일리 모드에서 이 감정의 일기를 쓰면 열려요"
+                    : "아직 준비 중인 맵이에요"
             );
-            box.setStrokeStyle(2, unlocked ? 0xffffff : 0x666666);
+            return;
+        }
 
-            // 버튼 글자
-            let label = EMOTION_LABEL[emotion];
-            if (!exists) {
-                label += "\n(준비 중)";
-            } else if (!unlocked) {
-                label += "\n(잠김)";
-            }
-
-            this.add.text(x, y, label, {
-                fontFamily: "Mona",
-                fontSize: "18px",
-                color: unlocked ? "#ffffff" : "#888888",
-                align: "center"
-            }).setOrigin(0.5);
-
-            // 버튼을 눌렀을 때
-            box.setInteractive({ useHandCursor: true });
-            box.on("pointerdown", () => {
-
-                if (!unlocked) {
-                    // 못 여는 맵이면 안내 문구만 보여줌
-                    showToast(
-                        this,
-                        exists
-                            ? "데일리 모드에서 이 감정의 일기를 쓰면 열려요"
-                            : "아직 준비 중인 맵이에요"
-                    );
-                    return;
-                }
-
-                // 열린 맵이면 게임 시작
-                this.scene.start("GameScene", {
-                    gameMode: "infinity",
-                    emotion: emotion
-                });
-            });
+        // 열린 맵이면 게임 시작
+        this.scene.start("GameScene", {
+            gameMode: "infinity",
+            emotion: emotion
         });
-
-        // 뒤로가기 (모드 선택 화면으로)
-        const back = this.add.text(30, 25, "<", {
-            fontFamily: "Mona",
-            fontSize: "42px",
-            color: "#ffffff",
-            fontStyle: "bold"
-        });
-
-        back.setInteractive({ useHandCursor: true });
-        back.on("pointerdown", () => this.scene.start("ModeSelectScene"));
     }
 }

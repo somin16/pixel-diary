@@ -33,6 +33,9 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
         // 슬라이드 상태
         this.isSliding = false;
 
+        // 지금 쓰는 캐릭터 시트 ("" = 낮, "_night" = 밤)
+        this.skinSuffix = "";
+
         // 키보드 입력
         this.cursors = scene.input.keyboard.createCursorKeys();
 
@@ -60,6 +63,15 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
         this.body?.updateFromGameObject();
     }
 
+        // =========================
+    // 밤/낮에 맞춰 캐릭터 시트 바꾸기
+    // suffix: "" (낮) 또는 "_night" (밤)
+    // 애니메이션이 다음 프레임에 새 이름으로 재생되면서 시트가 자동으로 바뀝니다.
+    // =========================
+
+    setSkin(suffix) {
+        this.skinSuffix = suffix;
+    }
 
     // =========================
     // 매 프레임 플레이어 처리
@@ -117,22 +129,15 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
 
         // 슬라이드 중
         if (this.isSliding) {
-
-            this.play("player_slide", true);
-
+            this.play(`player_slide${this.skinSuffix}`, true);  
         }
-
         // 공중
         else if (!isGrounded) {
-
-            this.play("player_jump", true);
-
+            this.play(`player_jump${this.skinSuffix}`, true);   
         }
-
         // 땅
         else {
-
-            this.play("player_run", true);
+            this.play(`player_run${this.skinSuffix}`, true);   
         }
 
 
@@ -164,7 +169,7 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
         this.setVelocityY(this.jumpPower);
 
         // 점프 애니메이션
-        this.play("player_jump", true);
+        this.play(`player_jump${this.skinSuffix}`, true);
     }
 
 
@@ -193,7 +198,7 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
         this.isSliding = true;
 
         // 슬라이드 애니메이션
-        this.play("player_slide", true);
+        this.play(`player_slide${this.skinSuffix}`, true);
 
 
         // 0.5초 후 슬라이드 종료

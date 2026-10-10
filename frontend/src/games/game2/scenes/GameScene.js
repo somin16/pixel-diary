@@ -94,7 +94,7 @@ export default class GameScene extends Phaser.Scene {
         // groundHeight : 눈에 보이는 도로 두께 (맵마다 다름 × 픽셀 배율)
         // groundTopY   : 바닥 윗면의 y 좌표 (캐릭터와 장애물이 서는 높이)
         this.groundHeight = this.map.groundUnits * this.pixel;
-        this.groundTopY = this.scale.height - this.groundHeight;
+         this.groundTopY = this.map.artBottom - this.groundHeight;   // 그림 아랫면 기준
 
         // 판정 영역은 윗면에서 아래로 (두께 + 여분) 만큼 두껍게
         this.ground = this.add.rectangle(
@@ -120,6 +120,9 @@ export default class GameScene extends Phaser.Scene {
 
         // 플레이어를 바닥 위에 올려놓기
         this.player.y = this.groundTopY - this.player.body.height / 2;
+
+        // 시작 단계(밤이면 밤 시트)에 맞는 캐릭터 시트로 맞추기
+        this.player.setSkin(this.map.playerSkin);
 
         // 바닥을 뚫고 떨어지지 않게 충돌 설정
         this.physics.add.collider(this.player, this.ground);
@@ -158,8 +161,9 @@ export default class GameScene extends Phaser.Scene {
 
         this.pauseMenu = new PauseMenu(
             this,
-            () => this.scene.start(MODE_SELECT_KEY)   // 게임종료 → 모드 선택 화면
+            () => window.dispatchEvent(new CustomEvent("exitMiniGame"))
         );
+
 
 
         // ---------- 테스트용 N 키: 다음 맵 단계로 건너뛰기 ----------
@@ -276,8 +280,8 @@ export default class GameScene extends Phaser.Scene {
                 emotion: this.emotion
             }),
 
-            // 나가기: 모드 선택 화면으로
-            onExit: () => this.scene.start(MODE_SELECT_KEY)
+            // 나가기
+            onExit: () => window.dispatchEvent(new CustomEvent("exitMiniGame"))
         });
     }
 
@@ -300,7 +304,7 @@ export default class GameScene extends Phaser.Scene {
         // 새 화면 크기에 맞춰 다시 계산
         this.pixel = getPixelScale(gameSize.height);
         this.groundHeight = this.map.groundUnits * this.pixel;
-        this.groundTopY = gameSize.height - this.groundHeight;
+        this.groundTopY = this.map.artBottom - this.groundHeight;   // 그림 아랫면 기준
 
         // 바닥 판정 영역을 새 위치/크기로
         this.ground.setPosition(

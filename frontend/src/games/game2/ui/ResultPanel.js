@@ -1,3 +1,5 @@
+import { PIXEL, createPixelBox, createPixelButton } from "./PixelUI";
+
 // =====================================================
 // 결과 창 (CLEAR! / GAME OVER)
 // 점수와 버튼을 보여줍니다.
@@ -15,53 +17,46 @@ export function showResultPanel(scene, options) {
     const cy = height / 2;
 
     // 창 높이 (버튼이 1개면 작게, 2개면 크게)
-    const panelH = canRetry ? 240 : 190;
+    const panelH = canRetry ? 260 : 200;
     const top = cy - panelH / 2;
 
-    // 어두운 배경 + 창 (depth가 클수록 앞에 그려짐)
-    scene.add.rectangle(cx, cy, width, height, 0x000000, 0.5).setDepth(500);
-    scene.add.rectangle(cx, cy, 360, panelH, 0x333333)
-        .setStrokeStyle(3, 0xffffff)
-        .setDepth(501);
+    // 어두운 배경 (뒤쪽 버튼이 눌리지 않게 막아줌. depth가 클수록 앞에 그려짐)
+    scene.add.rectangle(0, 0, width, height, PIXEL.shadow, 0.7)
+        .setOrigin(0)
+        .setDepth(500)
+        .setInteractive();
+
+    // 창
+    createPixelBox(scene, { x: cx, y: cy, w: 360, h: panelH, depth: 501 });
 
     // 제목, 점수
-    addText(scene, cx, top + 45, title, 40, true);
-    addText(scene, cx, top + 95, `SCORE : ${score}`, 24, false);
+    addText(scene, cx, top + 50, title, 40, true);
+    addText(scene, cx, top + 105, `SCORE : ${score}`, 24, false);
 
     // 버튼 (무한 모드만 다시 하기가 있음)
-    let y = top + 145;
+    let y = top + 160;
 
     if (canRetry) {
-        addButton(scene, cx, y, "다시 하기", onRetry);
-        y += 55;
+        createPixelButton(scene, {
+            x: cx, y, w: 220, h: 44, label: "다시 하기", fill: PIXEL.sun,
+            fontSize: 22, depth: 502, onClick: onRetry
+        });
+        y += 56;
     }
 
-    addButton(scene, cx, y, "나가기", onExit);
+    createPixelButton(scene, {
+        x: cx, y, w: 220, h: 44, label: "나가기", fill: PIXEL.lilac,
+        fontSize: 22, depth: 502, onClick: onExit
+    });
 }
 
 
 // 글자 하나 추가
 function addText(scene, x, y, label, size, bold) {
     return scene.add.text(x, y, label, {
-        fontFamily: "Mona",
+        fontFamily: PIXEL.font,
         fontSize: `${size}px`,
-        color: "#ffffff",
+        color: PIXEL.inkText,
         fontStyle: bold ? "bold" : "normal"
     }).setOrigin(0.5).setDepth(502);
-}
-
-
-// 버튼 하나 추가
-function addButton(scene, x, y, label, onClick) {
-    const box = scene.add.rectangle(x, y, 220, 44, 0x8f9596)
-        .setStrokeStyle(3, 0x333333)
-        .setDepth(502)
-        .setInteractive({ useHandCursor: true });
-
-    addText(scene, x, y, label, 22, true).setDepth(503);
-
-    // 마우스를 올리면 밝아짐
-    box.on("pointerover", () => box.setFillStyle(0xa6adae));
-    box.on("pointerout", () => box.setFillStyle(0x8f9596));
-    box.on("pointerdown", onClick);
 }

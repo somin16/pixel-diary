@@ -1,196 +1,89 @@
+import { PIXEL, drawBackground, createPixelBox, createPixelButton, createTopBar } from "./PixelUI";
+
+// =====================================================
+// 설정 화면
+// 배경음 / 효과음의 ON / OFF 버튼을 보여줍니다.
+// 켜짐 상태는 게임 전체 저장소(registry)에 기억해서 화면을 나갔다 와도 유지됩니다.
+// (실제 소리를 켜고 끄는 건 나중에 연결)
+// =====================================================
+
+const GAP = 16;
+
 export function createSettingsUI(scene) {
 
     const { width, height } = scene.scale;
 
+    drawBackground(scene);
 
-    // =========================
-    // 화면 크기에 맞춘 값 계산
-    // =========================
-
-    const titleSize = Math.max(20, Math.min(32, height * 0.08));
-
-
-    // =========================
-    // 제목
-    // =========================
-
-    scene.add.text(
-        width / 2,
-        height * 0.12,
-        "설정",
-        {
-            fontFamily: "Mona",
-            fontSize: `${titleSize}px`,
-            color: "#ffffff"
-        }
-    ).setOrigin(0.5);
-
-
-    // =========================
-    // 배경음
-    // =========================
-
-    createSoundSetting(
-        scene,
-        width / 2,
-        height * 0.36,
-        "배경음"
-    );
-
-
-    // =========================
-    // 효과음
-    // =========================
-
-    createSoundSetting(
-        scene,
-        width / 2,
-        height * 0.60,
-        "효과음"
-    );
-
-
-    // =========================
-    // 뒤로가기
-    // =========================
-
-    const backButton = scene.add.text(
-        30,
-        25,
-        "<",
-        {
-            fontFamily: "Mona",
-            fontSize: "42px",
-            color: "#ffffff",
-            fontStyle: "bold"
-        }
-    );
-
-
-    backButton.setInteractive({
-        useHandCursor: true
-    });
-
-
-    backButton.on("pointerdown", () => {
-
+    const { margin, top } = createTopBar(scene, "설정", () => {
         scene.scene.start("ModeSelectScene");
-
     });
+
+    // 두 줄을 남는 영역의 가운데에 배치
+    const areaH = height - top - margin;
+    const rowW = Math.min(520, width - margin * 2);
+    const rowH = Math.min(96, Math.floor((areaH - GAP) / 2));
+    const startY = top + (areaH - (rowH * 2 + GAP)) / 2 + rowH / 2;
+
+    createSoundRow(scene, width / 2, startY, rowW, rowH, "배경음", "bgmOn");
+    createSoundRow(scene, width / 2, startY + rowH + GAP, rowW, rowH, "효과음", "sfxOn");
 }
 
 
 // =========================
-// 사운드 설정 버튼
+// 사운드 설정 한 줄 (이름 + ON / OFF 버튼)
+// key : registry에 기억해 둘 이름
 // =========================
 
-function createSoundSetting(scene, x, y, title) {
+function createSoundRow(scene, x, y, w, h, title, key) {
 
-    const { width, height } = scene.scale;
+    // 줄 배경 상자
+    createPixelBox(scene, { x, y, w, h });
 
+    const pad = 20;   // 상자 안쪽 여백
 
-    // 설정 박스 크기 (화면에 맞춰 줄어듦)
-    const boxW = Math.min(360, width * 0.8);
-    const boxH = Math.min(90, height * 0.17);
+    // 설정 이름 (왼쪽)
+    scene.add.text(x - w / 2 + pad, y, title, {
+        fontFamily: PIXEL.font,
+        fontSize: `${Math.max(14, Math.min(22, h * 0.25))}px`,
+        color: PIXEL.inkText
+    }).setOrigin(0, 0.5);
 
-    // ON / OFF 버튼 크기
-    const buttonW = Math.min(70, boxW * 0.19);
-    const buttonH = Math.min(45, boxH * 0.5);
+    // ON / OFF 버튼 위치 (OFF는 오른쪽 끝, ON은 그 왼쪽)
+    const btnW = Math.min(76, w * 0.18);
+    const btnH = Math.min(48, h * 0.55);
+    const btnGap = 12;
+    const offX = x + w / 2 - pad - btnW / 2;
+    const onX = offX - btnW - btnGap;
+    const fontSize = Math.max(12, Math.min(18, h * 0.2));
 
-    // 글자 크기
-    const titleFont = Math.max(14, Math.min(22, boxH * 0.25));
-    const buttonFont = Math.max(12, Math.min(18, boxH * 0.2));
+    // 저장된 값이 없으면 켜짐
+    const isOn = () => scene.registry.get(key) !== false;
 
-    // 박스 안쪽 여백과 ON / OFF 사이 간격
-    const pad = boxW * 0.06;
-    const buttonGap = buttonW * 0.2;
+    let onButton = null;
+    let offButton = null;
 
-    // 박스 왼쪽 / 오른쪽 끝
-    const left = x - boxW / 2;
-    const right = x + boxW / 2;
+    // 지금 상태에 맞게 색 칠하기 (선택된 쪽은 노랑)
+    const refresh = () => {
+        onButton.inner.setFillStyle(isOn() ? PIXEL.sun : PIXEL.lilac);
+        offButton.inner.setFillStyle(isOn() ? PIXEL.lilac : PIXEL.sun);
+    };
 
-    // OFF는 오른쪽 끝에서 여백만큼 안쪽, ON은 OFF 왼쪽
-    const offX = right - pad - buttonW / 2;
-    const onX = offX - buttonW - buttonGap;
-
-
-    // 설정 박스
-
-    const box = scene.add.rectangle(
-        x,
-        y,
-        boxW,
-        boxH,
-        0x222222
-    );
-
-    box.setStrokeStyle(2, 0xffffff);
-
-
-    // 설정 이름 (왼쪽 여백에 맞춰 왼쪽 정렬)
-
-    scene.add.text(
-        left + pad,
-        y,
-        title,
-        {
-            fontFamily: "Mona",
-            fontSize: `${titleFont}px`,
-            color: "#ffffff"
+    onButton = createPixelButton(scene, {
+        x: onX, y, w: btnW, h: btnH, label: "ON", fontSize,
+        onClick: () => {
+            scene.registry.set(key, true);
+            refresh();
         }
-    ).setOrigin(0, 0.5);
+    });
 
-
-    // ON 버튼
-
-    const onButton = scene.add.rectangle(
-        onX,
-        y,
-        buttonW,
-        buttonH,
-        0x444444
-    );
-
-    onButton.setStrokeStyle(2, 0xffffff);
-
-
-    scene.add.text(
-        onX,
-        y,
-        "ON",
-        {
-            fontFamily: "Mona",
-            fontSize: `${buttonFont}px`,
-            color: "#ffffff"
+    offButton = createPixelButton(scene, {
+        x: offX, y, w: btnW, h: btnH, label: "OFF", fontSize,
+        onClick: () => {
+            scene.registry.set(key, false);
+            refresh();
         }
-    ).setOrigin(0.5);
+    });
 
-
-    // OFF 버튼
-
-    const offButton = scene.add.rectangle(
-        offX,
-        y,
-        buttonW,
-        buttonH,
-        0x444444
-    );
-
-    offButton.setStrokeStyle(2, 0xffffff);
-
-
-    scene.add.text(
-        offX,
-        y,
-        "OFF",
-        {
-            fontFamily: "Mona",
-            fontSize: `${buttonFont}px`,
-            color: "#ffffff"
-        }
-    ).setOrigin(0.5);
-
-
-    // 현재는 UI만 구현
-    // 실제 배경음 / 효과음 제어는 나중에 연결
+    refresh();
 }

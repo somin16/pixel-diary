@@ -1,11 +1,16 @@
 import Phaser from "phaser";
-import { createModeSelectUI } from "../ui/ModeSelect";
+import { createModeSelectUI, loadModeSelectAssets } from "../ui/ModeSelect";  
 import { restartOnResize } from "../ui/ResizeRestart";
 
 export default class ModeSelectScene extends Phaser.Scene {
 
     constructor() {
         super("ModeSelectScene");
+    }
+
+    // 화면이 만들어지기 전에 이미지를 먼저 불러옴
+    preload() {
+        loadModeSelectAssets(this);
     }
 
     create() {
