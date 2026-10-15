@@ -617,14 +617,14 @@ export default function DiaryForm() {
       {step === 5 && (
         <ImageZoomOverlay onClose={handleCloseOverlay} imageUrl={imageUrl}
           footer={
-            <div className="w-full h-full flex flex-col justify-end items-center mb-[10%] gap-[8%]">
+            <div className="w-full h-full flex flex-col justify-end items-center gap-[6%]">
               {attachedPhoto ? (
                 // img2img 모드: 사진 변경 or 다시 그리기 or 꾸미기
-                <div className="flex flex-col items-center w-full gap-[8%]">
+                <>
                   <ImageButton label="다른 사진 사용하기" onClick={handleChangePhoto} className="w-[60%] aspect-[237/72]" imageSrc={getAssetUrl(currentTheme, 'buttons', 'babypink_button_x3')} textOption="text-base text-[#FF7396]" />
                   <ImageButton label="다시 그리기" onClick={handleRegenerateImage} className="w-[60%] aspect-[237/72]" imageSrc={getAssetUrl(currentTheme, 'buttons', 'skyblue_button_x3')} textOption="text-2xl text-[#4C8AE8]" />
                   <ImageButton label="꾸미기" onClick={handleDecorate} className="w-[60%] aspect-[237/72]" imageSrc={getAssetUrl(currentTheme, 'buttons', 'skyblue_button_x3')} textOption="text-2xl text-[#4C8AE8]" />
-                </div>
+                </>
               ) : (
                 // txt2img 모드: 기존 버튼
                 <>
