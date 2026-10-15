@@ -171,7 +171,7 @@ export default function AuthRedirect() {
       return (
         <>
           <div className="mb-4 animate-bounce text-4xl">☃️</div>
-          <p className="text-lg font-bold text-[#35407A]">로그인 정보를 확인하고 있어요...</p>
+          <p className="text-base font-bold text-[#35407A]">로그인 정보를 확인하고 있어요...</p>
           <p className="text-sm text-gray-400 mt-2">잠시만 기다려 주세요!</p>
         </>
       );
@@ -180,7 +180,7 @@ export default function AuthRedirect() {
       return (
         <>
           <div className="mb-4 text-4xl">🌌</div>
-          <p className="text-lg font-bold text-green-600">로그인 성공!</p>
+          <p className="text-base font-bold text-green-600">로그인 성공!</p>
           <p className="text-sm text-gray-400 mt-2">곧 홈 화면으로 이동합니다.</p>
         </>
       );
@@ -189,7 +189,7 @@ export default function AuthRedirect() {
       return (
         <>
           <div className="mb-4 text-4xl">❌</div>
-          <p className="text-lg font-bold text-red-500">인증에 실패했습니다.</p>
+          <p className="text-base font-bold text-red-500">인증에 실패했습니다.</p>
           <p className="text-sm text-gray-400 mt-2">다시 로그인해 주세요.</p>
         </>
       );
@@ -198,7 +198,7 @@ export default function AuthRedirect() {
       return (
         <>
           <div className="mb-4 text-5xl animate-bounce">🎉</div>
-          <p className="text-xl font-bold text-[#35407A]">가입을 환영합니다!</p>
+          <p className="text-base font-bold text-[#35407A]">가입을 환영합니다!</p>
           <p className="text-sm text-gray-400 mt-2">로그인 화면으로 이동합니다.</p>
         </>
       );
@@ -208,7 +208,7 @@ export default function AuthRedirect() {
       return (
         <>
           <div className="mb-4 text-5xl">⚠️</div>
-          <p className="text-xl font-bold text-red-500">회원가입 실패</p>
+          <p className="text-base font-bold text-red-500">회원가입 실패</p>
           <p className="text-md text-gray-600 mt-2">다시 시도해주세요</p>
         </>
       );
@@ -218,7 +218,7 @@ export default function AuthRedirect() {
       return (
         <>
           <div className="mb-4 text-4xl">🔑</div>
-          <p className="text-lg font-bold text-[#35407A]">비밀번호 재설정 화면으로 이동합니다.</p>
+          <p className="text-base font-bold text-[#35407A]">비밀번호 재설정 화면으로 이동합니다.</p>
         </>
       );
     }
