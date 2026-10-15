@@ -15,8 +15,8 @@ export default class RudolpSlime extends Phaser.Physics.Arcade.Sprite {
         // 스탯 
         this.isElite = false;          // 엘리트 몬스터 확인용
         this.monsterID = 14;           // 몬스터 번호
-        this.hp = 18 + monsterStatus;  // 체력
-        this.damage = -4;              // 대미지
+        this.hp = 22 + monsterStatus;  // 체력
+        this.damage = -5;              // 대미지
         this.resistance = 1;           // 공격을 받았을때 밀려나는 저항정도
                                        // ※ 1은 저항없음, 0에 가까울수록 안밀린다
 

@@ -9,7 +9,7 @@ export function spawnChest(scene) {
 
     // 상자 생성
     let snowChest = scene.chests.create(SPAWN_X, SPAWN_Y, "snow_chest");
-    snowChest.hp = 10; // 임시수치(아마 150 ~ 200정도 될거같습니다)
+    snowChest.hp = 100;
     snowChest.resistance = 0;
     snowChest.isHit = false;
     snowChest.setScale(2);

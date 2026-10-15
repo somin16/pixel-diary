@@ -30,6 +30,19 @@ export function createMenu(scene) {
     menuOpenButton.setScale(2)          // 해상도x2
     .setOrigin(1, 0);        
 
+    // 뒷배경
+    const menuOpenButtonDetail = scene.add.rectangle(
+        menuOpenButton.x + 3,
+        menuOpenButton.y + 3,
+        menuOpenButton.displayWidth,
+        menuOpenButton.displayHeight,
+        0x000000,
+        1
+    );
+    menuOpenButtonDetail.setOrigin(1, 0);
+    menuOpenButtonDetail.setScrollFactor(0);
+    menuOpenButtonDetail.setDepth(menuOpenButton.depth - 1);
+
     // 메뉴 컨테이너
     const menuContainer = scene.add.container(0, 0);
     menuContainer.setScrollFactor(0);
@@ -39,43 +52,37 @@ export function createMenu(scene) {
     // 메뉴 배경
     // nieslice는 상하좌우 n픽셀은 건들지않고 크기를 조정할 수 있다.
     // (x,y, 텍스쳐이름, 프레임, 가로, 세로, 보호픽셀 좌,우,위,아래)
-    const menuBackGround = scene.add.nineslice(centerX, centerY, "menu_window", 0, 125, 150, 2,2,2,2);
+    const menuBackGround = scene.add.nineslice(centerX, centerY, "menu_window", 0, 125, 90, 2,2,2,2);
     menuBackGround.setScale(2);     // 해상도x2
 
     // 돌아가기 버튼
-    const returnButton = scene.add.nineslice(centerX, height * 0.45 , "menu_window_button", 0, buttonWidth, buttonHeight, 2,2,2,2);
+    const returnButton = scene.add.nineslice(centerX, height * 0.415 , "menu_window_button", 0, buttonWidth, buttonHeight, 2,2,2,2);
     returnButton.setInteractive();   // 클릭가능여부(없으면 클릭이 안됩니다)
     returnButton.setScrollFactor(0); // 가운데 고정
     returnButton.setScale(2);        // 해상도x2
 
     // 돌아가기 텍스트
-    const returnText = scene.add.text(centerX , height * 0.45, "돌아가기", {
+    const returnText = scene.add.text(centerX , height * 0.415, "돌아가기", {
         fontFamily: "Mona",
         fontSize: "18px",
         fill: "#ffffff"
     }).setOrigin(0.5, 0.5); // 가운데 정렬
 
     // 게임종료 버튼
-    const gameEndButton = scene.add.nineslice(centerX, height * 0.65, "menu_window_button", 0, buttonWidth, buttonHeight, 2,2,2,2);
+    const gameEndButton = scene.add.nineslice(centerX, height * 0.585, "menu_window_button", 0, buttonWidth, buttonHeight, 2,2,2,2);
     gameEndButton.setInteractive();
     gameEndButton.setScrollFactor(0);
     gameEndButton.setScale(2);
 
     // 게임종료 텍스트
-    const gameEndText = scene.add.text(centerX , height * 0.65, "게임종료", {
+    const gameEndText = scene.add.text(centerX , height * 0.585, "게임종료", {
         fontFamily: "Mona",
         fontSize: "18px",
         fill: "#ffffff"
     }).setOrigin(0.5, 0.5); // 가운데 정렬
 
-    // 소리 온오프 버튼
-    const soundBtn = scene.add.image(centerX + 100, height * 0.25, "sound_icon_on");
-    soundBtn.setInteractive();
-    soundBtn.setScrollFactor(0);
-    soundBtn.setScale(2);
-
     // 만든걸 다 컨에티너에 넣기
-    menuContainer.add([backGround, menuBackGround, returnButton, returnText, gameEndButton, gameEndText, soundBtn]);
+    menuContainer.add([backGround, menuBackGround, returnButton, returnText, gameEndButton, gameEndText]);
 
     // ==============버튼 클릭시==================
     // 해당하는 버튼을 눌렀을때 아래에있는 함수를 실행한다
@@ -88,10 +95,6 @@ export function createMenu(scene) {
 
     // 게임종료 버튼(미구현)
     gameEndButton.on('pointerdown', () => selectGameEnd());
-
-    // 사운드 버튼
-    scene.isSoundOn = true; // 사운드 상태체크용 변수
-    soundBtn.on('pointerdown', () => selectSound(soundBtn, scene));
 }
 
 // 메뉴 버튼 클릭시
@@ -126,21 +129,4 @@ function selectGameEnd() {
 
     // React에게 게임 종료 신호(이벤트) 보내기
     window.dispatchEvent(new CustomEvent("exitMiniGame"));
-}
-
-// 사운드 버튼 클릭시
-function selectSound(soundBtn, scene) {
-
-    if (scene.isSoundOn) {
-
-        scene.isSoundOn = false;
-        soundBtn.setTexture("sound_icon_off");
-        // 게임 자체에 아직 소리가 없어서 이미지만 바뀝니다
-    } 
-    
-    else {
-
-        scene.isSoundOn = true;
-        soundBtn.setTexture("sound_icon_on");
-    }
 }
