@@ -12,6 +12,7 @@ import SettingsScene from "./scenes/SettingsScene";
 import InfinityMenuScene from "./scenes/InfinityMenuScene";
 
 import { buildDiaryInfo } from "./manage/DiaryInfo";
+import { diaryApi } from "../../api/diaryApi";
 
 import { supabase } from "../../utils/SupabaseClient";
 
