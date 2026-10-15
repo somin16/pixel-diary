@@ -6,15 +6,12 @@ export function loadAllSprite(scene) {
 
     // ========================플레이어 + 공격 이펙트=========================
     // 플레이어 이미지
-    scene.load.image("player_stop", "/assets/game1/player/player_stop.png");
-
-    // 플레이어 이동 이미지
-    scene.load.image("player_move1", "/assets/game1/player/player_move1.png");
-    scene.load.image("player_move2", "/assets/game1/player/player_move2.png");
-    scene.load.image("player_move3", "/assets/game1/player/player_move3.png");
+    scene.load.spritesheet("player", "/assets/game1/player/player.png", {
+        frameWidth: 16, 
+        frameHeight: 16
+    }); 
 
     // 공격 이미지
-
     // 블레이드(기본무기)
     scene.load.image("blade_1", "/assets/game1/attacks/blade/blade_1.png");
     scene.load.image("blade_2", "/assets/game1/attacks/blade/blade_2.png");
@@ -124,6 +121,27 @@ export function loadAllSprite(scene) {
         frameHeight: 16
     });
 
+    // 탱크 슬라임(상부) 뚜껑
+    scene.load.spritesheet("tank_slime_top", "/assets/game1/monster/snow/boss/tank_slime_top_open.png", {
+        frameWidth: 64,
+        frameHeight: 48
+    });
+
+    // 탱크 슬라임(상부) 발사
+    scene.load.spritesheet("tank_slime_top_shot", "/assets/game1/monster/snow/boss/tank_slime_top_shot.png", {
+        frameWidth: 64,
+        frameHeight: 48
+    });
+
+    // 탱크 슬라임(하부)
+    scene.load.spritesheet("tank_slime_bottom", "/assets/game1/monster/snow/boss/tank_slime_bottom_move.png", {
+        frameWidth: 64,
+        frameHeight: 48
+    });
+
+    // 탱크 슬라임이 발사하는 투사체
+    scene.load.image("box", "/assets/game1/monster/snow/boss/box.png");
+    scene.load.image("snow", "/assets/game1/monster/snow/boss/snow.png")
 
     // =======================타일======================================
 
@@ -168,9 +186,6 @@ export function loadAllSprite(scene) {
     // ====================메뉴 아이콘=====================================
     // 메뉴아이콘
     scene.load.image("menu_icon", "/assets/game1/ui/menu_icon/menu_icon.png");
-    // 사운드아이콘
-    scene.load.image("sound_icon_on", "/assets/game1/ui/menu_icon/sound_icon_on.png");
-    scene.load.image("sound_icon_off", "/assets/game1/ui/menu_icon/sound_icon_off.png");
 
     // 레벨업시에 사용할 아이콘들
     // =====================스킬 아이콘=====================================

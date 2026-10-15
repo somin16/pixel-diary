@@ -15,6 +15,7 @@ import XmasSlime from "./snow/XmasSlime.js";
 import SantaSlime from "./snow/SantaSlime.js";
 import BoxSlime from "./snow/BoxSlime.js";
 import RudolpSlime from "./snow/RudolphSlime.js";
+import TankSlime from "./snow/TankSlime.js";
 
 // 몬스터 이동 로직
 export function monsterMove(scene) {
@@ -57,7 +58,7 @@ export function overlapMonstersHit(scene) {
 export function monstersHitDamageBase(monster, knockback, scene) {
 
     monster.isHit = true;
-    monster.setTintFill(0xffffff); // 히트효과
+    monster.setTintFill(0xD3D3D3); // 히트효과
     // setTint와는 조금 다른 setTintFill은 스프라이트의 명도 조절이 아닌 스프라이트 위에 색 자체를 덮어버린다
 
     let knockbackValue = knockback * monster.resistance;
@@ -98,11 +99,15 @@ export function spawnBossMonster(scene) {
     // 점수 잠금(꼼수방지)
     lockScore(scene);
 
-    // 보스 몬스터가 스폰되면 엘리트 몬스터 타이머를 파괴
-    scene.eliteMonsterSpawnTimer.destroy();
+    // 보스 몬스터가 스폰되면 일부 타이머들을 파괴
+    if (scene.mapType == "default") scene.eliteMonsterSpawnTimer.destroy();
+    else {
+        scene.monsterSpawnTimer.destroy();
+        scene.magicSlimeSpawnEvent.destroy();
+    } 
 
     // 생성범위
-    const SPAWN_RADIUS = 450;
+    const SPAWN_RADIUS = 550;
     // Between을 통해 랜덤한 각도를 뽑아낸다
     const randomAngle = Phaser.Math.FloatBetween(0, Math.PI * 2);
 
@@ -110,7 +115,9 @@ export function spawnBossMonster(scene) {
     const SPAWN_X = scene.player.x + Math.cos(randomAngle) * SPAWN_RADIUS;
     const SPAWN_Y = scene.player.y + Math.sin(randomAngle) * SPAWN_RADIUS;
 
-    spawnKingSlime(SPAWN_X,SPAWN_Y,scene);
+    // 맵에 따라 다른 몬스터를 소환
+    if (scene.mapType == "default") spawnKingSlime(SPAWN_X, SPAWN_Y, scene);
+    else spawnTankSlime(SPAWN_X, SPAWN_Y, scene);
 }
 
 // 엘리트 몬스터 스폰
@@ -133,7 +140,7 @@ function spawnEliteMonster(scene) {
 function spawnMonster(scene) {
 
     // 생성범위
-    const SPAWN_RADIUS = 400;
+    const SPAWN_RADIUS = 450;
     // Between을 통해 랜덤한 각도를 뽑아낸다
     const randomAngle = Phaser.Math.FloatBetween(0, Math.PI * 2);
 
@@ -186,7 +193,7 @@ function spawnPhalanx(PosX, PosY, scene) {
     let phalanx = new Phalanx(scene, PosX, PosY, scene.monsterStatus);
     scene.monsters.add(phalanx);
 }
-
+``
 // 슬라임 생성
 function spawnSlime(PosX, PosY, scene) { // 함수를 따로 할당했기에 어디에 소환할지도 설정
 
@@ -329,6 +336,15 @@ export function spawnRudolpSlime(PosX, PosY, scene) {
     scene.monsters.add(rudolpSlime);
 }
 
+// 탱크슬라임 소환
+function spawnTankSlime(PosX, PosY, scene) {
+
+	let tankSlime = new TankSlime(scene, PosX, PosY, scene.monsterStatus);
+	scene.monsters.add(tankSlime);
+
+    tankSlime.readyAttackDash();
+}
+
 
 // 이벤트 생성 함수
 export function addEventMonsterLevelUp(scene) {
@@ -354,6 +370,9 @@ function monsterLevelUp(scene) {
 
 // 몬스터 스폰률 업데이트
 function updateMonsterSpawn(scene) {
+
+    // 보스가 있으면 패스
+    if (scene.isBossSpawn) return;
 
     // 중복 방지
     if (scene.monsterSpawnTimer) {

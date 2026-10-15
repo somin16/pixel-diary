@@ -11,7 +11,7 @@ export async function createModeSelectUI(scene, ticketCount) {
     const centerX = width / 2;
 
     // 상단 타이틀(게임 맵 선택)
-    scene.add.text(centerX, height * 0.1, '맵 선택', {
+    scene.add.text(centerX, height * 0.1, '난이도 선택', {
         fontFamily: 'Mona',
         fontSize: '40px',
         fontStyle: 'bold',
@@ -90,8 +90,12 @@ export function createModeButton(modType, x, y, onClick, scene) {
 
     // 배경(원래라면 스프라이트로 이미지를 넣어서 구현하는게 맞지만, 
     // 코드로 구현하는 창도 크게 나쁘지 않아서 임시로 사용하겠습니다)
-    const background = scene.add.rectangle(0, 0, btnWidth, btnHeight, 0x222222, 0.8)
+    const background = scene.add.rectangle(0, 0, btnWidth, btnHeight, 0x121212, 1)
         .setStrokeStyle(3, 0xffffff);
+
+    // 뒷배경
+    const backgroundDetail = scene.add.rectangle(background.x, background.y + 7, btnWidth + 12, btnHeight, 0x111111, 1)
+        .setStrokeStyle(3, 0xcdcdcd);
 
     // 모드 이름
     let modName = scene.add.text(0, -btnHeight / 2 + 40, "", {
@@ -116,25 +120,29 @@ export function createModeButton(modType, x, y, onClick, scene) {
     // 기본이면..
     if (modType == "basic") {
 
+        background.setFillStyle(0x123212, 1);
+
         // 모드 이름
-        modName.setText("일반 맵");
+        modName.setText("기본");
 
         // 모드 설명
-        modInfo.setText("기본적인 맵입니다!");
+        modInfo.setText("쉬운 난이도의 기본적인 모드입니다!");
 
         // 모드 설명 이미지
         modImageView.setTexture("phalanx_move1");
         modImageView.play("phalanx_animation", true);
     }
 
-    // 아니면..(무한모드)
+    // 아니면..(어려움)
     else {
 
+        background.setFillStyle(0x113342, 1);
+
         // 모드 이름
-        modName.setText("추가 맵");
+        modName.setText("어려움");
 
         // 모드 설명
-        modInfo.setText("어려운 난이도의 맵을 구현중..");
+        modInfo.setText("조금은 어려운 모드입니다!");
 
         // 모드 설명 이미지
         modImageView.setTexture("x_mas_slime");
@@ -142,7 +150,7 @@ export function createModeButton(modType, x, y, onClick, scene) {
     }
 
     // 만든거 다 넣기
-    container.add([background, modName, modInfo, modImageView]);
+    container.add([backgroundDetail,background, modName, modInfo, modImageView]);
 
     // 컨테이너 전체를 클릭범위로 지정(setSize)
     container.setSize(btnWidth, btnHeight);

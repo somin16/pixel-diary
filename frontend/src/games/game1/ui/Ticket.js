@@ -118,6 +118,9 @@ export function ticketUseUI(scene, selectMapType) {
         }
     );
 
+    // 사용 뒷배경
+    const yesButtonDetail = scene.add.rectangle(yesButton.x, yesButton.y + 10, 108, 40, 0x2d732d)
+
     // 사용 버튼 텍스트
     const yesButtonText = scene.add.text(width * 0.4, height * 0.75, "티켓 사용!", {
         fontFamily: "Mona",
@@ -126,7 +129,7 @@ export function ticketUseUI(scene, selectMapType) {
     }).setOrigin(0.5);
 
     // 아니요 버튼 배경
-    const noButton = scene.add.rectangle(width * 0.6, height * 0.75, 100, 40, 0xFF6961)
+    const noButton = scene.add.rectangle(width * 0.6, height * 0.75, 100, 40, 0xb85c64)
             
         .setScrollFactor(0) // 이거 안하면 이상한곳에서 스폰돼서 클릭이 안된다
         .setInteractive()   // 이걸 넣어줘야 클릭이 가능
@@ -140,6 +143,9 @@ export function ticketUseUI(scene, selectMapType) {
             startGame(scene, selectMapType, false); // 안쓴다고 했으니 false로
         }
     );
+
+    // 아니요 뒷배경
+    const noButtonDetail = scene.add.rectangle(noButton.x, noButton.y + 10, 108, 40, 0x803f48)
 
     // 아니요 버튼 텍스트
     const noButtonText = scene.add.text(width * 0.6, height * 0.75, "사용 안 함", {
@@ -156,8 +162,10 @@ export function ticketUseUI(scene, selectMapType) {
         ticketInfo,
         ticketIcon,
         ticketText,
+        yesButtonDetail,
         yesButton,
         yesButtonText,
+        noButtonDetail,
         noButton,
         noButtonText
     ])
