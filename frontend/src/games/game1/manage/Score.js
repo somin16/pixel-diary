@@ -18,7 +18,13 @@ export function addScore(addScoreValue, scene) {
     // 보스 전투 도중에는 점수가 오르지 않습니다(보스전에서 버텨서 점수를 버는 꼼수방지)
     if (scene.isBossSpawn == false) {
 
-        // 티켓을 썻으면 추가되는 점수가 2배로 증가
+        // 눈맵이면 얻는 모든 점수에 가중치로 +2
+        if(scene.mapType == "snow") {
+
+            addScoreValue += 2;
+        }
+
+        // 그 후 티켓을 썻으면 추가되는 점수가 2배로 증가
         if(scene.isTicketUse == true) {
 
             addScoreValue *= 2;
@@ -190,6 +196,12 @@ export async function gameClear(scene) {
         
     }).setVisible(false); // 처음엔 안보이게
 
+    // 뒷배경
+    const returnHomeButtonDetail = scene.add.rectangle(
+        returnHomeButton.x, returnHomeButton.y + 10,
+        returnHomeButton.width + 8, returnHomeButton.height, 0x2d732d
+    ).setScrollFactor(0).setVisible(false);
+
     // 홈으로 돌아가기 버튼 텍스트
     const returnHomeButtonText = scene.add.text(width * 0.325, height * 0.85, "메인 화면으로 이동!", {
         fontFamily: "Mona",
@@ -208,6 +220,12 @@ export async function gameClear(scene) {
         scene.gameEnd = false;
         scene.scene.start('ModeSelectScene'); // 생각해보니까 모드 선택 화면으로 보내는게 맞을거같아서 모드 선택화면으로 이동하는걸로 변경했습니다
     }).setVisible(false); // 처음엔 안보이게
+
+    // 재시작 버튼 뒷배경
+    const restartGameButtonDetail = scene.add.rectangle(
+        restartGameButton.x, restartGameButton.y + 10,
+        restartGameButton.width + 8, restartGameButton.height, 0x0077b3
+    ).setScrollFactor(0).setVisible(false);
 
     // 재시작 버튼 텍스트
     const restartGameButtonText = scene.add.text(width * 0.675, height * 0.85, "한번 더 플레이하기!", {
@@ -228,8 +246,10 @@ export async function gameClear(scene) {
         // 연출이 안끝났으면 리턴
         if (!canShowResultButtons()) return;
 
+        returnHomeButtonDetail.setVisible(true);
         returnHomeButton.setVisible(true).setInteractive();
         returnHomeButtonText.setVisible(true);
+        restartGameButtonDetail.setVisible(true);
         restartGameButton.setVisible(true).setInteractive();
         restartGameButtonText.setVisible(true);
     }
@@ -318,8 +338,10 @@ export async function gameClear(scene) {
         finalScoreText,
         coinRow,
         addCoinText,
+        returnHomeButtonDetail,
         returnHomeButton,
         returnHomeButtonText,
+        restartGameButtonDetail,
         restartGameButton,
         restartGameButtonText
     ]);

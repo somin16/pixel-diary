@@ -38,8 +38,8 @@ const FOCUS = 'focus-visible:outline focus-visible:outline-4 focus-visible:outli
 // 게임이 늘어나면 여기에 추가하면 됨. (지금 레이아웃은 2개 기준)
 // thumbnail 에 이미지 경로를 넣으면 대표 이미지로 표시, 없으면 픽셀 하늘 배경이 대신 나옴
 const GAMES = [
-  { id: 'game1run', title: '(말랑쫀득)슬라임대소동', subtitle: '미니게임1', thumbnail: null, tone: 'mint' },
-  { id: 'game2run', title: '(사뿐사뿐)오늘의 발자국', subtitle: '미니게임2', thumbnail: null, tone: 'dusk' },
+  { id: 'game1run', title: '(말랑쫀득)슬라임대소동', subtitle: '미니게임1', thumbnail: '/assets/game1/title/title.png', tone: 'mint' },
+  { id: 'game2run', title: '(사뿐사뿐)오늘의 발자국', subtitle: '미니게임2', thumbnail: '/assets/game2/title/title.png', tone: 'dusk' },
 ];
 
 // 계단식 색띠 팔레트 (mint: 미니게임1 임시 / dusk: 밤 → 새벽 → 아침)

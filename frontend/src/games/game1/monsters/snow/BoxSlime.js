@@ -15,7 +15,7 @@ export default class BoxSlime extends Phaser.Physics.Arcade.Sprite {
         // 스탯 
         this.isElite = true;           // 엘리트 몬스터 확인용(박스 슬라임은 엘리트 몬스터의 보상을 주기에 엘리트로 설정)
         this.monsterID = 15;           // 몬스터 번호
-        this.hp = 15 + monsterStatus;  // 체력
+        this.hp = 25 + monsterStatus;  // 체력
         this.damage = -2;              // 대미지
         this.resistance = 1;           // 공격을 받았을때 밀려나는 저항정도
                                        // ※ 1은 저항없음, 0에 가까울수록 안밀린다
