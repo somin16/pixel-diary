@@ -8,6 +8,9 @@ from utils import extract_access_token, get_user_from_token, get_supabase_header
 # 시리얼라이저
 from .serializers import UserCoinSerializer # 보유 재화 조회 및 추가 시리얼라이저
 
+# 코인 보유 한도 (이 값을 넘는 코인은 적립되지 않음)
+MAX_COIN = 99999
+
 class ItemPurchaseView(APIView):
     """아이템 구매 API"""
 
@@ -521,7 +524,12 @@ class UserCoinView(APIView):
 
             # ── 5. 코인 업데이트 ───────────────────────────
             current_coin = user_data[0].get("coin", 0)
-            total_coin = current_coin + added_coin
+
+            # 보유 한도(MAX_COIN)를 넘는 만큼은 적립하지 않음
+            # (이미 한도 이상인 경우에는 기존 값을 그대로 유지)
+            total_coin = max(current_coin, min(current_coin + added_coin, MAX_COIN))
+            actual_added = total_coin - current_coin  # 실제로 적립된 코인
+            is_capped = actual_added < added_coin  # 한도 때문에 일부 또는 전부 적립되지 않았는지
 
             update_response = requests.patch(
                 f"{supabase_url}/rest/v1/users?user_id=eq.{user_id}",
@@ -536,7 +544,13 @@ class UserCoinView(APIView):
             return Response(
                 {
                     "total_coin": total_coin,
-                    "message": "재화가 추가되었습니다.",
+                    "added_coin": actual_added,
+                    "is_capped": is_capped,
+                    "message": (
+                        f"코인 보유 한도({MAX_COIN:,})에 도달했습니다."
+                        if is_capped
+                        else "재화가 추가되었습니다."
+                    ),
                 },
                 status=status.HTTP_200_OK,
             )
