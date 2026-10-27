@@ -5,8 +5,8 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
     // 생성될 부모 클래스, x좌표, y좌표
     constructor(scene, x, y) {
 
-        // scene의 x좌표 y좌표에 player_stop이미지를 가진 개체를 소환
-        super(scene, x, y, 'player_stop');
+        // scene의 x좌표 y좌표에 player이미지를 가진 개체를 소환
+        super(scene, x, y, 'player', 0);
         scene.add.existing(this);     
         scene.physics.add.existing(this); 
 
@@ -90,14 +90,14 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
         // 이동시 ~ 애니메이션
         if (isMove) {
 
-            this.play("move_animation", true);
+            this.play("player_move_animation", true);
         } 
         
         else {
         
             // .stop : 애니메이션 중지
             this.stop();
-            this.setTexture("player_stop"); // 중지하고 이미지 변경
+            this.setTexture("player", 0); // 중지하고 이미지 변경
         }
     }
 }

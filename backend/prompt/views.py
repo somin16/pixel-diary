@@ -75,6 +75,35 @@ def sanitize_injection_attempt(text):
     return sanitized
 
 
+def preprocess_diary(diary_text):
+    """
+    일기 텍스트 전처리
+    1. 이모지/이모티콘 제거
+    2. LLM으로 그림으로 그릴 핵심 장면 한 문장 추출
+    """
+    # 이모지 제거
+    emoji_pattern = re.compile(
+        "[\U00010000-\U0010FFFF"   # 보조 다국어 평면 (이모지 대부분)
+        "\U00002700-\U000027BF"   # Dingbats
+        "\U0001F300-\U0001F9FF"   # 기타 이모지
+        "☀-⛿"           # 기타 기호
+        "]+", flags=re.UNICODE
+    )
+    cleaned = emoji_pattern.sub("", diary_text).strip()
+
+    # LLM으로 핵심 장면 추출
+    extracted = call_llm_model_engine_type([{
+        "role": "user",
+        "content": (
+            f"아래 일기에서 그림으로 그리기 가장 좋은 장면 하나만 한국어로 한 문장으로 추출해줘.\n"
+            f"감정이나 생각보다는 실제로 일어난 구체적인 행동/장소/상황을 우선해.\n"
+            f"추출한 문장만 출력하고 다른 설명은 절대 쓰지 마.\n\n"
+            f"일기: {cleaned}"
+        )
+    }])
+    return extracted.strip()
+
+
 def call_llm_model_engine_type(messages, llm_model_engine_type="groq"):
     """
     llm_model_engine_type 호출
@@ -133,6 +162,8 @@ class PromptView(APIView):
             )
 
         try:
+            diary = preprocess_diary(diary)  # 이모지 제거 + 핵심 장면 추출
+
             scene = call_llm_model_engine_type([{
                 "role": "user",
                 "content": (

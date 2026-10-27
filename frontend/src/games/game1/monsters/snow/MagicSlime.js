@@ -16,7 +16,7 @@ export default class MagicSlime extends Phaser.Physics.Arcade.Sprite {
         // 스탯 
         this.isElite = false;          // 엘리트 몬스터 확인용
         this.monsterID = 5;            // 몬스터 번호
-        this.hp = 20 + monsterStatus;  // 체력
+        this.hp = 18 + monsterStatus;  // 체력
         this.damage = -5;              // 대미지
         this.resistance = 0;           // 공격을 받았을때 밀려나는 저항정도
                                        // ※ 1은 저항없음, 0에 가까울수록 안밀린다
@@ -99,6 +99,9 @@ export default class MagicSlime extends Phaser.Physics.Arcade.Sprite {
     // 화염구 발사
     shootFireBall() {
 
+        const scene = this.scene;
+        const damage = this.damage;
+
         const posX = this.x;
         const posY = this.y;
 
@@ -112,24 +115,24 @@ export default class MagicSlime extends Phaser.Physics.Arcade.Sprite {
         this.scene.physics.moveToObject(fireBallEff, this.scene.player, 200);
 
         // 피격 이펙트(지금 모든 대미지 로직이 몬스터에 묶여 있기에 구분을 위해 하나 새로 만들었습니다)
-        this.scene.physics.add.overlap(fireBallEff, this.scene.player, (fireball, player) => {
+        scene.physics.add.overlap(fireBallEff, scene.player, (fireball, player) => {
 
             if(player.isDamage) return;
 
-            updateHP(this.scene.player, this.damage, this.scene);
+            updateHP(player, damage, scene);
             
             player.isDamage = true;
             player.setTint(0xff0000); // 피격 이펙트(붉은색)
 
             // 0.3초후에 피격종료(좀더 길게 잡은 이유는 투사체가 다소 느리기 때문에 연타방지)
-            this.scene.time.delayedCall(300, () => {
+            scene.time.delayedCall(300, () => {
                 player.isDamage = false;
                 player.clearTint(); // 피격 이펙트 제거
             });
         });
 
         // 안맞을 경우를 대비해서 4초후 자동파괴 로직
-        this.scene.time.delayedCall(4000, () => {
+        scene.time.delayedCall(4000, () => {
             if(fireBallEff.active) { 
                 
                 fireBallEff.destroy();

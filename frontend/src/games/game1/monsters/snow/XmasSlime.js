@@ -54,7 +54,6 @@ export default class XmasSlime extends Phaser.Physics.Arcade.Sprite {
         if (distance > 800 && this.dashCount < 2 && this.isDash == true && this.dashCooldown == false) {
 
             this.dashCount++;
-            console.log("오름");
 
             this.isDash = false;
             this.dashCooldown = true;

@@ -82,7 +82,7 @@ export default class GameScene extends Phaser.Scene {
     this.player = new Player(this, 400, 300);
 
     // 카메라를 플레이어에 맞춰서 이동
-    this.cameras.main.startFollow(this.player, true, 1, 1);
+    this.cameras.main.startFollow(this.player, false, 1, 1);
 
     // 플레이어 체력 자연 회복 이벤트(player/Hp.js)
     addEventautoHeal(this);

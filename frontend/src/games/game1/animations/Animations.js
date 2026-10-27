@@ -3,18 +3,21 @@ export function createAllAnimations(scene) {
 
     // 재시작시에 애니메이션이 중첩되지 않게 하는용도
     // 사실 이거 없어도 중첩은 안돼고 에러도 안뜨긴하지만, 콘솔에 애니메이션 에러문구 뜨는게 거슬려서 추가했습니다
-    if (scene.anims.exists('move_animation')) {
+    if (scene.anims.exists('player_move_animation')) {
         return; 
     }
 
     // 플레이어 움직임 애니메이션
     // anims: 이미지를 조합하여 애니메이션을 만들어준다
     // 스프라이트 시트가 아닌 각 이미지 형식일경우 프레임마다 key값을 넣어준다
-    scene.anims.create({ // 원래는 this로 시작했지만 지금은 부모 클래스에 넣어줘야하니 scene을 적는다
-		key: "move_animation",
-		frames: [{ key: "player_move1" }, { key: "player_move2" }, { key: "player_move3" }],
-		frameRate: 10,
-		repeat: -1,
+    scene.anims.create({ 
+		key: "player_move_animation", 
+		frames: scene.anims.generateFrameNumbers("player", {
+			start: 1,
+			end: 3
+		}),
+		duration: 350,
+		repeat: -1
     });
 
     // ======================== 기본맵 몬스터들 ================================
@@ -218,6 +221,41 @@ export function createAllAnimations(scene) {
       	duration: 500,
       	repeat: -1
     });
+
+	// 탱크 슬라임(상부)
+	// 뚜껑 열리고 슬라임 나오는 애니메이션
+	scene.anims.create({
+		key: "tank_slime_top_open_animation",
+		frames: scene.anims.generateFrameNumbers("tank_slime_top", {
+			start: 0,
+			end: 10
+		}),
+		duration: 1000,
+		repeat: 0
+	});
+
+	// 발사시
+	scene.anims.create({
+		key: "tank_slime_top_shot_animation",
+		frames: scene.anims.generateFrameNumbers("tank_slime_top_shot", {
+			start: 0,
+			end: 7
+		}),
+		duration: 1000,
+		repeat: 0
+	});
+
+	// 탱크 슬라임(하부)
+	// 탱크 움직이는 애니메이션(정방향)
+	scene.anims.create({
+		key: "tank_slime_bottom_move_animation",
+		frames: scene.anims.generateFrameNumbers("tank_slime_bottom", {
+			start: 0,
+			end: 7
+		}),
+		duration: 500,
+		repeat: -1
+	});
 
 	// ================================================================
 
